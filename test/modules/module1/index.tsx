@@ -16,7 +16,12 @@ export default class Module1 extends Module {
   render() {
     return (
       <i-vstack margin={{ left: 'auto', right: 'auto' }} maxWidth={960}>
-        <i-scom-editor id="elm" />
+        <i-scom-editor
+          id="elm" width={600}
+          margin={{left: 'auto', right:'auto'}}
+          border={{radius: '0.5rem'}}
+          background={{color: 'gray'}}
+        />
       </i-vstack>
     );
   }

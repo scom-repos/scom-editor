@@ -8,6 +8,7 @@ import {
   application,
   Styles
 } from '@ijstech/components';
+import { addSlashMenu, addFormattingToolbar, addSideMenu, addHyperlinkToolbar } from './blocks/index';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -41,6 +42,7 @@ const cssPath = `${path}/lib/@blocknote/style.css`;
 export class ScomEditor extends Module {
   private pnlEditor: Panel;
 
+  private _blocknoteObj: any;
   private _editor: any;
 
   public onChanged: onChangedCallback;
@@ -55,24 +57,33 @@ export class ScomEditor extends Module {
     return self;
   }
 
-  private initEditor() {
+  private async initEditor() {
     if (this._editor) return;
-    this.addCSS(cssPath, 'blocknote');
+    try {
+      this.addCSS(cssPath, 'blocknote');
+      this._blocknoteObj = await this.loadPlugin();
+      this.renderEditor();
+    } catch {}
+  }
+
+  private renderEditor() {
+    if (!this._blocknoteObj) return;
     const self = this;
-    RequireJS.require(libPlugins, (blocknote: any) => {
-      self._editor = new blocknote.BlockNoteEditor({
-        parentElement: self.pnlEditor,
-        onEditorContentChange: (editor: any) => {
-          console.log(editor.topLevelBlocks);
-          if (this.onChanged) this.onChanged(editor.topLevelBlocks);
-        },
-        domAttributes: {
-          editor: {
-            class: "scom-editor",
-          }
+    this._editor = new this._blocknoteObj.BlockNoteEditor({
+      parentElement: self.pnlEditor,
+      onEditorContentChange: (editor: any) => {
+        if (this.onChanged) this.onChanged(editor.topLevelBlocks);
+      },
+      domAttributes: {
+        editor: {
+          class: "scom-editor"
         }
-      });
-    })
+      }
+    });
+    addSideMenu(this._editor, this.pnlEditor);
+    addFormattingToolbar(this._editor, this.pnlEditor);
+    addSlashMenu(this._editor, this.pnlEditor);
+    addHyperlinkToolbar(this._editor, this.pnlEditor);
   }
 
   private addCSS(href: string, name: string) {
@@ -81,9 +92,18 @@ export class ScomEditor extends Module {
     let link = document.createElement('link');
     link.setAttribute('type', 'text/css');
     link.setAttribute('rel', 'stylesheet');
+    link.setAttribute('charset', 'utf-8');
     link.setAttribute('name', name);
     link.href = href;
     document.head.append(link);
+  }
+
+  private loadPlugin() {
+    return new Promise((resolve, reject) => {
+      RequireJS.require(libPlugins, (blocknote: any) => {
+        resolve(blocknote);
+      })
+    })
   }
 
   init() {
@@ -96,8 +116,9 @@ export class ScomEditor extends Module {
     return (
       <i-panel
         id="pnlEditor"
-        background={{color: Theme.background.main}}
-        font={{color: Theme.text.primary}}
+        background={{color: 'inherit'}}
+        font={{color: 'inherit'}}
+        border={{radius: 'inherit'}}
       ></i-panel>
     );
   }
