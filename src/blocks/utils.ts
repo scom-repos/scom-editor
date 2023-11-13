@@ -16,17 +16,15 @@ export const createButton = (props: IButtonProps, parent: Control) => {
   border.radius = '0.25rem';
   const onClick = props.onClick;
   props.onClick = (target: Control, event: MouseEvent) => {
-    // TODO: check by selected block
-    // const isSelected = props.isSelected ?? false;
-    // props.isSelected = !isSelected;
-    // target.background.color = props.isSelected ? Theme.action.activeBackground : 'transparent';
+    const isSelected = !(props.isSelected ?? false);
+    target.background.color = isSelected ? Theme.action.activeBackground : 'transparent';
     onClick(target, event);
   }
   const button = new Button(parent, {
     font: {size: '0.875rem'},
     padding: {top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem'},
     border: {...border},
-    background: {color: 'transparent'},
+    background: {color: props.isSelected ? Theme.action.activeBackground : 'transparent'},
     boxShadow: 'none',
     enabled: true,
     minWidth: '1.875rem',
@@ -52,4 +50,12 @@ export const createParent = async (props = {}) => {
     ...props
   });
   return elm;
+}
+
+export const setShown = (parent: Control, element: Control) => {
+  const wrappers = parent.querySelectorAll('.wrapper');
+  for (let wrapper of wrappers) {
+    const el = wrapper as Control;
+    el.visible = el.id === element.id;
+  }
 }

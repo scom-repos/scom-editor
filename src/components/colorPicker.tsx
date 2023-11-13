@@ -17,6 +17,7 @@ interface ScomEditorColorPickerElement extends ControlElement {
   textColor?: string;
   backgroundColor?: string;
   onSelected?: onSelectedCallback;
+  onClosed?: () => void;
 }
 
 declare global {
@@ -64,6 +65,7 @@ export class ScomEditorColorPicker extends Module {
   }
 
   onSelected: onSelectedCallback;
+  onClosed: () => void;
 
   get textColor() {
     return this._data.textColor ?? 'default';
@@ -172,14 +174,16 @@ export class ScomEditorColorPicker extends Module {
       if (icon) icon.visible = child.id === `${type}${color.charAt(0).toUpperCase() + color.slice(1)}`;
     }
     if (this.onSelected) this.onSelected(type, color);
+  }
 
-    // this.btnColor.font = {size: '0.75rem', color: this.textColor === 'default' ? Theme.text.primary : this.textColor};
-    // this.btnColor.background.color = this.backgroundColor === 'default' ? 'transparent' : this.backgroundColor;
+  private handleClose() {
+    if (this.onClosed) this.onClosed();
   }
 
   init() {
     super.init();
     this.onSelected = this.getAttribute('onSelected', true) || this.onSelected;
+    this.onClosed = this.getAttribute('onClosed', true) || this.onClosed;
     const textColor = this.getAttribute('textColor', true, 'default');
     const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
     this.setData({textColor, backgroundColor});
@@ -196,6 +200,7 @@ export class ScomEditorColorPicker extends Module {
         padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
         boxShadow={Theme.shadows[1]}
         showBackdrop={false}
+        onClose={this.handleClose}
       >
         <i-vstack
           id="pnlColors"

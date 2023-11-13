@@ -4,22 +4,20 @@ import {
   Styles,
   Module,
   Container,
-  Menu
+  Button
 } from '@ijstech/components';
-import { ColorType, ScomEditorColorPicker } from './colorPicker';
+import { ScomEditorDragHandle } from './dragHandle';
+import { ColorType } from './colorPicker';
 const Theme = Styles.Theme.ThemeVars;
-
-type deletedCallback = (block: any) => void;
-type setColorCallback = (type: ColorType, color: string) => void;
 
 interface ScomEditorSideMenuElement extends ControlElement {
   block?: any;
-  onDeleted?: deletedCallback;
-  onSetColor?: setColorCallback;
+  editor?: any;
 }
 
 interface ISideMenu {
-  block?: any;
+  block: any;
+  editor: any;
 }
 
 declare global {
@@ -32,13 +30,11 @@ declare global {
 
 @customElements('i-scom-editor-side-menu')
 export class ScomEditorSideMenu extends Module {
-  private menuElm: Menu;
-  private mdPicker: ScomEditorColorPicker;
+  private btnDrag: Button;
+  private dragHandle: ScomEditorDragHandle;
 
   private _data: ISideMenu;
-
-  onDeleted: deletedCallback;
-  onSetColor: setColorCallback;
+  private _isShowing: boolean = false;
 
   static async create(options?: ScomEditorSideMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -55,92 +51,91 @@ export class ScomEditorSideMenu extends Module {
   }
   set block(value: any) {
     this._data.block = value;
+    this.dragHandle.block = value;
+  }
+
+  get editor() {
+    return this._data.editor;
+  }
+  set editor(value: any) {
+    this._data.editor = value;
+    this.dragHandle.editor = value;
+  }
+
+  get isShowing() {
+    return this._isShowing ?? false;
   }
 
   setData(value: ISideMenu) {
     this._data = value;
-    this.renderUI();
+    this.dragHandle.setData({ block: this.block, editor: this.editor });
+    this.btnDrag.addEventListener("dragstart", this.editor.sideMenu.blockDragStart);
+    this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
+    this.btnDrag.draggable = true;
   }
 
-  private renderUI() {
-    this.mdPicker.setData({
-      textColor: this.block?.props?.textColor,
-      backgroundColor: this.block?.props?.backgroundColor
-    })
+  private handleSetColor(type: ColorType, color: string) {
+    const prop = type === 'text' ? 'textColor' : 'backgroundColor';
+    this.editor.updateBlock(this.block, {
+      props: { [prop]: color }
+    });
+    this.hideDragMenu();
   }
 
-  private onShowMenu() {
-    this.menuElm.visible = true;
+  private handleDelete() {
+    this.editor.removeBlocks([this.block]);
+    this.hideDragMenu();
   }
 
-  clear() {
-    this.menuElm.visible = false;
+  private addBlock() {
+    this.editor.sideMenu.addBlock();
   }
 
-  private onColorClicked(type: ColorType, color: string) {
-    this.menuElm.visible = false;
-    if (this.onSetColor) this.onSetColor(type, color);
+  private showDragMenu() {
+    this.dragHandle.onShowMenu();
+    this._isShowing = true;
+  }
+
+  private hideDragMenu() {
+    this.dragHandle.onHideMenu();
+    this._isShowing = false;
   }
 
   init() {
     super.init();
-    this.onDeleted = this.getAttribute('onDeleted', true) || this.onDeleted;
-    this.onSetColor = this.getAttribute('onSetColor', true) || this.onSetColor;
-    this.menuElm.data = [
-      {
-        title: 'Delete'
-      },
-      {
-        title: 'Colors',
-        icon: {
-          name: 'angle-right',
-          width: '0.3rem',
-          height: '0.3rem',
-          fill: Theme.text.primary
-        }
-      }
-    ]
-    this.menuElm.onItemClick = (target: Menu, item: any) => {
-      if (item.title === 'Delete') {
-        this.menuElm.visible = false;
-        if (this.onDeleted && this._data?.block) this.onDeleted(this._data?.block)
-      } else {
-        this.mdPicker.parent = item;
-        this.mdPicker.position = 'fixed';
-        this.mdPicker.showModal();
-      }
-    }
     const block = this.getAttribute('block', true);
-    if (block) this.setData({block});
+    const editor = this.getAttribute('editor', true);
+    if (editor && block) this.setData({block, editor});
   }
 
   render() {
     return (
-      <i-panel width={'auto'} height={'100%'} display='inline-block'>
-        <i-button
-          height={'100%'} width={'auto'}
-          minWidth={'1rem'}
-          border={{ radius: '0px'}}
-          icon={{name: "ellipsis-v", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary}}
-          background={{color: 'transparent'}}
-          boxShadow='none'
-          onClick={() => this.onShowMenu()}
-        ></i-button>
-        <i-menu
-          id="menuElm"
-          padding={{top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem'}}
-          font={{color: Theme.text.primary, size: '0.75rem'}}
-          // border={{radius: '0.25rem'}}
-          boxShadow={Theme.shadows[1]}
-          width={'6.25rem'}
-          position="absolute"
-          left="-4.375rem" top="0px"
-          mode="vertical"
-          background={{color: Theme.background.modal}}
-          visible={false}
-        ></i-menu>
-        <i-scom-editor-color-picker id="mdPicker" onSelected={this.onColorClicked}/>
+      <i-panel>
+        <i-hstack>
+          <i-button
+            padding={{top: 0, bottom: 0, left: '0.25rem', right: '0.25rem'}}
+            icon={{name: 'plus', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary}}
+            background={{color: 'transparent'}}
+            boxShadow='none'
+            onClick={() => this.addBlock()}
+          ></i-button>
+          <i-button
+            id="btnDrag"
+            border={{ radius: '0px'}}
+            padding={{top: 0, bottom: 0, left: '0.25rem', right: '0.25rem'}}
+            icon={{name: "ellipsis-v", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary}}
+            background={{color: 'transparent'}}
+            boxShadow='none'
+            onClick={() => this.showDragMenu()}
+          ></i-button>
+        </i-hstack>
+        <i-scom-editor-drag-handle
+          id="dragHandle"
+          onSetColor={this.handleSetColor}
+          onDeleted={this.handleDelete}
+        />
       </i-panel>
+      
     )
   }
 }

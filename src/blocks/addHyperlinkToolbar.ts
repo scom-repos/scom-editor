@@ -1,5 +1,5 @@
 import { Control, HStack, Styles } from "@ijstech/components";
-import { createButton, createParent } from "./utils";
+import { createButton, createParent, setShown } from "./utils";
 import { CustomHyperlinkToolbarState } from "../global/index";
 import { buttonHoverStyle } from "./index.css";
 import { ScomEditorLink } from "../components/index";
@@ -53,7 +53,9 @@ export const addHyperlinkToolbar = async (editor: any, parent: Control) => {
 
   editor.hyperlinkToolbar.onUpdate(async (hyperlinkToolbarState: CustomHyperlinkToolbarState) => {
     if (!element) {
-      element = await createParent();
+      element = await createParent({
+        id: 'pnlHyperlinkToolbar'
+      });
       buttonList = getToolbarButtons(editor, hyperlinkToolbarState, element);
       for (let props of buttonList) {
         if (props.customControl) {
@@ -69,16 +71,9 @@ export const addHyperlinkToolbar = async (editor: any, parent: Control) => {
     }
 
     if (hyperlinkToolbarState.show) {
-      const wrappers = parent.querySelectorAll('.wrapper');
-      for (let wrapper of wrappers) {
-        (wrapper as Control).visible = false;
-      }
-      element.visible = true;
-      element.style.top = `${hyperlinkToolbarState.referencePos.top - (element.offsetHeight - 10)}px`;
-      element.style.left = hyperlinkToolbarState.referencePos.x - element.offsetWidth + "px";
-    } else {
-      element.style.top = `${hyperlinkToolbarState.referencePos.top - (element.offsetHeight - 10)}px`;
-      element.style.left = hyperlinkToolbarState.referencePos.x - element.offsetWidth + "px";
+      setShown(parent, element);
     }
+    element.style.top = `${hyperlinkToolbarState.referencePos.top - (element.offsetHeight - 10)}px`;
+    element.style.left = hyperlinkToolbarState.referencePos.x - element.offsetWidth + "px";
   });
 };

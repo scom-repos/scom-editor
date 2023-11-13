@@ -1,5 +1,6 @@
-import { Module, customModule, Container } from '@ijstech/components';
+import { Module, customModule, Container, Styles } from '@ijstech/components';
 import { ScomEditor } from '@scom/scom-editor';
+const Theme = Styles.Theme.ThemeVars;
 
 @customModule
 export default class Module1 extends Module {
@@ -19,8 +20,9 @@ export default class Module1 extends Module {
         <i-scom-editor
           id="elm" width={600}
           margin={{left: 'auto', right:'auto'}}
-          border={{radius: '0.5rem'}}
-          background={{color: 'gray'}}
+          border={{radius: '0.5rem', width: '1px', style: 'solid', color: Theme.divider}}
+          font={{color: Theme.text.primary}}
+          background={{color: Theme.background.main}}
         />
       </i-vstack>
     );
