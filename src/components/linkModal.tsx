@@ -7,6 +7,7 @@ import {
   Modal,
   Input
 } from '@ijstech/components';
+import { getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 export type inputChangedCallback = (target: Input, event: KeyboardEvent) => void;
@@ -76,6 +77,9 @@ export class ScomEditorMdLink extends Module {
   }
 
   showModal() {
+    this.mdLink.position = 'fixed';
+    if (this.parent) this.mdLink.linkTo = this.parent;
+    this.mdLink.refresh();
     this.mdLink.visible = true;
   }
 
@@ -96,6 +100,7 @@ export class ScomEditorMdLink extends Module {
     const text = this.getAttribute('text', true);
     const url = this.getAttribute('url', true);
     this.setData({text, url});
+    getModalContainer().appendChild(this.mdLink);
   }
 
   render() {

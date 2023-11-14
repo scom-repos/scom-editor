@@ -8,9 +8,7 @@ import {
   application,
   Styles
 } from '@ijstech/components';
-import { addSlashMenu, addFormattingToolbar, addSideMenu, addHyperlinkToolbar } from './blocks/index';
-
-const Theme = Styles.Theme.ThemeVars;
+import { addSlashMenu, addFormattingToolbar, addSideMenu, addHyperlinkToolbar, addImageToolbar } from './blocks/index';
 
 type onChangedCallback = (blocks: any[]) => void;
 
@@ -84,6 +82,7 @@ export class ScomEditor extends Module {
     addFormattingToolbar(this._editor, this.pnlEditor);
     addSlashMenu(this._editor, this.pnlEditor);
     addHyperlinkToolbar(this._editor, this.pnlEditor);
+    addImageToolbar(this._editor, this.pnlEditor);
   }
 
   private addCSS(href: string, name: string) {

@@ -59,7 +59,6 @@ export class ScomEditorSideMenu extends Module {
   }
   set editor(value: any) {
     this._data.editor = value;
-    this.dragHandle.editor = value;
   }
 
   get isShowing() {
@@ -68,7 +67,9 @@ export class ScomEditorSideMenu extends Module {
 
   setData(value: ISideMenu) {
     this._data = value;
-    this.dragHandle.setData({ block: this.block, editor: this.editor });
+    this.dragHandle.freezeMenu = this.editor.sideMenu.freezeMenu;
+    this.dragHandle.unfreezeMenu = this.editor.sideMenu.unfreezeMenu;
+    this.dragHandle.setData({ block: this.block });
     this.btnDrag.addEventListener("dragstart", this.editor.sideMenu.blockDragStart);
     this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
     this.btnDrag.draggable = true;

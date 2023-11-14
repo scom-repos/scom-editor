@@ -1,22 +1,3 @@
-/// <amd-module name="@scom/scom-editor/blocks/index.css.ts" />
-declare module "@scom/scom-editor/blocks/index.css.ts" {
-    export const buttonHoverStyle: string;
-}
-/// <amd-module name="@scom/scom-editor/blocks/utils.ts" />
-declare module "@scom/scom-editor/blocks/utils.ts" {
-    import { Button, Control, HStack } from "@ijstech/components";
-    interface IButtonProps {
-        caption?: string;
-        icon?: any;
-        enabled?: boolean;
-        border?: any;
-        isSelected?: boolean;
-        onClick?: (target: Control, event: MouseEvent) => void;
-    }
-    export const createButton: (props: IButtonProps, parent: Control) => Button;
-    export const createParent: (props?: {}) => Promise<HStack>;
-    export const setShown: (parent: Control, element: Control) => void;
-}
 /// <amd-module name="@scom/scom-editor/global/helper.ts" />
 declare module "@scom/scom-editor/global/helper.ts" {
     export const isAppleOS: () => boolean;
@@ -48,99 +29,14 @@ declare module "@scom/scom-editor/global/index.ts" {
     };
     export * from "@scom/scom-editor/global/helper.ts";
 }
-/// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
-declare module "@scom/scom-editor/components/colorPicker.tsx" {
-    import { ControlElement, Module, Container } from '@ijstech/components';
-    export type onSelectedCallback = (type: ColorType, color: string) => void;
-    export type ColorType = 'text' | 'background';
-    interface ScomEditorColorPickerElement extends ControlElement {
-        textColor?: string;
-        backgroundColor?: string;
-        onSelected?: onSelectedCallback;
-        onClosed?: () => void;
-    }
-    global {
-        namespace JSX {
-            interface IntrinsicElements {
-                ['i-scom-editor-color-picker']: ScomEditorColorPickerElement;
-            }
-        }
-    }
-    interface IColorPicker {
-        textColor?: string;
-        backgroundColor?: string;
-    }
-    export class ScomEditorColorPicker extends Module {
-        private pnlColors;
-        private pnlText;
-        private pnlBackground;
-        private mdColorPicker;
-        private _colors;
-        private _data;
-        static create(options?: ScomEditorColorPickerElement, parent?: Container): Promise<ScomEditorColorPicker>;
-        constructor(parent?: Container, options?: any);
-        onSelected: onSelectedCallback;
-        onClosed: () => void;
-        get textColor(): string;
-        set textColor(value: string);
-        get backgroundColor(): string;
-        set backgroundColor(value: string);
-        setData(value: IColorPicker): Promise<void>;
-        getData(): IColorPicker;
-        showModal(): void;
-        closeModal(): void;
-        private renderSelection;
-        private getColor;
-        private onColorClicked;
-        private handleClose;
-        init(): void;
-        render(): any;
-    }
-}
-/// <amd-module name="@scom/scom-editor/components/colorButton.tsx" />
-declare module "@scom/scom-editor/components/colorButton.tsx" {
-    import { ControlElement, Module, Container } from '@ijstech/components';
-    import { ColorType } from "@scom/scom-editor/components/colorPicker.tsx";
-    export type setColorCallback = (type: ColorType, color: string) => void;
-    interface ScomEditorColorElement extends ControlElement {
-        textColor?: string;
-        backgroundColor?: string;
-        setColor?: setColorCallback;
-    }
-    global {
-        namespace JSX {
-            interface IntrinsicElements {
-                ['i-scom-editor-color']: ScomEditorColorElement;
-            }
-        }
-    }
-    interface IColorPicker {
-        textColor?: string;
-        backgroundColor?: string;
-        isSelected?: boolean;
-    }
-    export class ScomEditorColor extends Module {
-        private mdPicker;
-        private btnColor;
-        private _data;
-        static create(options?: ScomEditorColorElement, parent?: Container): Promise<ScomEditorColor>;
-        constructor(parent?: Container, options?: any);
-        setColor: setColorCallback;
-        get textColor(): string;
-        set textColor(value: string);
-        get backgroundColor(): string;
-        set backgroundColor(value: string);
-        setData(value: IColorPicker): Promise<void>;
-        getData(): IColorPicker;
-        private showModal;
-        private onColorClicked;
-        init(): void;
-        render(): any;
-    }
+/// <amd-module name="@scom/scom-editor/components/index.css.ts" />
+declare module "@scom/scom-editor/components/index.css.ts" {
+    export const buttonHoverStyle: string;
+    export const customModalStyle: string;
 }
 /// <amd-module name="@scom/scom-editor/components/utils.ts" />
 declare module "@scom/scom-editor/components/utils.ts" {
-    import { Control, IconName } from "@ijstech/components";
+    import { Button, Control, HStack, IconName, Modal } from "@ijstech/components";
     export type IToolbarDropdownItem = {
         text: string;
         icon?: {
@@ -217,6 +113,111 @@ declare module "@scom/scom-editor/components/utils.ts" {
             hint: string;
         };
     };
+    interface IButtonProps {
+        caption?: string;
+        icon?: any;
+        enabled?: boolean;
+        border?: any;
+        isSelected?: boolean | (() => boolean);
+        tooltip?: any;
+        onClick?: (target: Control, event: MouseEvent) => void;
+    }
+    export const createButton: (props: IButtonProps, parent: Control) => Button;
+    export const createParent: (props?: {}) => Promise<HStack>;
+    export const createModal: (props?: {}) => Promise<Modal>;
+    export const setShown: (parent: Control, element: Control) => void;
+    export const getModalContainer: () => HTMLElement;
+    export const getPlacement: (block: any) => void;
+}
+/// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
+declare module "@scom/scom-editor/components/colorPicker.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    export type onSelectedCallback = (type: ColorType, color: string) => void;
+    export type ColorType = 'text' | 'background';
+    interface ScomEditorColorPickerElement extends ControlElement {
+        textColor?: string;
+        backgroundColor?: string;
+        onSelected?: onSelectedCallback;
+        onClosed?: () => void;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-color-picker']: ScomEditorColorPickerElement;
+            }
+        }
+    }
+    interface IColorPicker {
+        textColor?: string;
+        backgroundColor?: string;
+    }
+    export class ScomEditorColorPicker extends Module {
+        private pnlColors;
+        private pnlText;
+        private pnlBackground;
+        private mdColorPicker;
+        private _colors;
+        private _data;
+        static create(options?: ScomEditorColorPickerElement, parent?: Container): Promise<ScomEditorColorPicker>;
+        constructor(parent?: Container, options?: any);
+        onSelected: onSelectedCallback;
+        onClosed: () => void;
+        get textColor(): string;
+        set textColor(value: string);
+        get backgroundColor(): string;
+        set backgroundColor(value: string);
+        setData(value: IColorPicker): Promise<void>;
+        getData(): IColorPicker;
+        showModal(popupPlacement?: string): void;
+        closeModal(): void;
+        private renderSelection;
+        private getColor;
+        private onColorClicked;
+        private handleClose;
+        init(): void;
+        render(): any;
+    }
+}
+/// <amd-module name="@scom/scom-editor/components/colorButton.tsx" />
+declare module "@scom/scom-editor/components/colorButton.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    import { ColorType } from "@scom/scom-editor/components/colorPicker.tsx";
+    export type setColorCallback = (type: ColorType, color: string) => void;
+    interface ScomEditorColorElement extends ControlElement {
+        textColor?: string;
+        backgroundColor?: string;
+        setColor?: setColorCallback;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-color']: ScomEditorColorElement;
+            }
+        }
+    }
+    interface IColorPicker {
+        textColor?: string;
+        backgroundColor?: string;
+        isSelected?: boolean;
+    }
+    export class ScomEditorColor extends Module {
+        private mdPicker;
+        private btnColor;
+        private _data;
+        static create(options?: ScomEditorColorElement, parent?: Container): Promise<ScomEditorColor>;
+        constructor(parent?: Container, options?: any);
+        setColor: setColorCallback;
+        get textColor(): string;
+        set textColor(value: string);
+        get backgroundColor(): string;
+        set backgroundColor(value: string);
+        setData(value: IColorPicker): Promise<void>;
+        getData(): IColorPicker;
+        private showModal;
+        private onColorClicked;
+        init(): void;
+        render(): any;
+    }
 }
 /// <amd-module name="@scom/scom-editor/components/toolbarDropdown.tsx" />
 declare module "@scom/scom-editor/components/toolbarDropdown.tsx" {
@@ -393,13 +394,13 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
     type setColorCallback = (type: ColorType, color: string) => void;
     interface ScomEditorDragHandleElement extends ControlElement {
         block?: any;
-        editor?: any;
         onDeleted?: deletedCallback;
         onSetColor?: setColorCallback;
+        unfreezeMenu?: any;
+        freezeMenu?: any;
     }
     interface ISideMenu {
         block: any;
-        editor: any;
     }
     global {
         namespace JSX {
@@ -409,24 +410,26 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         }
     }
     export class ScomEditorDragHandle extends Module {
-        private pnlMenu;
+        private mdMenu;
         private menuElm;
         private mdPicker;
         private _data;
         private _menuData;
         onDeleted: deletedCallback;
         onSetColor: setColorCallback;
+        unfreezeMenu: any;
+        freezeMenu: any;
         static create(options?: ScomEditorDragHandleElement, parent?: Container): Promise<ScomEditorDragHandle>;
         constructor(parent?: Container, options?: any);
         get block(): any;
         set block(value: any);
-        get editor(): any;
-        set editor(value: any);
         setData(value: ISideMenu): void;
         private renderUI;
         private handleMenu;
         onShowMenu(): void;
         onHideMenu(): void;
+        private onModalClose;
+        private onModalOpen;
         private onColorClicked;
         init(): void;
         render(): any;
@@ -516,6 +519,92 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
         render(): any;
     }
 }
+/// <amd-module name="@scom/scom-editor/components/imageToolbar.tsx" />
+declare module "@scom/scom-editor/components/imageToolbar.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    interface ScomEditorImageToolbarElement extends ControlElement {
+        editor?: any;
+        block?: any;
+        onUpdated?: () => void;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-image-toolbar']: ScomEditorImageToolbarElement;
+            }
+        }
+    }
+    interface IImageToolbar {
+        editor: any;
+        block: any;
+    }
+    export class ScomEditorImageToolbar extends Module {
+        private imageTabs;
+        private inputUrl;
+        private btnUpload;
+        private btnEmbed;
+        private lblFailed;
+        private pnlLoading;
+        private _data;
+        onUpdated: () => void;
+        static create(options?: ScomEditorImageToolbarElement, parent?: Container): Promise<ScomEditorImageToolbar>;
+        constructor(parent?: Container, options?: any);
+        get editor(): any;
+        set editor(value: any);
+        get block(): any;
+        set block(value: any);
+        setData(value: IImageToolbar): Promise<void>;
+        getData(): IImageToolbar;
+        private onFileChanged;
+        private handleURLEnter;
+        private updateBlock;
+        private handleURLChanged;
+        init(): void;
+        render(): any;
+    }
+}
+/// <amd-module name="@scom/scom-editor/components/formattingToolbar.tsx" />
+declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    interface ScomEditorFormattingToolbarElement extends ControlElement {
+        editor?: any;
+    }
+    interface IFormattingToolbar {
+        editor: any;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-formatting-toolbar']: ScomEditorFormattingToolbarElement;
+            }
+        }
+    }
+    export class ScomEditorFormattingToolbar extends Module {
+        private pnlFormatting;
+        private imgToolbar;
+        private mdReplace;
+        private _data;
+        private _oldBlock;
+        private _block;
+        static create(options?: ScomEditorFormattingToolbarElement, parent?: Container): Promise<ScomEditorFormattingToolbar>;
+        constructor(parent?: Container, options?: any);
+        get editor(): any;
+        set editor(value: any);
+        private setBlockType;
+        private setAlignment;
+        private setColor;
+        private setLink;
+        private getToolbarButtons;
+        private get isImageBlock();
+        setData(value: IFormattingToolbar): void;
+        onRefresh(): void;
+        private renderUI;
+        private updateBlock;
+        private renderList;
+        init(): void;
+        render(): any;
+    }
+}
 /// <amd-module name="@scom/scom-editor/components/index.ts" />
 declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorColor } from "@scom/scom-editor/components/colorButton.tsx";
@@ -525,7 +614,10 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorSideMenu } from "@scom/scom-editor/components/sideMenu.tsx";
     export { ScomEditorSlashMenu } from "@scom/scom-editor/components/slashMenu.tsx";
     export { ColorType, ScomEditorColorPicker } from "@scom/scom-editor/components/colorPicker.tsx";
+    export { ScomEditorFormattingToolbar } from "@scom/scom-editor/components/formattingToolbar.tsx";
+    export { ScomEditorImageToolbar } from "@scom/scom-editor/components/imageToolbar.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
+    export { buttonHoverStyle } from "@scom/scom-editor/components/index.css.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addFormattingToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addFormattingToolbar.ts" {
@@ -547,12 +639,18 @@ declare module "@scom/scom-editor/blocks/addHyperlinkToolbar.ts" {
     import { Control } from "@ijstech/components";
     export const addHyperlinkToolbar: (editor: any, parent: Control) => Promise<void>;
 }
+/// <amd-module name="@scom/scom-editor/blocks/addImageToolbar.tsx" />
+declare module "@scom/scom-editor/blocks/addImageToolbar.tsx" {
+    import { Control } from "@ijstech/components";
+    export const addImageToolbar: (editor: any, parent: Control) => void;
+}
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFormattingToolbar } from "@scom/scom-editor/blocks/addFormattingToolbar.ts";
     export { addSideMenu } from "@scom/scom-editor/blocks/addSideMenu.ts";
     export { addSlashMenu } from "@scom/scom-editor/blocks/addSlashMenu.ts";
     export { addHyperlinkToolbar } from "@scom/scom-editor/blocks/addHyperlinkToolbar.ts";
+    export { addImageToolbar } from "@scom/scom-editor/blocks/addImageToolbar.tsx";
 }
 /// <amd-module name="@scom/scom-editor" />
 declare module "@scom/scom-editor" {

@@ -18,74 +18,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-define("@scom/scom-editor/blocks/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.buttonHoverStyle = void 0;
-    const Theme = components_1.Styles.Theme.ThemeVars;
-    exports.buttonHoverStyle = components_1.Styles.style({
-        $nest: {
-            '&:hover': {
-                background: `${Theme.action.hoverBackground}!important`
-            }
-        }
-    });
-});
-define("@scom/scom-editor/blocks/utils.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.css.ts"], function (require, exports, components_2, index_css_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.setShown = exports.createParent = exports.createButton = void 0;
-    const Theme = components_2.Styles.Theme.ThemeVars;
-    const createButton = (props, parent) => {
-        const border = props?.border || {};
-        border.radius = '0.25rem';
-        const onClick = props.onClick;
-        props.onClick = (target, event) => {
-            const isSelected = !(props.isSelected ?? false);
-            target.background.color = isSelected ? Theme.action.activeBackground : 'transparent';
-            onClick(target, event);
-        };
-        const button = new components_2.Button(parent, {
-            font: { size: '0.875rem' },
-            padding: { top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem' },
-            border: { ...border },
-            background: { color: props.isSelected ? Theme.action.activeBackground : 'transparent' },
-            boxShadow: 'none',
-            enabled: true,
-            minWidth: '1.875rem',
-            minHeight: '1.875rem',
-            class: index_css_1.buttonHoverStyle,
-            ...props
-        });
-        return button;
-    };
-    exports.createButton = createButton;
-    const createParent = async (props = {}) => {
-        const elm = await components_2.HStack.create({
-            background: { color: Theme.background.main },
-            position: 'absolute',
-            zIndex: 3000,
-            boxShadow: Theme.shadows[1],
-            lineHeight: 1.2,
-            padding: { top: '0.125rem', bottom: '0.125rem', left: '0.125rem', right: '0.125rem' },
-            verticalAlignment: 'center',
-            border: { radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light },
-            gap: '0.125rem',
-            class: 'wrapper',
-            ...props
-        });
-        return elm;
-    };
-    exports.createParent = createParent;
-    const setShown = (parent, element) => {
-        const wrappers = parent.querySelectorAll('.wrapper');
-        for (let wrapper of wrappers) {
-            const el = wrapper;
-            el.visible = el.id === element.id;
-        }
-    };
-    exports.setShown = setShown;
-});
 define("@scom/scom-editor/global/helper.ts", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -111,191 +43,33 @@ define("@scom/scom-editor/global/index.ts", ["require", "exports", "@scom/scom-e
     Object.defineProperty(exports, "__esModule", { value: true });
     __exportStar(helper_1, exports);
 });
-define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@ijstech/components"], function (require, exports, components_3) {
+define("@scom/scom-editor/components/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ScomEditorColorPicker = void 0;
-    const Theme = components_3.Styles.Theme.ThemeVars;
-    let ScomEditorColorPicker = class ScomEditorColorPicker extends components_3.Module {
-        static async create(options, parent) {
-            let self = new this(parent, options);
-            await self.ready();
-            return self;
-        }
-        constructor(parent, options) {
-            super(parent, options);
-            this._colors = [
-                "default",
-                "gray",
-                "brown",
-                "red",
-                "orange",
-                "yellow",
-                "green",
-                "blue",
-                "purple",
-                "pink",
-            ];
-        }
-        get textColor() {
-            return this._data.textColor ?? 'default';
-        }
-        set textColor(value) {
-            this._data.textColor = value ?? 'default';
-        }
-        get backgroundColor() {
-            return this._data.backgroundColor ?? 'default';
-        }
-        set backgroundColor(value) {
-            this._data.backgroundColor = value ?? 'default';
-        }
-        async setData(value) {
-            this._data = value;
-            if (!this.pnlColors)
-                return;
-            this.pnlColors.clearInnerHTML();
-            this.renderSelection('text');
-            this.renderSelection('background');
-        }
-        getData() {
-            return this._data;
-        }
-        showModal() {
-            this.mdColorPicker.refresh();
-            this.mdColorPicker.visible = true;
-        }
-        closeModal() {
-            this.mdColorPicker.visible = false;
-        }
-        renderSelection(type) {
-            const itemsWrap = this.$render("i-vstack", { id: `pnl${type.charAt(0).toUpperCase() + type.slice(1)}`, width: '100%' });
-            const groupElm = (this.$render("i-panel", { width: '100%' },
-                this.$render("i-label", { caption: type, font: { size: '0.75rem', transform: 'capitalize', weight: 500 }, lineHeight: 1.55, padding: { top: '0.313rem', bottom: '0.313rem', left: '0.75rem', right: '0.75rem' } }),
-                itemsWrap));
-            this.pnlColors.append(groupElm);
-            for (let color of this._colors) {
-                const isActived = type === 'text' ? this._data.textColor === color : this._data.backgroundColor === color;
-                const colorEl = (this.$render("i-hstack", { id: `${type}${color.charAt(0).toUpperCase() + color.slice(1)}`, verticalAlignment: 'center', gap: "0.75rem", horizontalAlignment: 'space-between', cursor: 'pointer', padding: { top: '0.675rem', bottom: '0.675rem', left: '0.75rem', right: '0.75rem' }, border: { radius: '0.25rem' }, height: '1.875rem', hover: {
-                        backgroundColor: Theme.action.hoverBackground
-                    }, onClick: (target) => this.onColorClicked(target, type, color) },
-                    this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.75rem" },
-                        this.$render("i-button", { height: '1rem', width: '1rem', border: { radius: '0.25rem' }, background: { color: type === 'text' ? 'transparent' : this.getColor(color, 'background') }, caption: 'A', font: { color: type === 'text' ? this.getColor(color, 'text') : Theme.text.primary, size: '0.75rem' } }),
-                        this.$render("i-label", { caption: color, font: { size: '0.75rem', transform: 'capitalize', weight: 400 } })),
-                    this.$render("i-icon", { name: "check", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary, visible: isActived })));
-                itemsWrap.append(colorEl);
+    exports.customModalStyle = exports.buttonHoverStyle = void 0;
+    const Theme = components_1.Styles.Theme.ThemeVars;
+    exports.buttonHoverStyle = components_1.Styles.style({
+        $nest: {
+            '&:hover': {
+                background: `${Theme.action.hoverBackground}!important`
             }
         }
-        getColor(color, type) {
-            if (color === 'default') {
-                return type === 'text' ? Theme.text.primary : 'transparent';
+    });
+    exports.customModalStyle = components_1.Styles.style({
+        $nest: {
+            '.modal-wrapper': {
+                top: '0px !important',
+                left: '0px !important',
+                overflow: 'unset'
             }
-            return color;
         }
-        onColorClicked(target, type, color) {
-            this.mdColorPicker.visible = false;
-            const parent = type === 'text' ? this.pnlText : this.pnlBackground;
-            const prop = type === 'text' ? 'textColor' : 'backgroundColor';
-            this[prop] = color;
-            for (let child of parent.children) {
-                const icon = child.querySelector('i-icon');
-                if (icon)
-                    icon.visible = child.id === `${type}${color.charAt(0).toUpperCase() + color.slice(1)}`;
-            }
-            if (this.onSelected)
-                this.onSelected(type, color);
-        }
-        handleClose() {
-            if (this.onClosed)
-                this.onClosed();
-        }
-        init() {
-            super.init();
-            this.onSelected = this.getAttribute('onSelected', true) || this.onSelected;
-            this.onClosed = this.getAttribute('onClosed', true) || this.onClosed;
-            const textColor = this.getAttribute('textColor', true, 'default');
-            const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
-            this.setData({ textColor, backgroundColor });
-        }
-        render() {
-            return (this.$render("i-modal", { id: "mdColorPicker", popupPlacement: "bottom", minWidth: 200, maxWidth: 300, border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false, onClose: this.handleClose },
-                this.$render("i-vstack", { id: "pnlColors", maxHeight: '37.488rem', overflow: { y: 'auto' } })));
-        }
-    };
-    ScomEditorColorPicker = __decorate([
-        (0, components_3.customElements)('i-scom-editor-color-picker')
-    ], ScomEditorColorPicker);
-    exports.ScomEditorColorPicker = ScomEditorColorPicker;
+    });
 });
-define("@scom/scom-editor/components/colorButton.tsx", ["require", "exports", "@ijstech/components"], function (require, exports, components_4) {
+define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.css.ts"], function (require, exports, components_2, index_1, index_css_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ScomEditorColor = void 0;
-    const Theme = components_4.Styles.Theme.ThemeVars;
-    let ScomEditorColor = class ScomEditorColor extends components_4.Module {
-        static async create(options, parent) {
-            let self = new this(parent, options);
-            await self.ready();
-            return self;
-        }
-        constructor(parent, options) {
-            super(parent, options);
-            this.onColorClicked = this.onColorClicked.bind(this);
-        }
-        get textColor() {
-            return this._data.textColor ?? 'default';
-        }
-        set textColor(value) {
-            this._data.textColor = value ?? 'default';
-        }
-        get backgroundColor() {
-            return this._data.backgroundColor ?? 'default';
-        }
-        set backgroundColor(value) {
-            this._data.backgroundColor = value ?? 'default';
-        }
-        async setData(value) {
-            this._data = value;
-            this.mdPicker.setData({
-                textColor: this.textColor,
-                backgroundColor: this.backgroundColor
-            });
-        }
-        getData() {
-            return this._data;
-        }
-        showModal() {
-            this.mdPicker.showModal();
-        }
-        onColorClicked(type, color) {
-            const prop = type === 'text' ? 'textColor' : 'backgroundColor';
-            this[prop] = color;
-            if (this.setColor)
-                this.setColor(type, color);
-            this.btnColor.font = { size: '0.75rem', color: this.textColor === 'default' ? Theme.text.primary : this.textColor };
-            this.btnColor.background.color = this.backgroundColor === 'default' ? 'transparent' : this.backgroundColor;
-        }
-        init() {
-            super.init();
-            this.setColor = this.getAttribute('setColor', true) || this.setColor;
-            const textColor = this.getAttribute('textColor', true, 'default');
-            const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
-            this.setData({ textColor, backgroundColor });
-        }
-        render() {
-            return (this.$render("i-panel", { width: 'auto', height: '100%', display: 'inline-block' },
-                this.$render("i-button", { id: "btnColor", height: '1rem', width: '1rem', border: { radius: '0px' }, background: { color: 'transparent' }, caption: 'A', boxShadow: 'none', font: { size: '0.75rem', color: Theme.text.primary }, onClick: () => this.showModal() }),
-                this.$render("i-scom-editor-color-picker", { id: "mdPicker", onSelected: this.onColorClicked })));
-        }
-    };
-    ScomEditorColor = __decorate([
-        (0, components_4.customElements)('i-scom-editor-color')
-    ], ScomEditorColor);
-    exports.ScomEditorColor = ScomEditorColor;
-});
-define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@scom/scom-editor/global/index.ts"], function (require, exports, index_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getExtraFields = exports.defaultBlockTypeItems = void 0;
+    exports.getPlacement = exports.getModalContainer = exports.setShown = exports.createModal = exports.createParent = exports.createButton = exports.getExtraFields = exports.defaultBlockTypeItems = void 0;
+    const Theme = components_2.Styles.Theme.ThemeVars;
     exports.defaultBlockTypeItems = [
         {
             name: "Paragraph",
@@ -390,8 +164,294 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@scom/sc
         return extraFields;
     }
     exports.getExtraFields = getExtraFields;
+    const createButton = (props, parent) => {
+        const border = props?.border || {};
+        border.radius = '0.25rem';
+        const isSelectedVal = !props.isSelected || typeof props.isSelected === 'boolean' ? props.isSelected : props.isSelected();
+        const onClick = props.onClick;
+        props.onClick = (target, event) => {
+            const isSelected = !(isSelectedVal ?? false);
+            target.background.color = isSelected ? Theme.action.activeBackground : 'transparent';
+            onClick(target, event);
+        };
+        const button = new components_2.Button(parent, {
+            font: { size: '0.875rem' },
+            padding: { top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem' },
+            border: { ...border },
+            background: { color: isSelectedVal ? Theme.action.activeBackground : 'transparent' },
+            boxShadow: 'none',
+            enabled: true,
+            minWidth: '1.875rem',
+            minHeight: '1.875rem',
+            class: index_css_1.buttonHoverStyle,
+            ...props
+        });
+        return button;
+    };
+    exports.createButton = createButton;
+    const createParent = async (props = {}) => {
+        const elm = await components_2.HStack.create({
+            background: { color: Theme.background.main },
+            position: 'absolute',
+            zIndex: 500,
+            boxShadow: Theme.shadows[1],
+            lineHeight: 1.2,
+            padding: { top: '0.125rem', bottom: '0.125rem', left: '0.125rem', right: '0.125rem' },
+            verticalAlignment: 'center',
+            border: { radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light },
+            gap: '0.125rem',
+            class: 'wrapper',
+            ...props
+        });
+        return elm;
+    };
+    exports.createParent = createParent;
+    const createModal = async (props = {}) => {
+        const elm = await components_2.Modal.create({
+            background: { color: Theme.background.main },
+            boxShadow: Theme.shadows[1],
+            lineHeight: 1.2,
+            padding: { top: '0.125rem', bottom: '0.125rem', left: '0.125rem', right: '0.125rem' },
+            border: { radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light },
+            showBackdrop: false,
+            visible: false,
+            class: index_css_1.customModalStyle,
+            ...props
+        });
+        return elm;
+    };
+    exports.createModal = createModal;
+    const setShown = (parent, element) => {
+        const wrappers = parent.querySelectorAll('.wrapper');
+        for (let wrapper of wrappers) {
+            const el = wrapper;
+            el.visible = el.id === element.id;
+        }
+    };
+    exports.setShown = setShown;
+    const getModalContainer = () => {
+        let span = document.getElementById("modal-container");
+        if (!span) {
+            span = document.createElement('span');
+            span.id = "toolbar-container";
+            document.body.appendChild(span);
+        }
+        return span;
+    };
+    exports.getModalContainer = getModalContainer;
+    const textAlignmentToPlacement = (textAlignment) => {
+        switch (textAlignment) {
+            case "left":
+                return "topLeft";
+            case "center":
+                return "top";
+            case "right":
+                return "topRight";
+            default:
+                return "top";
+        }
+    };
+    const getPlacement = (block) => {
+        let placement = '';
+        if (!("textAlignment" in block.props)) {
+            placement = 'top';
+        }
+        else {
+            placement = textAlignmentToPlacement(block.props.textAlignment);
+        }
+    };
+    exports.getPlacement = getPlacement;
 });
-define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports", "@ijstech/components"], function (require, exports, components_5) {
+define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_3, utils_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.ScomEditorColorPicker = void 0;
+    const Theme = components_3.Styles.Theme.ThemeVars;
+    let ScomEditorColorPicker = class ScomEditorColorPicker extends components_3.Module {
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
+        constructor(parent, options) {
+            super(parent, options);
+            this._colors = [
+                "default",
+                "gray",
+                "brown",
+                "red",
+                "orange",
+                "yellow",
+                "green",
+                "blue",
+                "purple",
+                "pink",
+            ];
+        }
+        get textColor() {
+            return this._data.textColor ?? 'default';
+        }
+        set textColor(value) {
+            this._data.textColor = value ?? 'default';
+        }
+        get backgroundColor() {
+            return this._data.backgroundColor ?? 'default';
+        }
+        set backgroundColor(value) {
+            this._data.backgroundColor = value ?? 'default';
+        }
+        async setData(value) {
+            this._data = value;
+            if (!this.pnlColors)
+                return;
+            this.pnlColors.clearInnerHTML();
+            this.renderSelection('text');
+            this.renderSelection('background');
+        }
+        getData() {
+            return this._data;
+        }
+        showModal(popupPlacement) {
+            this.mdColorPicker.position = 'fixed';
+            if (this.parent)
+                this.mdColorPicker.linkTo = this.parent;
+            if (popupPlacement)
+                this.mdColorPicker.popupPlacement = popupPlacement;
+            // TODO: fix height
+            this.mdColorPicker.refresh();
+            this.mdColorPicker.visible = true;
+        }
+        closeModal() {
+            this.mdColorPicker.visible = false;
+        }
+        renderSelection(type) {
+            const itemsWrap = this.$render("i-vstack", { id: `pnl${type.charAt(0).toUpperCase() + type.slice(1)}`, width: '100%' });
+            const groupElm = (this.$render("i-panel", { width: '100%' },
+                this.$render("i-label", { caption: type, font: { size: '0.75rem', transform: 'capitalize', weight: 500 }, lineHeight: 1.55, padding: { top: '0.313rem', bottom: '0.313rem', left: '0.75rem', right: '0.75rem' } }),
+                itemsWrap));
+            this.pnlColors.append(groupElm);
+            for (let color of this._colors) {
+                const isActived = type === 'text' ? this._data.textColor === color : this._data.backgroundColor === color;
+                const colorEl = (this.$render("i-hstack", { id: `${type}${color.charAt(0).toUpperCase() + color.slice(1)}`, verticalAlignment: 'center', gap: "0.75rem", horizontalAlignment: 'space-between', cursor: 'pointer', padding: { top: '0.675rem', bottom: '0.675rem', left: '0.75rem', right: '0.75rem' }, border: { radius: '0.25rem' }, height: '1.875rem', hover: {
+                        backgroundColor: Theme.action.hoverBackground
+                    }, onClick: (target) => this.onColorClicked(target, type, color) },
+                    this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.75rem" },
+                        this.$render("i-button", { height: '1rem', width: '1rem', border: { radius: '0.25rem' }, background: { color: type === 'text' ? 'transparent' : this.getColor(color, 'background') }, caption: 'A', font: { color: type === 'text' ? this.getColor(color, 'text') : Theme.text.primary, size: '0.75rem' } }),
+                        this.$render("i-label", { caption: color, font: { size: '0.75rem', transform: 'capitalize', weight: 400 } })),
+                    this.$render("i-icon", { name: "check", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary, visible: isActived })));
+                itemsWrap.append(colorEl);
+            }
+        }
+        getColor(color, type) {
+            if (color === 'default') {
+                return type === 'text' ? Theme.text.primary : 'transparent';
+            }
+            return color;
+        }
+        onColorClicked(target, type, color) {
+            this.mdColorPicker.visible = false;
+            const parent = type === 'text' ? this.pnlText : this.pnlBackground;
+            const prop = type === 'text' ? 'textColor' : 'backgroundColor';
+            this[prop] = color;
+            for (let child of parent.children) {
+                const icon = child.querySelector('i-icon');
+                if (icon)
+                    icon.visible = child.id === `${type}${color.charAt(0).toUpperCase() + color.slice(1)}`;
+            }
+            if (this.onSelected)
+                this.onSelected(type, color);
+        }
+        handleClose() {
+            if (this.onClosed)
+                this.onClosed();
+        }
+        init() {
+            super.init();
+            this.onSelected = this.getAttribute('onSelected', true) || this.onSelected;
+            this.onClosed = this.getAttribute('onClosed', true) || this.onClosed;
+            const textColor = this.getAttribute('textColor', true, 'default');
+            const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
+            this.setData({ textColor, backgroundColor });
+            (0, utils_1.getModalContainer)().appendChild(this.mdColorPicker);
+        }
+        render() {
+            return (this.$render("i-modal", { id: "mdColorPicker", popupPlacement: "rightTop", minWidth: 200, maxWidth: 300, border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false, onClose: this.handleClose },
+                this.$render("i-vstack", { id: "pnlColors", maxHeight: '37.488rem', overflow: { y: 'auto' } })));
+        }
+    };
+    ScomEditorColorPicker = __decorate([
+        (0, components_3.customElements)('i-scom-editor-color-picker')
+    ], ScomEditorColorPicker);
+    exports.ScomEditorColorPicker = ScomEditorColorPicker;
+});
+define("@scom/scom-editor/components/colorButton.tsx", ["require", "exports", "@ijstech/components"], function (require, exports, components_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.ScomEditorColor = void 0;
+    const Theme = components_4.Styles.Theme.ThemeVars;
+    let ScomEditorColor = class ScomEditorColor extends components_4.Module {
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
+        constructor(parent, options) {
+            super(parent, options);
+            this.onColorClicked = this.onColorClicked.bind(this);
+        }
+        get textColor() {
+            return this._data.textColor ?? 'default';
+        }
+        set textColor(value) {
+            this._data.textColor = value ?? 'default';
+        }
+        get backgroundColor() {
+            return this._data.backgroundColor ?? 'default';
+        }
+        set backgroundColor(value) {
+            this._data.backgroundColor = value ?? 'default';
+        }
+        async setData(value) {
+            this._data = value;
+            this.mdPicker.setData({
+                textColor: this.textColor,
+                backgroundColor: this.backgroundColor
+            });
+        }
+        getData() {
+            return this._data;
+        }
+        showModal() {
+            this.mdPicker.parent = this.btnColor;
+            this.mdPicker.showModal('bottom');
+        }
+        onColorClicked(type, color) {
+            const prop = type === 'text' ? 'textColor' : 'backgroundColor';
+            this[prop] = color;
+            if (this.setColor)
+                this.setColor(type, color);
+            this.btnColor.font = { size: '0.75rem', color: this.textColor === 'default' ? Theme.text.primary : this.textColor };
+            this.btnColor.background.color = this.backgroundColor === 'default' ? 'transparent' : this.backgroundColor;
+        }
+        init() {
+            super.init();
+            this.setColor = this.getAttribute('setColor', true) || this.setColor;
+            const textColor = this.getAttribute('textColor', true, 'default');
+            const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
+            this.setData({ textColor, backgroundColor });
+        }
+        render() {
+            return (this.$render("i-panel", { width: 'auto', height: '100%', display: 'inline-block' },
+                this.$render("i-button", { id: "btnColor", height: '1rem', width: '1rem', border: { radius: '0px' }, background: { color: 'transparent' }, caption: 'A', boxShadow: 'none', font: { size: '0.75rem', color: Theme.text.primary }, onClick: () => this.showModal() }),
+                this.$render("i-scom-editor-color-picker", { id: "mdPicker", onSelected: this.onColorClicked })));
+        }
+    };
+    ScomEditorColor = __decorate([
+        (0, components_4.customElements)('i-scom-editor-color')
+    ], ScomEditorColor);
+    exports.ScomEditorColor = ScomEditorColor;
+});
+define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_5, utils_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditorToolbarDropdown = void 0;
@@ -457,12 +517,15 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
         }
         showModal() {
             this.mdDropdown.refresh();
+            this.mdDropdown.parent = this.btnSelected;
+            this.mdDropdown.position = 'fixed';
             this.mdDropdown.visible = true;
         }
         init() {
             super.init();
             const items = this.getAttribute('items', true);
             this.setData({ items });
+            (0, utils_2.getModalContainer)().appendChild(this.mdDropdown);
         }
         render() {
             return (this.$render("i-panel", { width: 'auto', height: '100%', display: 'inline-block' },
@@ -476,7 +539,7 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
     ], ScomEditorToolbarDropdown);
     exports.ScomEditorToolbarDropdown = ScomEditorToolbarDropdown;
 });
-define("@scom/scom-editor/components/blockTypeButton.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_6, utils_1) {
+define("@scom/scom-editor/components/blockTypeButton.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_6, utils_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditorBlockType = void 0;
@@ -490,10 +553,10 @@ define("@scom/scom-editor/components/blockTypeButton.tsx", ["require", "exports"
             super(parent, options);
         }
         get items() {
-            return this._data.items ?? utils_1.defaultBlockTypeItems;
+            return this._data.items ?? utils_3.defaultBlockTypeItems;
         }
         set items(value) {
-            this._data.items = value ?? utils_1.defaultBlockTypeItems;
+            this._data.items = value ?? utils_3.defaultBlockTypeItems;
         }
         get block() {
             return this._data.block;
@@ -559,7 +622,7 @@ define("@scom/scom-editor/components/blockTypeButton.tsx", ["require", "exports"
     ], ScomEditorBlockType);
     exports.ScomEditorBlockType = ScomEditorBlockType;
 });
-define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ijstech/components"], function (require, exports, components_7) {
+define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_7, utils_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditorMdLink = void 0;
@@ -595,6 +658,10 @@ define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ij
             return this._data;
         }
         showModal() {
+            this.mdLink.position = 'fixed';
+            if (this.parent)
+                this.mdLink.linkTo = this.parent;
+            this.mdLink.refresh();
             this.mdLink.visible = true;
         }
         closeModal() {
@@ -613,6 +680,7 @@ define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ij
             const text = this.getAttribute('text', true);
             const url = this.getAttribute('url', true);
             this.setData({ text, url });
+            (0, utils_4.getModalContainer)().appendChild(this.mdLink);
         }
         render() {
             return (this.$render("i-modal", { id: "mdLink", popupPlacement: "bottom", minWidth: '18.75rem', maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false },
@@ -692,6 +760,7 @@ define("@scom/scom-editor/components/linkButton.tsx", ["require", "exports", "@i
         }
         showModal() {
             this.mdCreateLink.setData({ text: this.text, url: this.url });
+            this.mdCreateLink.parent = this.btnLink;
             this.mdCreateLink.showModal();
         }
         init() {
@@ -749,12 +818,6 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
         set block(value) {
             this._data.block = value;
         }
-        get editor() {
-            return this._data.editor;
-        }
-        set editor(value) {
-            this._data.editor = value;
-        }
         setData(value) {
             this._data = value;
             this.renderUI();
@@ -766,7 +829,7 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
                     backgroundColor: this.block?.props?.backgroundColor
                 });
                 this.mdPicker.onClosed = () => {
-                    this.pnlMenu.visible = false;
+                    this.mdMenu.visible = false;
                 };
             }
         }
@@ -776,20 +839,26 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
                     this.onDeleted();
             }
             else {
+                this.mdPicker.parent = this.mdMenu;
+                this.mdPicker.refresh();
                 this.mdPicker.showModal();
-                if (this.editor)
-                    this.editor.sideMenu.freezeMenu();
+                if (this.freezeMenu)
+                    this.freezeMenu();
             }
         }
         onShowMenu() {
-            this.pnlMenu.visible = true;
-            if (this.editor)
-                this.editor.sideMenu.freezeMenu();
+            this.mdMenu.visible = true;
         }
         onHideMenu() {
-            this.pnlMenu.visible = false;
-            if (this.editor)
-                this.editor.sideMenu.unfreezeMenu();
+            this.mdMenu.visible = false;
+        }
+        onModalClose() {
+            if (this.unfreezeMenu)
+                this.unfreezeMenu();
+        }
+        onModalOpen() {
+            if (this.freezeMenu)
+                this.freezeMenu();
         }
         onColorClicked(type, color) {
             if (this.onSetColor)
@@ -799,15 +868,17 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
             super.init();
             this.onDeleted = this.getAttribute('onDeleted', true) || this.onDeleted;
             this.onSetColor = this.getAttribute('onSetColor', true) || this.onSetColor;
+            this.freezeMenu = this.getAttribute('freezeMenu', true) || this.freezeMenu;
+            this.unfreezeMenu = this.getAttribute('unfreezeMenu', true) || this.unfreezeMenu;
             const block = this.getAttribute('block', true);
-            const editor = this.getAttribute('editor', true);
-            if (editor && block)
-                this.setData({ block, editor });
+            if (block)
+                this.setData({ block });
         }
         render() {
-            return (this.$render("i-panel", { id: "pnlMenu", visible: false },
-                this.$render("i-menu", { id: "menuElm", padding: { top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem' }, font: { color: Theme.text.primary, size: '0.75rem' }, boxShadow: Theme.shadows[1], width: '6.25rem', position: "absolute", left: "-4.375rem", top: "-3rem", mode: "vertical", data: this._menuData, background: { color: Theme.background.modal }, onItemClick: this.handleMenu }),
-                this.$render("i-scom-editor-color-picker", { id: "mdPicker", onSelected: this.onColorClicked })));
+            return (this.$render("i-modal", { id: "mdMenu", popupPlacement: "left", showBackdrop: false, minWidth: '6.25rem', maxWidth: '100%', onOpen: this.onModalOpen, onClose: this.onModalClose },
+                this.$render("i-panel", null,
+                    this.$render("i-menu", { id: "menuElm", padding: { top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem' }, font: { color: Theme.text.primary, size: '0.75rem' }, boxShadow: Theme.shadows[1], width: '100%', mode: "vertical", data: this._menuData, background: { color: Theme.background.modal }, onItemClick: this.handleMenu }),
+                    this.$render("i-scom-editor-color-picker", { id: "mdPicker", onSelected: this.onColorClicked }))));
         }
     };
     ScomEditorDragHandle = __decorate([
@@ -842,14 +913,15 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         }
         set editor(value) {
             this._data.editor = value;
-            this.dragHandle.editor = value;
         }
         get isShowing() {
             return this._isShowing ?? false;
         }
         setData(value) {
             this._data = value;
-            this.dragHandle.setData({ block: this.block, editor: this.editor });
+            this.dragHandle.freezeMenu = this.editor.sideMenu.freezeMenu;
+            this.dragHandle.unfreezeMenu = this.editor.sideMenu.unfreezeMenu;
+            this.dragHandle.setData({ block: this.block });
             this.btnDrag.addEventListener("dragstart", this.editor.sideMenu.blockDragStart);
             this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
             this.btnDrag.draggable = true;
@@ -896,7 +968,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
     ], ScomEditorSideMenu);
     exports.ScomEditorSideMenu = ScomEditorSideMenu;
 });
-define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_11, utils_2) {
+define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_11, utils_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditorSlashMenu = void 0;
@@ -925,7 +997,7 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
         }
         get groupData() {
             const result = {};
-            const fieldData = (0, utils_2.getExtraFields)();
+            const fieldData = (0, utils_5.getExtraFields)();
             for (let item of this.items) {
                 const field = fieldData[item.name] || {};
                 if (result[field.group]) {
@@ -987,7 +1059,7 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
         }
         render() {
             return (this.$render("i-panel", null,
-                this.$render("i-vstack", { id: "pnlSlash", minWidth: 300 })));
+                this.$render("i-vstack", { id: "pnlSlash", minWidth: 300, maxHeight: '28.125rem', overflow: { y: 'auto' } })));
         }
     };
     ScomEditorSlashMenu = __decorate([
@@ -995,225 +1067,418 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
     ], ScomEditorSlashMenu);
     exports.ScomEditorSlashMenu = ScomEditorSlashMenu;
 });
-define("@scom/scom-editor/components/index.ts", ["require", "exports", "@scom/scom-editor/components/colorButton.tsx", "@scom/scom-editor/components/toolbarDropdown.tsx", "@scom/scom-editor/components/blockTypeButton.tsx", "@scom/scom-editor/components/linkButton.tsx", "@scom/scom-editor/components/sideMenu.tsx", "@scom/scom-editor/components/slashMenu.tsx", "@scom/scom-editor/components/colorPicker.tsx", "@scom/scom-editor/components/utils.ts"], function (require, exports, colorButton_1, toolbarDropdown_1, blockTypeButton_1, linkButton_1, sideMenu_1, slashMenu_1, colorPicker_1, utils_3) {
+define("@scom/scom-editor/components/imageToolbar.tsx", ["require", "exports", "@ijstech/components"], function (require, exports, components_12) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ScomEditorColorPicker = exports.ScomEditorSlashMenu = exports.ScomEditorSideMenu = exports.ScomEditorLink = exports.ScomEditorBlockType = exports.ScomEditorToolbarDropdown = exports.ScomEditorColor = void 0;
-    Object.defineProperty(exports, "ScomEditorColor", { enumerable: true, get: function () { return colorButton_1.ScomEditorColor; } });
+    exports.ScomEditorImageToolbar = void 0;
+    const Theme = components_12.Styles.Theme.ThemeVars;
+    let ScomEditorImageToolbar = class ScomEditorImageToolbar extends components_12.Module {
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
+        constructor(parent, options) {
+            super(parent, options);
+        }
+        get editor() {
+            return this._data.editor;
+        }
+        set editor(value) {
+            this._data.editor = value;
+        }
+        get block() {
+            return this._data.block;
+        }
+        set block(value) {
+            this._data.block = value;
+        }
+        async setData(value) {
+            this._data = value;
+        }
+        getData() {
+            return this._data;
+        }
+        async onFileChanged(target, files) {
+            const file = files[0];
+            if (!file)
+                return;
+            this.lblFailed.visible = false;
+            try {
+                this.pnlLoading.visible = true;
+                const file = files[0];
+                const imageStr = await this.btnUpload.toBase64(file);
+                this.updateBlock(imageStr);
+            }
+            catch (err) {
+                this.btnUpload.clear();
+                this.lblFailed.visible = true;
+            }
+            this.pnlLoading.visible = false;
+        }
+        handleURLEnter(target, event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                this.updateBlock();
+            }
+        }
+        updateBlock(url) {
+            this.editor.updateBlock(this.block, {
+                type: "image",
+                props: {
+                    url: url ?? this.inputUrl.value,
+                },
+            });
+            this.btnUpload.clear();
+            this.imageTabs.activeTabIndex = 0;
+            if (this.onUpdated)
+                this.onUpdated();
+        }
+        handleURLChanged(target) {
+            this.btnEmbed.enabled = !!target.value;
+        }
+        init() {
+            super.init();
+            this.onUpdated = this.getAttribute('onUpdated', true) || this.onUpdated;
+            const editor = this.getAttribute('editor', true);
+            const block = this.getAttribute('block', true);
+            if (editor && block)
+                this.setData({ editor, block });
+        }
+        render() {
+            return (this.$render("i-panel", { width: '100%' },
+                this.$render("i-tabs", { id: "imageTabs", width: '100%' },
+                    this.$render("i-tab", { caption: "Upload", font: { color: Theme.text.primary, size: '0.875rem' }, minHeight: '0px' },
+                        this.$render("i-panel", null,
+                            this.$render("i-vstack", { id: "pnlLoading", padding: { top: '0.5rem', bottom: '0.5rem' }, visible: false, height: "100%", width: "100%", minHeight: 200, position: "absolute", top: 0, bottom: 0, zIndex: 999, background: { color: Theme.background.main }, class: "i-loading-overlay" },
+                                this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: "center", position: "absolute", top: "calc(50% - 0.75rem)", left: "calc(50% - 0.75rem)" },
+                                    this.$render("i-icon", { class: "i-loading-spinner_icon", name: "spinner", width: 24, height: 24, fill: Theme.colors.primary.main }))),
+                            this.$render("i-vstack", { gap: "0.5rem", padding: { left: '0.5rem', right: '0.5rem', top: '0.5rem', bottom: '0.5rem' } },
+                                this.$render("i-upload", { id: "btnUpload", caption: 'Upload Image', width: '100%', minHeight: '6.25rem', border: { width: '1px', style: 'solid', color: Theme.divider }, font: { size: '0.75rem', color: Theme.text.primary, weight: 600 }, onChanged: this.onFileChanged }),
+                                this.$render("i-label", { id: "lblFailed", caption: "Error: Upload failed", visible: false, font: { color: Theme.colors.error.main, size: '0.75rem' }, class: "text-center" })))),
+                    this.$render("i-tab", { caption: "Embed", font: { color: Theme.text.primary, size: '0.875rem' }, minHeight: '0px' },
+                        this.$render("i-vstack", { gap: '0.5rem', padding: { left: '0.5rem', right: '0.5rem', top: '0.5rem', bottom: '0.5rem' } },
+                            this.$render("i-input", { id: "inputUrl", placeholder: "Enter Url", border: { width: '1px', style: 'solid', color: Theme.divider }, font: { size: '0.75rem', color: Theme.text.primary }, background: { color: 'transparent' }, width: '100%', height: '1.875rem', onChanged: this.handleURLChanged, onKeyDown: this.handleURLEnter }),
+                            this.$render("i-button", { id: "btnEmbed", width: '100%', border: { width: '1px', style: 'solid', color: Theme.divider }, font: { size: '0.75rem', color: Theme.text.primary, weight: 600 }, padding: { left: '0.625rem', right: '0.625rem' }, minHeight: '1.875rem', background: { color: 'transparent' }, enabled: false, caption: 'Embed Image', onClick: () => this.updateBlock() }))))));
+        }
+    };
+    ScomEditorImageToolbar = __decorate([
+        (0, components_12.customElements)('i-scom-editor-image-toolbar')
+    ], ScomEditorImageToolbar);
+    exports.ScomEditorImageToolbar = ScomEditorImageToolbar;
+});
+define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/utils.ts", "@scom/scom-editor/components/colorButton.tsx", "@scom/scom-editor/components/index.css.ts", "@scom/scom-editor/components/blockTypeButton.tsx", "@scom/scom-editor/components/linkButton.tsx"], function (require, exports, components_13, index_2, utils_6, colorButton_1, index_css_2, blockTypeButton_1, linkButton_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.ScomEditorFormattingToolbar = void 0;
+    const Theme = components_13.Styles.Theme.ThemeVars;
+    let ScomEditorFormattingToolbar = class ScomEditorFormattingToolbar extends components_13.Module {
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
+        constructor(parent, options) {
+            super(parent, options);
+            this._oldBlock = {};
+            this._block = {};
+        }
+        get editor() {
+            return this._data.editor;
+        }
+        set editor(value) {
+            this._data.editor = value;
+        }
+        setBlockType(editor, item) {
+            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+            editor.focus();
+            for (const block of selectedBlocks) {
+                editor.updateBlock(block, {
+                    type: item.type,
+                    props: item.props,
+                });
+            }
+        }
+        setAlignment(editor, textAlignment) {
+            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+            editor.focus();
+            for (const block of selectedBlocks) {
+                editor.updateBlock(block, {
+                    props: { textAlignment }
+                });
+            }
+        }
+        setColor(editor, type, color) {
+            editor.focus();
+            const prop = type === 'text' ? 'textColor' : 'backgroundColor';
+            color === "default"
+                ? editor.removeStyles({ [prop]: color })
+                : editor.addStyles({ [prop]: color });
+        }
+        setLink(editor, text, url) {
+            editor.createLink(url, text || editor.getSelectedText());
+            editor.focus();
+        }
+        getToolbarButtons(editor) {
+            const iconProps = { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary };
+            const toolTipProps = { placement: 'bottom' };
+            const customProps = {
+                display: 'inline-flex',
+                grid: { verticalAlignment: 'center' },
+                height: '100%',
+                minHeight: '1.875rem',
+                padding: { top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem' }
+            };
+            return [
+                {
+                    icon: { ...iconProps, name: 'image' },
+                    tooltip: { ...toolTipProps, content: `Replace Image` },
+                    isSelected: false,
+                    visible: this.isImageBlock,
+                    onClick: () => {
+                        this.mdReplace.visible = true;
+                    }
+                },
+                {
+                    customControl: (element) => {
+                        let blockType = new blockTypeButton_1.ScomEditorBlockType(undefined, {
+                            ...customProps,
+                            block: this._block,
+                            visible: !this.isImageBlock,
+                            stack: { shrink: '0' },
+                            onItemClicked: (item) => this.setBlockType(editor, item),
+                            onValidate: (item) => {
+                                return (item.type in editor.schema);
+                            },
+                            class: index_css_2.buttonHoverStyle
+                        });
+                        return blockType;
+                    }
+                },
+                {
+                    icon: { ...iconProps, name: 'bold' },
+                    tooltip: { ...toolTipProps, content: `Bold <br/> ${(0, index_2.formatKeyboardShortcut)("Mod+B")}` },
+                    isSelected: editor.getActiveStyles().bold,
+                    visible: !this.isImageBlock,
+                    onClick: () => {
+                        editor.toggleStyles({ bold: true });
+                    }
+                },
+                {
+                    icon: { ...iconProps, name: 'italic' },
+                    visible: !this.isImageBlock,
+                    tooltip: { ...toolTipProps, content: `Italicize <br/> ${(0, index_2.formatKeyboardShortcut)("Mod+I")}` },
+                    isSelected: editor.getActiveStyles().italic,
+                    onClick: () => {
+                        editor.toggleStyles({ italic: true });
+                    }
+                },
+                {
+                    icon: { ...iconProps, name: 'underline' },
+                    visible: !this.isImageBlock,
+                    tooltip: { ...toolTipProps, content: `Underline <br/> ${(0, index_2.formatKeyboardShortcut)("Mod+U")}` },
+                    isSelected: editor.getActiveStyles().underline,
+                    onClick: () => {
+                        editor.toggleStyles({ underline: true });
+                    }
+                },
+                {
+                    icon: { ...iconProps, name: 'strikethrough' },
+                    visible: !this.isImageBlock,
+                    tooltip: { ...toolTipProps, content: `Strike-through <br/>  ${(0, index_2.formatKeyboardShortcut)("Mod+Shift+X")} or  ${(0, index_2.formatKeyboardShortcut)("Mod+Shift+Z")}` },
+                    isSelected: editor.getActiveStyles().strikethrough,
+                    onClick: () => {
+                        editor.toggleStyles({ strikethrough: true });
+                    }
+                },
+                {
+                    icon: { ...iconProps, name: 'align-left' },
+                    tooltip: { ...toolTipProps, content: 'Align Text Left' },
+                    isSelected: this._block.props?.textAlignment === 'left',
+                    onClick: () => {
+                        this.setAlignment(editor, 'left');
+                    }
+                },
+                {
+                    icon: { ...iconProps, name: 'align-center' },
+                    tooltip: { ...toolTipProps, content: 'Align Text Center' },
+                    isSelected: this._block.props?.textAlignment === 'center',
+                    onClick: () => {
+                        this.setAlignment(editor, 'center');
+                    }
+                },
+                {
+                    icon: { ...iconProps, name: 'align-right' },
+                    isSelected: this._block.props?.textAlignment === 'right',
+                    tooltip: { ...toolTipProps, content: 'Align Text Right' },
+                    onClick: () => {
+                        this.setAlignment(editor, 'right');
+                    }
+                },
+                {
+                    customControl: (element) => {
+                        let colorPicker = new colorButton_1.ScomEditorColor(undefined, {
+                            ...customProps,
+                            visible: !this.isImageBlock,
+                            textColor: editor.getActiveStyles().textColor || "default",
+                            backgroundColor: editor.getActiveStyles().backgroundColor || "default",
+                            setColor: (type, color) => this.setColor(editor, type, color),
+                            class: index_css_2.buttonHoverStyle
+                        });
+                        return colorPicker;
+                    }
+                },
+                {
+                    icon: { ...iconProps, name: 'indent' },
+                    tooltip: { ...toolTipProps, content: 'Indent' },
+                    onClick: () => {
+                    },
+                    enabled: false
+                },
+                {
+                    icon: { ...iconProps, name: 'outdent' },
+                    tooltip: { ...toolTipProps, content: 'Outdent' },
+                    onClick: () => {
+                    },
+                    enabled: false
+                },
+                {
+                    customControl: (element) => {
+                        let link = new linkButton_1.ScomEditorLink(undefined, {
+                            ...customProps,
+                            tooltip: { content: `Create Link <br />  ${(0, index_2.formatKeyboardShortcut)("Mod+K")}`, placement: 'bottom' },
+                            editor: editor,
+                            visible: !this.isImageBlock,
+                            setLink: (text, url) => {
+                                this.setLink(editor, text, url);
+                                element.visible = false;
+                            },
+                            class: index_css_2.buttonHoverStyle
+                        });
+                        return link;
+                    }
+                }
+            ];
+        }
+        get isImageBlock() {
+            const selectedBlocks = this.editor.getSelection()?.blocks || [this.editor.getTextCursorPosition().block];
+            const show = 
+            // Checks if only one block is selected.
+            selectedBlocks.length === 1 &&
+                // Checks if the selected block is an image.
+                selectedBlocks[0].type === "image";
+            return show;
+        }
+        setData(value) {
+            this._data = value;
+            this.renderUI();
+        }
+        onRefresh() {
+            this.updateBlock();
+            if (this._oldBlock?.id !== this._block?.id) {
+                this.renderList();
+            }
+        }
+        renderUI() {
+            this.updateBlock();
+            this.renderList();
+        }
+        updateBlock() {
+            this._oldBlock = { ...this._block };
+            const block = this.editor.getTextCursorPosition().block;
+            this._block = block;
+            this.imgToolbar.setData({
+                block: this._block,
+                editor: this.editor
+            });
+        }
+        renderList() {
+            this.pnlFormatting.clearInnerHTML();
+            let buttonList = this.getToolbarButtons(this.editor);
+            for (let props of buttonList) {
+                if (props.customControl) {
+                    const elm = props.customControl(this.pnlFormatting);
+                    this.pnlFormatting.appendChild(elm);
+                }
+                else {
+                    const btn = (0, utils_6.createButton)(props, this.pnlFormatting);
+                    this.pnlFormatting.appendChild(btn);
+                }
+            }
+        }
+        init() {
+            super.init();
+            const editor = this.getAttribute('editor', true);
+            if (editor)
+                this.setData({ editor });
+            this.imgToolbar.onUpdated = () => {
+                this.mdReplace.visible = false;
+            };
+        }
+        render() {
+            return (this.$render("i-panel", null,
+                this.$render("i-hstack", { id: "pnlFormatting", width: '100%', verticalAlignment: 'center', gap: "0.125rem", overflow: 'hidden' }),
+                this.$render("i-modal", { id: "mdReplace", popupPlacement: 'bottom', showBackdrop: false, width: 500, maxWidth: '100%', background: { color: Theme.background.main }, boxShadow: Theme.shadows[1], visible: false, padding: { top: '0.125rem', bottom: '0.125rem', left: '0.125rem', right: '0.125rem' }, border: { radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light } },
+                    this.$render("i-scom-editor-image-toolbar", { id: "imgToolbar" }))));
+        }
+    };
+    ScomEditorFormattingToolbar = __decorate([
+        (0, components_13.customElements)('i-scom-editor-formatting-toolbar')
+    ], ScomEditorFormattingToolbar);
+    exports.ScomEditorFormattingToolbar = ScomEditorFormattingToolbar;
+});
+define("@scom/scom-editor/components/index.ts", ["require", "exports", "@scom/scom-editor/components/colorButton.tsx", "@scom/scom-editor/components/toolbarDropdown.tsx", "@scom/scom-editor/components/blockTypeButton.tsx", "@scom/scom-editor/components/linkButton.tsx", "@scom/scom-editor/components/sideMenu.tsx", "@scom/scom-editor/components/slashMenu.tsx", "@scom/scom-editor/components/colorPicker.tsx", "@scom/scom-editor/components/formattingToolbar.tsx", "@scom/scom-editor/components/imageToolbar.tsx", "@scom/scom-editor/components/utils.ts", "@scom/scom-editor/components/index.css.ts"], function (require, exports, colorButton_2, toolbarDropdown_1, blockTypeButton_2, linkButton_2, sideMenu_1, slashMenu_1, colorPicker_1, formattingToolbar_1, imageToolbar_1, utils_7, index_css_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.buttonHoverStyle = exports.ScomEditorImageToolbar = exports.ScomEditorFormattingToolbar = exports.ScomEditorColorPicker = exports.ScomEditorSlashMenu = exports.ScomEditorSideMenu = exports.ScomEditorLink = exports.ScomEditorBlockType = exports.ScomEditorToolbarDropdown = exports.ScomEditorColor = void 0;
+    Object.defineProperty(exports, "ScomEditorColor", { enumerable: true, get: function () { return colorButton_2.ScomEditorColor; } });
     Object.defineProperty(exports, "ScomEditorToolbarDropdown", { enumerable: true, get: function () { return toolbarDropdown_1.ScomEditorToolbarDropdown; } });
-    Object.defineProperty(exports, "ScomEditorBlockType", { enumerable: true, get: function () { return blockTypeButton_1.ScomEditorBlockType; } });
-    Object.defineProperty(exports, "ScomEditorLink", { enumerable: true, get: function () { return linkButton_1.ScomEditorLink; } });
+    Object.defineProperty(exports, "ScomEditorBlockType", { enumerable: true, get: function () { return blockTypeButton_2.ScomEditorBlockType; } });
+    Object.defineProperty(exports, "ScomEditorLink", { enumerable: true, get: function () { return linkButton_2.ScomEditorLink; } });
     Object.defineProperty(exports, "ScomEditorSideMenu", { enumerable: true, get: function () { return sideMenu_1.ScomEditorSideMenu; } });
     Object.defineProperty(exports, "ScomEditorSlashMenu", { enumerable: true, get: function () { return slashMenu_1.ScomEditorSlashMenu; } });
     Object.defineProperty(exports, "ScomEditorColorPicker", { enumerable: true, get: function () { return colorPicker_1.ScomEditorColorPicker; } });
-    __exportStar(utils_3, exports);
+    Object.defineProperty(exports, "ScomEditorFormattingToolbar", { enumerable: true, get: function () { return formattingToolbar_1.ScomEditorFormattingToolbar; } });
+    Object.defineProperty(exports, "ScomEditorImageToolbar", { enumerable: true, get: function () { return imageToolbar_1.ScomEditorImageToolbar; } });
+    __exportStar(utils_7, exports);
+    Object.defineProperty(exports, "buttonHoverStyle", { enumerable: true, get: function () { return index_css_3.buttonHoverStyle; } });
 });
-define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/utils.ts", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/index.css.ts"], function (require, exports, components_12, utils_4, index_2, index_3, index_css_2) {
+define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addFormattingToolbar = void 0;
-    const Theme = components_12.Styles.Theme.ThemeVars;
-    const getToolbarButtons = (editor) => {
-        const iconProps = { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary };
-        const toolTipProps = { placement: 'bottom' };
-        const customProps = {
-            display: 'inline-flex',
-            grid: { verticalAlignment: 'center' },
-            height: '100%',
-            minHeight: '1.875rem',
-            padding: { top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem' }
-        };
-        return [
-            {
-                customControl: (element) => {
-                    const block = editor.getTextCursorPosition().block;
-                    let blockType = new index_3.ScomEditorBlockType(undefined, {
-                        ...customProps,
-                        block,
-                        onItemClicked: (item) => setBlockType(editor, item),
-                        onValidate: (item) => {
-                            return (item.type in editor.schema);
-                        },
-                        class: index_css_2.buttonHoverStyle
-                    });
-                    return blockType;
-                }
-            },
-            {
-                icon: { ...iconProps, name: 'bold' },
-                tooltip: { ...toolTipProps, content: `Bold <br/> ${(0, index_2.formatKeyboardShortcut)("Mod+B")}` },
-                isSelected: false,
-                onClick: () => {
-                    editor.toggleStyles({ bold: true });
-                }
-            },
-            {
-                icon: { ...iconProps, name: 'italic' },
-                tooltip: { ...toolTipProps, content: `Italicize <br/> ${(0, index_2.formatKeyboardShortcut)("Mod+I")}` },
-                onClick: () => {
-                    editor.toggleStyles({ italic: true });
-                }
-            },
-            {
-                icon: { ...iconProps, name: 'underline' },
-                tooltip: { ...toolTipProps, content: `Underline <br/> ${(0, index_2.formatKeyboardShortcut)("Mod+U")}` },
-                onClick: () => {
-                    editor.toggleStyles({ underline: true });
-                }
-            },
-            {
-                icon: { ...iconProps, name: 'strikethrough' },
-                tooltip: { ...toolTipProps, content: `Strike-through <br/>  ${(0, index_2.formatKeyboardShortcut)("Mod+Shift+X")} or  ${(0, index_2.formatKeyboardShortcut)("Mod+Shift+Z")}` },
-                onClick: () => {
-                    editor.toggleStyles({ strikethrough: true });
-                }
-            },
-            {
-                icon: { ...iconProps, name: 'align-left' },
-                tooltip: { ...toolTipProps, content: 'Align Text Left' },
-                onClick: () => {
-                    setAlignment(editor, 'left');
-                }
-            },
-            {
-                icon: { ...iconProps, name: 'align-center' },
-                tooltip: { ...toolTipProps, content: 'Align Text Center' },
-                onClick: () => {
-                    setAlignment(editor, 'center');
-                }
-            },
-            {
-                icon: { ...iconProps, name: 'align-right' },
-                tooltip: { ...toolTipProps, content: 'Align Text Right' },
-                onClick: () => {
-                    setAlignment(editor, 'right');
-                }
-            },
-            {
-                customControl: (element) => {
-                    let colorPicker = new index_3.ScomEditorColor(undefined, {
-                        ...customProps,
-                        textColor: editor.getActiveStyles().textColor || "default",
-                        backgroundColor: editor.getActiveStyles().backgroundColor || "default",
-                        setColor: (type, color) => setColor(editor, type, color),
-                        class: index_css_2.buttonHoverStyle
-                    });
-                    return colorPicker;
-                }
-            },
-            {
-                icon: { ...iconProps, name: 'indent' },
-                tooltip: { ...toolTipProps, content: 'Indent' },
-                onClick: () => {
-                },
-                enabled: false
-            },
-            {
-                icon: { ...iconProps, name: 'outdent' },
-                tooltip: { ...toolTipProps, content: 'Outdent' },
-                onClick: () => {
-                },
-                enabled: false
-            },
-            {
-                customControl: (element) => {
-                    let link = new index_3.ScomEditorLink(undefined, {
-                        ...customProps,
-                        tooltip: { content: `Create Link <br />  ${(0, index_2.formatKeyboardShortcut)("Mod+K")}`, placement: 'bottom' },
-                        editor: editor,
-                        setLink: (text, url) => {
-                            setLink(editor, text, url);
-                            element.visible = false;
-                        },
-                        class: index_css_2.buttonHoverStyle
-                    });
-                    return link;
-                }
-            }
-        ];
-    };
-    function setBlockType(editor, item) {
-        const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
-        editor.focus();
-        for (const block of selectedBlocks) {
-            editor.updateBlock(block, {
-                type: item.type,
-                props: item.props,
-            });
-        }
-    }
-    function setAlignment(editor, textAlignment) {
-        const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
-        editor.focus();
-        for (const block of selectedBlocks) {
-            editor.updateBlock(block, {
-                props: { textAlignment }
-            });
-        }
-    }
-    function setColor(editor, type, color) {
-        editor.focus();
-        const prop = type === 'text' ? 'textColor' : 'backgroundColor';
-        color === "default"
-            ? editor.removeStyles({ [prop]: color })
-            : editor.addStyles({ [prop]: color });
-    }
-    function setLink(editor, text, url) {
-        editor.createLink(url, text || editor.getSelectedText());
-        editor.focus();
-    }
     const addFormattingToolbar = async (editor, parent) => {
-        let element;
-        let buttonList = getToolbarButtons(editor);
+        let modal;
+        let formattingToolbar;
         editor.formattingToolbar.onUpdate(async (formattingToolbarState) => {
-            if (!element) {
-                element = await (0, utils_4.createParent)({
+            if (!modal) {
+                modal = await (0, index_3.createModal)({
                     id: 'pnlFormattingToolbar'
                 });
-                for (let props of buttonList) {
-                    if (props.customControl) {
-                        const elm = props.customControl(element);
-                        element.appendChild(elm);
-                    }
-                    else {
-                        const btn = (0, utils_4.createButton)(props, element);
-                        element.appendChild(btn);
-                    }
-                }
-                element.style.display = "none";
-                parent.appendChild(element);
+                parent.append(modal);
             }
-            if (formattingToolbarState.show) {
-                (0, utils_4.setShown)(parent, element);
-                const firstChild = element.firstElementChild;
-                const block = editor.getTextCursorPosition().block;
-                if (firstChild)
-                    firstChild.setData({ block });
-                console.log(block, editor.getActiveStyles());
+            if (!formattingToolbar) {
+                formattingToolbar = await index_3.ScomEditorFormattingToolbar.create({
+                    editor: editor
+                });
+                modal.item = formattingToolbar;
             }
             else {
-                console.log('hide formatting toolbar');
+                formattingToolbar.onRefresh();
             }
-            element.style.top = `${formattingToolbarState.referencePos.top}px`;
-            const newPos = formattingToolbarState.referencePos.x + element.offsetWidth;
-            const newLeft = formattingToolbarState.referencePos.x - (element.offsetWidth / 2);
-            let left = '';
-            let right = '';
-            if (newPos >= parent.offsetWidth) {
-                left = 'auto';
-                right = '0px';
-            }
-            else {
-                left = `${Math.max(newLeft, 0)}px`;
-                right = '';
-            }
-            element.style.left = left;
-            element.style.right = right;
+            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+            const isImageBlock = selectedBlocks.length === 1 &&
+                selectedBlocks[0].type === "image";
+            const top = formattingToolbarState.referencePos.top - (formattingToolbarState.referencePos.height / 2);
+            modal.style.top = isImageBlock ? `${formattingToolbarState.referencePos.top}px` : `${top}px`;
+            modal.style.left = `${formattingToolbarState.referencePos.width / 2}px`;
+            modal.refresh();
+            modal.visible = true; // TODO: formattingToolbarState.show;
         });
     };
     exports.addFormattingToolbar = addFormattingToolbar;
 });
-define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/scom-editor/blocks/utils.ts", "@scom/scom-editor/components/index.ts"], function (require, exports, utils_5, index_4) {
+define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSideMenu = void 0;
@@ -1222,7 +1487,7 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
         let sideMenu;
         editor.sideMenu.onUpdate(async (sideMenuState) => {
             if (!element) {
-                element = await (0, utils_5.createParent)({
+                element = await (0, index_4.createParent)({
                     id: 'pnlSideMenu',
                     border: { radius: '0px', style: 'none' },
                     background: { color: 'transparent' },
@@ -1252,47 +1517,47 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
     };
     exports.addSideMenu = addSideMenu;
 });
-define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom/scom-editor/blocks/utils.ts", "@scom/scom-editor/components/index.ts"], function (require, exports, utils_6, index_5) {
+define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSlashMenu = void 0;
     const addSlashMenu = (editor, parent) => {
-        let element;
+        let modal;
         async function updateItems(items, onClick, selected) {
-            element.clearInnerHTML();
             const slashMenu = await index_5.ScomEditorSlashMenu.create({
                 items,
                 selectedIndex: selected,
                 onItemClicked: (item) => {
                     onClick(item);
-                    element.visible = false;
+                    modal.visible = false;
                 }
             });
-            element.append(slashMenu);
+            modal.item = slashMenu;
         }
         editor.slashMenu.onUpdate(async (slashMenuState) => {
-            if (!element) {
-                element = await (0, utils_6.createParent)({
+            if (!modal) {
+                modal = await (0, index_5.createModal)({
                     id: 'pnlSlashMenu',
+                    popupPlacement: "center",
                     padding: { left: 0, top: 0, right: 0, bottom: 0 }
                 });
-                parent.appendChild(element);
+                parent.appendChild(modal);
             }
             if (slashMenuState.show) {
                 updateItems(slashMenuState.filteredItems, editor.slashMenu.itemCallback, slashMenuState.keyboardHoveredItemIndex);
-                (0, utils_6.setShown)(parent, element);
+                modal.visible = true;
             }
-            element.style.top = slashMenuState.referencePos.top + "px";
-            element.style.left = '3rem';
+            modal.style.top = `${slashMenuState.referencePos.top}px`;
+            modal.style.left = '3rem';
         });
     };
     exports.addSlashMenu = addSlashMenu;
 });
-define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/utils.ts", "@scom/scom-editor/blocks/index.css.ts", "@scom/scom-editor/components/index.ts"], function (require, exports, components_13, utils_7, index_css_3, index_6) {
+define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts"], function (require, exports, components_14, index_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addHyperlinkToolbar = void 0;
-    const Theme = components_13.Styles.Theme.ThemeVars;
+    const Theme = components_14.Styles.Theme.ThemeVars;
     const getToolbarButtons = (editor, hyperlinkToolbarState, parent) => {
         const iconProps = { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary };
         const toolTipProps = { placement: 'bottom' };
@@ -1312,7 +1577,7 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
                             editor.hyperlinkToolbar.editHyperlink(url, text || editor.getSelectedText());
                             parent.visible = false;
                         },
-                        class: index_css_3.buttonHoverStyle
+                        class: index_6.buttonHoverStyle
                     });
                     return link;
                 }
@@ -1339,7 +1604,7 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
         let buttonList = [];
         editor.hyperlinkToolbar.onUpdate(async (hyperlinkToolbarState) => {
             if (!element) {
-                element = await (0, utils_7.createParent)({
+                element = await (0, index_6.createParent)({
                     id: 'pnlHyperlinkToolbar'
                 });
                 buttonList = getToolbarButtons(editor, hyperlinkToolbarState, element);
@@ -1349,7 +1614,7 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
                         element.appendChild(elm);
                     }
                     else {
-                        const btn = (0, utils_7.createButton)(props, element);
+                        const btn = (0, index_6.createButton)(props, element);
                         element.appendChild(btn);
                     }
                 }
@@ -1357,7 +1622,7 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
                 parent.appendChild(element);
             }
             if (hyperlinkToolbarState.show) {
-                (0, utils_7.setShown)(parent, element);
+                (0, index_6.setShown)(parent, element);
             }
             element.style.top = `${hyperlinkToolbarState.referencePos.top - (element.offsetHeight - 10)}px`;
             element.style.left = hyperlinkToolbarState.referencePos.x - element.offsetWidth + "px";
@@ -1365,22 +1630,56 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
     };
     exports.addHyperlinkToolbar = addHyperlinkToolbar;
 });
-define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-editor/blocks/addFormattingToolbar.ts", "@scom/scom-editor/blocks/addSideMenu.ts", "@scom/scom-editor/blocks/addSlashMenu.ts", "@scom/scom-editor/blocks/addHyperlinkToolbar.ts"], function (require, exports, addFormattingToolbar_1, addSideMenu_1, addSlashMenu_1, addHyperlinkToolbar_1) {
+define("@scom/scom-editor/blocks/addImageToolbar.tsx", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addHyperlinkToolbar = exports.addSlashMenu = exports.addSideMenu = exports.addFormattingToolbar = void 0;
+    exports.addImageToolbar = void 0;
+    const addImageToolbar = (editor, parent) => {
+        let modal;
+        let imageToolbar;
+        editor.imageToolbar.onUpdate(async (imageToolbarState) => {
+            if (!modal) {
+                modal = await (0, index_7.createModal)({
+                    id: 'pnlImageToolbar',
+                    width: 500
+                });
+                parent.append(modal);
+            }
+            if (!imageToolbar) {
+                imageToolbar = await index_7.ScomEditorImageToolbar.create({
+                    block: imageToolbarState.block,
+                    editor: editor,
+                    width: '100%',
+                    display: 'block',
+                    onUpdated: () => modal.visible = false
+                });
+                modal.item = imageToolbar;
+            }
+            modal.refresh();
+            modal.visible = true;
+            modal.style.top = `${imageToolbarState.referencePos.top + imageToolbarState.referencePos.height}px`;
+            // modal.style.left = `${imageToolbarState.referencePos.left - (+modal.width / 2)}px`;
+            modal.style.left = `${(+parent.width - +modal.width) / 2}px`;
+        });
+    };
+    exports.addImageToolbar = addImageToolbar;
+});
+define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-editor/blocks/addFormattingToolbar.ts", "@scom/scom-editor/blocks/addSideMenu.ts", "@scom/scom-editor/blocks/addSlashMenu.ts", "@scom/scom-editor/blocks/addHyperlinkToolbar.ts", "@scom/scom-editor/blocks/addImageToolbar.tsx"], function (require, exports, addFormattingToolbar_1, addSideMenu_1, addSlashMenu_1, addHyperlinkToolbar_1, addImageToolbar_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.addImageToolbar = exports.addHyperlinkToolbar = exports.addSlashMenu = exports.addSideMenu = exports.addFormattingToolbar = void 0;
     Object.defineProperty(exports, "addFormattingToolbar", { enumerable: true, get: function () { return addFormattingToolbar_1.addFormattingToolbar; } });
     Object.defineProperty(exports, "addSideMenu", { enumerable: true, get: function () { return addSideMenu_1.addSideMenu; } });
     Object.defineProperty(exports, "addSlashMenu", { enumerable: true, get: function () { return addSlashMenu_1.addSlashMenu; } });
     Object.defineProperty(exports, "addHyperlinkToolbar", { enumerable: true, get: function () { return addHyperlinkToolbar_1.addHyperlinkToolbar; } });
+    Object.defineProperty(exports, "addImageToolbar", { enumerable: true, get: function () { return addImageToolbar_1.addImageToolbar; } });
 });
-define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts"], function (require, exports, components_14, index_7) {
+define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts"], function (require, exports, components_15, index_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditor = void 0;
-    const Theme = components_14.Styles.Theme.ThemeVars;
-    const path = components_14.application.currentModuleDir;
-    components_14.RequireJS.config({
+    const path = components_15.application.currentModuleDir;
+    components_15.RequireJS.config({
         paths: {
             'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
         }
@@ -1389,7 +1688,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         'blocknote'
     ];
     const cssPath = `${path}/lib/@blocknote/style.css`;
-    let ScomEditor = class ScomEditor extends components_14.Module {
+    let ScomEditor = class ScomEditor extends components_15.Module {
         constructor(parent, options) {
             super(parent, options);
         }
@@ -1424,10 +1723,11 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                     }
                 }
             });
-            (0, index_7.addSideMenu)(this._editor, this.pnlEditor);
-            (0, index_7.addFormattingToolbar)(this._editor, this.pnlEditor);
-            (0, index_7.addSlashMenu)(this._editor, this.pnlEditor);
-            (0, index_7.addHyperlinkToolbar)(this._editor, this.pnlEditor);
+            (0, index_8.addSideMenu)(this._editor, this.pnlEditor);
+            (0, index_8.addFormattingToolbar)(this._editor, this.pnlEditor);
+            (0, index_8.addSlashMenu)(this._editor, this.pnlEditor);
+            (0, index_8.addHyperlinkToolbar)(this._editor, this.pnlEditor);
+            (0, index_8.addImageToolbar)(this._editor, this.pnlEditor);
         }
         addCSS(href, name) {
             const css = document.head.querySelector(`[name="${name}"]`);
@@ -1443,7 +1743,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         loadPlugin() {
             return new Promise((resolve, reject) => {
-                components_14.RequireJS.require(libPlugins, (blocknote) => {
+                components_15.RequireJS.require(libPlugins, (blocknote) => {
                     resolve(blocknote);
                 });
             });
@@ -1458,7 +1758,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
     };
     ScomEditor = __decorate([
-        (0, components_14.customElements)('i-scom-editor')
+        (0, components_15.customElements)('i-scom-editor')
     ], ScomEditor);
     exports.ScomEditor = ScomEditor;
 });

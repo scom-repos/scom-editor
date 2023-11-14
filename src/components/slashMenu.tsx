@@ -159,7 +159,7 @@ export class ScomEditorSlashMenu extends Module {
   render() {
     return (
       <i-panel>
-        <i-vstack id="pnlSlash" minWidth={300} />
+        <i-vstack id="pnlSlash" minWidth={300} maxHeight={'28.125rem'} overflow={{y: 'auto'}}/>
       </i-panel>
     )
   }

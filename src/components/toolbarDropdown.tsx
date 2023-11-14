@@ -10,7 +10,7 @@ import {
   Control,
   HStack
 } from '@ijstech/components';
-import { IToolbarDropdownItem } from './utils';
+import { IToolbarDropdownItem, getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorToolbarDropdownElement extends ControlElement {
@@ -126,6 +126,8 @@ export class ScomEditorToolbarDropdown extends Module {
 
   private showModal() {
     this.mdDropdown.refresh();
+    this.mdDropdown.parent = this.btnSelected;
+    this.mdDropdown.position = 'fixed';
     this.mdDropdown.visible = true;
   }
 
@@ -133,6 +135,7 @@ export class ScomEditorToolbarDropdown extends Module {
     super.init();
     const items = this.getAttribute('items', true);
     this.setData({ items });
+    getModalContainer().appendChild(this.mdDropdown);
   }
 
   render() {

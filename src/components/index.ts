@@ -5,4 +5,7 @@ export { ScomEditorLink } from './linkButton';
 export { ScomEditorSideMenu } from './sideMenu';
 export { ScomEditorSlashMenu } from './slashMenu';
 export { ColorType, ScomEditorColorPicker } from './colorPicker';
+export { ScomEditorFormattingToolbar } from './formattingToolbar';
+export { ScomEditorImageToolbar } from './imageToolbar';
 export * from './utils';
+export { buttonHoverStyle } from './index.css';
