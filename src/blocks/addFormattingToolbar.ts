@@ -1,6 +1,6 @@
-import { Container, Control, HStack, Styles } from "@ijstech/components";
-import { createButton, createParent } from "./utils";
-import { CustomFormattingToolbarState, TextAlignmentType } from '../global/index';
+import { Button, Container, Control, HStack, Styles } from "@ijstech/components";
+import { createButton, createParent, setShown } from "./utils";
+import { CustomFormattingToolbarState, TextAlignmentType, formatKeyboardShortcut } from '../global/index';
 import { ScomEditorColor, IBlockTypeItem, ScomEditorBlockType, ScomEditorLink, ColorType } from '../components/index';
 import { buttonHoverStyle } from "./index.css";
 
@@ -34,28 +34,29 @@ const getToolbarButtons = (editor: any) => {
     },
     {
       icon: {...iconProps, name: 'bold'},
-      tooltip: {...toolTipProps, content: 'Bold <br/> Ctrl + B'},
+      tooltip: {...toolTipProps, content: `Bold <br/> ${formatKeyboardShortcut("Mod+B")}`},
+      isSelected: false,
       onClick: () => {
         editor.toggleStyles({ bold: true });
       }
     },
     {
       icon: {...iconProps, name: 'italic'},
-      tooltip: {...toolTipProps, content: 'Italicize <br/> Ctrl + I'},
+      tooltip: {...toolTipProps, content: `Italicize <br/> ${formatKeyboardShortcut("Mod+I")}`},
       onClick: () => {
         editor.toggleStyles({ italic: true });
       }
     },
     {
       icon: {...iconProps, name: 'underline'},
-      tooltip: {...toolTipProps, content: 'Underline <br/> Ctrl + U'},
+      tooltip: {...toolTipProps, content: `Underline <br/> ${formatKeyboardShortcut("Mod+U")}`},
       onClick: () => {
         editor.toggleStyles({ underline: true });
       }
     },
     {
       icon: {...iconProps, name: 'strikethrough'},
-      tooltip: {...toolTipProps, content: 'Strike-through <br/> Ctrl + Shift + X or Ctrl + Shift + Z'},
+      tooltip: {...toolTipProps, content: `Strike-through <br/>  ${formatKeyboardShortcut("Mod+Shift+X")} or  ${formatKeyboardShortcut("Mod+Shift+Z")}`},
       onClick: () => {
         editor.toggleStyles({ strikethrough: true });
       }
@@ -111,7 +112,7 @@ const getToolbarButtons = (editor: any) => {
       customControl: (element: Container) => {
         let link = new ScomEditorLink(undefined, {
           ...customProps,
-          tooltip: { content: 'Create Link <br /> Ctrl + K', placement: 'bottom' },
+          tooltip: { content: `Create Link <br />  ${formatKeyboardShortcut("Mod+K")}`, placement: 'bottom' },
           editor: editor,
           setLink: (text: string, url: string) => {
             setLink(editor, text, url);
@@ -162,16 +163,20 @@ function setLink(editor: any, text: string, url: string) {
 export const addFormattingToolbar = async (editor: any, parent: Control) => {
   let element: HStack;
   let buttonList = getToolbarButtons(editor);
+  let buttons: Button[] = [];
 
   editor.formattingToolbar.onUpdate(async(formattingToolbarState: CustomFormattingToolbarState) => {
     if (!element) {
-      element = await createParent();
+      element = await createParent({
+        id: 'pnlFormattingToolbar'
+      });
       for (let props of buttonList) {
         if (props.customControl) {
           const elm = props.customControl(element);
           element.appendChild(elm);
         } else {
           const btn = createButton(props, element);
+          buttons.push(btn);
           element.appendChild(btn);
         }
       }
@@ -180,27 +185,26 @@ export const addFormattingToolbar = async (editor: any, parent: Control) => {
     }
 
     if (formattingToolbarState.show) {
-      const wrappers = parent.querySelectorAll('.wrapper');
-      for (let wrapper of wrappers) {
-        (wrapper as Control).visible = false;
-      }
-      element.visible = true;
-      element.style.top = `${formattingToolbarState.referencePos.top}px`;
-      const newPos = formattingToolbarState.referencePos.x + element.offsetWidth;
-      const newLeft = formattingToolbarState.referencePos.x - (element.offsetWidth / 2);
-      let left = '';
-      let right = ''
-      if (newPos >= parent.offsetWidth) {
-        left = 'auto';
-        right = '0px';
-      } else {
-        left = `${Math.max(newLeft, 0)}px`;
-        right = '';
-      }
-      element.style.left = left;
-      element.style.right = right;
+      setShown(parent, element);
+      const firstChild = element.firstElementChild as ScomEditorBlockType;
+      const block = editor.getTextCursorPosition().block;
+      if (firstChild) firstChild.setData({ block });
     } else {
       console.log('hide formatting toolbar')
     }
+    element.style.top = `${formattingToolbarState.referencePos.top}px`;
+    const newPos = formattingToolbarState.referencePos.x + element.offsetWidth;
+    const newLeft = formattingToolbarState.referencePos.x - (element.offsetWidth / 2);
+    let left = '';
+    let right = ''
+    if (newPos >= parent.offsetWidth) {
+      left = 'auto';
+      right = '0px';
+    } else {
+      left = `${Math.max(newLeft, 0)}px`;
+      right = '';
+    }
+    element.style.left = left;
+    element.style.right = right;
   });
 };

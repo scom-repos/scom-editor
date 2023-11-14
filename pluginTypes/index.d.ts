@@ -15,6 +15,12 @@ declare module "@scom/scom-editor/blocks/utils.ts" {
     }
     export const createButton: (props: IButtonProps, parent: Control) => Button;
     export const createParent: (props?: {}) => Promise<HStack>;
+    export const setShown: (parent: Control, element: Control) => void;
+}
+/// <amd-module name="@scom/scom-editor/global/helper.ts" />
+declare module "@scom/scom-editor/global/helper.ts" {
+    export const isAppleOS: () => boolean;
+    export function formatKeyboardShortcut(shortcut: string): string;
 }
 /// <amd-module name="@scom/scom-editor/global/index.ts" />
 declare module "@scom/scom-editor/global/index.ts" {
@@ -40,6 +46,7 @@ declare module "@scom/scom-editor/global/index.ts" {
         show: boolean;
         block: any;
     };
+    export * from "@scom/scom-editor/global/helper.ts";
 }
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
@@ -50,6 +57,7 @@ declare module "@scom/scom-editor/components/colorPicker.tsx" {
         textColor?: string;
         backgroundColor?: string;
         onSelected?: onSelectedCallback;
+        onClosed?: () => void;
     }
     global {
         namespace JSX {
@@ -72,6 +80,7 @@ declare module "@scom/scom-editor/components/colorPicker.tsx" {
         static create(options?: ScomEditorColorPickerElement, parent?: Container): Promise<ScomEditorColorPicker>;
         constructor(parent?: Container, options?: any);
         onSelected: onSelectedCallback;
+        onClosed: () => void;
         get textColor(): string;
         set textColor(value: string);
         get backgroundColor(): string;
@@ -83,6 +92,7 @@ declare module "@scom/scom-editor/components/colorPicker.tsx" {
         private renderSelection;
         private getColor;
         private onColorClicked;
+        private handleClose;
         init(): void;
         render(): any;
     }
@@ -150,6 +160,63 @@ declare module "@scom/scom-editor/components/utils.ts" {
         isSelected: (block: any) => boolean;
     };
     export const defaultBlockTypeItems: IBlockTypeItem[];
+    export function getExtraFields(): {
+        Heading: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
+        "Heading 2": {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
+        "Heading 3": {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
+        "Numbered List": {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
+        "Bullet List": {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
+        Paragraph: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
+        Image: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
+    };
 }
 /// <amd-module name="@scom/scom-editor/components/toolbarDropdown.tsx" />
 declare module "@scom/scom-editor/components/toolbarDropdown.tsx" {
@@ -318,19 +385,63 @@ declare module "@scom/scom-editor/components/linkButton.tsx" {
         render(): any;
     }
 }
-/// <amd-module name="@scom/scom-editor/components/sideMenu.tsx" />
-declare module "@scom/scom-editor/components/sideMenu.tsx" {
+/// <amd-module name="@scom/scom-editor/components/dragHandle.tsx" />
+declare module "@scom/scom-editor/components/dragHandle.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
     import { ColorType } from "@scom/scom-editor/components/colorPicker.tsx";
-    type deletedCallback = (block: any) => void;
+    type deletedCallback = () => void;
     type setColorCallback = (type: ColorType, color: string) => void;
-    interface ScomEditorSideMenuElement extends ControlElement {
+    interface ScomEditorDragHandleElement extends ControlElement {
         block?: any;
+        editor?: any;
         onDeleted?: deletedCallback;
         onSetColor?: setColorCallback;
     }
     interface ISideMenu {
+        block: any;
+        editor: any;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-drag-handle']: ScomEditorDragHandleElement;
+            }
+        }
+    }
+    export class ScomEditorDragHandle extends Module {
+        private pnlMenu;
+        private menuElm;
+        private mdPicker;
+        private _data;
+        private _menuData;
+        onDeleted: deletedCallback;
+        onSetColor: setColorCallback;
+        static create(options?: ScomEditorDragHandleElement, parent?: Container): Promise<ScomEditorDragHandle>;
+        constructor(parent?: Container, options?: any);
+        get block(): any;
+        set block(value: any);
+        get editor(): any;
+        set editor(value: any);
+        setData(value: ISideMenu): void;
+        private renderUI;
+        private handleMenu;
+        onShowMenu(): void;
+        onHideMenu(): void;
+        private onColorClicked;
+        init(): void;
+        render(): any;
+    }
+}
+/// <amd-module name="@scom/scom-editor/components/sideMenu.tsx" />
+declare module "@scom/scom-editor/components/sideMenu.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    interface ScomEditorSideMenuElement extends ControlElement {
         block?: any;
+        editor?: any;
+    }
+    interface ISideMenu {
+        block: any;
+        editor: any;
     }
     global {
         namespace JSX {
@@ -340,20 +451,67 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         }
     }
     export class ScomEditorSideMenu extends Module {
-        private menuElm;
-        private mdPicker;
+        private btnDrag;
+        private dragHandle;
         private _data;
-        onDeleted: deletedCallback;
-        onSetColor: setColorCallback;
+        private _isShowing;
         static create(options?: ScomEditorSideMenuElement, parent?: Container): Promise<ScomEditorSideMenu>;
         constructor(parent?: Container, options?: any);
         get block(): any;
         set block(value: any);
+        get editor(): any;
+        set editor(value: any);
+        get isShowing(): boolean;
         setData(value: ISideMenu): void;
+        private handleSetColor;
+        private handleDelete;
+        private addBlock;
+        private showDragMenu;
+        private hideDragMenu;
+        init(): void;
+        render(): any;
+    }
+}
+/// <amd-module name="@scom/scom-editor/components/slashMenu.tsx" />
+declare module "@scom/scom-editor/components/slashMenu.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    interface ScomEditorSlashMenuElement extends ControlElement {
+        items?: any;
+        selectedIndex?: number;
+        onItemClicked?: (item: any) => void;
+    }
+    interface ISlashMenuItem {
+        name: string;
+        execute: any;
+        aliases: string[];
+    }
+    interface ISlashMenu {
+        items?: ISlashMenuItem[];
+        selectedIndex?: number;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-splash-menu']: ScomEditorSlashMenuElement;
+            }
+        }
+    }
+    export class ScomEditorSlashMenu extends Module {
+        private pnlSlash;
+        private itemsMap;
+        private _data;
+        onItemClicked: (item: any) => void;
+        static create(options?: ScomEditorSlashMenuElement, parent?: Container): Promise<ScomEditorSlashMenu>;
+        constructor(parent?: Container, options?: any);
+        get items(): ISlashMenuItem[];
+        set items(value: ISlashMenuItem[]);
+        get selectedIndex(): number;
+        set selectedIndex(value: number);
+        get groupData(): {
+            [key: string]: any[];
+        };
+        setData(value: ISlashMenu): void;
         private renderUI;
-        private onShowMenu;
-        clear(): void;
-        private onColorClicked;
         init(): void;
         render(): any;
     }
@@ -365,6 +523,7 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorBlockType } from "@scom/scom-editor/components/blockTypeButton.tsx";
     export { ScomEditorLink } from "@scom/scom-editor/components/linkButton.tsx";
     export { ScomEditorSideMenu } from "@scom/scom-editor/components/sideMenu.tsx";
+    export { ScomEditorSlashMenu } from "@scom/scom-editor/components/slashMenu.tsx";
     export { ColorType, ScomEditorColorPicker } from "@scom/scom-editor/components/colorPicker.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
 }
@@ -375,11 +534,13 @@ declare module "@scom/scom-editor/blocks/addFormattingToolbar.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSideMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSideMenu.ts" {
-    export const addSideMenu: (editor: any, parent: HTMLElement) => void;
+    import { Control } from "@ijstech/components";
+    export const addSideMenu: (editor: any, parent: Control) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSlashMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSlashMenu.ts" {
-    export const addSlashMenu: (editor: any, parent: HTMLElement) => void;
+    import { Control } from "@ijstech/components";
+    export const addSlashMenu: (editor: any, parent: Control) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addHyperlinkToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addHyperlinkToolbar.ts" {
