@@ -8,6 +8,7 @@ import {
   Container,
   Modal
 } from '@ijstech/components';
+import { getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 export type onSelectedCallback = (type: ColorType, color: string) => void;
@@ -93,7 +94,11 @@ export class ScomEditorColorPicker extends Module {
     return this._data;
   }
 
-  showModal() {
+  showModal(popupPlacement?: string) {
+    this.mdColorPicker.position = 'fixed';
+    if (this.parent) this.mdColorPicker.linkTo = this.parent;
+    if (popupPlacement) this.mdColorPicker.popupPlacement = popupPlacement as any;
+    // TODO: fix height
     this.mdColorPicker.refresh();
     this.mdColorPicker.visible = true;
   }
@@ -187,13 +192,14 @@ export class ScomEditorColorPicker extends Module {
     const textColor = this.getAttribute('textColor', true, 'default');
     const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
     this.setData({textColor, backgroundColor});
+    getModalContainer().appendChild(this.mdColorPicker);
   }
 
   render() {
     return (
       <i-modal
         id="mdColorPicker"
-        popupPlacement="bottom"
+        popupPlacement="rightTop"
         minWidth={200}
         maxWidth={300}
         border={{radius: '0.375rem'}}

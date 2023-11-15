@@ -1,30 +1,29 @@
-import { Control, HStack } from "@ijstech/components";
-import { createParent, setShown } from "./utils";
-import { ScomEditorSlashMenu } from "../components/index";
+import { Control, Modal } from "@ijstech/components";
+import { ScomEditorSlashMenu, createModal } from "../components/index";
 
 export const addSlashMenu = (editor: any, parent: Control) => {
-  let element: HStack;
+  let modal: Modal;
 
   async function updateItems(items: any[], onClick: (item: any) => void, selected: number) {
-    element.clearInnerHTML();
     const slashMenu = await ScomEditorSlashMenu.create({
       items,
       selectedIndex: selected,
       onItemClicked: (item: any) => {
         onClick(item);
-        element.visible = false;
+        modal.visible = false;
       }
     });
-    element.append(slashMenu);
+    modal.item = slashMenu;
   }
 
   editor.slashMenu.onUpdate(async (slashMenuState: any) => {
-    if (!element) {
-      element = await createParent({
+    if (!modal) {
+      modal = await createModal({
         id: 'pnlSlashMenu',
+        popupPlacement: "center",
         padding: {left: 0, top: 0, right: 0, bottom: 0}
-      });
-      parent.appendChild(element);
+      })
+      parent.appendChild(modal);
     }
 
     if (slashMenuState.show) {
@@ -33,9 +32,9 @@ export const addSlashMenu = (editor: any, parent: Control) => {
         editor.slashMenu.itemCallback,
         slashMenuState.keyboardHoveredItemIndex
       );
-      setShown(parent, element);
+      modal.visible = true;
     }
-    element.style.top = slashMenuState.referencePos.top + "px";
-    element.style.left = '3rem';
+    modal.style.top = `${slashMenuState.referencePos.top}px`;
+    modal.style.left = '3rem';
   });
 };

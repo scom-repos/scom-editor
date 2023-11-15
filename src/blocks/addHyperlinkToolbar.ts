@@ -1,8 +1,6 @@
 import { Control, HStack, Styles } from "@ijstech/components";
-import { createButton, createParent, setShown } from "./utils";
 import { CustomHyperlinkToolbarState } from "../global/index";
-import { buttonHoverStyle } from "./index.css";
-import { ScomEditorLink } from "../components/index";
+import { ScomEditorLink, buttonHoverStyle, createButton, createParent, setShown } from "../components/index";
 const Theme = Styles.Theme.ThemeVars;
 
 const getToolbarButtons = (editor: any, hyperlinkToolbarState: CustomHyperlinkToolbarState, parent: Control) => {

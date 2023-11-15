@@ -1,7 +1,6 @@
 import { Control, HStack } from "@ijstech/components";
 import { CustomSideMenuState } from "../global/index";
-import { createParent, setShown } from "./utils";
-import { ScomEditorSideMenu } from "../components/index";
+import { ScomEditorSideMenu, createParent } from "../components/index";
 
 export const addSideMenu = (editor: any, parent: Control) => {
   let element: HStack;

@@ -8,3 +8,13 @@ export const buttonHoverStyle = Styles.style({
     }
   }
 })
+
+export const customModalStyle = Styles.style({
+  $nest: {
+    '.modal-wrapper': {
+      top: '0px !important',
+      left: '0px !important',
+      overflow: 'unset'
+    }
+  }
+})

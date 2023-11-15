@@ -1,5 +1,7 @@
-import { Control, IconName } from "@ijstech/components";
+import { Button, Control, HStack, Styles, IconName, Modal } from "@ijstech/components";
 import { formatKeyboardShortcut } from "../global/index";
+import { buttonHoverStyle, customModalStyle } from "./index.css";
+const Theme = Styles.Theme.ThemeVars;
 
 export type IToolbarDropdownItem = {
   text: string;
@@ -115,3 +117,112 @@ export function getExtraFields () {
   return extraFields;
 }
 
+interface IButtonProps {
+  caption?: string;
+  icon?: any;
+  enabled?: boolean;
+  border?: any;
+  isSelected?: boolean | (() => boolean);
+  tooltip?: any,
+  onClick?: (target: Control, event: MouseEvent) => void;
+}
+
+export const createButton = (props: IButtonProps, parent: Control) => {
+  const border = props?.border || {};
+  border.radius = '0.25rem';
+  const isSelectedVal = !props.isSelected || typeof props.isSelected === 'boolean' ? props.isSelected : props.isSelected();
+  const onClick = props.onClick;
+  props.onClick = (target: Control, event: MouseEvent) => {
+    const isSelected = !(isSelectedVal ?? false);
+    target.background.color = isSelected ? Theme.action.activeBackground : 'transparent';
+    onClick(target, event);
+  }
+  const button = new Button(parent, {
+    font: {size: '0.875rem'},
+    padding: {top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem'},
+    border: {...border},
+    background: {color: isSelectedVal ? Theme.action.activeBackground : 'transparent'},
+    boxShadow: 'none',
+    enabled: true,
+    minWidth: '1.875rem',
+    minHeight: '1.875rem',
+    class: buttonHoverStyle,
+    ...props
+  });
+  return button;
+}
+
+export const createParent = async (props = {}) => {
+  const elm = await HStack.create({
+    background: {color: Theme.background.main},
+    position: 'absolute',
+    zIndex: 500,
+    boxShadow: Theme.shadows[1],
+    lineHeight: 1.2,
+    padding: {top: '0.125rem', bottom: '0.125rem', left: '0.125rem', right: '0.125rem'},
+    verticalAlignment: 'center',
+    border: {radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light},
+    gap: '0.125rem',
+    class: 'wrapper',
+    ...props
+  });
+  return elm;
+}
+
+export const createModal = async (props = {}) => {
+  const elm = await Modal.create({
+    background: {color: Theme.background.main},
+    boxShadow: Theme.shadows[1],
+    lineHeight: 1.2,
+    padding: {top: '0.125rem', bottom: '0.125rem', left: '0.125rem', right: '0.125rem'},
+    border: {radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light},
+    showBackdrop: false,
+    visible: false,
+    class: customModalStyle,
+    ...props
+  });
+  return elm;
+}
+
+export const setShown = (parent: Control, element: Control) => {
+  const wrappers = parent.querySelectorAll('.wrapper');
+  for (let wrapper of wrappers) {
+    const el = wrapper as Control;
+    el.visible = el.id === element.id;
+  }
+}
+
+export const getModalContainer = () => {
+  let span = document.getElementById("modal-container");
+  if (!span) {
+    span = document.createElement('span');
+    span.id = "toolbar-container";
+    document.body.appendChild(span);
+  }
+  return span;
+}
+
+
+const textAlignmentToPlacement = (textAlignment: string) => {
+  switch (textAlignment) {
+    case "left":
+      return "topLeft";
+    case "center":
+      return "top";
+    case "right":
+      return "topRight";
+    default:
+      return "top";
+  }
+};
+
+export const getPlacement = (block: any) => {
+  let placement = '';
+  if (!("textAlignment" in block.props)) {
+    placement = 'top';
+  } else {
+    placement = textAlignmentToPlacement(
+      block.props.textAlignment
+    )
+  }
+}

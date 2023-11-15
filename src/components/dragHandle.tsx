@@ -5,7 +5,7 @@ import {
   Module,
   Container,
   Menu,
-  Panel
+  Modal
 } from '@ijstech/components';
 import { ColorType, ScomEditorColorPicker } from './colorPicker';
 const Theme = Styles.Theme.ThemeVars;
@@ -15,14 +15,14 @@ type setColorCallback = (type: ColorType, color: string) => void;
 
 interface ScomEditorDragHandleElement extends ControlElement {
   block?: any;
-  editor?: any
   onDeleted?: deletedCallback;
   onSetColor?: setColorCallback;
+  unfreezeMenu?: any;
+  freezeMenu?: any;
 }
 
 interface ISideMenu {
   block: any;
-  editor: any;
 }
 
 declare global {
@@ -35,7 +35,7 @@ declare global {
 
 @customElements('i-scom-editor-drag-handle')
 export class ScomEditorDragHandle extends Module {
-  private pnlMenu: Panel;
+  private mdMenu: Modal;
   private menuElm: Menu;
   private mdPicker: ScomEditorColorPicker;
 
@@ -56,6 +56,8 @@ export class ScomEditorDragHandle extends Module {
 
   onDeleted: deletedCallback;
   onSetColor: setColorCallback;
+  unfreezeMenu: any;
+  freezeMenu: any;
 
   static async create(options?: ScomEditorDragHandleElement, parent?: Container) {
     let self = new this(parent, options);
@@ -76,13 +78,6 @@ export class ScomEditorDragHandle extends Module {
     this._data.block = value;
   }
 
-  get editor() {
-    return this._data.editor;
-  }
-  set editor(value: any) {
-    this._data.editor = value;
-  }
-
   setData(value: ISideMenu) {
     this._data = value;
     this.renderUI();
@@ -95,7 +90,7 @@ export class ScomEditorDragHandle extends Module {
         backgroundColor: this.block?.props?.backgroundColor
       })
       this.mdPicker.onClosed = () => {
-        this.pnlMenu.visible = false;
+        this.mdMenu.visible = false;
       }
     }
   }
@@ -104,19 +99,27 @@ export class ScomEditorDragHandle extends Module {
     if (item.id === 'delete') {
       if (this.onDeleted) this.onDeleted()
     } else {
+      this.mdPicker.parent = this.mdMenu;
+      this.mdPicker.refresh();
       this.mdPicker.showModal();
-      if (this.editor) this.editor.sideMenu.freezeMenu();
+      if (this.freezeMenu) this.freezeMenu();
     }
   }
 
   onShowMenu() {
-    this.pnlMenu.visible = true;
-    if (this.editor) this.editor.sideMenu.freezeMenu();
+    this.mdMenu.visible = true;
   }
 
   onHideMenu() {
-    this.pnlMenu.visible = false;
-    if (this.editor) this.editor.sideMenu.unfreezeMenu();
+    this.mdMenu.visible = false;
+  }
+
+  private onModalClose() {
+    if (this.unfreezeMenu) this.unfreezeMenu();
+  }
+
+  private onModalOpen() {
+    if (this.freezeMenu) this.freezeMenu();
   }
 
   private onColorClicked(type: ColorType, color: string) {
@@ -127,29 +130,38 @@ export class ScomEditorDragHandle extends Module {
     super.init();
     this.onDeleted = this.getAttribute('onDeleted', true) || this.onDeleted;
     this.onSetColor = this.getAttribute('onSetColor', true) || this.onSetColor;
+    this.freezeMenu = this.getAttribute('freezeMenu', true) || this.freezeMenu;
+    this.unfreezeMenu = this.getAttribute('unfreezeMenu', true) || this.unfreezeMenu;
     const block = this.getAttribute('block', true);
-    const editor = this.getAttribute('editor', true);
-    if (editor && block) this.setData({block, editor});
+    if (block) this.setData({block});
   }
 
   render() {
     return (
-      <i-panel id="pnlMenu" visible={false}>
-        <i-menu
-          id="menuElm"
-          padding={{top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem'}}
-          font={{color: Theme.text.primary, size: '0.75rem'}}
-          boxShadow={Theme.shadows[1]}
-          width={'6.25rem'}
-          position="absolute"
-          left="-4.375rem" top="-3rem"
-          mode="vertical"
-          data={this._menuData}
-          background={{color: Theme.background.modal}}
-          onItemClick={this.handleMenu}
-        ></i-menu>
-        <i-scom-editor-color-picker id="mdPicker" onSelected={this.onColorClicked}/>
-      </i-panel>
+      <i-modal
+        id="mdMenu"
+        popupPlacement="left"
+        showBackdrop={false}
+        minWidth={'6.25rem'}
+        maxWidth={'100%'}
+        onOpen={this.onModalOpen}
+        onClose={this.onModalClose}
+      >
+        <i-panel>
+          <i-menu
+            id="menuElm"
+            padding={{top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem'}}
+            font={{color: Theme.text.primary, size: '0.75rem'}}
+            boxShadow={Theme.shadows[1]}
+            width={'100%'}
+            mode="vertical"
+            data={this._menuData}
+            background={{color: Theme.background.modal}}
+            onItemClick={this.handleMenu}
+          ></i-menu>
+          <i-scom-editor-color-picker id="mdPicker" onSelected={this.onColorClicked}/>
+        </i-panel>
+      </i-modal>
     )
   }
 }
