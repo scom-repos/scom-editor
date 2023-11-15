@@ -27,12 +27,18 @@ declare module "@scom/scom-editor/global/index.ts" {
         show: boolean;
         block: any;
     };
+    export type CustomSlashMenuState = {
+        referencePos: any;
+        show: boolean;
+        filteredItems: any[];
+        itemCallback: any;
+        keyboardHoveredItemIndex: number;
+    };
     export * from "@scom/scom-editor/global/helper.ts";
 }
 /// <amd-module name="@scom/scom-editor/components/index.css.ts" />
 declare module "@scom/scom-editor/components/index.css.ts" {
     export const buttonHoverStyle: string;
-    export const customModalStyle: string;
 }
 /// <amd-module name="@scom/scom-editor/components/utils.ts" />
 declare module "@scom/scom-editor/components/utils.ts" {
@@ -125,9 +131,8 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const createButton: (props: IButtonProps, parent: Control) => Button;
     export const createParent: (props?: {}) => Promise<HStack>;
     export const createModal: (props?: {}) => Promise<Modal>;
-    export const setShown: (parent: Control, element: Control) => void;
     export const getModalContainer: () => HTMLElement;
-    export const getPlacement: (block: any) => void;
+    export const getPlacement: (block: any) => string;
 }
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
@@ -251,6 +256,7 @@ declare module "@scom/scom-editor/components/toolbarDropdown.tsx" {
         private renderUI;
         private updateSelected;
         private showModal;
+        private handleClosed;
         init(): void;
         render(): any;
     }
@@ -334,6 +340,7 @@ declare module "@scom/scom-editor/components/linkModal.tsx" {
         showModal(): void;
         closeModal(): void;
         private handleInput;
+        private handleClosed;
         init(): void;
         render(): any;
     }
@@ -481,6 +488,7 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
     interface ScomEditorSlashMenuElement extends ControlElement {
         items?: any;
         selectedIndex?: number;
+        referencePos?: any;
         onItemClicked?: (item: any) => void;
     }
     interface ISlashMenuItem {
@@ -491,6 +499,7 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
     interface ISlashMenu {
         items?: ISlashMenuItem[];
         selectedIndex?: number;
+        referencePos?: any;
     }
     global {
         namespace JSX {
@@ -510,10 +519,13 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
         set items(value: ISlashMenuItem[]);
         get selectedIndex(): number;
         set selectedIndex(value: number);
+        get referencePos(): any;
+        set referencePos(value: any);
         get groupData(): {
             [key: string]: any[];
         };
         setData(value: ISlashMenu): void;
+        private updatePanel;
         private renderUI;
         init(): void;
         render(): any;
@@ -621,8 +633,7 @@ declare module "@scom/scom-editor/components/index.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addFormattingToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addFormattingToolbar.ts" {
-    import { Control } from "@ijstech/components";
-    export const addFormattingToolbar: (editor: any, parent: Control) => Promise<void>;
+    export const addFormattingToolbar: (editor: any) => Promise<void>;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSideMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSideMenu.ts" {
@@ -631,18 +642,15 @@ declare module "@scom/scom-editor/blocks/addSideMenu.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSlashMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSlashMenu.ts" {
-    import { Control } from "@ijstech/components";
-    export const addSlashMenu: (editor: any, parent: Control) => void;
+    export const addSlashMenu: (editor: any) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addHyperlinkToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addHyperlinkToolbar.ts" {
-    import { Control } from "@ijstech/components";
-    export const addHyperlinkToolbar: (editor: any, parent: Control) => Promise<void>;
+    export const addHyperlinkToolbar: (editor: any) => Promise<void>;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addImageToolbar.tsx" />
 declare module "@scom/scom-editor/blocks/addImageToolbar.tsx" {
-    import { Control } from "@ijstech/components";
-    export const addImageToolbar: (editor: any, parent: Control) => void;
+    export const addImageToolbar: (editor: any) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
@@ -658,6 +666,8 @@ declare module "@scom/scom-editor" {
     type onChangedCallback = (blocks: any[]) => void;
     interface ScomEditorElement extends ControlElement {
         placeholder?: string;
+        value?: string;
+        lazyLoad?: boolean;
         onChanged?: onChangedCallback;
     }
     global {
@@ -671,14 +681,49 @@ declare module "@scom/scom-editor" {
         private pnlEditor;
         private _blocknoteObj;
         private _editor;
+        private _data;
+        tag: any;
         onChanged: onChangedCallback;
         constructor(parent?: Container, options?: any);
+        get value(): string;
+        set value(data: string);
+        get placeholder(): string;
+        set placeholder(data: string);
+        getEditor(): any;
         static create(options?: ScomEditorElement, parent?: Container): Promise<ScomEditor>;
         private initEditor;
         private renderEditor;
         private addCSS;
         private loadPlugin;
-        init(): void;
+        private getData;
+        private setData;
+        private setBlocks;
+        private updateTag;
+        private setTag;
+        private updateStyle;
+        private updateTheme;
+        private getTag;
+        getConfigurators(): ({
+            name: string;
+            target: string;
+            getActions: () => any[];
+            getData: any;
+            setData: any;
+            getTag: any;
+            setTag: any;
+        } | {
+            name: string;
+            target: string;
+            getData: any;
+            setData: any;
+            getTag: any;
+            setTag: any;
+            getActions?: undefined;
+        })[];
+        private _getActions;
+        private getWidgetSchemas;
+        private getThemeSchema;
+        init(): Promise<void>;
         render(): any;
     }
 }

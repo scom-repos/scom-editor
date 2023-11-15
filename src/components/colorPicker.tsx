@@ -95,12 +95,13 @@ export class ScomEditorColorPicker extends Module {
   }
 
   showModal(popupPlacement?: string) {
+    getModalContainer().appendChild(this.mdColorPicker);
     this.mdColorPicker.position = 'fixed';
     if (this.parent) this.mdColorPicker.linkTo = this.parent;
     if (popupPlacement) this.mdColorPicker.popupPlacement = popupPlacement as any;
-    // TODO: fix height
-    this.mdColorPicker.refresh();
     this.mdColorPicker.visible = true;
+    const { top, height } = this.getBoundingClientRect();
+    this.pnlColors.maxHeight = `calc(100vh - ${top + height + 32}px`;
   }
 
   closeModal(): void {
@@ -183,6 +184,7 @@ export class ScomEditorColorPicker extends Module {
 
   private handleClose() {
     if (this.onClosed) this.onClosed();
+    getModalContainer().removeChild(this.mdColorPicker);
   }
 
   init() {
@@ -192,7 +194,6 @@ export class ScomEditorColorPicker extends Module {
     const textColor = this.getAttribute('textColor', true, 'default');
     const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
     this.setData({textColor, backgroundColor});
-    getModalContainer().appendChild(this.mdColorPicker);
   }
 
   render() {
@@ -210,7 +211,6 @@ export class ScomEditorColorPicker extends Module {
       >
         <i-vstack
           id="pnlColors"
-          maxHeight={'37.488rem'}
           overflow={{y: 'auto'}}
         ></i-vstack>
       </i-modal>

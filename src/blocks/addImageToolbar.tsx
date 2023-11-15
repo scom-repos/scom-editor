@@ -1,21 +1,27 @@
-import { Control, Modal } from "@ijstech/components";
-import { ScomEditorImageToolbar, createModal } from "../components/index";
+import { Modal } from "@ijstech/components";
+import { ScomEditorImageToolbar, createModal, getModalContainer } from "../components/index";
 
-export const addImageToolbar = (editor: any, parent: Control) => {
+export const addImageToolbar = (editor: any) => {
   let modal: Modal;
   let imageToolbar: ScomEditorImageToolbar;
 
   editor.imageToolbar.onUpdate(async (imageToolbarState: any) => {
+    const block = imageToolbarState.block;
+    const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
         id: 'pnlImageToolbar',
-        width: 500
+        popupPlacement: 'center',
+        zIndex: 3000,
+        width: '31.25rem'
       })
-      parent.append(modal);
+      modal.linkTo = editor.domElement;
+      modal.position = "fixed";
+      getModalContainer().appendChild(modal);
     }
     if (!imageToolbar) {
       imageToolbar = await ScomEditorImageToolbar.create({
-        block: imageToolbarState.block,
+        block: block,
         editor: editor,
         width: '100%',
         display: 'block',
@@ -23,10 +29,19 @@ export const addImageToolbar = (editor: any, parent: Control) => {
       })
       modal.item = imageToolbar;
     }
-    modal.refresh();
-    modal.visible = true;
-    modal.style.top = `${imageToolbarState.referencePos.top + imageToolbarState.referencePos.height}px`;
-    // modal.style.left = `${imageToolbarState.referencePos.left - (+modal.width / 2)}px`;
-    modal.style.left = `${(+parent.width - +modal.width) / 2}px`;
+
+    if (blockID) {
+      const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+      if (blockEl) {
+        modal.linkTo = blockEl;
+        modal.visible = true;
+      }
+    } else {
+      modal.visible = false;
+    }
+    // modal.refresh();
+    // modal.visible = true;
+    // modal.style.top = `${imageToolbarState.referencePos.top + imageToolbarState.referencePos.height}px`;
+    // modal.style.left = `${(+parent.width - +modal.width) / 2}px`;
   })
 }

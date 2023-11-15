@@ -28,4 +28,12 @@ export type CustomSideMenuState = {
   block: any;
 }
 
+export type CustomSlashMenuState = {
+  referencePos: any;
+  show: boolean;
+  filteredItems: any[];
+  itemCallback: any;
+  keyboardHoveredItemIndex: number;
+}
+
 export * from './helper';

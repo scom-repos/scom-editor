@@ -227,7 +227,6 @@ export class ScomEditorFormattingToolbar extends Module {
             visible: !this.isImageBlock,
             setLink: (text: string, url: string) => {
               this.setLink(editor, text, url);
-              element.visible = false;
             },
             class: buttonHoverStyle
           })
