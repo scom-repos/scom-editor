@@ -3,6 +3,75 @@ declare module "@scom/scom-editor/global/helper.ts" {
     export const isAppleOS: () => boolean;
     export function formatKeyboardShortcut(shortcut: string): string;
 }
+/// <amd-module name="@scom/scom-editor/global/coreType.ts" />
+declare module "@scom/scom-editor/global/coreType.ts" {
+    export type Styles = {
+        bold?: true;
+        italic?: true;
+        underline?: true;
+        strike?: true;
+        code?: true;
+        textColor?: string;
+        backgroundColor?: string;
+    };
+    export type ToggledStyle = {
+        [K in keyof Styles]-?: Required<Styles>[K] extends true ? K : never;
+    }[keyof Styles];
+    export type ColorStyle = {
+        [K in keyof Styles]-?: Required<Styles>[K] extends string ? K : never;
+    }[keyof Styles];
+    export type StyledText = {
+        type: "text";
+        text: string;
+        styles: Styles;
+    };
+    export type Link = {
+        type: "link";
+        href: string;
+        content: StyledText[];
+    };
+    export type PartialLink = Omit<Link, "content"> & {
+        content: string | Link["content"];
+    };
+    export type InlineContent = StyledText | Link;
+    export type PartialInlineContent = StyledText | PartialLink;
+    export type PartialBlock = {
+        id?: string;
+        type?: string;
+        props?: Partial<Record<string, string>>;
+        content?: string | InlineContent[];
+        children?: any[];
+    };
+    export type Block = {
+        id: string;
+        type: boolean | number | string;
+        props: Record<string, string>;
+        content: InlineContent[];
+        children: Block[];
+    };
+    export type BlockIdentifier = string | Block;
+    export type SlashMenuItem = {
+        name: string;
+        execute: (editor: any) => void;
+        aliases?: string[];
+        group: string;
+        icon: any;
+        hint?: string;
+        shortcut?: string;
+    };
+    export type BlockNoteEditor = any;
+    export type BlockNoteEditorOptions = Partial<{
+        editable: boolean;
+        initialContent: PartialBlock[];
+        editorDOMAttributes: Record<string, string>;
+        onEditorReady: (editor: BlockNoteEditor) => void;
+        onEditorContentChange: (editor: BlockNoteEditor) => void;
+        onTextCursorPositionChange: (editor: BlockNoteEditor) => void;
+        slashMenuItems: SlashMenuItem[];
+        defaultStyles: boolean;
+        uploadFile: (file: File) => Promise<string>;
+    }>;
+}
 /// <amd-module name="@scom/scom-editor/global/index.ts" />
 declare module "@scom/scom-editor/global/index.ts" {
     export type TextAlignmentType = "left" | "center" | "right" | "justify";
@@ -35,6 +104,7 @@ declare module "@scom/scom-editor/global/index.ts" {
         keyboardHoveredItemIndex: number;
     };
     export * from "@scom/scom-editor/global/helper.ts";
+    export * from "@scom/scom-editor/global/coreType.ts";
 }
 /// <amd-module name="@scom/scom-editor/components/index.css.ts" />
 declare module "@scom/scom-editor/components/index.css.ts" {
@@ -118,6 +188,20 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        'Image Widget': {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
+        Video: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -133,6 +217,8 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const createModal: (props?: {}) => Promise<Modal>;
     export const getModalContainer: () => HTMLElement;
     export const getPlacement: (block: any) => string;
+    export const CustomBlockTypes: string[];
+    export const MediaBlockTypes: string[];
 }
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
@@ -348,9 +434,10 @@ declare module "@scom/scom-editor/components/linkModal.tsx" {
 /// <amd-module name="@scom/scom-editor/components/linkButton.tsx" />
 declare module "@scom/scom-editor/components/linkButton.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     export type setLinkCallback = (text: string, url: string) => void;
     interface ScomEditorLinkElement extends ControlElement {
-        editor?: any;
+        editor?: BlockNoteEditor;
         text?: string;
         url?: string;
         caption?: string;
@@ -364,7 +451,7 @@ declare module "@scom/scom-editor/components/linkButton.tsx" {
         }
     }
     interface ILink {
-        editor?: any;
+        editor?: BlockNoteEditor;
         text?: string;
         url?: string;
         caption?: string;
@@ -382,8 +469,8 @@ declare module "@scom/scom-editor/components/linkButton.tsx" {
         set url(value: string);
         get caption(): string;
         set caption(value: string);
-        get editor(): any;
-        set editor(value: any);
+        get editor(): BlockNoteEditor;
+        set editor(value: BlockNoteEditor);
         setData(value: ILink): void;
         getData(): ILink;
         private renderUI;
@@ -397,17 +484,18 @@ declare module "@scom/scom-editor/components/linkButton.tsx" {
 declare module "@scom/scom-editor/components/dragHandle.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
     import { ColorType } from "@scom/scom-editor/components/colorPicker.tsx";
+    import { Block } from "@scom/scom-editor/global/index.ts";
     type deletedCallback = () => void;
     type setColorCallback = (type: ColorType, color: string) => void;
     interface ScomEditorDragHandleElement extends ControlElement {
-        block?: any;
+        block?: Block;
         onDeleted?: deletedCallback;
         onSetColor?: setColorCallback;
         unfreezeMenu?: any;
         freezeMenu?: any;
     }
     interface ISideMenu {
-        block: any;
+        block: Block;
     }
     global {
         namespace JSX {
@@ -428,8 +516,8 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         freezeMenu: any;
         static create(options?: ScomEditorDragHandleElement, parent?: Container): Promise<ScomEditorDragHandle>;
         constructor(parent?: Container, options?: any);
-        get block(): any;
-        set block(value: any);
+        get block(): Block;
+        set block(value: Block);
         setData(value: ISideMenu): void;
         private renderUI;
         private handleMenu;
@@ -442,15 +530,48 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         render(): any;
     }
 }
+/// <amd-module name="@scom/scom-editor/components/settingsForm.tsx" />
+declare module "@scom/scom-editor/components/settingsForm.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    interface ScomEditorSettingsFormElement extends ControlElement {
+        data?: ISettingsForm;
+    }
+    export interface ISettingsForm {
+        action: any;
+        props: Record<string, string>;
+        onConfirm: (data: any) => void;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-settings-form']: ScomEditorSettingsFormElement;
+            }
+        }
+    }
+    export class ScomEditorSettingsForm extends Module {
+        private pnlForm;
+        private actionForm;
+        private _data;
+        static create(options?: ScomEditorSettingsFormElement, parent?: Container): Promise<ScomEditorSettingsForm>;
+        constructor(parent?: Container, options?: any);
+        get data(): ISettingsForm;
+        set data(value: ISettingsForm);
+        setData(value: ISettingsForm): void;
+        private renderForm;
+        init(): void;
+        render(): any;
+    }
+}
 /// <amd-module name="@scom/scom-editor/components/sideMenu.tsx" />
 declare module "@scom/scom-editor/components/sideMenu.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
+    import { Block, BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     interface ScomEditorSideMenuElement extends ControlElement {
-        block?: any;
-        editor?: any;
+        block?: Block;
+        editor?: BlockNoteEditor;
     }
     interface ISideMenu {
-        block: any;
+        block: Block;
         editor: any;
     }
     global {
@@ -462,22 +583,30 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
     }
     export class ScomEditorSideMenu extends Module {
         private btnDrag;
+        private btnAdd;
+        private btnEdit;
         private dragHandle;
+        private actionForm;
         private _data;
         private _isShowing;
         static create(options?: ScomEditorSideMenuElement, parent?: Container): Promise<ScomEditorSideMenu>;
         constructor(parent?: Container, options?: any);
-        get block(): any;
-        set block(value: any);
-        get editor(): any;
-        set editor(value: any);
+        get block(): Block;
+        set block(value: Block);
+        get editor(): BlockNoteEditor;
+        set editor(value: BlockNoteEditor);
         get isShowing(): boolean;
         setData(value: ISideMenu): void;
         private handleSetColor;
         private handleDelete;
-        private addBlock;
+        private handleAddBlock;
         private showDragMenu;
         private hideDragMenu;
+        private handleEditBlock;
+        private getActions;
+        private getEditAction;
+        private renderForm;
+        private updateBlock;
         init(): void;
         render(): any;
     }
@@ -534,9 +663,10 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
 /// <amd-module name="@scom/scom-editor/components/imageToolbar.tsx" />
 declare module "@scom/scom-editor/components/imageToolbar.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
+    import { Block, BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     interface ScomEditorImageToolbarElement extends ControlElement {
-        editor?: any;
-        block?: any;
+        editor?: BlockNoteEditor;
+        block?: Block;
         onUpdated?: () => void;
     }
     global {
@@ -547,8 +677,8 @@ declare module "@scom/scom-editor/components/imageToolbar.tsx" {
         }
     }
     interface IImageToolbar {
-        editor: any;
-        block: any;
+        editor: BlockNoteEditor;
+        block: Block;
     }
     export class ScomEditorImageToolbar extends Module {
         private imageTabs;
@@ -561,10 +691,10 @@ declare module "@scom/scom-editor/components/imageToolbar.tsx" {
         onUpdated: () => void;
         static create(options?: ScomEditorImageToolbarElement, parent?: Container): Promise<ScomEditorImageToolbar>;
         constructor(parent?: Container, options?: any);
-        get editor(): any;
-        set editor(value: any);
-        get block(): any;
-        set block(value: any);
+        get editor(): BlockNoteEditor;
+        set editor(value: BlockNoteEditor);
+        get block(): Block;
+        set block(value: Block);
         setData(value: IImageToolbar): Promise<void>;
         getData(): IImageToolbar;
         private onFileChanged;
@@ -578,11 +708,12 @@ declare module "@scom/scom-editor/components/imageToolbar.tsx" {
 /// <amd-module name="@scom/scom-editor/components/formattingToolbar.tsx" />
 declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     interface ScomEditorFormattingToolbarElement extends ControlElement {
-        editor?: any;
+        editor?: BlockNoteEditor;
     }
     interface IFormattingToolbar {
-        editor: any;
+        editor: BlockNoteEditor;
     }
     global {
         namespace JSX {
@@ -600,14 +731,14 @@ declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
         private _block;
         static create(options?: ScomEditorFormattingToolbarElement, parent?: Container): Promise<ScomEditorFormattingToolbar>;
         constructor(parent?: Container, options?: any);
-        get editor(): any;
-        set editor(value: any);
+        get editor(): BlockNoteEditor;
+        set editor(value: BlockNoteEditor);
         private setBlockType;
         private setAlignment;
         private setColor;
         private setLink;
         private getToolbarButtons;
-        private get isImageBlock();
+        private get isMediaBlock();
         setData(value: IFormattingToolbar): void;
         onRefresh(): void;
         private renderUI;
@@ -633,24 +764,52 @@ declare module "@scom/scom-editor/components/index.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addFormattingToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addFormattingToolbar.ts" {
-    export const addFormattingToolbar: (editor: any) => Promise<void>;
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addFormattingToolbar: (editor: BlockNoteEditor) => Promise<void>;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSideMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSideMenu.ts" {
-    import { Control } from "@ijstech/components";
-    export const addSideMenu: (editor: any, parent: Control) => void;
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addSideMenu: (editor: BlockNoteEditor) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSlashMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSlashMenu.ts" {
-    export const addSlashMenu: (editor: any) => void;
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addSlashMenu: (editor: BlockNoteEditor) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addHyperlinkToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addHyperlinkToolbar.ts" {
-    export const addHyperlinkToolbar: (editor: any) => Promise<void>;
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addHyperlinkToolbar: (editor: BlockNoteEditor) => Promise<void>;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addImageToolbar.tsx" />
 declare module "@scom/scom-editor/blocks/addImageToolbar.tsx" {
-    export const addImageToolbar: (editor: any) => void;
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addImageToolbar: (editor: BlockNoteEditor) => void;
+}
+/// <amd-module name="@scom/scom-editor/blocks/addVideoBlock.ts" />
+declare module "@scom/scom-editor/blocks/addVideoBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addVideoBlock: (blocknote: any) => {
+        VideoBlock: any;
+        VideoSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
+/// <amd-module name="@scom/scom-editor/blocks/addImageBlock.ts" />
+declare module "@scom/scom-editor/blocks/addImageBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export function addImageBlock(blocknote: any): {
+        ImageBlock: any;
+        ImageSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
 }
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
@@ -659,11 +818,13 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addSlashMenu } from "@scom/scom-editor/blocks/addSlashMenu.ts";
     export { addHyperlinkToolbar } from "@scom/scom-editor/blocks/addHyperlinkToolbar.ts";
     export { addImageToolbar } from "@scom/scom-editor/blocks/addImageToolbar.tsx";
+    export { addVideoBlock } from "@scom/scom-editor/blocks/addVideoBlock.ts";
+    export { addImageBlock } from "@scom/scom-editor/blocks/addImageBlock.ts";
 }
 /// <amd-module name="@scom/scom-editor" />
 declare module "@scom/scom-editor" {
     import { Module, ControlElement, Container } from '@ijstech/components';
-    type onChangedCallback = (blocks: any[]) => void;
+    type onChangedCallback = (value: string) => void;
     interface ScomEditorElement extends ControlElement {
         placeholder?: string;
         value?: string;
@@ -697,7 +858,8 @@ declare module "@scom/scom-editor" {
         private loadPlugin;
         private getData;
         private setData;
-        private setBlocks;
+        private markdownToBlocks;
+        private blocksToMarkdown;
         private updateTag;
         private setTag;
         private updateStyle;
@@ -722,7 +884,6 @@ declare module "@scom/scom-editor" {
         })[];
         private _getActions;
         private getWidgetSchemas;
-        private getThemeSchema;
         init(): Promise<void>;
         render(): any;
     }

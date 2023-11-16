@@ -1,14 +1,14 @@
 import { Modal } from "@ijstech/components";
 import { ScomEditorSlashMenu, createModal, getModalContainer } from "../components/index";
-import { CustomSlashMenuState } from "../global/index";
+import { BlockNoteEditor, CustomSlashMenuState } from "../global/index";
 
-export const addSlashMenu = (editor: any) => {
+export const addSlashMenu = (editor: BlockNoteEditor) => {
   let modal: Modal;
   let menuElm: ScomEditorSlashMenu;
 
   async function updateItems(items: any[], onClick: (item: any) => void, selected: number, referencePos: any) {
     menuElm = await ScomEditorSlashMenu.create({
-      items,
+      items: [...items],
       selectedIndex: selected,
       referencePos,
       onItemClicked: (item: any) => {
@@ -30,7 +30,6 @@ export const addSlashMenu = (editor: any) => {
         padding: {left: 0, top: 0, right: 0, bottom: 0},
         zIndex: 3000
       })
-      modal.linkTo = editor.domElement;
       modal.position = "fixed";
       getModalContainer().appendChild(modal);
     }

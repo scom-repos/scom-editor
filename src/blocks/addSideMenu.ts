@@ -1,8 +1,8 @@
-import { Control, HStack } from "@ijstech/components";
-import { CustomSideMenuState } from "../global/index";
+import { HStack } from "@ijstech/components";
+import { BlockNoteEditor, CustomSideMenuState } from "../global/index";
 import { ScomEditorSideMenu, createParent } from "../components/index";
 
-export const addSideMenu = (editor: any, parent: Control) => {
+export const addSideMenu = (editor: BlockNoteEditor) => {
   let element: HStack;
   let sideMenu: ScomEditorSideMenu;
 
@@ -11,6 +11,7 @@ export const addSideMenu = (editor: any, parent: Control) => {
       element = await createParent({
         id: 'pnlSideMenu',
         border: {radius: '0px', style: 'none'},
+        padding: {top: 0, left: '0.125rem', right: '0.125rem', bottom: 0},
         background: {color: 'transparent'},
         boxShadow: 'none',
         visible: false
@@ -21,7 +22,7 @@ export const addSideMenu = (editor: any, parent: Control) => {
         editor: editor
       })
       element.appendChild(sideMenu);
-      parent.appendChild(element);
+      editor.domElement.parentElement.appendChild(element);
     }
 
     if (sideMenuState.show) {
@@ -30,7 +31,7 @@ export const addSideMenu = (editor: any, parent: Control) => {
       sideMenu.block = sideMenuState.block;
       element.visible = true;
     }
-    const { top: parentTop } = parent.getBoundingClientRect();
+    const { top: parentTop } = editor.domElement.parentElement.getBoundingClientRect();
     const top = sideMenuState.referencePos.top - parentTop;
     element.style.top = `${top + (sideMenuState.referencePos.height / 2) - sideMenu.offsetHeight / 2}px`;
     element.style.left = `${0}px`;

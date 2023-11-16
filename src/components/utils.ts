@@ -112,6 +112,16 @@ export function getExtraFields () {
       group: "Media",
       icon: { name: 'image' },
       hint: "Insert an image",
+    },
+    'Image Widget': {
+      group: "Media",
+      icon: { name: 'image' },
+      hint: "Insert an image",
+    },
+    'Video': {
+      group: "Media",
+      icon: {name: 'video'},
+      hint: "Insert a video",
     }
   };
   return extraFields;
@@ -194,7 +204,6 @@ export const getModalContainer = () => {
   return span;
 }
 
-
 const textAlignmentToPlacement = (textAlignment: string) => {
   switch (textAlignment) {
     case "left":
@@ -217,3 +226,6 @@ export const getPlacement = (block: any) => {
   }
   return placement;
 }
+
+export const CustomBlockTypes = ['video', 'imageWidget'];
+export const MediaBlockTypes = ['video', 'image', 'imageWidget'];

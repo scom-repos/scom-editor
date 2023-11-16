@@ -37,3 +37,4 @@ export type CustomSlashMenuState = {
 }
 
 export * from './helper';
+export * from './coreType';

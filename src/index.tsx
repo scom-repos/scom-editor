@@ -7,11 +7,22 @@ import {
   RequireJS,
   application,
   IDataSchema,
-  IUISchema
+  IUISchema,
+  Styles
 } from '@ijstech/components';
-import { addSlashMenu, addFormattingToolbar, addSideMenu, addHyperlinkToolbar, addImageToolbar } from './blocks/index';
+import {
+  addSlashMenu,
+  addFormattingToolbar,
+  addSideMenu,
+  addHyperlinkToolbar,
+  addImageToolbar,
+  addVideoBlock,
+  addImageBlock
+} from './blocks/index';
+import { Block } from './global';
+const Theme = Styles.Theme.ThemeVars;
 
-type onChangedCallback = (blocks: any[]) => void;
+type onChangedCallback = (value: string) => void;
 
 interface ScomEditorElement extends ControlElement {
   placeholder?: string;
@@ -94,22 +105,36 @@ export class ScomEditor extends Module {
 
   private renderEditor() {
     if (!this._blocknoteObj) return;
-    const self = this;
+    const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
+    const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
+    const customSchema = {
+      ...this._blocknoteObj.defaultBlockSchema,
+      video: VideoBlock,
+      imageWidget: ImageBlock
+    };
+    
     this._editor = new this._blocknoteObj.BlockNoteEditor({
-      parentElement: self.pnlEditor,
+      parentElement: this.pnlEditor,
+      blockSchema: customSchema,
+      slashMenuItems: [
+        ...this._blocknoteObj.getDefaultSlashMenuItems(),
+        VideoSlashItem,
+        ImageSlashItem
+      ],
       onEditorContentChange: async (editor: any) => {
-        const markdownContent = await editor.blocksToMarkdown(editor.topLevelBlocks);
-        this._data.value = markdownContent;
-        if (this.onChanged) this.onChanged(markdownContent);
+        // TODO: check missing node
+        this.value = await this.blocksToMarkdown(editor);
+        if (this.onChanged) this.onChanged(this.value);
       },
       domAttributes: {
         editor: {
-          class: 'scom-editor',
-        },
-      },
+          class: 'scom-editor'
+        }
+      }
     });
-    if (this.value) this.setBlocks(this.value);
-    addSideMenu(this._editor, this.pnlEditor);
+    console.log('_blocknoteObj', this._blocknoteObj)
+    if (this.value) this.markdownToBlocks(this.value);
+    addSideMenu(this._editor);
     addFormattingToolbar(this._editor);
     addSlashMenu(this._editor);
     addHyperlinkToolbar(this._editor);
@@ -142,14 +167,19 @@ export class ScomEditor extends Module {
 
   private async setData(data: IEditor) {
     this._data = data;
-    await this.setBlocks(data.value || '');
+    await this.markdownToBlocks(data.value || '');
   }
 
-  private async setBlocks(markdown: string) {
+  private async markdownToBlocks(markdown: string) {
     if (!this._editor) return;
-    const blocks: any[] = await this._editor.markdownToBlocks(markdown);
-    this._editor.replaceBlocks(this._editor.topLevelBlocks, blocks); // TODO: check updating
+    const blocks: Block[] = await this._editor.markdownToBlocks(markdown);
+    this._editor.replaceBlocks(JSON.parse(JSON.stringify(this._editor.topLevelBlocks)), JSON.parse(JSON.stringify(blocks)));
   };
+
+  private async blocksToMarkdown(editor: any) {
+    const markdownContent = await editor.blocksToMarkdown(JSON.parse(JSON.stringify(editor.topLevelBlocks)));
+    return markdownContent;
+  }
 
   private updateTag(type: 'light' | 'dark', value: any) {
     this.tag[type] = this.tag[type] ?? {};
@@ -213,49 +243,7 @@ export class ScomEditor extends Module {
   }
 
   private _getActions() {
-    const { dataSchema, jsonUISchema } = this.getThemeSchema();
     const actions = [
-      {
-        name: 'Edit',
-        icon: 'edit',
-        command: (builder: any, userInputData: any) => {
-          let _oldData = {};
-          return {
-            execute: async () => {
-              _oldData = {...this._data};
-              this.setData(userInputData);
-              if (builder?.setData) builder.setData(userInputData);
-            },
-            undo: async () => {
-              this._data = {..._oldData};
-              this.setData(this._data);
-              if (builder?.setData) builder.setData(this._data);
-            },
-            redo: () => {},
-          };
-        },
-        userInputDataSchema: dataSchema,
-        userInputUISchema: jsonUISchema
-      },
-      {
-        name: 'Edit',
-        icon: 'edit',
-        command: (builder: any, userInputData: any) => {
-          let oldData: IEditor = {};
-          return {
-            execute: () => {
-              oldData = JSON.parse(JSON.stringify(this._data));
-              if (builder?.setData) builder.setData(userInputData);
-              this.setData(userInputData);
-            },
-            undo: () => {
-              if (builder?.setData) builder.setData(oldData);
-              this.setData(oldData);
-            },
-            redo: () => { }
-          }
-        }
-      },
       {
         name: 'Widget Settings',
         icon: 'edit',
@@ -351,45 +339,6 @@ export class ScomEditor extends Module {
     }
   }
 
-  private getThemeSchema() {
-    const dataSchema: IDataSchema = {
-      type: 'object',
-      properties: {
-        backgroundColor: {
-          title: 'Background color',
-          type: 'string',
-          format: 'color',
-        },
-        textColor: {
-          title: 'Text color',
-          type: 'string',
-          format: 'color',
-        }
-      }
-    };
-
-    const jsonUISchema: IUISchema = {
-      type: 'VerticalLayout',
-      elements: [
-        {
-          type: 'HorizontalLayout',
-          elements: [
-            {
-              type: 'Control',
-              scope: '#/properties/backgroundColor',
-            },
-            {
-              type: 'Control',
-              scope: '#/properties/textColor',
-            },
-          ]
-        }
-      ]
-    };
-
-    return { dataSchema, jsonUISchema };
-  }
-
   async init() {
     super.init();
     this.onChanged = this.getAttribute('onChanged', true) || this.onChanged;
@@ -406,8 +355,8 @@ export class ScomEditor extends Module {
     return (
       <i-panel
         id="pnlEditor"
-        background={{ color: 'inherit' }}
-        font={{ color: 'inherit' }}
+        background={{ color: Theme.background.main }}
+        font={{ color: Theme.text.primary }}
         border={{ radius: 'inherit' }}
       ></i-panel>
     );
