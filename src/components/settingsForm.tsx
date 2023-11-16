@@ -7,6 +7,7 @@ import {
   Form,
   Panel
 } from '@ijstech/components';
+import { Block } from '../global/index';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSettingsFormElement extends ControlElement {
@@ -15,8 +16,8 @@ interface ScomEditorSettingsFormElement extends ControlElement {
 
 export interface ISettingsForm {
   action: any;
-  props: Record<string, string>;
-  onConfirm: (data: any) => void;
+  block: Block;
+  onConfirm: (block: Block, props: any) => void;
 }
 
 declare global {
@@ -57,14 +58,12 @@ export class ScomEditorSettingsForm extends Module {
   }
 
   private async renderForm() {
-    const { action, props, onConfirm } = this.data;
+    const { action, onConfirm, block } = this.data;
     this.pnlForm.visible = false;
     this.actionForm.visible = false;
     this.pnlForm.clearInnerHTML();
     if (action.customUI) {
-      let element = await action.customUI.render({ ...props }, (result: boolean, data: any) => {
-        if (onConfirm && result) onConfirm(data);
-      });
+      let element = await action.customUI.render({ ...block.props }, this.onSave.bind(this));
       this.pnlForm.append(element);
       this.pnlForm.visible = true;
     } else {
@@ -82,7 +81,7 @@ export class ScomEditorSettingsForm extends Module {
           hide: false,
           onClick: async () => {
             const data = await this.actionForm.getFormData();
-            if (onConfirm) onConfirm(data);
+            if (onConfirm) onConfirm(block, data);
           }
         },
         customControls: action.customControls,
@@ -94,9 +93,14 @@ export class ScomEditorSettingsForm extends Module {
       };
       this.actionForm.renderForm();
       this.actionForm.clearFormData();
-      this.actionForm.setFormData({ ...props });
+      this.actionForm.setFormData({ ...block.props });
       this.actionForm.visible = true;
     }
+  }
+
+  private onSave(result: boolean, data: any) {
+    const { onConfirm, block } = this.data;
+    if (onConfirm && result) onConfirm(block, {...data});
   }
 
   init() {

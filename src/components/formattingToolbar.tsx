@@ -8,7 +8,7 @@ import {
   Modal
 } from '@ijstech/components';
 import { Block, BlockNoteEditor, TextAlignmentType, formatKeyboardShortcut } from '../global/index';
-import { IBlockTypeItem, MediaBlockTypes, createButton } from './utils';
+import { IBlockTypeItem, MediaBlockTypes, createButton, getModalContainer } from './utils';
 import { ScomEditorColor } from './colorButton';
 import { ColorType } from './colorPicker';
 import { buttonHoverStyle } from './index.css';
@@ -124,6 +124,9 @@ export class ScomEditorFormattingToolbar extends Module {
         isSelected: false,
         visible: this.isMediaBlock,
         onClick: () => {
+          getModalContainer().appendChild(this.mdReplace);
+          this.mdReplace.position = 'fixed';
+          this.mdReplace.linkTo = this;
           this.mdReplace.visible = true;
         }
       },
@@ -297,6 +300,12 @@ export class ScomEditorFormattingToolbar extends Module {
     }
   }
 
+  private handleClose() {
+    const container = getModalContainer();
+    if (container.contains(this.mdReplace))
+      container.removeChild(this.mdReplace);
+  }
+
   init() {
     super.init();
     const editor = this.getAttribute('editor', true);
@@ -318,11 +327,11 @@ export class ScomEditorFormattingToolbar extends Module {
           maxWidth={'100%'}
           background={{color: Theme.background.main}}
           boxShadow={Theme.shadows[1]}
-          visible={false}
           padding={{top: '0.125rem', bottom: '0.125rem', left: '0.125rem', right: '0.125rem'}}
           border={{radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light}}
+          onClose={this.handleClose}
         >
-          <i-scom-editor-image-toolbar id="imgToolbar" />
+          <i-scom-editor-image-toolbar id="imgToolbar" overflow={'hidden'}/>
         </i-modal>
       </i-panel>
     )

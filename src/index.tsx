@@ -123,8 +123,8 @@ export class ScomEditor extends Module {
       ],
       onEditorContentChange: async (editor: any) => {
         // TODO: check missing node
-        this.value = await this.blocksToMarkdown(editor);
-        if (this.onChanged) this.onChanged(this.value);
+        // this.value = await this.blocksToMarkdown(editor);
+        // if (this.onChanged) this.onChanged(this.value);
       },
       domAttributes: {
         editor: {

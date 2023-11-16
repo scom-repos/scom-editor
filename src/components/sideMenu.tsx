@@ -124,10 +124,10 @@ export class ScomEditorSideMenu extends Module {
         if (editAction) {
           formConfig = {
             action: {...editAction},
-            props: {...this.block.props},
-            onConfirm: (data: any) => {
-              if (data.url !== this.block.props.url) {
-                this.updateBlock({ url: data.url });
+            block: JSON.parse(JSON.stringify(this.block)),
+            onConfirm: (block: Block, data: any) => {
+              if (data.url !== block.props.url) {
+                this.updateBlock(block, { url: data.url });
               }
               this.actionForm.closeModal();
             }
@@ -140,16 +140,11 @@ export class ScomEditorSideMenu extends Module {
         if (editAction) {
           formConfig = {
             action: {...editAction},
-            props: {...this.block.props},
-            onConfirm: (data: any) => {
-              this.updateBlock({
-                url: data.url,
-                cid: data?.cid || '',
-                link: data?.link || '',
-                altText: data?.altText || '',
-                keyword: data?.keyword || '',
-                photoId: data?.photoId || ''
-              });
+            block: JSON.parse(JSON.stringify(this.block)),
+            onConfirm: (block: Block, data: any) => {
+              const newProps = {...data};
+              const { url, cid, link, altText, keyword, photoId, backgroundColor } = newProps;
+              this.updateBlock(block, { url, cid, link, altText, keyword, photoId, backgroundColor });
               this.actionForm.closeModal();
             }
           }
@@ -185,9 +180,8 @@ export class ScomEditorSideMenu extends Module {
     });
   }
 
-  private updateBlock (props: Record<string, string>) {
-    const newProps = { ...this.block.props, ...props };
-    this.editor.updateBlock(this.block, { props: newProps });
+  private updateBlock (block: Block, props: Record<string, string>) {
+    this.editor.updateBlock(block, { props });
   }
 
   init() {

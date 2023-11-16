@@ -533,13 +533,14 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
 /// <amd-module name="@scom/scom-editor/components/settingsForm.tsx" />
 declare module "@scom/scom-editor/components/settingsForm.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
+    import { Block } from "@scom/scom-editor/global/index.ts";
     interface ScomEditorSettingsFormElement extends ControlElement {
         data?: ISettingsForm;
     }
     export interface ISettingsForm {
         action: any;
-        props: Record<string, string>;
-        onConfirm: (data: any) => void;
+        block: Block;
+        onConfirm: (block: Block, props: any) => void;
     }
     global {
         namespace JSX {
@@ -558,6 +559,7 @@ declare module "@scom/scom-editor/components/settingsForm.tsx" {
         set data(value: ISettingsForm);
         setData(value: ISettingsForm): void;
         private renderForm;
+        private onSave;
         init(): void;
         render(): any;
     }
@@ -744,6 +746,7 @@ declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
         private renderUI;
         private updateBlock;
         private renderList;
+        private handleClose;
         init(): void;
         render(): any;
     }

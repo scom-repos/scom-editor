@@ -38,6 +38,7 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
     if (formattingToolbarState.show) {
       const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
       if (blockEl) modal.linkTo = blockEl;
+      modal.refresh();
       modal.visible = true;
     }
   });

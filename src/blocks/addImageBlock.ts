@@ -10,7 +10,7 @@ export function addImageBlock(blocknote: any) {
       url: {default: ''},
       cid: {default: ''},
       link: {default: ''},
-      altText: {default: ''},
+      altText: {default: '',},
       keyword: {default: ''},
       photoId: {default: ''},
       width: {default: 512},
@@ -19,14 +19,8 @@ export function addImageBlock(blocknote: any) {
     containsInlineContent: false,
     render: (block: Block, editor: BlockNoteEditor) => {
       const wrapper = new Panel();
-      const image = new ScomImage(wrapper, {
-        url: block.props.url,
-        cid: block.props?.cid || '',
-        link: block.props?.link || '',
-        altText: block.props?.altText || '',
-        keyword: block.props?.keyword || '',
-        photoId: block.props?.photoId || ''
-      });
+      const { url, cid, link, altText, keyword, photoId, backgroundColor } = JSON.parse(JSON.stringify(block.props))
+      const image = new ScomImage(wrapper, { url, cid, link, altText, keyword, photoId, backgroundColor });
       wrapper.appendChild(image);
       return {
         dom: wrapper
