@@ -125,17 +125,21 @@ export class ScomEditorToolbarDropdown extends Module {
   }
 
   private showModal() {
-    this.mdDropdown.refresh();
+    getModalContainer().appendChild(this.mdDropdown);
     this.mdDropdown.parent = this.btnSelected;
     this.mdDropdown.position = 'fixed';
+    this.mdDropdown.refresh();
     this.mdDropdown.visible = true;
+  }
+
+  private handleClosed() {
+    getModalContainer().removeChild(this.mdDropdown);
   }
 
   init() {
     super.init();
     const items = this.getAttribute('items', true);
     this.setData({ items });
-    getModalContainer().appendChild(this.mdDropdown);
   }
 
   render() {
@@ -162,6 +166,7 @@ export class ScomEditorToolbarDropdown extends Module {
           boxShadow={Theme.shadows[1]}
           margin={{top: '1rem'}}
           showBackdrop={false}
+          onClose={this.handleClosed}
         >
           <i-vstack
             id="pnlOptions"

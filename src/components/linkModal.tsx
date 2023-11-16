@@ -77,6 +77,7 @@ export class ScomEditorMdLink extends Module {
   }
 
   showModal() {
+    getModalContainer().appendChild(this.mdLink);
     this.mdLink.position = 'fixed';
     if (this.parent) this.mdLink.linkTo = this.parent;
     this.mdLink.refresh();
@@ -94,13 +95,16 @@ export class ScomEditorMdLink extends Module {
     }
   }
 
+  private handleClosed() {
+    getModalContainer().removeChild(this.mdLink);
+  }
+
   init() {
     super.init();
     this.onInputChanged = this.getAttribute('onInputChanged', true) || this.onInputChanged;
     const text = this.getAttribute('text', true);
     const url = this.getAttribute('url', true);
     this.setData({text, url});
-    getModalContainer().appendChild(this.mdLink);
   }
 
   render() {
@@ -113,7 +117,9 @@ export class ScomEditorMdLink extends Module {
         border={{radius: '0.375rem'}}
         padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
         boxShadow={Theme.shadows[1]}
+        margin={{top: '1rem'}}
         showBackdrop={false}
+        onClose={this.handleClosed}
       >
         <i-vstack
           id="pnlLink"

@@ -46,7 +46,7 @@ define("@scom/scom-editor/global/index.ts", ["require", "exports", "@scom/scom-e
 define("@scom/scom-editor/components/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.customModalStyle = exports.buttonHoverStyle = void 0;
+    exports.buttonHoverStyle = void 0;
     const Theme = components_1.Styles.Theme.ThemeVars;
     exports.buttonHoverStyle = components_1.Styles.style({
         $nest: {
@@ -55,20 +55,11 @@ define("@scom/scom-editor/components/index.css.ts", ["require", "exports", "@ijs
             }
         }
     });
-    exports.customModalStyle = components_1.Styles.style({
-        $nest: {
-            '.modal-wrapper': {
-                top: '0px !important',
-                left: '0px !important',
-                overflow: 'unset'
-            }
-        }
-    });
 });
 define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.css.ts"], function (require, exports, components_2, index_1, index_css_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getPlacement = exports.getModalContainer = exports.setShown = exports.createModal = exports.createParent = exports.createButton = exports.getExtraFields = exports.defaultBlockTypeItems = void 0;
+    exports.getPlacement = exports.getModalContainer = exports.createModal = exports.createParent = exports.createButton = exports.getExtraFields = exports.defaultBlockTypeItems = void 0;
     const Theme = components_2.Styles.Theme.ThemeVars;
     exports.defaultBlockTypeItems = [
         {
@@ -215,22 +206,14 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
             border: { radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light },
             showBackdrop: false,
             visible: false,
-            class: index_css_1.customModalStyle,
+            minWidth: 0,
             ...props
         });
         return elm;
     };
     exports.createModal = createModal;
-    const setShown = (parent, element) => {
-        const wrappers = parent.querySelectorAll('.wrapper');
-        for (let wrapper of wrappers) {
-            const el = wrapper;
-            el.visible = el.id === element.id;
-        }
-    };
-    exports.setShown = setShown;
     const getModalContainer = () => {
-        let span = document.getElementById("modal-container");
+        let span = document.getElementById("toolbar-container");
         if (!span) {
             span = document.createElement('span');
             span.id = "toolbar-container";
@@ -242,23 +225,24 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
     const textAlignmentToPlacement = (textAlignment) => {
         switch (textAlignment) {
             case "left":
-                return "topLeft";
+                return "bottomLeft";
             case "center":
-                return "top";
+                return "bottom";
             case "right":
-                return "topRight";
+                return "bottomRight";
             default:
-                return "top";
+                return "bottom";
         }
     };
     const getPlacement = (block) => {
         let placement = '';
         if (!("textAlignment" in block.props)) {
-            placement = 'top';
+            placement = 'bottom';
         }
         else {
             placement = textAlignmentToPlacement(block.props.textAlignment);
         }
+        return placement;
     };
     exports.getPlacement = getPlacement;
 });
@@ -312,14 +296,15 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
             return this._data;
         }
         showModal(popupPlacement) {
+            (0, utils_1.getModalContainer)().appendChild(this.mdColorPicker);
             this.mdColorPicker.position = 'fixed';
             if (this.parent)
                 this.mdColorPicker.linkTo = this.parent;
             if (popupPlacement)
                 this.mdColorPicker.popupPlacement = popupPlacement;
-            // TODO: fix height
-            this.mdColorPicker.refresh();
             this.mdColorPicker.visible = true;
+            const { top, height } = this.getBoundingClientRect();
+            this.pnlColors.maxHeight = `calc(100vh - ${top + height + 32}px`;
         }
         closeModal() {
             this.mdColorPicker.visible = false;
@@ -364,6 +349,7 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
         handleClose() {
             if (this.onClosed)
                 this.onClosed();
+            (0, utils_1.getModalContainer)().removeChild(this.mdColorPicker);
         }
         init() {
             super.init();
@@ -372,11 +358,10 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
             const textColor = this.getAttribute('textColor', true, 'default');
             const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
             this.setData({ textColor, backgroundColor });
-            (0, utils_1.getModalContainer)().appendChild(this.mdColorPicker);
         }
         render() {
             return (this.$render("i-modal", { id: "mdColorPicker", popupPlacement: "rightTop", minWidth: 200, maxWidth: 300, border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false, onClose: this.handleClose },
-                this.$render("i-vstack", { id: "pnlColors", maxHeight: '37.488rem', overflow: { y: 'auto' } })));
+                this.$render("i-vstack", { id: "pnlColors", overflow: { y: 'auto' } })));
         }
     };
     ScomEditorColorPicker = __decorate([
@@ -516,21 +501,24 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
                 this.btnSelected.icon.name = this.selectedItem.icon.name;
         }
         showModal() {
-            this.mdDropdown.refresh();
+            (0, utils_2.getModalContainer)().appendChild(this.mdDropdown);
             this.mdDropdown.parent = this.btnSelected;
             this.mdDropdown.position = 'fixed';
+            this.mdDropdown.refresh();
             this.mdDropdown.visible = true;
+        }
+        handleClosed() {
+            (0, utils_2.getModalContainer)().removeChild(this.mdDropdown);
         }
         init() {
             super.init();
             const items = this.getAttribute('items', true);
             this.setData({ items });
-            (0, utils_2.getModalContainer)().appendChild(this.mdDropdown);
         }
         render() {
             return (this.$render("i-panel", { width: 'auto', height: '100%', display: 'inline-block' },
                 this.$render("i-button", { id: "btnSelected", height: '100%', width: 'auto', minWidth: '1rem', border: { radius: '0px' }, background: { color: 'transparent' }, font: { size: '0.75rem', color: Theme.text.primary }, boxShadow: 'none', icon: { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, rightIcon: { width: '0.5rem', height: '0.5rem', fill: Theme.text.primary, name: 'angle-down' }, onClick: () => this.showModal() }),
-                this.$render("i-modal", { id: "mdDropdown", popupPlacement: "bottom", minWidth: 200, maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], margin: { top: '1rem' }, showBackdrop: false },
+                this.$render("i-modal", { id: "mdDropdown", popupPlacement: "bottom", minWidth: 200, maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], margin: { top: '1rem' }, showBackdrop: false, onClose: this.handleClosed },
                     this.$render("i-vstack", { id: "pnlOptions", maxHeight: '34.788rem', overflow: { y: 'auto' } }))));
         }
     };
@@ -658,6 +646,7 @@ define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ij
             return this._data;
         }
         showModal() {
+            (0, utils_4.getModalContainer)().appendChild(this.mdLink);
             this.mdLink.position = 'fixed';
             if (this.parent)
                 this.mdLink.linkTo = this.parent;
@@ -674,16 +663,18 @@ define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ij
                     this.onInputChanged(target, event);
             }
         }
+        handleClosed() {
+            (0, utils_4.getModalContainer)().removeChild(this.mdLink);
+        }
         init() {
             super.init();
             this.onInputChanged = this.getAttribute('onInputChanged', true) || this.onInputChanged;
             const text = this.getAttribute('text', true);
             const url = this.getAttribute('url', true);
             this.setData({ text, url });
-            (0, utils_4.getModalContainer)().appendChild(this.mdLink);
         }
         render() {
-            return (this.$render("i-modal", { id: "mdLink", popupPlacement: "bottom", minWidth: '18.75rem', maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false },
+            return (this.$render("i-modal", { id: "mdLink", popupPlacement: "bottom", minWidth: '18.75rem', maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], margin: { top: '1rem' }, showBackdrop: false, onClose: this.handleClosed },
                 this.$render("i-vstack", { id: "pnlLink", maxHeight: '37.488rem', overflow: { y: 'auto' }, gap: '0.25rem' },
                     this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.5rem", border: { radius: '0.25rem' }, background: { color: Theme.background.modal } },
                         this.$render("i-icon", { name: "paperclip", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary, stack: { basis: '1.875rem', shrink: '0' } }),
@@ -840,8 +831,7 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
             }
             else {
                 this.mdPicker.parent = this.mdMenu;
-                this.mdPicker.refresh();
-                this.mdPicker.showModal();
+                this.mdPicker.showModal('rightTop');
                 if (this.freezeMenu)
                     this.freezeMenu();
             }
@@ -995,6 +985,12 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
         set selectedIndex(value) {
             this._data.selectedIndex = value ?? 0;
         }
+        get referencePos() {
+            return this._data.referencePos;
+        }
+        set referencePos(value) {
+            this._data.referencePos = value;
+        }
         get groupData() {
             const result = {};
             const fieldData = (0, utils_5.getExtraFields)();
@@ -1012,6 +1008,10 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
         setData(value) {
             this._data = value;
             this.renderUI();
+        }
+        updatePanel() {
+            const { top = 0, height = 0 } = this.referencePos || {};
+            this.pnlSlash.maxHeight = `calc(100vh - ${top + height}px)`;
         }
         renderUI() {
             this.pnlSlash.clearInnerHTML();
@@ -1048,18 +1048,20 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
                 }
                 this.pnlSlash.appendChild(groupEl);
             }
+            this.updatePanel();
         }
         init() {
             super.init();
             this.onItemClicked = this.getAttribute('onItemClicked', true) || this.onItemClicked;
             const items = this.getAttribute('items', true);
             const selectedIndex = this.getAttribute('selectedIndex', true);
+            const referencePos = this.getAttribute('referencePos', true);
             if (items)
-                this.setData({ items, selectedIndex });
+                this.setData({ items, selectedIndex, referencePos });
         }
         render() {
             return (this.$render("i-panel", null,
-                this.$render("i-vstack", { id: "pnlSlash", minWidth: 300, maxHeight: '28.125rem', overflow: { y: 'auto' } })));
+                this.$render("i-vstack", { id: "pnlSlash", minWidth: 300, maxWidth: '100%', overflow: { y: 'auto' } })));
         }
     };
     ScomEditorSlashMenu = __decorate([
@@ -1351,7 +1353,6 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                             visible: !this.isImageBlock,
                             setLink: (text, url) => {
                                 this.setLink(editor, text, url);
-                                element.visible = false;
                             },
                             class: index_css_2.buttonHoverStyle
                         });
@@ -1447,33 +1448,41 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addFormattingToolbar = void 0;
-    const addFormattingToolbar = async (editor, parent) => {
+    const addFormattingToolbar = async (editor) => {
         let modal;
         let formattingToolbar;
         editor.formattingToolbar.onUpdate(async (formattingToolbarState) => {
+            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+            const block = selectedBlocks[0];
+            const blockID = block?.id;
             if (!modal) {
                 modal = await (0, index_3.createModal)({
-                    id: 'pnlFormattingToolbar'
+                    id: 'pnlFormattingToolbar',
+                    popupPlacement: (0, index_3.getPlacement)(block),
+                    zIndex: 3000
                 });
-                parent.append(modal);
+                modal.linkTo = editor.domElement;
+                modal.position = "fixed";
+                (0, index_3.getModalContainer)().appendChild(modal);
             }
-            if (!formattingToolbar) {
+            if (formattingToolbar) {
+                formattingToolbar.onRefresh();
+            }
+            else {
                 formattingToolbar = await index_3.ScomEditorFormattingToolbar.create({
                     editor: editor
                 });
                 modal.item = formattingToolbar;
             }
-            else {
-                formattingToolbar.onRefresh();
-            }
-            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
             const isImageBlock = selectedBlocks.length === 1 &&
                 selectedBlocks[0].type === "image";
-            const top = formattingToolbarState.referencePos.top - (formattingToolbarState.referencePos.height / 2);
-            modal.style.top = isImageBlock ? `${formattingToolbarState.referencePos.top}px` : `${top}px`;
-            modal.style.left = `${formattingToolbarState.referencePos.width / 2}px`;
-            modal.refresh();
-            modal.visible = true; // TODO: formattingToolbarState.show;
+            modal.popupPlacement = isImageBlock ? 'top' : (0, index_3.getPlacement)(block);
+            if (formattingToolbarState.show) {
+                const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+                if (blockEl)
+                    modal.linkTo = blockEl;
+                modal.visible = true;
+            }
         });
     };
     exports.addFormattingToolbar = addFormattingToolbar;
@@ -1521,34 +1530,49 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSlashMenu = void 0;
-    const addSlashMenu = (editor, parent) => {
+    const addSlashMenu = (editor) => {
         let modal;
-        async function updateItems(items, onClick, selected) {
-            const slashMenu = await index_5.ScomEditorSlashMenu.create({
+        let menuElm;
+        async function updateItems(items, onClick, selected, referencePos) {
+            menuElm = await index_5.ScomEditorSlashMenu.create({
                 items,
                 selectedIndex: selected,
+                referencePos,
                 onItemClicked: (item) => {
                     onClick(item);
                     modal.visible = false;
                 }
             });
-            modal.item = slashMenu;
+            modal.item = menuElm;
         }
         editor.slashMenu.onUpdate(async (slashMenuState) => {
+            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+            const block = selectedBlocks[0];
+            const blockID = block?.id;
             if (!modal) {
                 modal = await (0, index_5.createModal)({
                     id: 'pnlSlashMenu',
-                    popupPlacement: "center",
-                    padding: { left: 0, top: 0, right: 0, bottom: 0 }
+                    popupPlacement: 'bottomLeft',
+                    padding: { left: 0, top: 0, right: 0, bottom: 0 },
+                    zIndex: 3000
                 });
-                parent.appendChild(modal);
+                modal.linkTo = editor.domElement;
+                modal.position = "fixed";
+                (0, index_5.getModalContainer)().appendChild(modal);
             }
             if (slashMenuState.show) {
-                updateItems(slashMenuState.filteredItems, editor.slashMenu.itemCallback, slashMenuState.keyboardHoveredItemIndex);
-                modal.visible = true;
+                updateItems(slashMenuState.filteredItems, editor.slashMenu.itemCallback, slashMenuState.keyboardHoveredItemIndex, slashMenuState.referencePos);
+                if (blockID) {
+                    const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+                    if (blockEl) {
+                        modal.linkTo = blockEl;
+                        modal.visible = true;
+                    }
+                }
+                else {
+                    modal.visible = false;
+                }
             }
-            modal.style.top = `${slashMenuState.referencePos.top}px`;
-            modal.style.left = '3rem';
         });
     };
     exports.addSlashMenu = addSlashMenu;
@@ -1558,7 +1582,7 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addHyperlinkToolbar = void 0;
     const Theme = components_14.Styles.Theme.ThemeVars;
-    const getToolbarButtons = (editor, hyperlinkToolbarState, parent) => {
+    const getToolbarButtons = (editor, hyperlinkToolbarState, modal) => {
         const iconProps = { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary };
         const toolTipProps = { placement: 'bottom' };
         return [
@@ -1575,7 +1599,7 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
                         caption: 'Edit Link',
                         setLink: (text, url) => {
                             editor.hyperlinkToolbar.editHyperlink(url, text || editor.getSelectedText());
-                            parent.visible = false;
+                            modal.visible = false;
                         },
                         class: index_6.buttonHoverStyle
                     });
@@ -1594,20 +1618,33 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
                 tooltip: { ...toolTipProps, content: 'Remove link' },
                 onClick: () => {
                     editor.hyperlinkToolbar.deleteHyperlink();
-                    parent.visible = false;
+                    modal.visible = false;
                 }
             }
         ];
     };
-    const addHyperlinkToolbar = async (editor, parent) => {
+    const addHyperlinkToolbar = async (editor) => {
+        let modal;
         let element;
         let buttonList = [];
         editor.hyperlinkToolbar.onUpdate(async (hyperlinkToolbarState) => {
-            if (!element) {
-                element = await (0, index_6.createParent)({
-                    id: 'pnlHyperlinkToolbar'
+            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+            const block = selectedBlocks[0];
+            const blockID = block?.id;
+            if (!modal) {
+                modal = await (0, index_6.createModal)({
+                    id: 'pnlHyperlinkToolbar',
+                    popupPlacement: 'top',
+                    minWidth: 0,
+                    zIndex: 3000
                 });
-                buttonList = getToolbarButtons(editor, hyperlinkToolbarState, element);
+                modal.linkTo = editor.domElement;
+                modal.position = "fixed";
+                (0, index_6.getModalContainer)().appendChild(modal);
+            }
+            if (!element) {
+                element = await components_14.Panel.create({ minWidth: 'max-content' });
+                buttonList = getToolbarButtons(editor, hyperlinkToolbarState, modal);
                 for (let props of buttonList) {
                     if (props.customControl) {
                         const elm = props.customControl(element);
@@ -1618,14 +1655,14 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
                         element.appendChild(btn);
                     }
                 }
-                element.visible = false;
-                parent.appendChild(element);
+                modal.item = element;
             }
             if (hyperlinkToolbarState.show) {
-                (0, index_6.setShown)(parent, element);
+                const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+                if (blockEl)
+                    modal.linkTo = blockEl;
+                modal.visible = true;
             }
-            element.style.top = `${hyperlinkToolbarState.referencePos.top - (element.offsetHeight - 10)}px`;
-            element.style.left = hyperlinkToolbarState.referencePos.x - element.offsetWidth + "px";
         });
     };
     exports.addHyperlinkToolbar = addHyperlinkToolbar;
@@ -1634,20 +1671,26 @@ define("@scom/scom-editor/blocks/addImageToolbar.tsx", ["require", "exports", "@
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addImageToolbar = void 0;
-    const addImageToolbar = (editor, parent) => {
+    const addImageToolbar = (editor) => {
         let modal;
         let imageToolbar;
         editor.imageToolbar.onUpdate(async (imageToolbarState) => {
+            const block = imageToolbarState.block;
+            const blockID = block?.id;
             if (!modal) {
                 modal = await (0, index_7.createModal)({
                     id: 'pnlImageToolbar',
-                    width: 500
+                    popupPlacement: 'center',
+                    zIndex: 3000,
+                    width: '31.25rem'
                 });
-                parent.append(modal);
+                modal.linkTo = editor.domElement;
+                modal.position = "fixed";
+                (0, index_7.getModalContainer)().appendChild(modal);
             }
             if (!imageToolbar) {
                 imageToolbar = await index_7.ScomEditorImageToolbar.create({
-                    block: imageToolbarState.block,
+                    block: block,
                     editor: editor,
                     width: '100%',
                     display: 'block',
@@ -1655,11 +1698,20 @@ define("@scom/scom-editor/blocks/addImageToolbar.tsx", ["require", "exports", "@
                 });
                 modal.item = imageToolbar;
             }
-            modal.refresh();
-            modal.visible = true;
-            modal.style.top = `${imageToolbarState.referencePos.top + imageToolbarState.referencePos.height}px`;
-            // modal.style.left = `${imageToolbarState.referencePos.left - (+modal.width / 2)}px`;
-            modal.style.left = `${(+parent.width - +modal.width) / 2}px`;
+            if (blockID) {
+                const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+                if (blockEl) {
+                    modal.linkTo = blockEl;
+                    modal.visible = true;
+                }
+            }
+            else {
+                modal.visible = false;
+            }
+            // modal.refresh();
+            // modal.visible = true;
+            // modal.style.top = `${imageToolbarState.referencePos.top + imageToolbarState.referencePos.height}px`;
+            // modal.style.left = `${(+parent.width - +modal.width) / 2}px`;
         });
     };
     exports.addImageToolbar = addImageToolbar;
@@ -1691,6 +1743,22 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
     let ScomEditor = class ScomEditor extends components_15.Module {
         constructor(parent, options) {
             super(parent, options);
+            this.tag = {};
+        }
+        get value() {
+            return this._data.value;
+        }
+        set value(data) {
+            this._data.value = data;
+        }
+        get placeholder() {
+            return this._data.placeholder;
+        }
+        set placeholder(data) {
+            this._data.placeholder = data;
+        }
+        getEditor() {
+            return this._editor;
         }
         static async create(options, parent) {
             let self = new this(parent, options);
@@ -1713,21 +1781,25 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             const self = this;
             this._editor = new this._blocknoteObj.BlockNoteEditor({
                 parentElement: self.pnlEditor,
-                onEditorContentChange: (editor) => {
+                onEditorContentChange: async (editor) => {
+                    const markdownContent = await editor.blocksToMarkdown(editor.topLevelBlocks);
+                    this._data.value = markdownContent;
                     if (this.onChanged)
-                        this.onChanged(editor.topLevelBlocks);
+                        this.onChanged(markdownContent);
                 },
                 domAttributes: {
                     editor: {
-                        class: "scom-editor"
-                    }
-                }
+                        class: 'scom-editor',
+                    },
+                },
             });
+            if (this.value)
+                this.setBlocks(this.value);
             (0, index_8.addSideMenu)(this._editor, this.pnlEditor);
-            (0, index_8.addFormattingToolbar)(this._editor, this.pnlEditor);
-            (0, index_8.addSlashMenu)(this._editor, this.pnlEditor);
-            (0, index_8.addHyperlinkToolbar)(this._editor, this.pnlEditor);
-            (0, index_8.addImageToolbar)(this._editor, this.pnlEditor);
+            (0, index_8.addFormattingToolbar)(this._editor);
+            (0, index_8.addSlashMenu)(this._editor);
+            (0, index_8.addHyperlinkToolbar)(this._editor);
+            (0, index_8.addImageToolbar)(this._editor);
         }
         addCSS(href, name) {
             const css = document.head.querySelector(`[name="${name}"]`);
@@ -1748,10 +1820,262 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 });
             });
         }
-        init() {
+        getData() {
+            return this._data;
+        }
+        async setData(data) {
+            this._data = data;
+            await this.setBlocks(data.value || '');
+        }
+        async setBlocks(markdown) {
+            if (!this._editor)
+                return;
+            const blocks = await this._editor.markdownToBlocks(markdown);
+            this._editor.replaceBlocks(this._editor.topLevelBlocks, blocks); // TODO: check updating
+        }
+        ;
+        updateTag(type, value) {
+            this.tag[type] = this.tag[type] ?? {};
+            for (let prop in value) {
+                if (value.hasOwnProperty(prop))
+                    this.tag[type][prop] = value[prop];
+            }
+        }
+        async setTag(value) {
+            const newValue = value || {};
+            for (let prop in newValue) {
+                if (newValue.hasOwnProperty(prop)) {
+                    if (prop === 'light' || prop === 'dark')
+                        this.updateTag(prop, newValue[prop]);
+                    else
+                        this.tag[prop] = newValue[prop];
+                }
+            }
+            this.updateTheme();
+        }
+        updateStyle(name, value) {
+            value ?
+                this.style.setProperty(name, value) :
+                this.style.removeProperty(name);
+        }
+        updateTheme() {
+            const themeVar = document.body.style.getPropertyValue('--theme') ?? 'dark';
+            this.updateStyle('--text-primary', this.tag[themeVar]?.fontColor);
+            this.updateStyle('--background-main', this.tag[themeVar]?.backgroundColor);
+        }
+        getTag() {
+            return this.tag;
+        }
+        getConfigurators() {
+            return [
+                {
+                    name: 'Builder Configurator',
+                    target: 'Builders',
+                    getActions: () => {
+                        return this._getActions();
+                    },
+                    getData: this.getData.bind(this),
+                    setData: this.setData.bind(this),
+                    getTag: this.getTag.bind(this),
+                    setTag: this.setTag.bind(this),
+                },
+                {
+                    name: 'Emdedder Configurator',
+                    target: 'Embedders',
+                    getData: this.getData.bind(this),
+                    setData: this.setData.bind(this),
+                    getTag: this.getTag.bind(this),
+                    setTag: this.setTag.bind(this),
+                },
+            ];
+        }
+        _getActions() {
+            const { dataSchema, jsonUISchema } = this.getThemeSchema();
+            const actions = [
+                {
+                    name: 'Edit',
+                    icon: 'edit',
+                    command: (builder, userInputData) => {
+                        let _oldData = {};
+                        return {
+                            execute: async () => {
+                                _oldData = { ...this._data };
+                                this.setData(userInputData);
+                                if (builder?.setData)
+                                    builder.setData(userInputData);
+                            },
+                            undo: async () => {
+                                this._data = { ..._oldData };
+                                this.setData(this._data);
+                                if (builder?.setData)
+                                    builder.setData(this._data);
+                            },
+                            redo: () => { },
+                        };
+                    },
+                    userInputDataSchema: dataSchema,
+                    userInputUISchema: jsonUISchema
+                },
+                {
+                    name: 'Edit',
+                    icon: 'edit',
+                    command: (builder, userInputData) => {
+                        let oldData = {};
+                        return {
+                            execute: () => {
+                                oldData = JSON.parse(JSON.stringify(this._data));
+                                if (builder?.setData)
+                                    builder.setData(userInputData);
+                                this.setData(userInputData);
+                            },
+                            undo: () => {
+                                if (builder?.setData)
+                                    builder.setData(oldData);
+                                this.setData(oldData);
+                            },
+                            redo: () => { }
+                        };
+                    }
+                },
+                {
+                    name: 'Widget Settings',
+                    icon: 'edit',
+                    ...this.getWidgetSchemas()
+                }
+            ];
+            return actions;
+        }
+        getWidgetSchemas() {
+            const propertiesSchema = {
+                type: 'object',
+                properties: {
+                    pt: {
+                        title: 'Top',
+                        type: 'number'
+                    },
+                    pb: {
+                        title: 'Bottom',
+                        type: 'number'
+                    },
+                    pl: {
+                        title: 'Left',
+                        type: 'number'
+                    },
+                    pr: {
+                        title: 'Right',
+                        type: 'number'
+                    },
+                    align: {
+                        type: 'string',
+                        title: 'Alignment',
+                        enum: [
+                            'left',
+                            'center',
+                            'right'
+                        ]
+                    },
+                    maxWidth: {
+                        type: 'number'
+                    },
+                    link: {
+                        title: 'URL',
+                        type: 'string'
+                    }
+                }
+            };
+            const themesSchema = {
+                type: 'VerticalLayout',
+                elements: [
+                    {
+                        type: 'HorizontalLayout',
+                        elements: [
+                            {
+                                type: 'Group',
+                                label: 'Padding (px)',
+                                elements: [
+                                    {
+                                        type: 'VerticalLayout',
+                                        elements: [
+                                            {
+                                                type: 'HorizontalLayout',
+                                                elements: [
+                                                    {
+                                                        type: 'Control',
+                                                        scope: '#/properties/pt',
+                                                    },
+                                                    {
+                                                        type: 'Control',
+                                                        scope: '#/properties/pb',
+                                                    },
+                                                    {
+                                                        type: 'Control',
+                                                        scope: '#/properties/pl',
+                                                    },
+                                                    {
+                                                        type: 'Control',
+                                                        scope: '#/properties/pr',
+                                                    },
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            };
+            return {
+                userInputDataSchema: propertiesSchema,
+                userInputUISchema: themesSchema
+            };
+        }
+        getThemeSchema() {
+            const dataSchema = {
+                type: 'object',
+                properties: {
+                    backgroundColor: {
+                        title: 'Background color',
+                        type: 'string',
+                        format: 'color',
+                    },
+                    textColor: {
+                        title: 'Text color',
+                        type: 'string',
+                        format: 'color',
+                    }
+                }
+            };
+            const jsonUISchema = {
+                type: 'VerticalLayout',
+                elements: [
+                    {
+                        type: 'HorizontalLayout',
+                        elements: [
+                            {
+                                type: 'Control',
+                                scope: '#/properties/backgroundColor',
+                            },
+                            {
+                                type: 'Control',
+                                scope: '#/properties/textColor',
+                            },
+                        ]
+                    }
+                ]
+            };
+            return { dataSchema, jsonUISchema };
+        }
+        async init() {
             super.init();
             this.onChanged = this.getAttribute('onChanged', true) || this.onChanged;
             this.initEditor();
+            const lazyLoad = this.getAttribute('lazyLoad', true, false);
+            if (!lazyLoad) {
+                const value = this.getAttribute('value', true);
+                const placeholder = this.getAttribute('placeholder', true);
+                await this.setData({ value, placeholder });
+            }
         }
         render() {
             return (this.$render("i-panel", { id: "pnlEditor", background: { color: 'inherit' }, font: { color: 'inherit' }, border: { radius: 'inherit' } }));

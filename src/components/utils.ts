@@ -1,6 +1,6 @@
 import { Button, Control, HStack, Styles, IconName, Modal } from "@ijstech/components";
 import { formatKeyboardShortcut } from "../global/index";
-import { buttonHoverStyle, customModalStyle } from "./index.css";
+import { buttonHoverStyle } from "./index.css";
 const Theme = Styles.Theme.ThemeVars;
 
 export type IToolbarDropdownItem = {
@@ -178,22 +178,14 @@ export const createModal = async (props = {}) => {
     border: {radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light},
     showBackdrop: false,
     visible: false,
-    class: customModalStyle,
+    minWidth: 0,
     ...props
   });
   return elm;
 }
 
-export const setShown = (parent: Control, element: Control) => {
-  const wrappers = parent.querySelectorAll('.wrapper');
-  for (let wrapper of wrappers) {
-    const el = wrapper as Control;
-    el.visible = el.id === element.id;
-  }
-}
-
 export const getModalContainer = () => {
-  let span = document.getElementById("modal-container");
+  let span = document.getElementById("toolbar-container");
   if (!span) {
     span = document.createElement('span');
     span.id = "toolbar-container";
@@ -206,23 +198,22 @@ export const getModalContainer = () => {
 const textAlignmentToPlacement = (textAlignment: string) => {
   switch (textAlignment) {
     case "left":
-      return "topLeft";
+      return "bottomLeft";
     case "center":
-      return "top";
+      return "bottom";
     case "right":
-      return "topRight";
+      return "bottomRight";
     default:
-      return "top";
+      return "bottom";
   }
 };
 
 export const getPlacement = (block: any) => {
   let placement = '';
   if (!("textAlignment" in block.props)) {
-    placement = 'top';
+    placement = 'bottom';
   } else {
-    placement = textAlignmentToPlacement(
-      block.props.textAlignment
-    )
+    placement = textAlignmentToPlacement(block.props.textAlignment);
   }
+  return placement;
 }

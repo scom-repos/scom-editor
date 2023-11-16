@@ -13,6 +13,7 @@ const Theme = Styles.Theme.ThemeVars;
 interface ScomEditorSlashMenuElement extends ControlElement {
   items?: any;
   selectedIndex?: number;
+  referencePos?: any;
   onItemClicked?: (item: any) => void,
 }
 
@@ -25,6 +26,7 @@ interface ISlashMenuItem {
 interface ISlashMenu {
   items?: ISlashMenuItem[];
   selectedIndex?: number;
+  referencePos?: any;
 }
 
 declare global {
@@ -68,6 +70,13 @@ export class ScomEditorSlashMenu extends Module {
     this._data.selectedIndex = value ?? 0;
   }
 
+  get referencePos() {
+    return this._data.referencePos;
+  }
+  set referencePos(value: any) {
+    this._data.referencePos = value;
+  }
+
   get groupData() {
     const result: {[key: string]: any[]} = {};
     const fieldData = getExtraFields();
@@ -85,6 +94,11 @@ export class ScomEditorSlashMenu extends Module {
   setData(value: ISlashMenu) {
     this._data = value;
     this.renderUI();
+  }
+
+  private updatePanel() {
+    const { top = 0, height = 0 } = this.referencePos || {};
+    this.pnlSlash.maxHeight = `calc(100vh - ${top + height}px)`;
   }
 
   private renderUI() {
@@ -146,6 +160,7 @@ export class ScomEditorSlashMenu extends Module {
       }
       this.pnlSlash.appendChild(groupEl);
     }
+    this.updatePanel();
   }
 
   init() {
@@ -153,13 +168,18 @@ export class ScomEditorSlashMenu extends Module {
     this.onItemClicked = this.getAttribute('onItemClicked', true) || this.onItemClicked;
     const items = this.getAttribute('items', true);
     const selectedIndex = this.getAttribute('selectedIndex', true);
-    if (items) this.setData({items, selectedIndex});
+    const referencePos = this.getAttribute('referencePos', true);
+    if (items) this.setData({items, selectedIndex, referencePos});
   }
 
   render() {
     return (
       <i-panel>
-        <i-vstack id="pnlSlash" minWidth={300} maxHeight={'28.125rem'} overflow={{y: 'auto'}}/>
+        <i-vstack
+          id="pnlSlash"
+          minWidth={300} maxWidth={'100%'}
+          overflow={{y: 'auto'}}
+        />
       </i-panel>
     )
   }

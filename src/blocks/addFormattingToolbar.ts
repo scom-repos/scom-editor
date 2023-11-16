@@ -1,38 +1,43 @@
-import { Control, Modal } from "@ijstech/components";
+import { Modal } from "@ijstech/components";
 import { CustomFormattingToolbarState } from '../global/index';
-import { ScomEditorFormattingToolbar, createModal } from '../components/index';
+import { ScomEditorFormattingToolbar, createModal, getModalContainer, getPlacement } from '../components/index';
 
-export const addFormattingToolbar = async (editor: any, parent: Control) => {
+export const addFormattingToolbar = async (editor: any) => {
   let modal: Modal;
   let formattingToolbar: ScomEditorFormattingToolbar;
 
   editor.formattingToolbar.onUpdate(async(formattingToolbarState: CustomFormattingToolbarState) => {
+    const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+    const block = selectedBlocks[0];
+    const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
-        id: 'pnlFormattingToolbar'
+        id: 'pnlFormattingToolbar',
+        popupPlacement: getPlacement(block),
+        zIndex: 3000
       })
-      parent.append(modal);
+      modal.linkTo = editor.domElement;
+      modal.position = "fixed";
+      getModalContainer().appendChild(modal);
     }
 
-    if (!formattingToolbar) {
+    if (formattingToolbar) {
+      formattingToolbar.onRefresh();
+    } else {
       formattingToolbar = await ScomEditorFormattingToolbar.create({
         editor: editor
       })
       modal.item = formattingToolbar;
-    } else {
-      formattingToolbar.onRefresh();
     }
-
-    const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
     const isImageBlock =
       selectedBlocks.length === 1 &&
       selectedBlocks[0].type === "image";
+    modal.popupPlacement = isImageBlock ? 'top' : getPlacement(block) as any;
 
-    const top = formattingToolbarState.referencePos.top - (formattingToolbarState.referencePos.height / 2);
-    modal.style.top = isImageBlock ? `${formattingToolbarState.referencePos.top}px` : `${top}px`;
-    modal.style.left = `${formattingToolbarState.referencePos.width / 2}px`;
-
-    modal.refresh();
-    modal.visible = true; // TODO: formattingToolbarState.show;
+    if (formattingToolbarState.show) {
+      const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+      if (blockEl) modal.linkTo = blockEl;
+      modal.visible = true;
+    }
   });
 };

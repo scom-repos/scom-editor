@@ -100,8 +100,7 @@ export class ScomEditorDragHandle extends Module {
       if (this.onDeleted) this.onDeleted()
     } else {
       this.mdPicker.parent = this.mdMenu;
-      this.mdPicker.refresh();
-      this.mdPicker.showModal();
+      this.mdPicker.showModal('rightTop');
       if (this.freezeMenu) this.freezeMenu();
     }
   }
