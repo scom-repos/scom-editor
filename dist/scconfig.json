@@ -3,6 +3,11 @@
     "type": "widget",
     "version": "0.1.0",
     "dependencies": [
-        "@ijstech/components"
+        "@ijstech/components",
+        "@scom/scom-network-list",
+        "@scom/scom-multicall",
+        "@scom/scom-dapp-container",
+        "@scom/scom-video",
+        "@scom/scom-image"
     ]
 }

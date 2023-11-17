@@ -1,7 +1,8 @@
 import { Modal } from "@ijstech/components";
 import { ScomEditorImageToolbar, createModal, getModalContainer } from "../components/index";
+import { BlockNoteEditor } from "../global/index";
 
-export const addImageToolbar = (editor: any) => {
+export const addImageToolbar = (editor: BlockNoteEditor) => {
   let modal: Modal;
   let imageToolbar: ScomEditorImageToolbar;
 
@@ -11,11 +12,10 @@ export const addImageToolbar = (editor: any) => {
     if (!modal) {
       modal = await createModal({
         id: 'pnlImageToolbar',
-        popupPlacement: 'center',
-        zIndex: 3000,
+        popupPlacement: 'bottom',
+        zIndex: 2000,
         width: '31.25rem'
       })
-      modal.linkTo = editor.domElement;
       modal.position = "fixed";
       getModalContainer().appendChild(modal);
     }
@@ -39,9 +39,5 @@ export const addImageToolbar = (editor: any) => {
     } else {
       modal.visible = false;
     }
-    // modal.refresh();
-    // modal.visible = true;
-    // modal.style.top = `${imageToolbarState.referencePos.top + imageToolbarState.referencePos.height}px`;
-    // modal.style.left = `${(+parent.width - +modal.width) / 2}px`;
   })
 }

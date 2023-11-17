@@ -149,7 +149,7 @@ export class ScomEditorSlashMenu extends Module {
             caption={item.shortcut || ''}
             font={{size: '0.625rem', weight: 600}}
             border={{radius: '0.25rem'}}
-            background={{color: Theme.action.activeBackground}}
+            background={{color: item.shortcut ? Theme.action.activeBackground : 'transparent'}}
             visible={item.shortcut}
             padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
             stack={{shrink: '0'}}

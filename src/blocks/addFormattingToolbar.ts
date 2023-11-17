@@ -1,8 +1,8 @@
 import { Modal } from "@ijstech/components";
-import { CustomFormattingToolbarState } from '../global/index';
-import { ScomEditorFormattingToolbar, createModal, getModalContainer, getPlacement } from '../components/index';
+import { BlockNoteEditor, CustomFormattingToolbarState } from '../global/index';
+import { MediaBlockTypes, ScomEditorFormattingToolbar, createModal, getModalContainer, getPlacement } from '../components/index';
 
-export const addFormattingToolbar = async (editor: any) => {
+export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
   let modal: Modal;
   let formattingToolbar: ScomEditorFormattingToolbar;
 
@@ -29,14 +29,16 @@ export const addFormattingToolbar = async (editor: any) => {
       })
       modal.item = formattingToolbar;
     }
-    const isImageBlock =
+
+    const isMediaBlock =
       selectedBlocks.length === 1 &&
-      selectedBlocks[0].type === "image";
-    modal.popupPlacement = isImageBlock ? 'top' : getPlacement(block) as any;
+      MediaBlockTypes.includes(selectedBlocks[0].type);
+    modal.popupPlacement = isMediaBlock ? 'top' : getPlacement(block) as any;
 
     if (formattingToolbarState.show) {
       const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
       if (blockEl) modal.linkTo = blockEl;
+      modal.refresh();
       modal.visible = true;
     }
   });

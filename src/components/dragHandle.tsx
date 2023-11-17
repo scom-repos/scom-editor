@@ -8,13 +8,14 @@ import {
   Modal
 } from '@ijstech/components';
 import { ColorType, ScomEditorColorPicker } from './colorPicker';
+import { Block } from '../global/index';
 const Theme = Styles.Theme.ThemeVars;
 
 type deletedCallback = () => void;
 type setColorCallback = (type: ColorType, color: string) => void;
 
 interface ScomEditorDragHandleElement extends ControlElement {
-  block?: any;
+  block?: Block;
   onDeleted?: deletedCallback;
   onSetColor?: setColorCallback;
   unfreezeMenu?: any;
@@ -22,7 +23,7 @@ interface ScomEditorDragHandleElement extends ControlElement {
 }
 
 interface ISideMenu {
-  block: any;
+  block: Block;
 }
 
 declare global {
@@ -74,7 +75,7 @@ export class ScomEditorDragHandle extends Module {
   get block() {
     return this._data.block;
   }
-  set block(value: any) {
+  set block(value: Block) {
     this._data.block = value;
   }
 

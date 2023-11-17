@@ -11,11 +11,12 @@ import {
   VStack,
   Upload
 } from '@ijstech/components';
+import { Block, BlockNoteEditor } from '../global/index';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorImageToolbarElement extends ControlElement {
-  editor?: any;
-  block?: any;
+  editor?: BlockNoteEditor;
+  block?: Block;
   onUpdated?: () => void;
 }
 
@@ -28,8 +29,8 @@ declare global {
 }
 
 interface IImageToolbar {
-  editor: any;
-  block: any;
+  editor: BlockNoteEditor;
+  block: Block;
 }
 
 @customElements('i-scom-editor-image-toolbar')
@@ -58,14 +59,14 @@ export class ScomEditorImageToolbar extends Module {
   get editor() {
     return this._data.editor;
   }
-  set editor(value: any) {
+  set editor(value: BlockNoteEditor) {
     this._data.editor = value;
   }
 
   get block() {
     return this._data.block;
   }
-  set block(value: any) {
+  set block(value: Block) {
     this._data.block = value;
   }
 

@@ -8,12 +8,13 @@ import {
   Button
 } from '@ijstech/components';
 import { ScomEditorMdLink } from './linkModal';
+import { BlockNoteEditor } from '../global/index';
 const Theme = Styles.Theme.ThemeVars;
 
 export type setLinkCallback = (text: string, url: string) => void;
 
 interface ScomEditorLinkElement extends ControlElement {
-  editor?: any;
+  editor?: BlockNoteEditor;
   text?: string;
   url?: string;
   caption?: string;
@@ -29,7 +30,7 @@ declare global {
 }
 
 interface ILink {
-  editor?: any;
+  editor?: BlockNoteEditor;
   text?: string;
   url?: string;
   caption?: string;
@@ -78,7 +79,7 @@ export class ScomEditorLink extends Module {
   get editor() {
     return this._data.editor;
   }
-  set editor(value: any) {
+  set editor(value: BlockNoteEditor) {
     this._data.editor = value;
   }
 

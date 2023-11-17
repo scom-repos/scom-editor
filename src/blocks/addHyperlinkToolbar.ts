@@ -1,5 +1,5 @@
 import { Control, Modal, Panel, Styles } from "@ijstech/components";
-import { CustomHyperlinkToolbarState } from "../global/index";
+import { BlockNoteEditor, CustomHyperlinkToolbarState } from "../global/index";
 import { ScomEditorLink, buttonHoverStyle, createButton, createModal, getModalContainer } from "../components/index";
 const Theme = Styles.Theme.ThemeVars;
 
@@ -45,7 +45,7 @@ const getToolbarButtons = (editor: any, hyperlinkToolbarState: CustomHyperlinkTo
   ]
 }
 
-export const addHyperlinkToolbar = async (editor: any) => {
+export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
   let modal: Modal;
   let element: Panel;
   let buttonList = [];
@@ -59,7 +59,7 @@ export const addHyperlinkToolbar = async (editor: any) => {
         id: 'pnlHyperlinkToolbar',
         popupPlacement: 'top',
         minWidth: 0,
-        zIndex: 3000
+        zIndex: 2000
       })
       modal.linkTo = editor.domElement;
       modal.position = "fixed";

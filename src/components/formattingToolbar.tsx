@@ -7,8 +7,8 @@ import {
   HStack,
   Modal
 } from '@ijstech/components';
-import { TextAlignmentType, formatKeyboardShortcut } from '../global/index';
-import { IBlockTypeItem, createButton } from './utils';
+import { Block, BlockNoteEditor, TextAlignmentType, formatKeyboardShortcut } from '../global/index';
+import { IBlockTypeItem, MediaBlockTypes, createButton, getModalContainer } from './utils';
 import { ScomEditorColor } from './colorButton';
 import { ColorType } from './colorPicker';
 import { buttonHoverStyle } from './index.css';
@@ -18,11 +18,11 @@ import { ScomEditorImageToolbar } from './imageToolbar';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorFormattingToolbarElement extends ControlElement {
-  editor?: any;
+  editor?: BlockNoteEditor;
 }
 
 interface IFormattingToolbar {
-  editor: any;
+  editor: BlockNoteEditor;
 }
 
 declare global {
@@ -40,8 +40,20 @@ export class ScomEditorFormattingToolbar extends Module {
   private mdReplace: Modal;
 
   private _data: IFormattingToolbar;
-  private _oldBlock: any = {};
-  private _block: any = {};
+  private _oldBlock: Block = {
+    id: '',
+    type: '',
+    props: undefined,
+    content: [],
+    children: []
+  };
+  private _block: Block = {
+    id: '',
+    type: '',
+    props: undefined,
+    content: [],
+    children: []
+  };
 
   static async create(options?: ScomEditorFormattingToolbarElement, parent?: Container) {
     let self = new this(parent, options);
@@ -56,11 +68,11 @@ export class ScomEditorFormattingToolbar extends Module {
   get editor() {
     return this._data.editor;
   }
-  set editor(value: any) {
+  set editor(value: BlockNoteEditor) {
     this._data.editor = value;
   }
   
-  private setBlockType(editor: any, item: IBlockTypeItem) {
+  private setBlockType(editor: BlockNoteEditor, item: IBlockTypeItem) {
     const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block]
     editor.focus();
     for (const block of selectedBlocks) {
@@ -71,7 +83,7 @@ export class ScomEditorFormattingToolbar extends Module {
     }
   }
 
-  private setAlignment(editor: any, textAlignment: TextAlignmentType) {
+  private setAlignment(editor: BlockNoteEditor, textAlignment: TextAlignmentType) {
     const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
     editor.focus();
     for (const block of selectedBlocks) {
@@ -81,7 +93,7 @@ export class ScomEditorFormattingToolbar extends Module {
     }
   }
 
-  private setColor(editor: any, type: ColorType, color: string) {
+  private setColor(editor: BlockNoteEditor, type: ColorType, color: string) {
     editor.focus();
     const prop = type === 'text' ? 'textColor' : 'backgroundColor';
     color === "default"
@@ -89,12 +101,12 @@ export class ScomEditorFormattingToolbar extends Module {
       : editor.addStyles({ [prop]: color });
   }
 
-  private setLink(editor: any, text: string, url: string) {
+  private setLink(editor: BlockNoteEditor, text: string, url: string) {
     editor.createLink(url, text || editor.getSelectedText());
     editor.focus();
   }
 
-  private getToolbarButtons(editor: any) {
+  private getToolbarButtons(editor: BlockNoteEditor) {
     const iconProps = {width: '0.75rem', height: '0.75rem', fill: Theme.text.primary};
     const toolTipProps = {placement: 'bottom'};
     const customProps = {
@@ -110,8 +122,11 @@ export class ScomEditorFormattingToolbar extends Module {
         icon: {...iconProps, name: 'image'},
         tooltip: {...toolTipProps, content: `Replace Image`},
         isSelected: false,
-        visible: this.isImageBlock,
+        visible: this.isMediaBlock,
         onClick: () => {
+          getModalContainer().appendChild(this.mdReplace);
+          this.mdReplace.position = 'fixed';
+          this.mdReplace.linkTo = this;
           this.mdReplace.visible = true;
         }
       },
@@ -120,7 +135,7 @@ export class ScomEditorFormattingToolbar extends Module {
           let blockType = new ScomEditorBlockType(undefined, {
             ...customProps,
             block: this._block,
-            visible: !this.isImageBlock,
+            visible: !this.isMediaBlock,
             stack: {shrink: '0'},
             onItemClicked: (item: IBlockTypeItem) => this.setBlockType(editor, item),
             onValidate: (item: IBlockTypeItem) => {
@@ -135,14 +150,14 @@ export class ScomEditorFormattingToolbar extends Module {
         icon: {...iconProps, name: 'bold'},
         tooltip: {...toolTipProps, content: `Bold <br/> ${formatKeyboardShortcut("Mod+B")}`},
         isSelected: editor.getActiveStyles().bold,
-        visible: !this.isImageBlock,
+        visible: !this.isMediaBlock,
         onClick: () => {
           editor.toggleStyles({ bold: true });
         }
       },
       {
         icon: {...iconProps, name: 'italic'},
-        visible: !this.isImageBlock,
+        visible: !this.isMediaBlock,
         tooltip: {...toolTipProps, content: `Italicize <br/> ${formatKeyboardShortcut("Mod+I")}`},
         isSelected: editor.getActiveStyles().italic,
         onClick: () => {
@@ -151,7 +166,7 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         icon: {...iconProps, name: 'underline'},
-        visible: !this.isImageBlock,
+        visible: !this.isMediaBlock,
         tooltip: {...toolTipProps, content: `Underline <br/> ${formatKeyboardShortcut("Mod+U")}`},
         isSelected: editor.getActiveStyles().underline,
         onClick: () => {
@@ -160,7 +175,7 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         icon: {...iconProps, name: 'strikethrough'},
-        visible: !this.isImageBlock,
+        visible: !this.isMediaBlock,
         tooltip: {...toolTipProps, content: `Strike-through <br/>  ${formatKeyboardShortcut("Mod+Shift+X")} or  ${formatKeyboardShortcut("Mod+Shift+Z")}`},
         isSelected: editor.getActiveStyles().strikethrough,
         onClick: () => {
@@ -195,7 +210,7 @@ export class ScomEditorFormattingToolbar extends Module {
         customControl: (element: Container) => {
           let colorPicker = new ScomEditorColor(undefined, {
             ...customProps,
-            visible: !this.isImageBlock,
+            visible: !this.isMediaBlock,
             textColor: editor.getActiveStyles().textColor || "default",
             backgroundColor: editor.getActiveStyles().backgroundColor || "default",
             setColor: (type: ColorType, color: string) => this.setColor(editor, type, color),
@@ -224,7 +239,7 @@ export class ScomEditorFormattingToolbar extends Module {
             ...customProps,
             tooltip: { content: `Create Link <br />  ${formatKeyboardShortcut("Mod+K")}`, placement: 'bottom' },
             editor: editor,
-            visible: !this.isImageBlock,
+            visible: !this.isMediaBlock,
             setLink: (text: string, url: string) => {
               this.setLink(editor, text, url);
             },
@@ -236,13 +251,11 @@ export class ScomEditorFormattingToolbar extends Module {
     ]
   }
 
-  private get isImageBlock() {
+  private get isMediaBlock() {
     const selectedBlocks = this.editor.getSelection()?.blocks || [this.editor.getTextCursorPosition().block];
     const show =
-      // Checks if only one block is selected.
       selectedBlocks.length === 1 &&
-      // Checks if the selected block is an image.
-      selectedBlocks[0].type === "image";
+      MediaBlockTypes.includes(selectedBlocks[0].type);
     return show;
   }
 
@@ -287,6 +300,12 @@ export class ScomEditorFormattingToolbar extends Module {
     }
   }
 
+  private handleClose() {
+    const container = getModalContainer();
+    if (container.contains(this.mdReplace))
+      container.removeChild(this.mdReplace);
+  }
+
   init() {
     super.init();
     const editor = this.getAttribute('editor', true);
@@ -308,11 +327,11 @@ export class ScomEditorFormattingToolbar extends Module {
           maxWidth={'100%'}
           background={{color: Theme.background.main}}
           boxShadow={Theme.shadows[1]}
-          visible={false}
           padding={{top: '0.125rem', bottom: '0.125rem', left: '0.125rem', right: '0.125rem'}}
           border={{radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light}}
+          onClose={this.handleClose}
         >
-          <i-scom-editor-image-toolbar id="imgToolbar" />
+          <i-scom-editor-image-toolbar id="imgToolbar" overflow={'hidden'}/>
         </i-modal>
       </i-panel>
     )
