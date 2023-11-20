@@ -571,10 +571,12 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
     interface ScomEditorSideMenuElement extends ControlElement {
         block?: Block;
         editor?: BlockNoteEditor;
+        isDefaultConfigShown?: boolean;
     }
     interface ISideMenu {
         block: Block;
-        editor: any;
+        editor: BlockNoteEditor;
+        isDefaultConfigShown?: boolean;
     }
     global {
         namespace JSX {
@@ -591,14 +593,18 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         private actionForm;
         private _data;
         private _isShowing;
+        private _isInit;
         static create(options?: ScomEditorSideMenuElement, parent?: Container): Promise<ScomEditorSideMenu>;
         constructor(parent?: Container, options?: any);
         get block(): Block;
         set block(value: Block);
         get editor(): BlockNoteEditor;
         set editor(value: BlockNoteEditor);
+        get isDefaultConfigShown(): boolean;
+        get isEditShown(): boolean;
         get isShowing(): boolean;
         setData(value: ISideMenu): void;
+        private updateEditButton;
         private handleSetColor;
         private handleDelete;
         private handleAddBlock;

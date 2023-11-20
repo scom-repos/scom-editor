@@ -995,6 +995,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         constructor(parent, options) {
             super(parent, options);
             this._isShowing = false;
+            this._isInit = false;
         }
         get block() {
             return this._data.block;
@@ -1002,13 +1003,19 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         set block(value) {
             this._data.block = value;
             this.dragHandle.block = value;
-            this.btnEdit.visible = this.block?.type && utils_5.CustomBlockTypes.includes(this.block.type);
+            this.updateEditButton();
         }
         get editor() {
             return this._data.editor;
         }
         set editor(value) {
             this._data.editor = value;
+        }
+        get isDefaultConfigShown() {
+            return !this.block?.props?.url;
+        }
+        get isEditShown() {
+            return this.block?.type && utils_5.CustomBlockTypes.includes(this.block.type);
         }
         get isShowing() {
             return this._isShowing ?? false;
@@ -1021,7 +1028,14 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             this.btnDrag.addEventListener("dragstart", this.editor.sideMenu.blockDragStart);
             this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
             this.btnDrag.draggable = true;
-            this.btnEdit.visible = this.block?.type && utils_5.CustomBlockTypes.includes(this.block.type);
+            this.updateEditButton();
+        }
+        updateEditButton() {
+            this.btnEdit.visible = this.isEditShown;
+            if (this.isEditShown && this.isDefaultConfigShown && !this._isInit) {
+                this.handleEditBlock();
+                this._isInit = true;
+            }
         }
         handleSetColor(type, color) {
             const prop = type === 'text' ? 'textColor' : 'backgroundColor';
@@ -1109,6 +1123,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             else {
                 this.actionForm = new settingsForm_1.ScomEditorSettingsForm(undefined, { data });
             }
+            this.actionForm.refresh();
             this.actionForm.openModal({
                 title: 'Edit',
                 width: '30rem'
@@ -1656,7 +1671,8 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
                 modal = await (0, index_3.createModal)({
                     id: 'pnlFormattingToolbar',
                     popupPlacement: (0, index_3.getPlacement)(block),
-                    zIndex: 3000
+                    zIndex: 3000,
+                    overflow: 'hidden'
                 });
                 modal.linkTo = editor.domElement;
                 modal.position = "fixed";
@@ -1693,6 +1709,7 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
         let element;
         let sideMenu;
         editor.sideMenu.onUpdate(async (sideMenuState) => {
+            const block = { ...sideMenuState.block };
             if (!element) {
                 element = await (0, index_4.createParent)({
                     id: 'pnlSideMenu',
@@ -1703,7 +1720,7 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
                     visible: false
                 });
                 sideMenu = await index_4.ScomEditorSideMenu.create({
-                    block: sideMenuState.block,
+                    block: block,
                     editor: editor
                 });
                 element.appendChild(sideMenu);

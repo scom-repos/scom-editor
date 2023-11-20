@@ -17,11 +17,13 @@ const Theme = Styles.Theme.ThemeVars;
 interface ScomEditorSideMenuElement extends ControlElement {
   block?: Block;
   editor?: BlockNoteEditor;
+  isDefaultConfigShown?: boolean;
 }
 
 interface ISideMenu {
   block: Block;
-  editor: any;
+  editor: BlockNoteEditor;
+  isDefaultConfigShown?: boolean;
 }
 
 declare global {
@@ -42,6 +44,7 @@ export class ScomEditorSideMenu extends Module {
 
   private _data: ISideMenu;
   private _isShowing: boolean = false;
+  private _isInit: boolean = false;
 
   static async create(options?: ScomEditorSideMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -59,7 +62,7 @@ export class ScomEditorSideMenu extends Module {
   set block(value: Block) {
     this._data.block = value;
     this.dragHandle.block = value;
-    this.btnEdit.visible = this.block?.type && CustomBlockTypes.includes(this.block.type as string);
+    this.updateEditButton();
   }
 
   get editor() {
@@ -67,6 +70,14 @@ export class ScomEditorSideMenu extends Module {
   }
   set editor(value: BlockNoteEditor) {
     this._data.editor = value;
+  }
+
+  get isDefaultConfigShown() {
+    return !this.block?.props?.url
+  }
+
+  get isEditShown() {
+    return this.block?.type && CustomBlockTypes.includes(this.block.type as string)
   }
 
   get isShowing() {
@@ -81,7 +92,15 @@ export class ScomEditorSideMenu extends Module {
     this.btnDrag.addEventListener("dragstart", this.editor.sideMenu.blockDragStart);
     this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
     this.btnDrag.draggable = true;
-    this.btnEdit.visible = this.block?.type && CustomBlockTypes.includes(this.block.type as string);
+    this.updateEditButton();
+  }
+
+  private updateEditButton() {
+    this.btnEdit.visible = this.isEditShown;
+    if (this.isEditShown && this.isDefaultConfigShown && !this._isInit) {
+      this.handleEditBlock();
+      this._isInit = true;
+    }
   }
 
   private handleSetColor(type: ColorType, color: string) {
@@ -174,6 +193,7 @@ export class ScomEditorSideMenu extends Module {
     } else {
       this.actionForm = new ScomEditorSettingsForm(undefined, { data });
     }
+    this.actionForm.refresh();
     this.actionForm.openModal({
       title: 'Edit',
       width: '30rem'
