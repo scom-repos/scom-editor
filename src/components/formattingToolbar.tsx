@@ -122,7 +122,7 @@ export class ScomEditorFormattingToolbar extends Module {
         icon: {...iconProps, name: 'image'},
         tooltip: {...toolTipProps, content: `Replace Image`},
         isSelected: false,
-        visible: this.isMediaBlock,
+        visible: this.isImageBlock,
         onClick: () => {
           getModalContainer().appendChild(this.mdReplace);
           this.mdReplace.position = 'fixed';
@@ -256,6 +256,14 @@ export class ScomEditorFormattingToolbar extends Module {
     const show =
       selectedBlocks.length === 1 &&
       MediaBlockTypes.includes(selectedBlocks[0].type);
+    return show;
+  }
+
+  private get isImageBlock() {
+    const selectedBlocks = this.editor.getSelection()?.blocks || [this.editor.getTextCursorPosition().block];
+    const show =
+      selectedBlocks.length === 1 &&
+      selectedBlocks[0].type === 'image';
     return show;
   }
 

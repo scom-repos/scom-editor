@@ -207,6 +207,7 @@ export class ScomEditorColorPicker extends Module {
         padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
         boxShadow={Theme.shadows[1]}
         showBackdrop={false}
+        zIndex={30001}
         onClose={this.handleClose}
       >
         <i-vstack

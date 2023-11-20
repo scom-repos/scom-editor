@@ -17,7 +17,6 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
         zIndex: 3000,
         overflow: 'hidden'
       })
-      modal.linkTo = editor.domElement;
       modal.position = "fixed";
       getModalContainer().appendChild(modal);
     }
@@ -36,11 +35,14 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
       MediaBlockTypes.includes(selectedBlocks[0].type);
     modal.popupPlacement = isMediaBlock ? 'top' : getPlacement(block) as any;
 
-    if (formattingToolbarState.show) {
+    if (blockID) {
       const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-      if (blockEl) modal.linkTo = blockEl;
-      modal.refresh();
-      modal.visible = true;
+      if (blockEl) {
+        modal.linkTo = blockEl;
+        modal.visible = true;
+      }
+    } else {
+      modal.visible = false;
     }
   });
 };

@@ -44,7 +44,8 @@ export class ScomEditorSideMenu extends Module {
 
   private _data: ISideMenu;
   private _isShowing: boolean = false;
-  private _isInit: boolean = false;
+  private initedMap: Map<string, boolean> = new Map();
+  private configurator: any;
 
   static async create(options?: ScomEditorSideMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -97,9 +98,9 @@ export class ScomEditorSideMenu extends Module {
 
   private updateEditButton() {
     this.btnEdit.visible = this.isEditShown;
-    if (this.isEditShown && this.isDefaultConfigShown && !this._isInit) {
+    if (this.isEditShown && this.isDefaultConfigShown && !this.initedMap.has(this.block.id)) {
       this.handleEditBlock();
-      this._isInit = true;
+      this.initedMap.set(this.block.id, true);
     }
   }
 
@@ -139,7 +140,7 @@ export class ScomEditorSideMenu extends Module {
     switch(this.block.type) {
       case 'video':
         module = blockEl.querySelector('i-scom-video');
-        editAction = this.getEditAction(module);
+        editAction = this.getActions(module)[0];
         if (editAction) {
           formConfig = {
             action: {...editAction},
@@ -155,7 +156,7 @@ export class ScomEditorSideMenu extends Module {
         break;
       case 'imageWidget':
         module = blockEl.querySelector('i-scom-image');
-        editAction = this.getEditAction(module);
+        editAction = this.getActions(module)[0];
         if (editAction) {
           formConfig = {
             action: {...editAction},
@@ -176,15 +177,10 @@ export class ScomEditorSideMenu extends Module {
   private getActions(component: any) {
     if (component?.getConfigurators) {
       const configs = component.getConfigurators() || [];
-      const builderTarget = configs.find((conf: any) => conf.target === 'Builders');
-      if (builderTarget?.getActions) return builderTarget.getActions();
+      this.configurator = configs.find((conf: any) => conf.target === 'Editor');
+      if (this.configurator?.getActions) return this.configurator.getActions();
     }
     return [];
-  }
-
-  private getEditAction(component: any) {
-    const actions = this.getActions(component);
-    return actions.find(action => action.name === 'Edit') || null;
   }
 
   private renderForm(data: ISettingsForm) {
@@ -200,7 +196,12 @@ export class ScomEditorSideMenu extends Module {
     });
   }
 
-  private updateBlock (block: Block, props: Record<string, string>) {
+  private async updateBlock (block: Block, props: Record<string, string>) {
+    const newData = this.configurator?.getData ? {...this.configurator.getData(), ...props} : {...props};
+    if (this.configurator?.setData) await this.configurator.setData(newData);
+    if (this.configurator?.getLink) {
+      props.embedUrl = this.configurator.getLink();
+    }
     this.editor.updateBlock(block, { props });
   }
 

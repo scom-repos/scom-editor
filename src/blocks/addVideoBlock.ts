@@ -31,7 +31,7 @@ export const addVideoBlock = (blocknote: any) => {
           {
             type: "video",
             props: {
-              url: "https://www.youtube.com/embed/Wlf1T5nrO50"
+              url: ""
             }
           }
         ],
