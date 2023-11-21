@@ -5,6 +5,7 @@ declare module "@scom/scom-editor/global/helper.ts" {
 }
 /// <amd-module name="@scom/scom-editor/global/coreType.ts" />
 declare module "@scom/scom-editor/global/coreType.ts" {
+    import { Control } from "@ijstech/components";
     export type Styles = {
         bold?: true;
         italic?: true;
@@ -33,7 +34,7 @@ declare module "@scom/scom-editor/global/coreType.ts" {
     export type PartialLink = Omit<Link, "content"> & {
         content: string | Link["content"];
     };
-    export type InlineContent = StyledText | Link;
+    export type InlineContent = Link | StyledText;
     export type PartialInlineContent = StyledText | PartialLink;
     export type PartialBlock = {
         id?: string;
@@ -60,9 +61,15 @@ declare module "@scom/scom-editor/global/coreType.ts" {
         shortcut?: string;
     };
     export type BlockNoteEditor = any;
+    export type BlockNoteDOMElement = "editor" | "blockContainer" | "blockGroup" | "blockContent" | "inlineContent";
+    export type BlockNoteDOMAttributes = Partial<{
+        [DOMElement in BlockNoteDOMElement]: Record<string, string>;
+    }>;
     export type BlockNoteEditorOptions = Partial<{
+        parentElement: Control;
         editable: boolean;
         initialContent: PartialBlock[];
+        blockSchema: any;
         editorDOMAttributes: Record<string, string>;
         onEditorReady: (editor: BlockNoteEditor) => void;
         onEditorContentChange: (editor: BlockNoteEditor) => void;
@@ -70,6 +77,7 @@ declare module "@scom/scom-editor/global/coreType.ts" {
         slashMenuItems: SlashMenuItem[];
         defaultStyles: boolean;
         uploadFile: (file: File) => Promise<string>;
+        domAttributes: Partial<BlockNoteDOMAttributes>;
     }>;
 }
 /// <amd-module name="@scom/scom-editor/global/index.ts" />
@@ -219,6 +227,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const getPlacement: (block: any) => string;
     export const CustomBlockTypes: string[];
     export const MediaBlockTypes: string[];
+    export const TypeMapping: {
+        '@scom/scom-video': string;
+        '@scom/scom-image': string;
+    };
+    export const WidgetMapping: {
+        [key: string]: any;
+    };
 }
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
@@ -605,7 +620,7 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         get isEditShown(): boolean;
         get isShowing(): boolean;
         setData(value: ISideMenu): void;
-        private updateEditButton;
+        private updateButtons;
         private handleSetColor;
         private handleDelete;
         private handleAddBlock;
@@ -857,11 +872,14 @@ declare module "@scom/scom-editor" {
         static create(options?: ScomEditorElement, parent?: Container): Promise<ScomEditor>;
         private initEditor;
         private renderEditor;
+        private isEmptyBlock;
+        private getEmbedUrl;
         private addCSS;
         private loadPlugin;
         private getData;
         private setData;
         private markdownToBlocks;
+        private parseData;
         private updateTag;
         private setTag;
         private updateStyle;

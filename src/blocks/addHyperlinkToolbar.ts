@@ -61,8 +61,6 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
         minWidth: 0,
         zIndex: 2000
       })
-      modal.linkTo = editor.domElement;
-      modal.position = "fixed";
       getModalContainer().appendChild(modal);
     }
 
@@ -84,6 +82,7 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
     if (hyperlinkToolbarState.show) {
       const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
       if (blockEl) modal.linkTo = blockEl;
+      modal.position = 'fixed';
       modal.visible = true;
     }
   });

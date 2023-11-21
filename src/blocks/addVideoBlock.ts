@@ -14,9 +14,8 @@ export const addVideoBlock = (blocknote: any) => {
     containsInlineContent: false,
     render: (block: Block, editor: BlockNoteEditor) => {
       const wrapper = new Panel();
-      const video = new ScomVideo(wrapper, {
-        url: block.props.url
-      });
+      const { url } = JSON.parse(JSON.stringify(block.props));
+      const video = new ScomVideo(wrapper, { url });
       wrapper.appendChild(video);
       return {
         dom: wrapper

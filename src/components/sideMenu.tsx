@@ -63,7 +63,7 @@ export class ScomEditorSideMenu extends Module {
   set block(value: Block) {
     this._data.block = value;
     this.dragHandle.block = value;
-    this.updateEditButton();
+    this.updateButtons();
   }
 
   get editor() {
@@ -93,11 +93,13 @@ export class ScomEditorSideMenu extends Module {
     this.btnDrag.addEventListener("dragstart", this.editor.sideMenu.blockDragStart);
     this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
     this.btnDrag.draggable = true;
-    this.updateEditButton();
+    this.updateButtons();
+    this.id = `side-${this.block.id}`;
   }
 
-  private updateEditButton() {
+  private updateButtons() {
     this.btnEdit.visible = this.isEditShown;
+    this.btnAdd.visible = !this.isEditShown;
     if (this.isEditShown && this.isDefaultConfigShown && !this.initedMap.has(this.block.id)) {
       this.handleEditBlock();
       this.initedMap.set(this.block.id, true);
@@ -197,11 +199,10 @@ export class ScomEditorSideMenu extends Module {
   }
 
   private async updateBlock (block: Block, props: Record<string, string>) {
-    const newData = this.configurator?.getData ? {...this.configurator.getData(), ...props} : {...props};
-    if (this.configurator?.setData) await this.configurator.setData(newData);
-    if (this.configurator?.getLink) {
-      props.embedUrl = this.configurator.getLink();
-    }
+    // const newData = this.configurator?.getData ? {...this.configurator.getData(), ...props} : {...props};
+    // if (this.configurator?.getLink) {
+    //   props.embedUrl = this.configurator.getLink(newData);
+    // }
     this.editor.updateBlock(block, { props });
   }
 

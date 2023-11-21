@@ -10,13 +10,13 @@ export const addSideMenu = (editor: BlockNoteEditor) => {
     const block = {...sideMenuState.block};
     if (!element) {
       element = await createParent({
-        id: 'pnlSideMenu',
         border: {radius: '0px', style: 'none'},
         padding: {top: 0, left: '0.125rem', right: '0.125rem', bottom: 0},
         background: {color: 'transparent'},
         boxShadow: 'none',
         visible: false
       });
+      element.id = 'pnlSideMenu';
 
       sideMenu = await ScomEditorSideMenu.create({
         block: block,
