@@ -38,7 +38,6 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         padding: {left: 0, top: 0, right: 0, bottom: 0},
         zIndex: 3000
       })
-      modal.position = "fixed";
       getModalContainer().appendChild(modal);
     }
 
@@ -53,6 +52,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
         if (blockEl) {
           modal.linkTo = blockEl;
+          modal.position = 'fixed';
           modal.visible = true;
         }
       } else {

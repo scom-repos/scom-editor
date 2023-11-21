@@ -13,7 +13,6 @@ export function addImageBlock(blocknote: any) {
       altText: {default: '',},
       keyword: {default: ''},
       photoId: {default: ''},
-      embedUrl: {default: ''},
       width: {default: 512},
       height: {default: 'auto'}
     },

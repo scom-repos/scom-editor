@@ -14,10 +14,8 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
       modal = await createModal({
         id: 'pnlFormattingToolbar',
         popupPlacement: getPlacement(block),
-        zIndex: 3000,
         overflow: 'hidden'
       })
-      modal.position = "fixed";
       getModalContainer().appendChild(modal);
     }
 
@@ -39,6 +37,7 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
       const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
       if (blockEl) {
         modal.linkTo = blockEl;
+        modal.position = 'fixed';
         modal.visible = true;
       }
     } else {

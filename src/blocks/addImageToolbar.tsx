@@ -16,7 +16,6 @@ export const addImageToolbar = (editor: BlockNoteEditor) => {
         zIndex: 2000,
         width: '31.25rem'
       })
-      modal.position = "fixed";
       getModalContainer().appendChild(modal);
     }
     if (!imageToolbar) {
@@ -34,6 +33,7 @@ export const addImageToolbar = (editor: BlockNoteEditor) => {
       const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
       if (blockEl) {
         modal.linkTo = blockEl;
+        modal.position = 'fixed';
         modal.visible = true;
       }
     } else {
