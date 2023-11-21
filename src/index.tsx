@@ -20,19 +20,20 @@ import {
   addImageBlock
 } from './blocks/index';
 import { Block } from './global';
+import { CustomBlockTypes } from './components';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
 
 interface ScomEditorElement extends ControlElement {
-  placeholder?: string;
+  // placeholder?: string;
   value?: string;
   lazyLoad?: boolean;
   onChanged?: onChangedCallback;
 }
 
 interface IEditor {
-  placeholder?: string;
+  // placeholder?: string;
   value?: string;
 }
 
@@ -77,12 +78,12 @@ export class ScomEditor extends Module {
     this._data.value = data;
   }
   
-  get placeholder() {
-    return this._data.placeholder;
-  }
-  set placeholder(data: string) {
-    this._data.placeholder = data;
-  }
+  // get placeholder() {
+  //   return this._data.placeholder;
+  // }
+  // set placeholder(data: string) {
+  //   this._data.placeholder = data;
+  // }
 
   getEditor() {
     return this._editor;
@@ -112,19 +113,26 @@ export class ScomEditor extends Module {
       video: VideoBlock,
       imageWidget: ImageBlock
     };
-    
     this._editor = new this._blocknoteObj.BlockNoteEditor({
       parentElement: this.pnlEditor,
       blockSchema: customSchema,
       slashMenuItems: [
-        ...this._blocknoteObj.getDefaultSlashMenuItems(),
+        ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== "Image"),
         VideoSlashItem,
         ImageSlashItem
       ],
       onEditorContentChange: async (editor: any) => {
-        // TODO: check missing node
-        // this.value = await this.blocksToMarkdown(editor);
-        // if (this.onChanged) this.onChanged(this.value);
+        let value = '';
+        for (let block of editor.topLevelBlocks) {
+          if (CustomBlockTypes.includes(block.type) && block?.props.embedUrl) {
+            const embedUrl = block.props.embedUrl;
+            value += `[${embedUrl}](${embedUrl})`;
+          } else {
+            value += await editor.blocksToMarkdown([block]);
+          }
+        }
+        this.value = value;
+        if (this.onChanged) this.onChanged(this.value);
       },
       domAttributes: {
         editor: {
@@ -175,11 +183,6 @@ export class ScomEditor extends Module {
     const blocks: Block[] = await this._editor.markdownToBlocks(markdown);
     this._editor.replaceBlocks(JSON.parse(JSON.stringify(this._editor.topLevelBlocks)), JSON.parse(JSON.stringify(blocks)));
   };
-
-  private async blocksToMarkdown(editor: any) {
-    const markdownContent = await editor.blocksToMarkdown(JSON.parse(JSON.stringify(editor.topLevelBlocks)));
-    return markdownContent;
-  }
 
   private updateTag(type: 'light' | 'dark', value: any) {
     this.tag[type] = this.tag[type] ?? {};
@@ -346,8 +349,8 @@ export class ScomEditor extends Module {
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
       const value = this.getAttribute('value', true);
-      const placeholder = this.getAttribute('placeholder', true);
-      await this.setData({ value, placeholder });
+      // const placeholder = this.getAttribute('placeholder', true);
+      await this.setData({ value });
     }
   }
 

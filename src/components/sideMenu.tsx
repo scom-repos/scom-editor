@@ -17,11 +17,13 @@ const Theme = Styles.Theme.ThemeVars;
 interface ScomEditorSideMenuElement extends ControlElement {
   block?: Block;
   editor?: BlockNoteEditor;
+  isDefaultConfigShown?: boolean;
 }
 
 interface ISideMenu {
   block: Block;
-  editor: any;
+  editor: BlockNoteEditor;
+  isDefaultConfigShown?: boolean;
 }
 
 declare global {
@@ -42,6 +44,8 @@ export class ScomEditorSideMenu extends Module {
 
   private _data: ISideMenu;
   private _isShowing: boolean = false;
+  private initedMap: Map<string, boolean> = new Map();
+  private configurator: any;
 
   static async create(options?: ScomEditorSideMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -59,7 +63,7 @@ export class ScomEditorSideMenu extends Module {
   set block(value: Block) {
     this._data.block = value;
     this.dragHandle.block = value;
-    this.btnEdit.visible = this.block?.type && CustomBlockTypes.includes(this.block.type as string);
+    this.updateEditButton();
   }
 
   get editor() {
@@ -67,6 +71,14 @@ export class ScomEditorSideMenu extends Module {
   }
   set editor(value: BlockNoteEditor) {
     this._data.editor = value;
+  }
+
+  get isDefaultConfigShown() {
+    return !this.block?.props?.url
+  }
+
+  get isEditShown() {
+    return this.block?.type && CustomBlockTypes.includes(this.block.type as string)
   }
 
   get isShowing() {
@@ -81,7 +93,15 @@ export class ScomEditorSideMenu extends Module {
     this.btnDrag.addEventListener("dragstart", this.editor.sideMenu.blockDragStart);
     this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
     this.btnDrag.draggable = true;
-    this.btnEdit.visible = this.block?.type && CustomBlockTypes.includes(this.block.type as string);
+    this.updateEditButton();
+  }
+
+  private updateEditButton() {
+    this.btnEdit.visible = this.isEditShown;
+    if (this.isEditShown && this.isDefaultConfigShown && !this.initedMap.has(this.block.id)) {
+      this.handleEditBlock();
+      this.initedMap.set(this.block.id, true);
+    }
   }
 
   private handleSetColor(type: ColorType, color: string) {
@@ -120,7 +140,7 @@ export class ScomEditorSideMenu extends Module {
     switch(this.block.type) {
       case 'video':
         module = blockEl.querySelector('i-scom-video');
-        editAction = this.getEditAction(module);
+        editAction = this.getActions(module)[0];
         if (editAction) {
           formConfig = {
             action: {...editAction},
@@ -136,7 +156,7 @@ export class ScomEditorSideMenu extends Module {
         break;
       case 'imageWidget':
         module = blockEl.querySelector('i-scom-image');
-        editAction = this.getEditAction(module);
+        editAction = this.getActions(module)[0];
         if (editAction) {
           formConfig = {
             action: {...editAction},
@@ -157,15 +177,10 @@ export class ScomEditorSideMenu extends Module {
   private getActions(component: any) {
     if (component?.getConfigurators) {
       const configs = component.getConfigurators() || [];
-      const builderTarget = configs.find((conf: any) => conf.target === 'Builders');
-      if (builderTarget?.getActions) return builderTarget.getActions();
+      this.configurator = configs.find((conf: any) => conf.target === 'Editor');
+      if (this.configurator?.getActions) return this.configurator.getActions();
     }
     return [];
-  }
-
-  private getEditAction(component: any) {
-    const actions = this.getActions(component);
-    return actions.find(action => action.name === 'Edit') || null;
   }
 
   private renderForm(data: ISettingsForm) {
@@ -174,13 +189,19 @@ export class ScomEditorSideMenu extends Module {
     } else {
       this.actionForm = new ScomEditorSettingsForm(undefined, { data });
     }
+    this.actionForm.refresh();
     this.actionForm.openModal({
       title: 'Edit',
       width: '30rem'
     });
   }
 
-  private updateBlock (block: Block, props: Record<string, string>) {
+  private async updateBlock (block: Block, props: Record<string, string>) {
+    const newData = this.configurator?.getData ? {...this.configurator.getData(), ...props} : {...props};
+    if (this.configurator?.setData) await this.configurator.setData(newData);
+    if (this.configurator?.getLink) {
+      props.embedUrl = this.configurator.getLink();
+    }
     this.editor.updateBlock(block, { props });
   }
 

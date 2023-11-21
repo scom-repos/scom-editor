@@ -571,10 +571,12 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
     interface ScomEditorSideMenuElement extends ControlElement {
         block?: Block;
         editor?: BlockNoteEditor;
+        isDefaultConfigShown?: boolean;
     }
     interface ISideMenu {
         block: Block;
-        editor: any;
+        editor: BlockNoteEditor;
+        isDefaultConfigShown?: boolean;
     }
     global {
         namespace JSX {
@@ -591,14 +593,19 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         private actionForm;
         private _data;
         private _isShowing;
+        private initedMap;
+        private configurator;
         static create(options?: ScomEditorSideMenuElement, parent?: Container): Promise<ScomEditorSideMenu>;
         constructor(parent?: Container, options?: any);
         get block(): Block;
         set block(value: Block);
         get editor(): BlockNoteEditor;
         set editor(value: BlockNoteEditor);
+        get isDefaultConfigShown(): boolean;
+        get isEditShown(): boolean;
         get isShowing(): boolean;
         setData(value: ISideMenu): void;
+        private updateEditButton;
         private handleSetColor;
         private handleDelete;
         private handleAddBlock;
@@ -606,7 +613,6 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         private hideDragMenu;
         private handleEditBlock;
         private getActions;
-        private getEditAction;
         private renderForm;
         private updateBlock;
         init(): void;
@@ -619,7 +625,6 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
     interface ScomEditorSlashMenuElement extends ControlElement {
         items?: any;
         selectedIndex?: number;
-        referencePos?: any;
         onItemClicked?: (item: any) => void;
     }
     interface ISlashMenuItem {
@@ -630,7 +635,6 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
     interface ISlashMenu {
         items?: ISlashMenuItem[];
         selectedIndex?: number;
-        referencePos?: any;
     }
     global {
         namespace JSX {
@@ -641,6 +645,7 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
     }
     export class ScomEditorSlashMenu extends Module {
         private pnlSlash;
+        private pnlWrap;
         private itemsMap;
         private _data;
         onItemClicked: (item: any) => void;
@@ -650,13 +655,10 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
         set items(value: ISlashMenuItem[]);
         get selectedIndex(): number;
         set selectedIndex(value: number);
-        get referencePos(): any;
-        set referencePos(value: any);
         get groupData(): {
             [key: string]: any[];
         };
         setData(value: ISlashMenu): void;
-        private updatePanel;
         private renderUI;
         init(): void;
         render(): any;
@@ -741,6 +743,7 @@ declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
         private setLink;
         private getToolbarButtons;
         private get isMediaBlock();
+        private get isImageBlock();
         setData(value: IFormattingToolbar): void;
         onRefresh(): void;
         private renderUI;
@@ -829,7 +832,6 @@ declare module "@scom/scom-editor" {
     import { Module, ControlElement, Container } from '@ijstech/components';
     type onChangedCallback = (value: string) => void;
     interface ScomEditorElement extends ControlElement {
-        placeholder?: string;
         value?: string;
         lazyLoad?: boolean;
         onChanged?: onChangedCallback;
@@ -851,8 +853,6 @@ declare module "@scom/scom-editor" {
         constructor(parent?: Container, options?: any);
         get value(): string;
         set value(data: string);
-        get placeholder(): string;
-        set placeholder(data: string);
         getEditor(): any;
         static create(options?: ScomEditorElement, parent?: Container): Promise<ScomEditor>;
         private initEditor;
@@ -862,7 +862,6 @@ declare module "@scom/scom-editor" {
         private getData;
         private setData;
         private markdownToBlocks;
-        private blocksToMarkdown;
         private updateTag;
         private setTag;
         private updateStyle;

@@ -189,6 +189,8 @@ export const createModal = async (props = {}) => {
     showBackdrop: false,
     visible: false,
     minWidth: 0,
+    isChildFixed: true,
+    closeOnScrollChildFixed: true,
     ...props
   });
   return elm;
