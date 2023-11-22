@@ -95,14 +95,17 @@ export class ScomEditorColorPicker extends Module {
   }
 
   showModal(popupPlacement?: string) {
-    this.mdColorPicker.position = 'fixed';
     getModalContainer().appendChild(this.mdColorPicker);
-    if (this.parent) this.mdColorPicker.linkTo = this.parent;
+    this.mdColorPicker.position = 'fixed';
+    if (this.parent) {
+      this.parent.position = 'relative';
+      this.mdColorPicker.linkTo = this.parent;
+    }
     const { top, height } = this.getBoundingClientRect();
     const maxHeight = window.innerHeight - (top + height);
-    this.pnlColors.maxHeight = maxHeight <= 110 ? 200 : maxHeight;
+    this.pnlColors.maxHeight = maxHeight <= 200 ? 200 : maxHeight;
     if (popupPlacement) this.mdColorPicker.popupPlacement = popupPlacement as any;
-    else this.mdColorPicker.popupPlacement = maxHeight <= 110 ? 'top' : 'rightTop';
+    else this.mdColorPicker.popupPlacement = maxHeight <= 200 ? 'top' : 'bottom';
     this.mdColorPicker.visible = true;
   }
 
@@ -202,7 +205,7 @@ export class ScomEditorColorPicker extends Module {
     return (
       <i-modal
         id="mdColorPicker"
-        popupPlacement="rightTop"
+        popupPlacement="bottom"
         minWidth={200}
         maxWidth={300}
         border={{radius: '0.375rem'}}

@@ -48729,7 +48729,7 @@ img.ProseMirror-separator {
         return propsToAttributes(blockConfig);
       },
       parseHTML() {
-        return parse(blockConfig);
+        return blockConfig.parse ? blockConfig.parse() : parse(blockConfig);
       },
       renderHTML({ HTMLAttributes }) {
         return render(blockConfig, HTMLAttributes);

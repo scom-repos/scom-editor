@@ -222,8 +222,8 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
             showBackdrop: false,
             visible: false,
             minWidth: 0,
-            isChildFixed: true,
-            closeOnScrollChildFixed: true,
+            isChildFixed: false,
+            closeOnScrollChildFixed: false,
             ...props
         });
         return elm;
@@ -329,17 +329,19 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
             return this._data;
         }
         showModal(popupPlacement) {
-            this.mdColorPicker.position = 'fixed';
             (0, utils_1.getModalContainer)().appendChild(this.mdColorPicker);
-            if (this.parent)
+            this.mdColorPicker.position = 'fixed';
+            if (this.parent) {
+                this.parent.position = 'relative';
                 this.mdColorPicker.linkTo = this.parent;
+            }
             const { top, height } = this.getBoundingClientRect();
             const maxHeight = window.innerHeight - (top + height);
-            this.pnlColors.maxHeight = maxHeight <= 110 ? 200 : maxHeight;
+            this.pnlColors.maxHeight = maxHeight <= 200 ? 200 : maxHeight;
             if (popupPlacement)
                 this.mdColorPicker.popupPlacement = popupPlacement;
             else
-                this.mdColorPicker.popupPlacement = maxHeight <= 110 ? 'top' : 'rightTop';
+                this.mdColorPicker.popupPlacement = maxHeight <= 200 ? 'top' : 'bottom';
             this.mdColorPicker.visible = true;
         }
         closeModal() {
@@ -396,7 +398,7 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
             this.setData({ textColor, backgroundColor });
         }
         render() {
-            return (this.$render("i-modal", { id: "mdColorPicker", popupPlacement: "rightTop", minWidth: 200, maxWidth: 300, border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false, zIndex: 30001, onClose: this.handleClose },
+            return (this.$render("i-modal", { id: "mdColorPicker", popupPlacement: "bottom", minWidth: 200, maxWidth: 300, border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false, zIndex: 30001, onClose: this.handleClose },
                 this.$render("i-vstack", { id: "pnlColors", overflow: { y: 'auto' } })));
         }
     };
@@ -538,9 +540,8 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
         }
         showModal() {
             (0, utils_2.getModalContainer)().appendChild(this.mdDropdown);
-            this.mdDropdown.parent = this.btnSelected;
+            this.mdDropdown.linkTo = this.pnlDropdown;
             this.mdDropdown.position = 'fixed';
-            this.mdDropdown.refresh();
             this.mdDropdown.visible = true;
         }
         handleClosed() {
@@ -552,9 +553,9 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
             this.setData({ items });
         }
         render() {
-            return (this.$render("i-panel", { width: 'auto', height: '100%', display: 'inline-block' },
+            return (this.$render("i-panel", { id: "pnlDropdown", width: 'auto', height: '100%', display: 'inline-block' },
                 this.$render("i-button", { id: "btnSelected", height: '100%', width: 'auto', minWidth: '1rem', border: { radius: '0px' }, background: { color: 'transparent' }, font: { size: '0.75rem', color: Theme.text.primary }, boxShadow: 'none', icon: { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, rightIcon: { width: '0.5rem', height: '0.5rem', fill: Theme.text.primary, name: 'angle-down' }, onClick: () => this.showModal() }),
-                this.$render("i-modal", { id: "mdDropdown", popupPlacement: "bottom", minWidth: 200, maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], margin: { top: '1rem' }, showBackdrop: false, zIndex: 100000, onClose: this.handleClosed },
+                this.$render("i-modal", { id: "mdDropdown", popupPlacement: "bottom", minWidth: 200, maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], margin: { top: '1rem' }, showBackdrop: false, zIndex: 30001, onClose: this.handleClosed },
                     this.$render("i-vstack", { id: "pnlOptions", maxHeight: '34.788rem', overflow: { y: 'auto' } }))));
         }
     };
@@ -1022,6 +1023,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         set block(value) {
             this._data.block = value;
             this.dragHandle.block = value;
+            this.id = `side-${this.block.id}`;
             this.updateButtons();
         }
         get editor() {
@@ -1687,7 +1689,10 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
                 modal = await (0, index_3.createModal)({
                     id: 'pnlFormattingToolbar',
                     popupPlacement: (0, index_3.getPlacement)(block),
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    minWidth: 'max-content',
+                    isChildFixed: true,
+                    closeOnScrollChildFixed: true,
                 });
                 (0, index_3.getModalContainer)().appendChild(modal);
             }
@@ -1766,25 +1771,24 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
     const addSlashMenu = (editor) => {
         let modal;
         let menuElm;
-        let popupPlacement = 'bottomLeft';
+        let popupPlacement = 'topLeft';
         async function updateItems(items, onClick, selected, referencePos) {
             const { bottom = 0 } = referencePos;
-            const maxHeight = window.innerHeight - bottom;
+            const maxHeight = window.innerHeight - bottom - 32;
             menuElm = await index_5.ScomEditorSlashMenu.create({
                 items: [...items],
                 selectedIndex: selected,
                 overflow: { y: 'auto' },
-                maxHeight: maxHeight <= 110 ? 200 : maxHeight,
+                maxHeight: maxHeight <= 200 ? 200 : maxHeight,
                 display: 'block',
                 onItemClicked: (item) => {
                     onClick(item);
                     modal.visible = false;
                 }
             });
-            if (window.innerHeight - bottom <= 110) {
-                popupPlacement = 'topLeft';
-            }
+            popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
             modal.item = menuElm;
+            modal.refresh();
         }
         editor.slashMenu.onUpdate(async (slashMenuState) => {
             const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
@@ -1794,8 +1798,7 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                 modal = await (0, index_5.createModal)({
                     id: 'pnlSlashMenu',
                     popupPlacement,
-                    padding: { left: 0, top: 0, right: 0, bottom: 0 },
-                    zIndex: 3000
+                    padding: { left: 0, top: 0, right: 0, bottom: 0 }
                 });
                 (0, index_5.getModalContainer)().appendChild(modal);
             }
@@ -1805,6 +1808,7 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                     const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
                     if (blockEl) {
                         modal.linkTo = blockEl;
+                        modal.popupPlacement = popupPlacement;
                         modal.position = 'fixed';
                         modal.visible = true;
                     }
@@ -1972,6 +1976,38 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
                 return {
                     dom: wrapper
                 };
+            },
+            parse: () => {
+                return [
+                    {
+                        tag: "div[data-content-type=video]",
+                        node: 'video'
+                    },
+                    {
+                        tag: "p",
+                        getAttrs: (element2) => {
+                            if (typeof element2 === "string") {
+                                return false;
+                            }
+                            const child = element2.firstChild;
+                            if (child === null) {
+                                return false;
+                            }
+                            if (child.nodeName === 'VIDEO') {
+                                return {
+                                    url: child.getAttribute('src')
+                                };
+                            }
+                            return false;
+                        },
+                        priority: 400,
+                        node: 'video'
+                    },
+                    {
+                        tag: "video",
+                        node: 'video'
+                    }
+                ];
             }
         });
         const VideoSlashItem = {
@@ -2022,6 +2058,39 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
                 return {
                     dom: wrapper
                 };
+            },
+            parse: () => {
+                return [
+                    {
+                        tag: "div[data-content-type=imageWidget]",
+                        node: 'imageWidget'
+                    },
+                    {
+                        tag: "p",
+                        getAttrs: (element2) => {
+                            if (typeof element2 === "string") {
+                                return false;
+                            }
+                            const child = element2.firstChild;
+                            if (child === null) {
+                                return false;
+                            }
+                            if (child.nodeName === 'IMG') {
+                                return {
+                                    url: child.getAttribute('src'),
+                                    altText: child.getAttribute('alt')
+                                };
+                            }
+                            return false;
+                        },
+                        priority: 400,
+                        node: 'imageWidget'
+                    },
+                    {
+                        tag: "img",
+                        node: 'imageWidget'
+                    }
+                ];
             }
         });
         const ImageSlashItem = {
@@ -2113,45 +2182,28 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             const customSchema = {
                 ...this._blocknoteObj.defaultBlockSchema,
                 video: VideoBlock,
-                imageWidget: ImageBlock
+                imageWidget: ImageBlock,
             };
             const editorConfig = {
                 parentElement: this.pnlEditor,
                 blockSchema: customSchema,
                 slashMenuItems: [
-                    ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== "Image"),
+                    ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
                     VideoSlashItem,
-                    ImageSlashItem
+                    ImageSlashItem,
                 ],
-                onEditorContentChange: async (editor) => {
-                    let value = '';
-                    for (let block of editor.topLevelBlocks) {
-                        const type = block.type;
-                        try {
-                            if (index_9.CustomBlockTypes.includes(type)) {
-                                const embedUrl = this.getEmbedUrl(block);
-                                if (embedUrl)
-                                    value += `${embedUrl}\\n\\n`;
-                            }
-                            else if (!this.isEmptyBlock(block)) {
-                                const blockValue = await editor.blocksToMarkdown([block]);
-                                value += `${blockValue}\\n\\n`;
-                            }
-                        }
-                        catch (error) {
-                            console.log('parsed: ', error);
-                        }
-                    }
-                    this.value = value;
-                    console.log(this.value);
-                    if (this.onChanged)
-                        this.onChanged(this.value);
+                onEditorContentChange: (editor) => {
+                    if (this.timer)
+                        clearTimeout(this.timer);
+                    this.timer = setTimeout(() => {
+                        this.onEditorChanged(editor);
+                    }, 500);
                 },
                 domAttributes: {
                     editor: {
-                        class: 'scom-editor'
-                    }
-                }
+                        class: 'scom-editor',
+                    },
+                },
             };
             if (initialContent)
                 editorConfig.initialContent = initialContent;
@@ -2165,22 +2217,33 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         isEmptyBlock(block) {
             let result = false;
             let type = block.type;
-            if (type === "paragraph")
+            if (type === 'paragraph')
                 return !block.content?.length;
             return result;
         }
-        getEmbedUrl(block) {
-            const type = block.type;
-            let module = index_9.WidgetMapping[type];
-            if (module) {
-                const widgetData = {
-                    module,
-                    "properties": { ...block.props }
-                };
-                const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
-                return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
+        async onEditorChanged(editor) {
+            let value = '';
+            for (let block of editor.topLevelBlocks) {
+                const type = block.type;
+                try {
+                    if (index_9.CustomBlockTypes.includes(type)) {
+                        const { altText = '', url } = block.props;
+                        const mdString = type === 'video' ? `[video](${url})` : `![${altText || ''}](${url})`;
+                        value += `${mdString}\\n\\n`;
+                    }
+                    else if (!this.isEmptyBlock(block)) {
+                        const blockValue = await editor.blocksToMarkdown([block]);
+                        value += `${blockValue}\\n\\n`;
+                    }
+                }
+                catch (error) {
+                    console.log('parsed: ', error);
+                }
             }
-            return '';
+            this.value = value;
+            console.log(this.value);
+            if (this.onChanged)
+                this.onChanged(this.value);
         }
         addCSS(href, name) {
             const css = document.head.querySelector(`[name="${name}"]`);
@@ -2217,28 +2280,28 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._editor)
                 return [];
             const blocks = await this._editor.markdownToBlocks(markdown);
+            console.log('markdownToBlocks: ', blocks);
             let formattedBlocks = [];
             for (let block of blocks) {
                 let text = '';
                 if (block.type === 'paragraph') {
-                    text = block.content[0]?.type === 'text' ?
-                        block.content[0]?.text :
-                        block.content[0]?.type === 'link' ? block.content[0]?.href : '';
+                    text =
+                        block.content[0]?.type === 'text'
+                            ? block.content[0]?.text
+                            : block.content[0]?.type === 'link'
+                                ? block.content[0]?.href
+                                : '';
                 }
                 text = (text || '').trim();
-                let isCustom = text.startsWith(WIDGET_LOADER_URL);
-                if (isCustom) {
-                    const [_, params = ''] = text.split('?');
-                    const dataStr = params.replace('data=', '');
-                    const widgetData = dataStr ? this.parseData(dataStr) : null;
-                    if (widgetData) {
-                        const { module, properties } = widgetData;
-                        const newBlock = {
-                            type: index_9.TypeMapping[module.name],
-                            props: properties
-                        };
-                        formattedBlocks.push(newBlock);
-                    }
+                const customType = this.getContentType(text);
+                if (customType) {
+                    const newBlock = {
+                        type: customType,
+                        props: {
+                            url: text
+                        },
+                    };
+                    formattedBlocks.push(newBlock);
                 }
                 else {
                     formattedBlocks.push(block);
@@ -2246,7 +2309,31 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             }
             return JSON.parse(JSON.stringify(formattedBlocks));
         }
-        ;
+        getContentType(content) {
+            const imageUrlRegex = /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g;
+            const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+            const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+            if (imageUrlRegex.test(content))
+                return 'imageWidget';
+            if (videoUrlRegex.test(content))
+                return 'video';
+            if (youtubeUrlRegex.test(content))
+                return 'video';
+            return '';
+        }
+        getEmbedUrl(block) {
+            const type = block.type;
+            let module = index_9.WidgetMapping[type];
+            if (module) {
+                const widgetData = {
+                    module,
+                    properties: { ...block.props },
+                };
+                const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
+                return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
+            }
+            return '';
+        }
         parseData(value) {
             try {
                 const utf8String = decodeURIComponent(value);
@@ -2277,9 +2364,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             this.updateTheme();
         }
         updateStyle(name, value) {
-            value ?
-                this.style.setProperty(name, value) :
-                this.style.removeProperty(name);
+            value ? this.style.setProperty(name, value) : this.style.removeProperty(name);
         }
         updateTheme() {
             const themeVar = document.body.style.getPropertyValue('--theme') ?? 'dark';
@@ -2317,8 +2402,8 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 {
                     name: 'Widget Settings',
                     icon: 'edit',
-                    ...this.getWidgetSchemas()
-                }
+                    ...this.getWidgetSchemas(),
+                },
             ];
             return actions;
         }
@@ -2328,37 +2413,33 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 properties: {
                     pt: {
                         title: 'Top',
-                        type: 'number'
+                        type: 'number',
                     },
                     pb: {
                         title: 'Bottom',
-                        type: 'number'
+                        type: 'number',
                     },
                     pl: {
                         title: 'Left',
-                        type: 'number'
+                        type: 'number',
                     },
                     pr: {
                         title: 'Right',
-                        type: 'number'
+                        type: 'number',
                     },
                     align: {
                         type: 'string',
                         title: 'Alignment',
-                        enum: [
-                            'left',
-                            'center',
-                            'right'
-                        ]
+                        enum: ['left', 'center', 'right'],
                     },
                     maxWidth: {
-                        type: 'number'
+                        type: 'number',
                     },
                     link: {
                         title: 'URL',
-                        type: 'string'
-                    }
-                }
+                        type: 'string',
+                    },
+                },
             };
             const themesSchema = {
                 type: 'VerticalLayout',
@@ -2392,20 +2473,24 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                                                         type: 'Control',
                                                         scope: '#/properties/pr',
                                                     },
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
             };
             return {
                 userInputDataSchema: propertiesSchema,
-                userInputUISchema: themesSchema
+                userInputUISchema: themesSchema,
             };
+        }
+        onHide() {
+            if (this.timer)
+                clearTimeout(this.timer);
         }
         async init() {
             super.init();
@@ -2413,7 +2498,6 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {
                 const value = this.getAttribute('value', true);
-                // const placeholder = this.getAttribute('placeholder', true);
                 await this.setData({ value });
             }
         }

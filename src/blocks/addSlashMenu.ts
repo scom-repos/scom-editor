@@ -5,26 +5,25 @@ import { BlockNoteEditor, CustomSlashMenuState } from "../global/index";
 export const addSlashMenu = (editor: BlockNoteEditor) => {
   let modal: Modal;
   let menuElm: ScomEditorSlashMenu;
-  let popupPlacement = 'bottomLeft';
+  let popupPlacement = 'topLeft';
 
   async function updateItems(items: any[], onClick: (item: any) => void, selected: number, referencePos: any) {
     const { bottom = 0 } = referencePos;
-    const maxHeight = window.innerHeight - bottom;
+    const maxHeight = window.innerHeight - bottom - 32;
     menuElm = await ScomEditorSlashMenu.create({
       items: [...items],
       selectedIndex: selected,
       overflow: {y: 'auto'},
-      maxHeight: maxHeight <= 110 ? 200 : maxHeight,
+      maxHeight: maxHeight <= 200 ? 200 : maxHeight,
       display: 'block',
       onItemClicked: (item: any) => {
         onClick(item);
         modal.visible = false;
       }
     });
-    if (window.innerHeight - bottom <= 110) {
-      popupPlacement = 'topLeft';
-    }
+    popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
     modal.item = menuElm;
+    modal.refresh();
   }
 
   editor.slashMenu.onUpdate(async (slashMenuState: CustomSlashMenuState) => {
@@ -35,8 +34,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
       modal = await createModal({
         id: 'pnlSlashMenu',
         popupPlacement,
-        padding: {left: 0, top: 0, right: 0, bottom: 0},
-        zIndex: 3000
+        padding: {left: 0, top: 0, right: 0, bottom: 0}
       })
       getModalContainer().appendChild(modal);
     }
@@ -52,6 +50,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
         if (blockEl) {
           modal.linkTo = blockEl;
+          modal.popupPlacement = popupPlacement as any;
           modal.position = 'fixed';
           modal.visible = true;
         }
