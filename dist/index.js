@@ -604,21 +604,6 @@ define("@scom/scom-editor/components/blockTypeButton.tsx", ["require", "exports"
                 if (!this.onValidate(item)) {
                     return false;
                 }
-                // Checks if props for the block type are valid
-                // for (const [prop, value] of Object.entries(item.props || {})) {
-                //   const propSchema = props.editor.schema[item.type].propSchema;
-                //   // Checks if the prop exists for the block type
-                //   if (!(prop in propSchema)) {
-                //     return false;
-                //   }
-                //   // Checks if the prop's value is valid
-                //   if (
-                //     propSchema[prop].values !== undefined &&
-                //     !propSchema[prop].values!.includes(value)
-                //   ) {
-                //     return false;
-                //   }
-                // }
                 return true;
             });
         }
@@ -1172,7 +1157,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         }
         render() {
             return (this.$render("i-panel", null,
-                this.$render("i-hstack", { verticalAlignment: "center", minWidth: 50, horizontalAlignment: 'center' },
+                this.$render("i-hstack", { verticalAlignment: "center", minWidth: 50 },
                     this.$render("i-button", { id: "btnAdd", icon: { name: 'plus', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, class: index_css_2.buttonHoverStyle, onClick: this.handleAddBlock }),
                     this.$render("i-button", { id: "btnEdit", icon: { name: 'cog', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', visible: false, class: index_css_2.buttonHoverStyle, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, onClick: this.handleEditBlock }),
                     this.$render("i-button", { id: "btnDrag", border: { radius: '0px' }, icon: { name: "ellipsis-v", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', class: index_css_2.buttonHoverStyle, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, onClick: this.showDragMenu })),
@@ -1914,11 +1899,16 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
                 modal.item = element;
             }
             if (hyperlinkToolbarState.show) {
-                const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-                if (blockEl)
-                    modal.linkTo = blockEl;
-                modal.position = 'fixed';
-                modal.visible = true;
+                if (blockID) {
+                    const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+                    if (blockEl)
+                        modal.linkTo = blockEl;
+                    modal.position = 'fixed';
+                    modal.visible = true;
+                }
+                else {
+                    modal.visible = false;
+                }
             }
         });
     };
@@ -2232,32 +2222,50 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             let result = false;
             let type = block.type;
             if (type === 'paragraph')
-                return !block.content?.length;
+                return !block.content?.length && !block.children?.length;
             return result;
         }
         async onEditorChanged(editor) {
             let value = '';
             for (let block of editor.topLevelBlocks) {
-                const type = block.type;
-                try {
-                    if (index_9.CustomBlockTypes.includes(type)) {
-                        const { altText = '', url } = block.props;
-                        const mdString = type === 'video' ? `[video](${url})` : `![${altText || ''}](${url})`;
-                        value += `${mdString}\\n\\n`;
-                    }
-                    else if (!this.isEmptyBlock(block)) {
-                        const blockValue = await editor.blocksToMarkdown([block]);
-                        value += `${blockValue}\\n\\n`;
-                    }
-                }
-                catch (error) {
-                    console.log('parsed: ', error);
+                if (!this.isEmptyBlock(block)) {
+                    value += await this.blockToMarkdown(block, '', true);
                 }
             }
             this.value = value;
             console.log(this.value);
             if (this.onChanged)
                 this.onChanged(this.value);
+        }
+        async getMarkdown(block, isStart) {
+            let value = '';
+            try {
+                const blockType = block.type;
+                if (index_9.CustomBlockTypes.includes(blockType)) {
+                    const { altText = '', url } = block.props;
+                    const mdString = blockType === 'video' ? `[video](${url})` : `![${altText || ''}](${url})`;
+                    value += `\\n\\n${mdString}\\n\\n`;
+                }
+                else if (!this.isEmptyBlock(block)) {
+                    const blockValue = await this._editor.blocksToMarkdown([block]);
+                    value += `${!isStart ? '\\n\\n' : ''}${blockValue}`;
+                }
+            }
+            catch { }
+            return value;
+        }
+        async blockToMarkdown(block, result, isStart) {
+            if (this.isEmptyBlock(block))
+                return result;
+            const clonedBlock = JSON.parse(JSON.stringify(block));
+            clonedBlock.children = [];
+            result += await this.getMarkdown(clonedBlock, isStart);
+            if (block.children?.length) {
+                for (const child of block.children) {
+                    result += await this.blockToMarkdown(child, '');
+                }
+            }
+            return result;
         }
         addCSS(href, name) {
             const css = document.head.querySelector(`[name="${name}"]`);

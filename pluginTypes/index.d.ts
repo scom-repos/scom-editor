@@ -876,6 +876,8 @@ declare module "@scom/scom-editor" {
         private renderEditor;
         private isEmptyBlock;
         private onEditorChanged;
+        private getMarkdown;
+        private blockToMarkdown;
         private addCSS;
         private loadPlugin;
         private getData;

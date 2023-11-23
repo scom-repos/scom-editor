@@ -20,7 +20,7 @@ import {
   addImageBlock
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
-import { CustomBlockTypes, TypeMapping, WidgetMapping, getModalContainer } from './components/index';
+import { CustomBlockTypes, WidgetMapping, getModalContainer } from './components/index';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
@@ -142,31 +142,49 @@ export class ScomEditor extends Module {
   private isEmptyBlock(block: Block) {
     let result = false;
     let type = block.type as string;
-    if (type === 'paragraph') return !block.content?.length;
+    if (type === 'paragraph') return !block.content?.length && !block.children?.length;
     return result;
   }
 
   private async onEditorChanged(editor: BlockNoteEditor) {
     let value = '';
     for (let block of editor.topLevelBlocks) {
-      const type = block.type;
-      console.log(block)
-      try {
-        if (CustomBlockTypes.includes(type)) {
-          const { altText = '', url } = block.props;
-          const mdString = type === 'video' ? `[video](${url})` : `![${altText || ''}](${url})`;
-          value += `${mdString}\\n\\n`;
-        } else if (!this.isEmptyBlock(block)) {
-          const blockValue = await editor.blocksToMarkdown([block]);
-          value += `${blockValue}\\n\\n`;
-        }
-      } catch (error) {
-        console.log('parsed: ', error);
+      if (!this.isEmptyBlock(block)) {
+        value += await this.blockToMarkdown(block, '', true);
       }
     }
     this.value = value;
     console.log(this.value);
     if (this.onChanged) this.onChanged(this.value);
+  }
+
+  private async getMarkdown(block: Block, isStart?: boolean) {
+    let value = '';
+    try {
+      const blockType = block.type as string;
+      if (CustomBlockTypes.includes(blockType)) {
+        const { altText = '', url } = block.props;
+        const mdString = blockType === 'video' ? `[video](${url})` : `![${altText || ''}](${url})`;
+        value += `\\n\\n${mdString}\\n\\n`;
+      } else if (!this.isEmptyBlock(block)) {
+        const blockValue = await this._editor.blocksToMarkdown([block]);
+        value += `${!isStart ? '\\n\\n' : ''}${blockValue}`;
+      }
+    } catch {}
+    return value
+  }
+
+  private async blockToMarkdown(block: Block, result: string, isStart?: boolean) {
+    if (this.isEmptyBlock(block)) return result;
+    const clonedBlock = JSON.parse(JSON.stringify(block));
+    clonedBlock.children = [];
+    result += await this.getMarkdown(clonedBlock, isStart);
+    if (block.children?.length) {
+      for (const child of block.children) {
+        result += await this.blockToMarkdown(child, '');
+      }
+    }
+    return result;
   }
 
   private addCSS(href: string, name: string) {

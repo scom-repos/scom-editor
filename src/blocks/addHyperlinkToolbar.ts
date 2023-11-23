@@ -80,10 +80,14 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
     }
 
     if (hyperlinkToolbarState.show) {
-      const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-      if (blockEl) modal.linkTo = blockEl;
-      modal.position = 'fixed';
-      modal.visible = true;
+      if (blockID) {
+        const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+        if (blockEl) modal.linkTo = blockEl;
+        modal.position = 'fixed';
+        modal.visible = true;
+      } else {
+        modal.visible = false;
+      }
     }
   });
 };
