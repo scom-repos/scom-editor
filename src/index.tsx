@@ -150,6 +150,7 @@ export class ScomEditor extends Module {
     let value = '';
     for (let block of editor.topLevelBlocks) {
       const type = block.type;
+      console.log(block)
       try {
         if (CustomBlockTypes.includes(type)) {
           const { altText = '', url } = block.props;
@@ -204,7 +205,6 @@ export class ScomEditor extends Module {
   private async markdownToBlocks(markdown: string) {
     if (!this._editor) return [];
     const blocks: Block[] = await this._editor.markdownToBlocks(markdown);
-    console.log('markdownToBlocks: ', blocks);
     let formattedBlocks = [];
     for (let block of blocks) {
       let text = '';

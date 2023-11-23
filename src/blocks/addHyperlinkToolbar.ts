@@ -56,11 +56,11 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
     const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
-        id: 'pnlHyperlinkToolbar',
         popupPlacement: 'top',
         minWidth: 0,
         zIndex: 2000
       })
+      modal.id = 'mdHyperlink';
       getModalContainer().appendChild(modal);
     }
 

@@ -79,7 +79,7 @@ export class ScomEditorColor extends Module {
 
   private showModal() {
     this.mdPicker.parent = this.btnColor;
-    this.mdPicker.showModal('bottom');
+    this.mdPicker.showModal();
   }
 
   private onColorClicked(type: ColorType, color: string) {

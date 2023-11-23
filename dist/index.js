@@ -446,7 +446,7 @@ define("@scom/scom-editor/components/colorButton.tsx", ["require", "exports", "@
         }
         showModal() {
             this.mdPicker.parent = this.btnColor;
-            this.mdPicker.showModal('bottom');
+            this.mdPicker.showModal();
         }
         onColorClicked(type, color) {
             const prop = type === 'text' ? 'textColor' : 'backgroundColor';
@@ -542,6 +542,9 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
             (0, utils_2.getModalContainer)().appendChild(this.mdDropdown);
             this.mdDropdown.linkTo = this.pnlDropdown;
             this.mdDropdown.position = 'fixed';
+            const { top, height } = this.getBoundingClientRect();
+            const maxHeight = window.innerHeight - (top + height);
+            this.mdDropdown.popupPlacement = maxHeight <= 200 ? 'top' : 'bottom';
             this.mdDropdown.visible = true;
         }
         handleClosed() {
@@ -1016,6 +1019,11 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             super(parent, options);
             this._isShowing = false;
             this.initedMap = new Map();
+            this.handleAddBlock = this.handleAddBlock.bind(this);
+            this.handleEditBlock = this.handleEditBlock.bind(this);
+            this.showDragMenu = this.showDragMenu.bind(this);
+            this.handleSetColor = this.handleSetColor.bind(this);
+            this.handleDelete = this.handleDelete.bind(this);
         }
         get block() {
             return this._data.block;
@@ -1164,10 +1172,10 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         }
         render() {
             return (this.$render("i-panel", null,
-                this.$render("i-hstack", { verticalAlignment: "center", gap: '0.5rem' },
-                    this.$render("i-button", { id: "btnAdd", icon: { name: 'plus', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', class: index_css_2.buttonHoverStyle, onClick: () => this.handleAddBlock() }),
-                    this.$render("i-button", { id: "btnEdit", icon: { name: 'cog', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', visible: false, class: index_css_2.buttonHoverStyle, onClick: () => this.handleEditBlock() }),
-                    this.$render("i-button", { id: "btnDrag", border: { radius: '0px' }, icon: { name: "ellipsis-v", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', class: index_css_2.buttonHoverStyle, onClick: () => this.showDragMenu() })),
+                this.$render("i-hstack", { verticalAlignment: "center", minWidth: 50, horizontalAlignment: 'center' },
+                    this.$render("i-button", { id: "btnAdd", icon: { name: 'plus', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, class: index_css_2.buttonHoverStyle, onClick: this.handleAddBlock }),
+                    this.$render("i-button", { id: "btnEdit", icon: { name: 'cog', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', visible: false, class: index_css_2.buttonHoverStyle, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, onClick: this.handleEditBlock }),
+                    this.$render("i-button", { id: "btnDrag", border: { radius: '0px' }, icon: { name: "ellipsis-v", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary }, background: { color: 'transparent' }, boxShadow: 'none', class: index_css_2.buttonHoverStyle, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, onClick: this.showDragMenu })),
                 this.$render("i-scom-editor-drag-handle", { id: "dragHandle", onSetColor: this.handleSetColor, onDeleted: this.handleDelete })));
         }
     };
@@ -1687,13 +1695,13 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
             const blockID = block?.id;
             if (!modal) {
                 modal = await (0, index_3.createModal)({
-                    id: 'pnlFormattingToolbar',
                     popupPlacement: (0, index_3.getPlacement)(block),
                     overflow: 'hidden',
                     minWidth: 'max-content',
                     isChildFixed: true,
                     closeOnScrollChildFixed: true,
                 });
+                modal.id = 'mdFormatting';
                 (0, index_3.getModalContainer)().appendChild(modal);
             }
             if (formattingToolbar) {
@@ -1708,16 +1716,19 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
             const isMediaBlock = selectedBlocks.length === 1 &&
                 index_3.MediaBlockTypes.includes(selectedBlocks[0].type);
             modal.popupPlacement = isMediaBlock ? 'top' : (0, index_3.getPlacement)(block);
-            if (blockID) {
-                const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-                if (blockEl) {
-                    modal.linkTo = blockEl;
-                    modal.position = 'fixed';
-                    modal.visible = true;
+            modal.refresh();
+            if (formattingToolbarState.show) {
+                if (blockID) {
+                    const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+                    if (blockEl) {
+                        modal.linkTo = blockEl;
+                        modal.position = 'fixed';
+                        modal.visible = true;
+                    }
                 }
-            }
-            else {
-                modal.visible = false;
+                else {
+                    modal.visible = false;
+                }
             }
         });
     };
@@ -1787,6 +1798,7 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                 }
             });
             popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
+            modal.popupPlacement = popupPlacement;
             modal.item = menuElm;
             modal.refresh();
         }
@@ -1796,10 +1808,10 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
             const blockID = block?.id;
             if (!modal) {
                 modal = await (0, index_5.createModal)({
-                    id: 'pnlSlashMenu',
                     popupPlacement,
                     padding: { left: 0, top: 0, right: 0, bottom: 0 }
                 });
+                modal.id = 'mdSlash';
                 (0, index_5.getModalContainer)().appendChild(modal);
             }
             if (slashMenuState.show) {
@@ -1808,9 +1820,11 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                     const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
                     if (blockEl) {
                         modal.linkTo = blockEl;
-                        modal.popupPlacement = popupPlacement;
                         modal.position = 'fixed';
                         modal.visible = true;
+                        const sideMenu = editor.domElement?.parentElement?.querySelector('#pnlSideMenu');
+                        if (sideMenu)
+                            sideMenu.visible = false;
                     }
                 }
                 else {
@@ -1877,11 +1891,11 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
             const blockID = block?.id;
             if (!modal) {
                 modal = await (0, index_6.createModal)({
-                    id: 'pnlHyperlinkToolbar',
                     popupPlacement: 'top',
                     minWidth: 0,
                     zIndex: 2000
                 });
+                modal.id = 'mdHyperlink';
                 (0, index_6.getModalContainer)().appendChild(modal);
             }
             if (!element) {
@@ -1922,11 +1936,11 @@ define("@scom/scom-editor/blocks/addImageToolbar.tsx", ["require", "exports", "@
             const blockID = block?.id;
             if (!modal) {
                 modal = await (0, index_7.createModal)({
-                    id: 'pnlImageToolbar',
                     popupPlacement: 'bottom',
                     zIndex: 2000,
                     width: '31.25rem'
                 });
+                modal.id = "mdImage";
                 (0, index_7.getModalContainer)().appendChild(modal);
             }
             if (!imageToolbar) {
@@ -2280,7 +2294,6 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._editor)
                 return [];
             const blocks = await this._editor.markdownToBlocks(markdown);
-            console.log('markdownToBlocks: ', blocks);
             let formattedBlocks = [];
             for (let block of blocks) {
                 let text = '';

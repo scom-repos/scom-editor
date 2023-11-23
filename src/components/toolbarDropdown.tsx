@@ -130,6 +130,9 @@ export class ScomEditorToolbarDropdown extends Module {
     getModalContainer().appendChild(this.mdDropdown);
     this.mdDropdown.linkTo = this.pnlDropdown;
     this.mdDropdown.position = 'fixed';
+    const { top, height } = this.getBoundingClientRect();
+    const maxHeight = window.innerHeight - (top + height);
+    this.mdDropdown.popupPlacement = maxHeight <= 200 ? 'top' : 'bottom';
     this.mdDropdown.visible = true;
   }
 

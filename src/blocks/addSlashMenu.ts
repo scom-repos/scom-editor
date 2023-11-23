@@ -1,11 +1,11 @@
-import { Modal } from "@ijstech/components";
+import { Control, Modal } from "@ijstech/components";
 import { ScomEditorSlashMenu, createModal, getModalContainer } from "../components/index";
 import { BlockNoteEditor, CustomSlashMenuState } from "../global/index";
 
 export const addSlashMenu = (editor: BlockNoteEditor) => {
   let modal: Modal;
   let menuElm: ScomEditorSlashMenu;
-  let popupPlacement = 'topLeft';
+  let popupPlacement: 'topLeft'|'bottomLeft' = 'topLeft';
 
   async function updateItems(items: any[], onClick: (item: any) => void, selected: number, referencePos: any) {
     const { bottom = 0 } = referencePos;
@@ -22,6 +22,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
       }
     });
     popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
+    modal.popupPlacement = popupPlacement;
     modal.item = menuElm;
     modal.refresh();
   }
@@ -32,10 +33,10 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
     const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
-        id: 'pnlSlashMenu',
         popupPlacement,
         padding: {left: 0, top: 0, right: 0, bottom: 0}
       })
+      modal.id = 'mdSlash';
       getModalContainer().appendChild(modal);
     }
 
@@ -50,9 +51,10 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
         if (blockEl) {
           modal.linkTo = blockEl;
-          modal.popupPlacement = popupPlacement as any;
           modal.position = 'fixed';
           modal.visible = true;
+          const sideMenu = editor.domElement?.parentElement?.querySelector('#pnlSideMenu');
+          if (sideMenu) sideMenu.visible = false;
         }
       } else {
         modal.visible = false;

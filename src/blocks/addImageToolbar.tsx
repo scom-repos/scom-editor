@@ -11,11 +11,11 @@ export const addImageToolbar = (editor: BlockNoteEditor) => {
     const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
-        id: 'pnlImageToolbar',
         popupPlacement: 'bottom',
         zIndex: 2000,
         width: '31.25rem'
       })
+      modal.id = "mdImage";
       getModalContainer().appendChild(modal);
     }
     if (!imageToolbar) {

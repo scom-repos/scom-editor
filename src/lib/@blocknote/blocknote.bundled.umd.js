@@ -48589,6 +48589,7 @@ img.ProseMirror-separator {
   async function blocksToHTML(blocks2, schema) {
     const htmlParentElement = document.createElement("div");
     const serializer = DOMSerializer.fromSchema(schema);
+    console.log(blocks2, schema)
     for (const block2 of blocks2) {
       const node2 = blockToNode(block2, schema);
       const htmlNode = serializer.serializeNode(node2);

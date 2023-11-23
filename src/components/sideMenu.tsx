@@ -55,6 +55,11 @@ export class ScomEditorSideMenu extends Module {
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
+    this.handleAddBlock = this.handleAddBlock.bind(this);
+    this.handleEditBlock = this.handleEditBlock.bind(this);
+    this.showDragMenu = this.showDragMenu.bind(this);
+    this.handleSetColor = this.handleSetColor.bind(this);
+    this.handleDelete = this.handleDelete.bind(this);
   }
 
   get block() {
@@ -217,14 +222,15 @@ export class ScomEditorSideMenu extends Module {
   render() {
     return (
       <i-panel>
-        <i-hstack verticalAlignment="center" gap={'0.5rem'}>
+        <i-hstack verticalAlignment="center" minWidth={50}>
           <i-button
             id="btnAdd"
             icon={{name: 'plus', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary}}
             background={{color: 'transparent'}}
             boxShadow='none'
+            padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
             class={buttonHoverStyle}
-            onClick={() => this.handleAddBlock()}
+            onClick={this.handleAddBlock}
           ></i-button>
           <i-button
             id="btnEdit"
@@ -233,7 +239,8 @@ export class ScomEditorSideMenu extends Module {
             boxShadow='none'
             visible={false}
             class={buttonHoverStyle}
-            onClick={() => this.handleEditBlock()}
+            padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
+            onClick={this.handleEditBlock}
           ></i-button>
           <i-button
             id="btnDrag"
@@ -242,7 +249,8 @@ export class ScomEditorSideMenu extends Module {
             background={{color: 'transparent'}}
             boxShadow='none'
             class={buttonHoverStyle}
-            onClick={() => this.showDragMenu()}
+            padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
+            onClick={this.showDragMenu}
           ></i-button>
         </i-hstack>
         <i-scom-editor-drag-handle
