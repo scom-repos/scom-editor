@@ -346,6 +346,7 @@ declare module "@scom/scom-editor/components/toolbarDropdown.tsx" {
         private mdDropdown;
         private btnSelected;
         private pnlOptions;
+        private pnlDropdown;
         private _data;
         static create(options?: ScomEditorToolbarDropdownElement, parent?: Container): Promise<ScomEditorToolbarDropdown>;
         constructor(parent?: Container, options?: any);
@@ -864,6 +865,7 @@ declare module "@scom/scom-editor" {
         private _editor;
         private _data;
         tag: any;
+        private timer;
         onChanged: onChangedCallback;
         constructor(parent?: Container, options?: any);
         get value(): string;
@@ -873,12 +875,14 @@ declare module "@scom/scom-editor" {
         private initEditor;
         private renderEditor;
         private isEmptyBlock;
-        private getEmbedUrl;
+        private onEditorChanged;
         private addCSS;
         private loadPlugin;
         private getData;
         private setData;
         private markdownToBlocks;
+        private getContentType;
+        private getEmbedUrl;
         private parseData;
         private updateTag;
         private setTag;
@@ -904,6 +908,7 @@ declare module "@scom/scom-editor" {
         })[];
         private _getActions;
         private getWidgetSchemas;
+        onHide(): void;
         init(): Promise<void>;
         render(): any;
     }

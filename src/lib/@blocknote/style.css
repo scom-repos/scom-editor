@@ -167,6 +167,9 @@ Tippy popups that are appended to document.body directly
 ._dragPreview_12je0_57 {
   position: absolute;
   top: -1000px;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Give a remote user a caret */

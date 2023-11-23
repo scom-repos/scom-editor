@@ -19,7 +19,7 @@ import {
   addVideoBlock,
   addImageBlock
 } from './blocks/index';
-import { Block, BlockNoteEditorOptions, PartialBlock } from './global/index';
+import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
 import { CustomBlockTypes, TypeMapping, WidgetMapping, getModalContainer } from './components/index';
 const Theme = Styles.Theme.ThemeVars;
 
@@ -65,6 +65,8 @@ export class ScomEditor extends Module {
   private _data: IEditor;
   tag: any = {};
 
+  private timer: any;
+
   public onChanged: onChangedCallback;
 
   constructor(parent?: Container, options?: any) {
@@ -106,41 +108,27 @@ export class ScomEditor extends Module {
     const customSchema = {
       ...this._blocknoteObj.defaultBlockSchema,
       video: VideoBlock,
-      imageWidget: ImageBlock
+      imageWidget: ImageBlock,
     };
     const editorConfig: BlockNoteEditorOptions = {
       parentElement: this.pnlEditor,
       blockSchema: customSchema,
       slashMenuItems: [
-        ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== "Image"),
+        ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
         VideoSlashItem,
-        ImageSlashItem
+        ImageSlashItem,
       ],
-      onEditorContentChange: async (editor: any) => {
-        let value = '';
-        for (let block of editor.topLevelBlocks) {
-          const type = block.type;
-          try {
-            if (CustomBlockTypes.includes(type)) {
-              const embedUrl = this.getEmbedUrl(block);
-              if (embedUrl) value += `${embedUrl}\\n\\n`;
-            } else if (!this.isEmptyBlock(block)) {
-              const blockValue = await editor.blocksToMarkdown([block]);
-              value += `${blockValue}\\n\\n`;
-            }
-          } catch (error) {
-            console.log('parsed: ', error);
-          }
-        }
-        this.value = value;
-        console.log(this.value)
-        if (this.onChanged) this.onChanged(this.value);
+      onEditorContentChange: (editor: any) => {
+        if (this.timer) clearTimeout(this.timer);
+        this.timer = setTimeout(() => {
+          this.onEditorChanged(editor);
+        }, 500);
       },
       domAttributes: {
         editor: {
-          class: 'scom-editor'
-        }
-      }
+          class: 'scom-editor',
+        },
+      },
     };
     if (initialContent) editorConfig.initialContent = initialContent;
     this._editor = new this._blocknoteObj.BlockNoteEditor(editorConfig);
@@ -154,22 +142,30 @@ export class ScomEditor extends Module {
   private isEmptyBlock(block: Block) {
     let result = false;
     let type = block.type as string;
-    if (type === "paragraph") return !block.content?.length;
+    if (type === 'paragraph') return !block.content?.length;
     return result;
   }
 
-  private getEmbedUrl(block: Block) {
-    const type = block.type as string;
-    let module = WidgetMapping[type];
-    if (module) {
-      const widgetData = {
-        module,
-        "properties": {...block.props}
+  private async onEditorChanged(editor: BlockNoteEditor) {
+    let value = '';
+    for (let block of editor.topLevelBlocks) {
+      const type = block.type;
+      try {
+        if (CustomBlockTypes.includes(type)) {
+          const { altText = '', url } = block.props;
+          const mdString = type === 'video' ? `[video](${url})` : `![${altText || ''}](${url})`;
+          value += `${mdString}\\n\\n`;
+        } else if (!this.isEmptyBlock(block)) {
+          const blockValue = await editor.blocksToMarkdown([block]);
+          value += `${blockValue}\\n\\n`;
+        }
+      } catch (error) {
+        console.log('parsed: ', error);
       }
-      const encodedWidgetDataString  = window.btoa(JSON.stringify(widgetData));
-      return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
     }
-    return '';
+    this.value = value;
+    console.log(this.value);
+    if (this.onChanged) this.onChanged(this.value);
   }
 
   private addCSS(href: string, name: string) {
@@ -208,41 +204,65 @@ export class ScomEditor extends Module {
   private async markdownToBlocks(markdown: string) {
     if (!this._editor) return [];
     const blocks: Block[] = await this._editor.markdownToBlocks(markdown);
+    console.log('markdownToBlocks: ', blocks);
     let formattedBlocks = [];
     for (let block of blocks) {
       let text = '';
       if (block.type === 'paragraph') {
-        text = block.content[0]?.type === 'text' ?
-          block.content[0]?.text :
-          block.content[0]?.type === 'link' ? block.content[0]?.href : '';
+        text =
+          block.content[0]?.type === 'text'
+            ? block.content[0]?.text
+            : block.content[0]?.type === 'link'
+            ? block.content[0]?.href
+            : '';
       }
       text = (text || '').trim();
-      let isCustom = text.startsWith(WIDGET_LOADER_URL);
-      if (isCustom) {
-        const [_, params = ''] = text.split('?');
-        const dataStr = params.replace('data=', '');
-        const widgetData = dataStr ? this.parseData(dataStr) : null;
-        if (widgetData) {
-          const { module, properties } = widgetData;
-          const newBlock = {
-            type: TypeMapping[module.name],
-            props: properties
-          }
-          formattedBlocks.push(newBlock);
-        }
+      const customType = this.getContentType(text);
+      if (customType) {
+        const newBlock = {
+          type: customType,
+          props: {
+            url: text
+          },
+        };
+        formattedBlocks.push(newBlock);
       } else {
         formattedBlocks.push(block);
       }
     }
     return JSON.parse(JSON.stringify(formattedBlocks));
-  };
+  }
+
+  private getContentType(content: string) {
+    const imageUrlRegex = /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g;
+    const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+    const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+    if (imageUrlRegex.test(content)) return 'imageWidget';
+    if (videoUrlRegex.test(content)) return 'video';
+    if (youtubeUrlRegex.test(content)) return 'video';
+    return '';
+  }
+
+  private getEmbedUrl(block: Block) {
+    const type = block.type as string;
+    let module = WidgetMapping[type];
+    if (module) {
+      const widgetData = {
+        module,
+        properties: { ...block.props },
+      };
+      const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
+      return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
+    }
+    return '';
+  }
 
   private parseData(value: string) {
     try {
       const utf8String = decodeURIComponent(value);
       const decodedString = window.atob(utf8String);
       const newData = JSON.parse(decodedString);
-      return {...newData}
+      return { ...newData };
     } catch {}
     return null;
   }
@@ -250,8 +270,7 @@ export class ScomEditor extends Module {
   private updateTag(type: 'light' | 'dark', value: any) {
     this.tag[type] = this.tag[type] ?? {};
     for (let prop in value) {
-      if (value.hasOwnProperty(prop))
-        this.tag[type][prop] = value[prop];
+      if (value.hasOwnProperty(prop)) this.tag[type][prop] = value[prop];
     }
   }
 
@@ -259,19 +278,15 @@ export class ScomEditor extends Module {
     const newValue = value || {};
     for (let prop in newValue) {
       if (newValue.hasOwnProperty(prop)) {
-        if (prop === 'light' || prop === 'dark')
-          this.updateTag(prop, newValue[prop]);
-        else
-          this.tag[prop] = newValue[prop];
+        if (prop === 'light' || prop === 'dark') this.updateTag(prop, newValue[prop]);
+        else this.tag[prop] = newValue[prop];
       }
     }
     this.updateTheme();
   }
 
   private updateStyle(name: string, value: any) {
-    value ?
-      this.style.setProperty(name, value) :
-      this.style.removeProperty(name);
+    value ? this.style.setProperty(name, value) : this.style.removeProperty(name);
   }
 
   private updateTheme() {
@@ -313,8 +328,8 @@ export class ScomEditor extends Module {
       {
         name: 'Widget Settings',
         icon: 'edit',
-        ...this.getWidgetSchemas()
-      }
+        ...this.getWidgetSchemas(),
+      },
     ];
     return actions;
   }
@@ -325,37 +340,33 @@ export class ScomEditor extends Module {
       properties: {
         pt: {
           title: 'Top',
-          type: 'number'
+          type: 'number',
         },
         pb: {
           title: 'Bottom',
-          type: 'number'
+          type: 'number',
         },
         pl: {
           title: 'Left',
-          type: 'number'
+          type: 'number',
         },
         pr: {
           title: 'Right',
-          type: 'number'
+          type: 'number',
         },
         align: {
           type: 'string',
           title: 'Alignment',
-          enum: [
-            'left',
-            'center',
-            'right'
-          ]
+          enum: ['left', 'center', 'right'],
         },
         maxWidth: {
-          type: 'number'
+          type: 'number',
         },
         link: {
           title: 'URL',
-          type: 'string'
-        }
-      }
+          type: 'string',
+        },
+      },
     };
     const themesSchema: IUISchema = {
       type: 'VerticalLayout',
@@ -389,20 +400,24 @@ export class ScomEditor extends Module {
                           type: 'Control',
                           scope: '#/properties/pr',
                         },
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     };
     return {
       userInputDataSchema: propertiesSchema,
-      userInputUISchema: themesSchema
-    }
+      userInputUISchema: themesSchema,
+    };
+  }
+
+  onHide(): void {
+    if (this.timer) clearTimeout(this.timer);
   }
 
   async init() {
@@ -411,7 +426,6 @@ export class ScomEditor extends Module {
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
       const value = this.getAttribute('value', true);
-      // const placeholder = this.getAttribute('placeholder', true);
       await this.setData({ value });
     }
   }

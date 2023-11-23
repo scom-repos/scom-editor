@@ -14,7 +14,10 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
       modal = await createModal({
         id: 'pnlFormattingToolbar',
         popupPlacement: getPlacement(block),
-        overflow: 'hidden'
+        overflow: 'hidden',
+        minWidth: 'max-content',
+        isChildFixed: true,
+        closeOnScrollChildFixed: true,
       })
       getModalContainer().appendChild(modal);
     }

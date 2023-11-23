@@ -20,6 +20,38 @@ export const addVideoBlock = (blocknote: any) => {
       return {
         dom: wrapper
       };
+    },
+    parse: () => {
+      return [
+        {
+          tag: "div[data-content-type=video]",
+          node: 'video'
+        },
+        {
+          tag: "p",
+          getAttrs: (element2: any) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            const child = element2.firstChild;
+            if (child === null) {
+              return false;
+            }
+            if (child.nodeName === 'VIDEO') {
+              return {
+                url: child.getAttribute('src')
+              };
+            }
+            return false;
+          },
+          priority: 400,
+          node: 'video'
+        },
+        {
+          tag: "video",
+          node: 'video'
+        }
+      ]
     }
   });
   const VideoSlashItem = {

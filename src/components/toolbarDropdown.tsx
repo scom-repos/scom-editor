@@ -8,7 +8,8 @@ import {
   Button,
   VStack,
   Control,
-  HStack
+  HStack,
+  Panel
 } from '@ijstech/components';
 import { IToolbarDropdownItem, getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
@@ -34,6 +35,7 @@ export class ScomEditorToolbarDropdown extends Module {
   private mdDropdown: Modal;
   private btnSelected: Button;
   private pnlOptions: VStack;
+  private pnlDropdown: Panel;
 
   private _data: IToolbarDropdown;
 
@@ -126,9 +128,8 @@ export class ScomEditorToolbarDropdown extends Module {
 
   private showModal() {
     getModalContainer().appendChild(this.mdDropdown);
-    this.mdDropdown.parent = this.btnSelected;
+    this.mdDropdown.linkTo = this.pnlDropdown;
     this.mdDropdown.position = 'fixed';
-    this.mdDropdown.refresh();
     this.mdDropdown.visible = true;
   }
 
@@ -144,7 +145,7 @@ export class ScomEditorToolbarDropdown extends Module {
 
   render() {
     return (
-      <i-panel width={'auto'} height={'100%'} display='inline-block'>
+      <i-panel id="pnlDropdown" width={'auto'} height={'100%'} display='inline-block'>
         <i-button
           id="btnSelected"
           height={'100%'} width={'auto'} minWidth={'1rem'}
@@ -166,7 +167,7 @@ export class ScomEditorToolbarDropdown extends Module {
           boxShadow={Theme.shadows[1]}
           margin={{top: '1rem'}}
           showBackdrop={false}
-          zIndex={100000}
+          zIndex={30001}
           onClose={this.handleClosed}
         >
           <i-vstack

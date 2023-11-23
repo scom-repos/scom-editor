@@ -63,6 +63,7 @@ export class ScomEditorSideMenu extends Module {
   set block(value: Block) {
     this._data.block = value;
     this.dragHandle.block = value;
+    this.id = `side-${this.block.id}`;
     this.updateButtons();
   }
 

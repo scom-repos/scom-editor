@@ -25,6 +25,39 @@ export function addImageBlock(blocknote: any) {
       return {
         dom: wrapper
       };
+    },
+    parse: () => {
+      return [
+        {
+          tag: "div[data-content-type=imageWidget]",
+          node: 'imageWidget'
+        },
+        {
+          tag: "p",
+          getAttrs: (element2: any) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            const child = element2.firstChild;
+            if (child === null) {
+              return false;
+            }
+            if (child.nodeName === 'IMG') {
+              return {
+                url: child.getAttribute('src'),
+                altText: child.getAttribute('alt')
+              };
+            }
+            return false;
+          },
+          priority: 400,
+          node: 'imageWidget'
+        },
+        {
+          tag: "img",
+          node: 'imageWidget'
+        }
+      ]
     }
   });
   const ImageSlashItem = {
