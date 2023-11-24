@@ -77,24 +77,6 @@ export class ScomEditorBlockType extends Module {
       if (!this.onValidate(item)) {
         return false;
       }
-      // Checks if props for the block type are valid
-      // for (const [prop, value] of Object.entries(item.props || {})) {
-      //   const propSchema = props.editor.schema[item.type].propSchema;
-
-      //   // Checks if the prop exists for the block type
-      //   if (!(prop in propSchema)) {
-      //     return false;
-      //   }
-
-      //   // Checks if the prop's value is valid
-      //   if (
-      //     propSchema[prop].values !== undefined &&
-      //     !propSchema[prop].values!.includes(value)
-      //   ) {
-      //     return false;
-      //   }
-      // }
-
       return true;
     });
   }
