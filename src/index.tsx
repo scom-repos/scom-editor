@@ -164,7 +164,7 @@ export class ScomEditor extends Module {
       const blockType = block.type as string;
       if (CustomBlockTypes.includes(blockType)) {
         const { altText = '', url } = block.props;
-        const mdString = blockType === 'video' ? `[video](${url})` : `![${altText || ''}](${url})`;
+        const mdString = blockType === 'video' ? `[](${url})` : `![${altText || ''}](${url})`;
         value += `\\n\\n${mdString}\\n\\n`;
       } else if (!this.isEmptyBlock(block)) {
         const blockValue = await this._editor.blocksToMarkdown([block]);
@@ -231,11 +231,11 @@ export class ScomEditor extends Module {
           block.content[0]?.type === 'text'
             ? block.content[0]?.text
             : block.content[0]?.type === 'link'
-            ? block.content[0]?.href
+            ? block.content[0]?.href || block.content[0]?.content[0]?.text
             : '';
       }
       text = (text || '').trim();
-      const customType = this.getContentType(text);
+      const customType = text === 'video' ? 'video' : this.getContentType(text);
       if (customType) {
         const newBlock = {
           type: customType,

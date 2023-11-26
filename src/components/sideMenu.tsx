@@ -17,13 +17,11 @@ const Theme = Styles.Theme.ThemeVars;
 interface ScomEditorSideMenuElement extends ControlElement {
   block?: Block;
   editor?: BlockNoteEditor;
-  isDefaultConfigShown?: boolean;
 }
 
 interface ISideMenu {
   block: Block;
   editor: BlockNoteEditor;
-  isDefaultConfigShown?: boolean;
 }
 
 declare global {
@@ -66,6 +64,7 @@ export class ScomEditorSideMenu extends Module {
     return this._data.block;
   }
   set block(value: Block) {
+    if (value.id === this._data.block.id) return;
     this._data.block = value;
     this.dragHandle.block = value;
     this.id = `side-${this.block.id}`;
@@ -77,10 +76,6 @@ export class ScomEditorSideMenu extends Module {
   }
   set editor(value: BlockNoteEditor) {
     this._data.editor = value;
-  }
-
-  get isDefaultConfigShown() {
-    return !this.block?.props?.url
   }
 
   get isEditShown() {
@@ -106,9 +101,14 @@ export class ScomEditorSideMenu extends Module {
   private updateButtons() {
     this.btnEdit.visible = this.isEditShown;
     this.btnAdd.visible = !this.isEditShown;
-    if (this.isEditShown && this.isDefaultConfigShown && !this.initedMap.has(this.block.id)) {
-      this.handleEditBlock();
-      this.initedMap.set(this.block.id, true);
+  }
+
+  openConfig(block: Block, module: any) {
+    const isCustomBlock = block?.type && CustomBlockTypes.includes(block.type as string)
+    if (isCustomBlock && !this.initedMap.has(block.id)) {
+      const editAction = this.getActions(module)[0];
+      this.showConfigModal(block, editAction);
+      this.initedMap.set(block.id, true);
     }
   }
 
@@ -144,40 +144,35 @@ export class ScomEditorSideMenu extends Module {
     if (!blockEl) return;
     let module: any;
     let editAction: any;
-    let formConfig: ISettingsForm;
     switch(this.block.type) {
       case 'video':
         module = blockEl.querySelector('i-scom-video');
         editAction = this.getActions(module)[0];
-        if (editAction) {
-          formConfig = {
-            action: {...editAction},
-            block: JSON.parse(JSON.stringify(this.block)),
-            onConfirm: (block: Block, data: any) => {
-              if (data.url !== block.props.url) {
-                this.updateBlock(block, { url: data.url });
-              }
-              this.actionForm.closeModal();
-            }
-          }
-        }
         break;
       case 'imageWidget':
         module = blockEl.querySelector('i-scom-image');
         editAction = this.getActions(module)[0];
-        if (editAction) {
-          formConfig = {
-            action: {...editAction},
-            block: JSON.parse(JSON.stringify(this.block)),
-            onConfirm: (block: Block, data: any) => {
-              const newProps = {...data};
-              const { url, cid, link, altText, keyword, photoId, backgroundColor } = newProps;
-              this.updateBlock(block, { url, cid, link, altText, keyword, photoId, backgroundColor });
-              this.actionForm.closeModal();
-            }
-          }
-        }
         break;
+    }
+    this.showConfigModal(this.block, editAction);
+  }
+
+  private showConfigModal(block: Block, editAction: any) {
+    const formConfig: ISettingsForm = {
+      action: {...editAction},
+      block: JSON.parse(JSON.stringify(block)),
+      onConfirm: (block: Block, data: any) => {
+        const newProps = {...data};
+        if (block.type === 'video') {
+          if (data.url !== block.props.url) {
+            this.updateBlock(block, { url: data.url });
+          }
+        } else if (block.type === 'imageWidget') {
+          const { url, cid, link, altText, keyword, photoId, backgroundColor } = newProps;
+          this.updateBlock(block, { url, cid, link, altText, keyword, photoId, backgroundColor });
+        }
+        this.actionForm.closeModal();
+      }
     }
     if (formConfig) this.renderForm(formConfig);
   }
@@ -197,7 +192,6 @@ export class ScomEditorSideMenu extends Module {
     } else {
       this.actionForm = new ScomEditorSettingsForm(undefined, { data });
     }
-    this.actionForm.refresh();
     this.actionForm.openModal({
       title: 'Edit',
       width: '30rem'
@@ -205,10 +199,6 @@ export class ScomEditorSideMenu extends Module {
   }
 
   private async updateBlock (block: Block, props: Record<string, string>) {
-    // const newData = this.configurator?.getData ? {...this.configurator.getData(), ...props} : {...props};
-    // if (this.configurator?.getLink) {
-    //   props.embedUrl = this.configurator.getLink(newData);
-    // }
     this.editor.updateBlock(block, { props });
   }
 
@@ -225,30 +215,32 @@ export class ScomEditorSideMenu extends Module {
         <i-hstack verticalAlignment="center" minWidth={50}>
           <i-button
             id="btnAdd"
-            icon={{name: 'plus', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary}}
+            icon={{name: 'plus', width: '0.75rem', height: '0.75rem', fill: Theme.text.secondary}}
             background={{color: 'transparent'}}
             boxShadow='none'
             padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
+            border={{radius: '0.125rem'}}
             class={buttonHoverStyle}
             onClick={this.handleAddBlock}
           ></i-button>
           <i-button
             id="btnEdit"
-            icon={{name: 'cog', width: '0.75rem', height: '0.75rem', fill: Theme.text.primary}}
+            icon={{name: 'cog', width: '0.75rem', height: '0.75rem', fill: Theme.text.secondary}}
             background={{color: 'transparent'}}
             boxShadow='none'
             visible={false}
+            border={{radius: '0.125rem'}}
             class={buttonHoverStyle}
             padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
             onClick={this.handleEditBlock}
           ></i-button>
           <i-button
             id="btnDrag"
-            border={{ radius: '0px'}}
-            icon={{name: "ellipsis-v", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary}}
+            icon={{name: "ellipsis-v", width: '0.75rem', height: '0.75rem', fill: Theme.text.secondary}}
             background={{color: 'transparent'}}
             boxShadow='none'
             class={buttonHoverStyle}
+            border={{radius: '0.125rem'}}
             padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
             onClick={this.showDragMenu}
           ></i-button>

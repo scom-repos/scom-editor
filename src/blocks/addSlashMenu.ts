@@ -1,4 +1,4 @@
-import { Control, Modal } from "@ijstech/components";
+import { Modal } from "@ijstech/components";
 import { ScomEditorSlashMenu, createModal, getModalContainer } from "../components/index";
 import { BlockNoteEditor, CustomSlashMenuState } from "../global/index";
 
@@ -10,21 +10,22 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
   async function updateItems(items: any[], onClick: (item: any) => void, selected: number, referencePos: any) {
     const { bottom = 0 } = referencePos;
     const maxHeight = window.innerHeight - bottom - 32;
-    menuElm = await ScomEditorSlashMenu.create({
-      items: [...items],
-      selectedIndex: selected,
-      overflow: {y: 'auto'},
-      maxHeight: maxHeight <= 200 ? 200 : maxHeight,
-      display: 'block',
-      onItemClicked: (item: any) => {
-        onClick(item);
-        modal.visible = false;
-      }
-    });
+    if (menuElm) {
+      menuElm.setData({
+        items: [...items],
+        selectedIndex: selected
+      })
+    } else {
+      menuElm = await ScomEditorSlashMenu.create({
+        items: [...items],
+        selectedIndex: selected,
+        onItemClicked: (item: any) => onClick(item)
+      });
+      modal.item = menuElm;
+    }
+    menuElm.updateMaxHeight(maxHeight <= 200 ? 200 : maxHeight);
     popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
     modal.popupPlacement = popupPlacement;
-    modal.item = menuElm;
-    modal.refresh();
   }
 
   editor.slashMenu.onUpdate(async (slashMenuState: CustomSlashMenuState) => {
@@ -52,7 +53,8 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         if (blockEl) {
           modal.linkTo = blockEl;
           modal.position = 'fixed';
-          modal.visible = true;
+          if (modal.visible) modal.refresh();
+          else modal.visible = true;
           const sideMenu = editor.domElement?.parentElement?.querySelector('#pnlSideMenu');
           if (sideMenu) sideMenu.visible = false;
         }

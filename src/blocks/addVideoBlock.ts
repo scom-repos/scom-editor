@@ -1,6 +1,7 @@
 import { Panel } from "@ijstech/components";
 import ScomVideo from '@scom/scom-video';
 import { Block, BlockNoteEditor } from "../global/index";
+import { ScomEditorSideMenu } from "../components/index";
 
 export const addVideoBlock = (blocknote: any) => {
   const VideoBlock = blocknote.createBlockSpec({
@@ -17,6 +18,10 @@ export const addVideoBlock = (blocknote: any) => {
       const { url } = JSON.parse(JSON.stringify(block.props));
       const video = new ScomVideo(wrapper, { url });
       wrapper.appendChild(video);
+      if (!url) {
+        const sideMenu = editor.domElement?.parentElement?.querySelector('i-scom-editor-side-menu') as ScomEditorSideMenu;
+        if (sideMenu) sideMenu.openConfig(block, video);
+      }
       return {
         dom: wrapper
       };

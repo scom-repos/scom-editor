@@ -84,7 +84,8 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
         const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
         if (blockEl) modal.linkTo = blockEl;
         modal.position = 'fixed';
-        modal.visible = true;
+        if (modal.visible) modal.refresh();
+        else modal.visible = true;
       } else {
         modal.visible = false;
       }

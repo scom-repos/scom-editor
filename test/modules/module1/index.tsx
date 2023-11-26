@@ -9,7 +9,8 @@ export default class Module1 extends Module {
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
-    this._value = `### Heading\n[video](https://www.youtube.com/embed/Wlf1T5nrO50)\n\n![orange flowers](https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NzM4Mzl8MHwxfHNlYXJjaHwxNHx8bmF0dXJlfGVufDB8fHx8MTcwMDUzOTQzMXww&ixlib=rb-4.0.3&q=80&w=1080)`
+    this._value = `### Heading
+    \n\n[video](https://www.youtube.com/embed/Wlf1T5nrO50)\n\n\n\n![orange flowers](https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NzM4Mzl8MHwxfHNlYXJjaHwxNHx8bmF0dXJlfGVufDB8fHx8MTcwMDUzOTQzMXww&ixlib=rb-4.0.3&q=80&w=1080)\n\n`
   }
 
   init() {

@@ -6,9 +6,10 @@ import {
   Container,
   VStack,
   HStack,
-  Panel
+  Panel,
+  Control
 } from '@ijstech/components';
-import { getExtraFields } from './utils';
+import { getExtraFields, getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSlashMenuElement extends ControlElement {
@@ -39,7 +40,6 @@ declare global {
 @customElements('i-scom-editor-splash-menu')
 export class ScomEditorSlashMenu extends Module {
   private pnlSlash: VStack;
-  private pnlWrap: Panel;
   private itemsMap: Map<string, HStack> = new Map();
 
   private _data: ISlashMenu;
@@ -74,6 +74,12 @@ export class ScomEditorSlashMenu extends Module {
     const result: {[key: string]: any[]} = {};
     const fieldData = getExtraFields();
     for (let item of this.items) {
+      const executeFn = item.execute;
+      item.execute = (editor: any) => {
+        executeFn(editor);
+        const slashMenu = getModalContainer().querySelector('#mdSlash') as Control;
+        if (slashMenu) slashMenu.visible = false;
+      }
       const field = fieldData[item.name] || {};
       if (result[field.group]) {
         result[field.group].push({...field, ...item});
@@ -87,6 +93,10 @@ export class ScomEditorSlashMenu extends Module {
   setData(value: ISlashMenu) {
     this._data = value;
     this.renderUI();
+  }
+
+  updateMaxHeight(maxHeight: number) {
+    this.pnlSlash.maxHeight = maxHeight;
   }
 
   private renderUI() {
@@ -105,6 +115,7 @@ export class ScomEditorSlashMenu extends Module {
           {itemsWrap}
         </i-vstack>
       );
+      let selectedItem: Control | null = null;
       for (let i = 0; i < this.groupData[group].length; i++) {
         const item = this.groupData[group][i];
         const isSelected = this.items[this.selectedIndex]?.name === item.name;
@@ -143,10 +154,14 @@ export class ScomEditorSlashMenu extends Module {
             stack={{shrink: '0'}}
           ></i-label>
         </i-hstack>
+        if (isSelected) selectedItem = hstack;
         itemsWrap.append(hstack);
         this.itemsMap.set(item.name, hstack);
       }
       this.pnlSlash.appendChild(groupEl);
+      if (selectedItem) {
+        this.pnlSlash.scrollTo({ top: selectedItem.offsetTop })
+      }
     }
   }
 
@@ -162,7 +177,7 @@ export class ScomEditorSlashMenu extends Module {
   render() {
     return (
       <i-panel id="pnlWrap" minWidth={300} maxWidth={'100%'} height="auto">
-        <i-vstack id="pnlSlash" width={'100%'}/>
+        <i-vstack id="pnlSlash" width={'100%'} overflow={{y: 'auto'}}/>
       </i-panel>
     )
   }

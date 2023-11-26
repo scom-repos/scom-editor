@@ -78,8 +78,8 @@ export class ScomEditorColor extends Module {
   }
 
   private showModal() {
-    this.mdPicker.parent = this.btnColor;
-    this.mdPicker.showModal();
+    this.mdPicker.visible = true;
+    this.mdPicker.showModal(this.btnColor);
   }
 
   private onColorClicked(type: ColorType, color: string) {
@@ -97,6 +97,9 @@ export class ScomEditorColor extends Module {
     const textColor = this.getAttribute('textColor', true, 'default');
     const backgroundColor = this.getAttribute('backgroundColor', true, 'default');
     this.setData({textColor, backgroundColor});
+    this.mdPicker.onClosed = () => {
+      this.mdPicker.visible = false;
+    }
   }
 
   render() {
@@ -112,7 +115,7 @@ export class ScomEditorColor extends Module {
           font={{size: '0.75rem', color: Theme.text.primary}}
           onClick={() => this.showModal()}
         ></i-button>
-        <i-scom-editor-color-picker id="mdPicker" onSelected={this.onColorClicked}/>
+        <i-scom-editor-color-picker id="mdPicker" visible={false} onSelected={this.onColorClicked}/>
       </i-panel>
     )
   }
