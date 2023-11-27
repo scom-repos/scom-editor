@@ -210,6 +210,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        Swap: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -230,6 +237,7 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const TypeMapping: {
         '@scom/scom-video': string;
         '@scom/scom-image': string;
+        '@scom/scom-swap': string;
     };
     export const WidgetMapping: {
         [key: string]: any;
@@ -842,6 +850,18 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addVideoBlock } from "@scom/scom-editor/blocks/addVideoBlock.ts";
     export { addImageBlock } from "@scom/scom-editor/blocks/addImageBlock.ts";
 }
+/// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
+declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addSwapBlock: (blocknote: any) => {
+        SwapBlock: any;
+        SwapSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor" />
 declare module "@scom/scom-editor" {
     import { Module, ControlElement, Container } from '@ijstech/components';
@@ -883,7 +903,8 @@ declare module "@scom/scom-editor" {
         private setData;
         private markdownToBlocks;
         private getContentType;
-        private getEmbedUrl;
+        private getMarkdownStr;
+        private getWidgetEmbedUrl;
         private parseData;
         private updateTag;
         private setTag;

@@ -19,6 +19,7 @@
     "@ijstech/compiler": "^0.1.18",
     "@ijstech/components": "^0.1.29",
     "@scom/scom-image": "latest",
-    "@scom/scom-video": "latest"
+    "@scom/scom-video": "latest",
+    "@scom/scom-swap": "latest"
   }
 }

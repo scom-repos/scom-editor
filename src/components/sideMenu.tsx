@@ -153,6 +153,10 @@ export class ScomEditorSideMenu extends Module {
         module = blockEl.querySelector('i-scom-image');
         editAction = this.getActions(module)[0];
         break;
+      case 'swap':
+        module = blockEl.querySelector('i-scom-swap');
+        editAction = this.getActions(module)[0];
+        break;
     }
     this.showConfigModal(this.block, editAction);
   }
@@ -170,6 +174,9 @@ export class ScomEditorSideMenu extends Module {
         } else if (block.type === 'imageWidget') {
           const { url, cid, link, altText, keyword, photoId, backgroundColor } = newProps;
           this.updateBlock(block, { url, cid, link, altText, keyword, photoId, backgroundColor });
+        } else if (block.type === 'swap') {
+          const { tokens, networks, title, logo, category, providers } = newProps;
+          this.updateBlock(block, { tokens, networks, title, logo, category, providers });
         }
         this.actionForm.closeModal();
       }
@@ -194,7 +201,7 @@ export class ScomEditorSideMenu extends Module {
     }
     this.actionForm.openModal({
       title: 'Edit',
-      width: '30rem'
+      width: '40rem'
     });
   }
 

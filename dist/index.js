@@ -165,6 +165,11 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
                 group: "Media",
                 icon: { name: 'video' },
                 hint: "Insert a video",
+            },
+            Swap: {
+                group: "Widget",
+                icon: { name: 'exchange-alt' },
+                hint: "Insert a swap widget",
             }
         };
         return extraFields;
@@ -262,11 +267,12 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
         return placement;
     };
     exports.getPlacement = getPlacement;
-    exports.CustomBlockTypes = ['video', 'imageWidget'];
-    exports.MediaBlockTypes = ['video', 'image', 'imageWidget'];
+    exports.CustomBlockTypes = ['video', 'imageWidget', 'swap'];
+    exports.MediaBlockTypes = ['video', 'image', 'imageWidget', 'swap'];
     exports.TypeMapping = {
         '@scom/scom-video': 'video',
-        '@scom/scom-image': 'imageWidget'
+        '@scom/scom-image': 'imageWidget',
+        '@scom/scom-swap': 'swap'
     };
     exports.WidgetMapping = {
         video: {
@@ -276,7 +282,11 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
         imageWidget: {
             name: '@scom/scom-image',
             localPath: 'scom-image'
-        }
+        },
+        swap: {
+            name: '@scom/scom-swap',
+            localPath: 'scom-swap'
+        },
     };
 });
 define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_3, utils_1) {
@@ -1093,6 +1103,10 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                     module = blockEl.querySelector('i-scom-image');
                     editAction = this.getActions(module)[0];
                     break;
+                case 'swap':
+                    module = blockEl.querySelector('i-scom-swap');
+                    editAction = this.getActions(module)[0];
+                    break;
             }
             this.showConfigModal(this.block, editAction);
         }
@@ -1110,6 +1124,10 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                     else if (block.type === 'imageWidget') {
                         const { url, cid, link, altText, keyword, photoId, backgroundColor } = newProps;
                         this.updateBlock(block, { url, cid, link, altText, keyword, photoId, backgroundColor });
+                    }
+                    else if (block.type === 'swap') {
+                        const { tokens, networks, title, logo, category, providers } = newProps;
+                        this.updateBlock(block, { tokens, networks, title, logo, category, providers });
                     }
                     this.actionForm.closeModal();
                 }
@@ -1135,7 +1153,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             }
             this.actionForm.openModal({
                 title: 'Edit',
-                width: '30rem'
+                width: '40rem'
             });
         }
         async updateBlock(block, props) {
@@ -1195,10 +1213,10 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
             for (let item of this.items) {
                 const executeFn = item.execute;
                 item.execute = (editor) => {
-                    executeFn(editor);
                     const slashMenu = (0, utils_6.getModalContainer)().querySelector('#mdSlash');
                     if (slashMenu)
                         slashMenu.visible = false;
+                    executeFn(editor);
                 };
                 const field = fieldData[item.name] || {};
                 if (result[field.group]) {
@@ -2161,14 +2179,128 @@ define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-e
     Object.defineProperty(exports, "addVideoBlock", { enumerable: true, get: function () { return addVideoBlock_1.addVideoBlock; } });
     Object.defineProperty(exports, "addImageBlock", { enumerable: true, get: function () { return addImageBlock_1.addImageBlock; } });
 });
-define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts"], function (require, exports, components_18, index_8, index_9) {
+define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-swap"], function (require, exports, components_18, scom_swap_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.addSwapBlock = void 0;
+    const addSwapBlock = (blocknote) => {
+        const SwapBlock = blocknote.createBlockSpec({
+            type: "swap",
+            propSchema: {
+                ...blocknote.defaultProps,
+                category: { default: 'fixed-pair', values: ['fixed-pair', 'fixed-protocal', 'aggregator', 'cross-chain-swap'] },
+                providers: { default: [] },
+                tokens: { default: [] },
+                defaultChainId: { default: 0 },
+                networks: { default: [] },
+                logo: { default: '' },
+                title: { default: '' },
+                // campaignId?: number;
+                // wallets: { default: [] },
+                // commissions: { default: [] },
+                // defaultInputToken?: ITokenConfig;
+                // defaultOutputToken?: ITokenConfig;
+                // defaultInputValue?: string;
+                // defaultOutputValue?: string;
+                // apiEndpoints?: Record<string, string>;
+            },
+            containsInlineContent: false,
+            render: (block, editor) => {
+                const wrapper = new components_18.Panel();
+                const props = JSON.parse(JSON.stringify(block.props));
+                const swapEl = new scom_swap_1.default(wrapper, props);
+                wrapper.appendChild(swapEl);
+                if (!props?.providers?.length) {
+                    const sideMenu = editor.domElement?.parentElement?.querySelector('i-scom-editor-side-menu');
+                    if (sideMenu)
+                        sideMenu.openConfig(block, swapEl);
+                }
+                return {
+                    dom: wrapper
+                };
+            },
+            parse: () => {
+                return [
+                    {
+                        tag: "div[data-content-type=swap]",
+                        node: 'swap'
+                    }
+                ];
+            }
+        });
+        const SwapSlashItem = {
+            name: "Swap",
+            execute: (editor) => {
+                editor.insertBlocks([
+                    {
+                        type: "swap",
+                        props: {
+                            "providers": [
+                                {
+                                    "key": "OpenSwap",
+                                    "chainId": 97
+                                },
+                                {
+                                    "key": "OpenSwap",
+                                    "chainId": 43113
+                                }
+                            ],
+                            "category": "fixed-pair",
+                            "tokens": [
+                                {
+                                    "address": "0x29386B60e0A9A1a30e1488ADA47256577ca2C385",
+                                    "chainId": 97
+                                },
+                                {
+                                    "address": "0x45eee762aaeA4e5ce317471BDa8782724972Ee19",
+                                    "chainId": 97
+                                },
+                                {
+                                    "address": "0xb9C31Ea1D475c25E58a1bE1a46221db55E5A7C6e",
+                                    "chainId": 43113
+                                },
+                                {
+                                    "address": "0x78d9D80E67bC80A11efbf84B7c8A65Da51a8EF3C",
+                                    "chainId": 43113
+                                }
+                            ],
+                            "defaultChainId": 43113,
+                            "networks": [
+                                {
+                                    "chainId": 43113
+                                },
+                                {
+                                    "chainId": 97
+                                }
+                            ],
+                            "wallets": [
+                                {
+                                    "name": "metamask"
+                                }
+                            ],
+                            "showHeader": true,
+                            "showFooter": true
+                        }
+                    }
+                ], editor.getTextCursorPosition().block, "after");
+            },
+            aliases: ["swap", "widget"]
+        };
+        return {
+            SwapBlock,
+            SwapSlashItem
+        };
+    };
+    exports.addSwapBlock = addSwapBlock;
+});
+define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts"], function (require, exports, components_19, index_8, index_9, addSwapBlock_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditor = void 0;
-    const Theme = components_18.Styles.Theme.ThemeVars;
+    const Theme = components_19.Styles.Theme.ThemeVars;
     const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
-    const path = components_18.application.currentModuleDir;
-    components_18.RequireJS.config({
+    const path = components_19.application.currentModuleDir;
+    components_19.RequireJS.config({
         paths: {
             'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
         }
@@ -2177,7 +2309,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         'blocknote'
     ];
     const cssPath = `${path}/lib/@blocknote/style.css`;
-    let ScomEditor = class ScomEditor extends components_18.Module {
+    let ScomEditor = class ScomEditor extends components_19.Module {
         constructor(parent, options) {
             super(parent, options);
             this.tag = {};
@@ -2213,10 +2345,12 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             (0, index_9.getModalContainer)().innerHTML = '';
             const { VideoSlashItem, VideoBlock } = (0, index_8.addVideoBlock)(this._blocknoteObj);
             const { ImageSlashItem, ImageBlock } = (0, index_8.addImageBlock)(this._blocknoteObj);
+            const { SwapSlashItem, SwapBlock } = (0, addSwapBlock_1.addSwapBlock)(this._blocknoteObj);
             const customSchema = {
                 ...this._blocknoteObj.defaultBlockSchema,
                 video: VideoBlock,
                 imageWidget: ImageBlock,
+                swap: SwapBlock
             };
             const editorConfig = {
                 parentElement: this.pnlEditor,
@@ -2225,6 +2359,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                     ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
                     VideoSlashItem,
                     ImageSlashItem,
+                    SwapSlashItem
                 ],
                 onEditorContentChange: (editor) => {
                     if (this.timer)
@@ -2246,7 +2381,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             (0, index_8.addFormattingToolbar)(this._editor);
             (0, index_8.addSlashMenu)(this._editor);
             (0, index_8.addHyperlinkToolbar)(this._editor);
-            (0, index_8.addImageToolbar)(this._editor);
+            // addImageToolbar(this._editor);
         }
         isEmptyBlock(block) {
             let result = false;
@@ -2272,8 +2407,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             try {
                 const blockType = block.type;
                 if (index_9.CustomBlockTypes.includes(blockType)) {
-                    const { altText = '', url } = block.props;
-                    const mdString = blockType === 'video' ? `[](${url})` : `![${altText || ''}](${url})`;
+                    const mdString = this.getMarkdownStr(block);
                     value += `\\n\\n${mdString}\\n\\n`;
                 }
                 else if (!this.isEmptyBlock(block)) {
@@ -2311,7 +2445,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         loadPlugin() {
             return new Promise((resolve, reject) => {
-                components_18.RequireJS.require(libPlugins, (blocknote) => {
+                components_19.RequireJS.require(libPlugins, (blocknote) => {
                     resolve(blocknote);
                 });
             });
@@ -2346,13 +2480,26 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 text = (text || '').trim();
                 const customType = text === 'video' ? 'video' : this.getContentType(text);
                 if (customType) {
-                    const newBlock = {
-                        type: customType,
-                        props: {
-                            url: text
-                        },
-                    };
-                    formattedBlocks.push(newBlock);
+                    if (customType === 'widget') {
+                        const [_, params = ''] = text.split('?');
+                        const dataStr = params.replace('data=', '');
+                        const widgetData = dataStr ? this.parseData(dataStr) : null;
+                        if (widgetData) {
+                            const { module, properties } = widgetData;
+                            formattedBlocks.push({
+                                type: index_9.TypeMapping[module.name],
+                                props: properties
+                            });
+                        }
+                    }
+                    else {
+                        formattedBlocks.push({
+                            type: customType,
+                            props: {
+                                url: text
+                            }
+                        });
+                    }
                 }
                 else {
                     formattedBlocks.push(block);
@@ -2370,9 +2517,28 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 return 'video';
             if (youtubeUrlRegex.test(content))
                 return 'video';
+            if (content.startsWith(WIDGET_LOADER_URL))
+                return 'widget';
             return '';
         }
-        getEmbedUrl(block) {
+        getMarkdownStr(block) {
+            const type = block.type;
+            let mdString = '';
+            const { altText = '', url } = block.props;
+            switch (type) {
+                case 'video':
+                    mdString = `[video](${url})`;
+                    break;
+                case 'imageWidget':
+                    mdString = `![${altText || ''}](${url})`;
+                    break;
+                case 'swap':
+                    mdString = this.getWidgetEmbedUrl(block);
+                    break;
+            }
+            return mdString;
+        }
+        getWidgetEmbedUrl(block) {
             const type = block.type;
             let module = index_9.WidgetMapping[type];
             if (module) {
@@ -2557,7 +2723,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
     };
     ScomEditor = __decorate([
-        (0, components_18.customElements)('i-scom-editor')
+        (0, components_19.customElements)('i-scom-editor')
     ], ScomEditor);
     exports.ScomEditor = ScomEditor;
 });

@@ -122,6 +122,11 @@ export function getExtraFields () {
       group: "Media",
       icon: {name: 'video'},
       hint: "Insert a video",
+    },
+    Swap: {
+      group: "Widget",
+      icon: {name: 'exchange-alt'},
+      hint: "Insert a swap widget",
     }
   };
   return extraFields;
@@ -229,11 +234,12 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget'];
-export const MediaBlockTypes = ['video', 'image', 'imageWidget'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap'];
+export const MediaBlockTypes = ['video', 'image', 'imageWidget', 'swap'];
 export const TypeMapping = {
   '@scom/scom-video': 'video',
-  '@scom/scom-image': 'imageWidget'
+  '@scom/scom-image': 'imageWidget',
+  '@scom/scom-swap': 'swap'
 }
 export const WidgetMapping: {[key: string]: any} = {
   video: {
@@ -243,5 +249,9 @@ export const WidgetMapping: {[key: string]: any} = {
   imageWidget: {
     name: '@scom/scom-image',
     localPath: 'scom-image'
-  }
+  },
+  swap: {
+    name: '@scom/scom-swap',
+    localPath: 'scom-swap'
+  },
 }

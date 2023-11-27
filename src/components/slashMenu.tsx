@@ -76,9 +76,9 @@ export class ScomEditorSlashMenu extends Module {
     for (let item of this.items) {
       const executeFn = item.execute;
       item.execute = (editor: any) => {
-        executeFn(editor);
         const slashMenu = getModalContainer().querySelector('#mdSlash') as Control;
         if (slashMenu) slashMenu.visible = false;
+        executeFn(editor);
       }
       const field = fieldData[item.name] || {};
       if (result[field.group]) {
