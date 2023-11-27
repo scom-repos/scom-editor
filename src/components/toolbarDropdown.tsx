@@ -162,9 +162,11 @@ export class ScomEditorToolbarDropdown extends Module {
         ></i-button>
         <i-modal
           id="mdDropdown"
-          popupPlacement="bottom"
           minWidth={200}
+          popupPlacement='bottom'
           maxWidth={'max-content'}
+          isChildFixed={true}
+          closeOnScrollChildFixed={false}
           border={{radius: '0.375rem'}}
           padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
           boxShadow={Theme.shadows[1]}

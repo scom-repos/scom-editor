@@ -20,7 +20,8 @@ import {
   addImageBlock
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
-import { CustomBlockTypes, WidgetMapping, getModalContainer } from './components/index';
+import { CustomBlockTypes, TypeMapping, WidgetMapping, getModalContainer } from './components/index';
+import { addSwapBlock } from './blocks/addSwapBlock';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
@@ -105,10 +106,12 @@ export class ScomEditor extends Module {
     getModalContainer().innerHTML = '';
     const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
     const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
+    const { SwapSlashItem, SwapBlock } =  addSwapBlock(this._blocknoteObj);
     const customSchema = {
       ...this._blocknoteObj.defaultBlockSchema,
       video: VideoBlock,
       imageWidget: ImageBlock,
+      swap: SwapBlock
     };
     const editorConfig: BlockNoteEditorOptions = {
       parentElement: this.pnlEditor,
@@ -117,6 +120,7 @@ export class ScomEditor extends Module {
         ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
         VideoSlashItem,
         ImageSlashItem,
+        SwapSlashItem
       ],
       onEditorContentChange: (editor: any) => {
         if (this.timer) clearTimeout(this.timer);
@@ -136,7 +140,7 @@ export class ScomEditor extends Module {
     addFormattingToolbar(this._editor);
     addSlashMenu(this._editor);
     addHyperlinkToolbar(this._editor);
-    addImageToolbar(this._editor);
+    // addImageToolbar(this._editor);
   }
 
   private isEmptyBlock(block: Block) {
@@ -163,8 +167,7 @@ export class ScomEditor extends Module {
     try {
       const blockType = block.type as string;
       if (CustomBlockTypes.includes(blockType)) {
-        const { altText = '', url } = block.props;
-        const mdString = blockType === 'video' ? `[video](${url})` : `![${altText || ''}](${url})`;
+        const mdString = this.getMarkdownStr(block);
         value += `\\n\\n${mdString}\\n\\n`;
       } else if (!this.isEmptyBlock(block)) {
         const blockValue = await this._editor.blocksToMarkdown([block]);
@@ -231,19 +234,31 @@ export class ScomEditor extends Module {
           block.content[0]?.type === 'text'
             ? block.content[0]?.text
             : block.content[0]?.type === 'link'
-            ? block.content[0]?.href
+            ? block.content[0]?.href || block.content[0]?.content[0]?.text
             : '';
       }
       text = (text || '').trim();
-      const customType = this.getContentType(text);
+      const customType = text === 'video' ? 'video' : this.getContentType(text);
       if (customType) {
-        const newBlock = {
-          type: customType,
-          props: {
-            url: text
-          },
-        };
-        formattedBlocks.push(newBlock);
+        if (customType === 'widget') {
+          const [_, params = ''] = text.split('?');
+          const dataStr = params.replace('data=', '');
+          const widgetData = dataStr ? this.parseData(dataStr) : null;
+          if (widgetData) {
+            const { module, properties } = widgetData;
+            formattedBlocks.push({
+              type: TypeMapping[module.name],
+              props: properties
+            });
+          }
+        } else {
+          formattedBlocks.push({
+            type: customType,
+            props: {
+              url: text
+            }
+          });
+        }
       } else {
         formattedBlocks.push(block);
       }
@@ -258,10 +273,29 @@ export class ScomEditor extends Module {
     if (imageUrlRegex.test(content)) return 'imageWidget';
     if (videoUrlRegex.test(content)) return 'video';
     if (youtubeUrlRegex.test(content)) return 'video';
+    if (content.startsWith(WIDGET_LOADER_URL)) return 'widget';
     return '';
   }
 
-  private getEmbedUrl(block: Block) {
+  private getMarkdownStr(block: Block) {
+    const type = block.type;
+    let mdString = '';
+    const { altText = '', url } = block.props;
+    switch(type) {
+      case 'video':
+        mdString = `[video](${url})`;
+        break;
+      case 'imageWidget':
+        mdString = `![${altText || ''}](${url})`;
+        break;
+      case 'swap':
+        mdString = this.getWidgetEmbedUrl(block);
+        break;
+    }
+    return mdString;
+  }
+
+  private getWidgetEmbedUrl(block: Block) {
     const type = block.type as string;
     let module = WidgetMapping[type];
     if (module) {

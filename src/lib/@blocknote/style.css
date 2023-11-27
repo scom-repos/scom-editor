@@ -505,6 +505,7 @@ NESTED BLOCKS
   /* width: 0; */
   position: absolute;
   font-style: italic;
+  color: var(--text-secondary);
 }
 
 /* TODO: would be nicer if defined from code */

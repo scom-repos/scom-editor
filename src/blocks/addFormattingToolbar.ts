@@ -43,7 +43,8 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
         if (blockEl) {
           modal.linkTo = blockEl;
           modal.position = 'fixed';
-          modal.visible = true;
+          if (modal.visible) modal.refresh();
+          else modal.visible = true;
         }
       } else {
         modal.visible = false;
