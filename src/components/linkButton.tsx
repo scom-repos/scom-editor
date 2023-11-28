@@ -109,8 +109,7 @@ export class ScomEditorLink extends Module {
 
   private showModal() {
     this.mdCreateLink.setData({ text: this.text, url: this.url });
-    this.mdCreateLink.parent = this.btnLink;
-    this.mdCreateLink.showModal();
+    this.mdCreateLink.showModal(this.btnLink);
   }
 
   init() {

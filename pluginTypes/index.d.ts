@@ -415,7 +415,7 @@ declare module "@scom/scom-editor/components/blockTypeButton.tsx" {
 }
 /// <amd-module name="@scom/scom-editor/components/linkModal.tsx" />
 declare module "@scom/scom-editor/components/linkModal.tsx" {
-    import { ControlElement, Module, Container, Input } from '@ijstech/components';
+    import { ControlElement, Module, Container, Input, Control } from '@ijstech/components';
     export type inputChangedCallback = (target: Input, event: KeyboardEvent) => void;
     interface ScomEditorMdLinkElement extends ControlElement {
         text?: string;
@@ -447,7 +447,7 @@ declare module "@scom/scom-editor/components/linkModal.tsx" {
         set url(value: string);
         setData(value: ILink): void;
         getData(): ILink;
-        showModal(): void;
+        showModal(parent?: Control): void;
         closeModal(): void;
         private handleInput;
         private handleClosed;

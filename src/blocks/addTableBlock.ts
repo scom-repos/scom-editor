@@ -75,7 +75,7 @@ export const addVideoBlock = (blocknote: any) => {
         "after"
       );
     },
-    aliases: ["video", "media"]
+    aliases: ["table", "basic"]
   }
 
   return {

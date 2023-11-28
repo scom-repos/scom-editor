@@ -92,7 +92,6 @@ export class ScomEditorDragHandle extends Module {
       })
       this.mdPicker.onClosed = () => {
         this.mdMenu.visible = false;
-        this.mdPicker.visible = false;
       }
     }
   }
@@ -101,7 +100,6 @@ export class ScomEditorDragHandle extends Module {
     if (item.id === 'delete') {
       if (this.onDeleted) this.onDeleted()
     } else {
-      this.mdPicker.visible = true;
       this.mdPicker.showModal(this.mdMenu, 'rightTop');
       if (this.freezeMenu) this.freezeMenu();
     }
@@ -160,7 +158,7 @@ export class ScomEditorDragHandle extends Module {
             background={{color: Theme.background.modal}}
             onItemClick={this.handleMenu}
           ></i-menu>
-          <i-scom-editor-color-picker id="mdPicker" visible={false} onSelected={this.onColorClicked}/>
+          <i-scom-editor-color-picker id="mdPicker" onSelected={this.onColorClicked}/>
         </i-panel>
       </i-modal>
     )

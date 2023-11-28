@@ -203,9 +203,9 @@ export class ScomEditorColorPicker extends Module {
         id="mdColorPicker"
         popupPlacement="bottom"
         minWidth={200}
-        maxWidth={300}
+        maxWidth={200}
         isChildFixed={true}
-        closeOnScrollChildFixed={false}
+        closeOnScrollChildFixed={true}
         border={{radius: '0.375rem'}}
         padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
         boxShadow={Theme.shadows[1]}

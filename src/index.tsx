@@ -96,6 +96,7 @@ export class ScomEditor extends Module {
     try {
       this.addCSS(cssPath, 'blocknote');
       this._blocknoteObj = await this.loadPlugin();
+      console.log(this._blocknoteObj)
       this.renderEditor();
     } catch {}
   }
