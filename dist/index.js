@@ -170,7 +170,12 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
                 group: "Widget",
                 icon: { name: 'exchange-alt' },
                 hint: "Insert a swap widget",
-            }
+            },
+            Table: {
+                group: "Basic blocks",
+                icon: { name: 'table' },
+                hint: "Create a table"
+            },
         };
         return extraFields;
     }
@@ -2280,14 +2285,43 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
     };
     exports.addSwapBlock = addSwapBlock;
 });
-define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts"], function (require, exports, components_19, index_10, index_11, addSwapBlock_1) {
+define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_19) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.customEditorStyle = void 0;
+    const Theme = components_19.Styles.Theme.ThemeVars;
+    exports.customEditorStyle = components_19.Styles.style({
+        $nest: {
+            'table': {
+                borderCollapse: "collapse",
+                overflow: 'hidden',
+                tableLayout: 'fixed',
+                width: '100%'
+            },
+            'td, th': {
+                border: `1px solid ${Theme.divider}`,
+                boxSizing: 'border-box',
+                minWidth: '1rem',
+                padding: '0.25rem 0.5rem',
+                verticalAlign: 'top',
+                position: 'relative'
+            },
+            'th': {
+                fontWeight: 600,
+                textAlign: 'left',
+                background: Theme.background.default
+            }
+        }
+    });
+});
+define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts"], function (require, exports, components_20, index_10, index_11, addSwapBlock_1, index_css_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditor = void 0;
-    const Theme = components_19.Styles.Theme.ThemeVars;
+    const Theme = components_20.Styles.Theme.ThemeVars;
     const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
-    const path = components_19.application.currentModuleDir;
-    components_19.RequireJS.config({
+    const path = components_20.application.currentModuleDir;
+    components_20.RequireJS.config({
         paths: {
             'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
         }
@@ -2296,7 +2330,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         'blocknote'
     ];
     const cssPath = `${path}/lib/@blocknote/style.css`;
-    let ScomEditor = class ScomEditor extends components_19.Module {
+    let ScomEditor = class ScomEditor extends components_20.Module {
         constructor(parent, options) {
             super(parent, options);
             this.tag = {};
@@ -2321,7 +2355,6 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             try {
                 this.addCSS(cssPath, 'blocknote');
                 this._blocknoteObj = await this.loadPlugin();
-                console.log(this._blocknoteObj);
                 this.renderEditor();
             }
             catch { }
@@ -2358,13 +2391,14 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 },
                 domAttributes: {
                     editor: {
-                        class: 'scom-editor',
+                        class: index_css_5.customEditorStyle,
                     },
                 },
             };
             if (initialContent)
                 editorConfig.initialContent = initialContent;
             this._editor = new this._blocknoteObj.BlockNoteEditor(editorConfig);
+            console.log(this._editor);
             (0, index_10.addSideMenu)(this._editor);
             (0, index_10.addFormattingToolbar)(this._editor);
             (0, index_10.addSlashMenu)(this._editor);
@@ -2433,7 +2467,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         loadPlugin() {
             return new Promise((resolve, reject) => {
-                components_19.RequireJS.require(libPlugins, (blocknote) => {
+                components_20.RequireJS.require(libPlugins, (blocknote) => {
                     resolve(blocknote);
                 });
             });
@@ -2711,7 +2745,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
     };
     ScomEditor = __decorate([
-        (0, components_19.customElements)('i-scom-editor')
+        (0, components_20.customElements)('i-scom-editor')
     ], ScomEditor);
     exports.ScomEditor = ScomEditor;
 });

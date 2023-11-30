@@ -217,6 +217,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        Table: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -861,6 +868,10 @@ declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
             aliases: string[];
         };
     };
+}
+/// <amd-module name="@scom/scom-editor/index.css.ts" />
+declare module "@scom/scom-editor/index.css.ts" {
+    export const customEditorStyle: string;
 }
 /// <amd-module name="@scom/scom-editor" />
 declare module "@scom/scom-editor" {

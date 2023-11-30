@@ -127,7 +127,12 @@ export function getExtraFields () {
       group: "Widget",
       icon: {name: 'exchange-alt'},
       hint: "Insert a swap widget",
-    }
+    },
+    Table: {
+      group: "Basic blocks",
+      icon: { name: 'table' },
+      hint: "Create a table"
+    },
   };
   return extraFields;
 }

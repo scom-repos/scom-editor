@@ -22,6 +22,7 @@ import {
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
 import { CustomBlockTypes, TypeMapping, WidgetMapping, getModalContainer } from './components/index';
 import { addSwapBlock } from './blocks/addSwapBlock';
+import { customEditorStyle } from './index.css';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
@@ -96,7 +97,6 @@ export class ScomEditor extends Module {
     try {
       this.addCSS(cssPath, 'blocknote');
       this._blocknoteObj = await this.loadPlugin();
-      console.log(this._blocknoteObj)
       this.renderEditor();
     } catch {}
   }
@@ -108,6 +108,7 @@ export class ScomEditor extends Module {
     const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
     const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
     const { SwapSlashItem, SwapBlock } =  addSwapBlock(this._blocknoteObj);
+
     const customSchema = {
       ...this._blocknoteObj.defaultBlockSchema,
       video: VideoBlock,
@@ -131,12 +132,13 @@ export class ScomEditor extends Module {
       },
       domAttributes: {
         editor: {
-          class: 'scom-editor',
+          class: customEditorStyle,
         },
       },
     };
     if (initialContent) editorConfig.initialContent = initialContent;
     this._editor = new this._blocknoteObj.BlockNoteEditor(editorConfig);
+    console.log(this._editor)
     addSideMenu(this._editor);
     addFormattingToolbar(this._editor);
     addSlashMenu(this._editor);
