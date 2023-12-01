@@ -14,9 +14,10 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
       modal = await createModal({
         popupPlacement: getPlacement(block),
         overflow: 'hidden',
+        maxHeight: '2rem',
         minWidth: 'max-content',
         isChildFixed: true,
-        closeOnScrollChildFixed: true,
+        closeOnScrollChildFixed: false
       })
       modal.id = 'mdFormatting';
       getModalContainer().appendChild(modal);
@@ -35,7 +36,6 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
       selectedBlocks.length === 1 &&
       MediaBlockTypes.includes(selectedBlocks[0].type);
     modal.popupPlacement = isMediaBlock ? 'top' : getPlacement(block) as any;
-    modal.refresh();
 
     if (formattingToolbarState.show) {
       if (blockID) {

@@ -128,7 +128,7 @@ export class ScomEditorToolbarDropdown extends Module {
 
   private showModal() {
     getModalContainer().appendChild(this.mdDropdown);
-    this.mdDropdown.linkTo = this.pnlDropdown;
+    this.mdDropdown.linkTo = this.btnSelected;
     this.mdDropdown.position = 'fixed';
     const { top, height } = this.getBoundingClientRect();
     const maxHeight = window.innerHeight - (top + height);
@@ -164,9 +164,9 @@ export class ScomEditorToolbarDropdown extends Module {
           id="mdDropdown"
           minWidth={200}
           popupPlacement='bottom'
-          maxWidth={'max-content'}
+          maxWidth={250}
           isChildFixed={true}
-          closeOnScrollChildFixed={false}
+          closeOnScrollChildFixed={true}
           border={{radius: '0.375rem'}}
           padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
           boxShadow={Theme.shadows[1]}

@@ -5,7 +5,8 @@ import {
   Module,
   Container,
   Modal,
-  Input
+  Input,
+  Control
 } from '@ijstech/components';
 import { getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
@@ -76,10 +77,10 @@ export class ScomEditorMdLink extends Module {
     return this._data;
   }
 
-  showModal() {
+  showModal(parent?: Control) {
     getModalContainer().appendChild(this.mdLink);
     this.mdLink.position = 'fixed';
-    if (this.parent) this.mdLink.linkTo = this.parent;
+    if (parent) this.mdLink.linkTo = parent;
     this.mdLink.refresh();
     this.mdLink.visible = true;
   }
@@ -118,6 +119,8 @@ export class ScomEditorMdLink extends Module {
         padding={{top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem'}}
         boxShadow={Theme.shadows[1]}
         margin={{top: '1rem'}}
+        isChildFixed={true}
+        closeOnScrollChildFixed={true}
         showBackdrop={false}
         onClose={this.handleClosed}
       >

@@ -15,13 +15,13 @@ export const addSwapBlock = (blocknote: any) => {
       networks: { default: [] },
       logo: { default: '' },
       title: { default: '' },
-      // campaignId?: number;
-      // wallets: { default: [] },
-      // commissions: { default: [] },
+      campaignId: { default: null},
+      wallets: { default: [] },
+      commissions: { default: [] },
+      defaultInputValue: { default: '' },
+      defaultOutputValue: { default: '' }
       // defaultInputToken?: ITokenConfig;
       // defaultOutputToken?: ITokenConfig;
-      // defaultInputValue?: string;
-      // defaultOutputValue?: string;
       // apiEndpoints?: Record<string, string>;
     },
     containsInlineContent: false,

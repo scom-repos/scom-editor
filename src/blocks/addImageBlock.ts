@@ -1,7 +1,7 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor } from "../global/index";
 import ScomImage from "@scom/scom-image";
-import { ScomEditorSideMenu } from "../components/index";
+import { ScomEditorSideMenu, getModalContainer } from "../components/index";
 
 export function addImageBlock(blocknote: any) {
   const ImageBlock = blocknote.createBlockSpec({
@@ -24,7 +24,7 @@ export function addImageBlock(blocknote: any) {
       const image = new ScomImage(wrapper, { url, cid, link, altText, keyword, photoId, backgroundColor });
       wrapper.appendChild(image);
       if (!url) {
-        const sideMenu = editor.domElement?.parentElement?.querySelector('i-scom-editor-side-menu') as ScomEditorSideMenu;
+        const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as ScomEditorSideMenu;
         if (sideMenu) sideMenu.openConfig(block, image);
       }
       return {
