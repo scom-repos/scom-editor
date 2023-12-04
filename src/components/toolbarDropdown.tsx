@@ -16,6 +16,7 @@ const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorToolbarDropdownElement extends ControlElement {
   items?: IToolbarDropdownItem[];
+  caption?: string;
 }
 
 declare global {
@@ -28,6 +29,7 @@ declare global {
 
 interface IToolbarDropdown {
   items?: IToolbarDropdownItem[];
+  caption?: string;
 }
 
 @customElements('i-scom-editor-toolbar-dropdown')
@@ -35,7 +37,6 @@ export class ScomEditorToolbarDropdown extends Module {
   private mdDropdown: Modal;
   private btnSelected: Button;
   private pnlOptions: VStack;
-  private pnlDropdown: Panel;
 
   private _data: IToolbarDropdown;
 
@@ -54,6 +55,13 @@ export class ScomEditorToolbarDropdown extends Module {
   }
   set items(value: IToolbarDropdownItem[]) {
     this._data.items = value ?? [];
+  }
+
+  get caption() {
+    return this._data.caption ?? '';
+  }
+  set caption(value: string) {
+    this._data.caption = value ?? '';
   }
 
   get selectedItem() {
@@ -121,9 +129,12 @@ export class ScomEditorToolbarDropdown extends Module {
   }
 
   private updateSelected() {
-    this.btnSelected.caption = this.selectedItem?.text || '';
-    if (this.selectedItem?.icon?.name)
+    this.btnSelected.caption = this.caption || this.selectedItem?.text || '';
+    if (this.selectedItem?.icon?.name && !this.caption) {
       this.btnSelected.icon.name = this.selectedItem.icon.name;
+    } else {
+      this.btnSelected.icon.visible = false;
+    }
   }
 
   private showModal() {
@@ -137,13 +148,14 @@ export class ScomEditorToolbarDropdown extends Module {
   }
 
   private handleClosed() {
-    getModalContainer().removeChild(this.mdDropdown);
+    if (this.mdDropdown) this.mdDropdown.remove();
   }
 
   init() {
     super.init();
     const items = this.getAttribute('items', true);
-    this.setData({ items });
+    const caption = this.getAttribute('caption', true);
+    this.setData({ items, caption });
   }
 
   render() {

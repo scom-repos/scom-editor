@@ -25984,7 +25984,7 @@ function customBlockToNode(block2, schema) {
     }
   }
   if (tableBlocks.includes(type.toString())) {
-    contentNode = schema.nodes[type].create(block2.props, children);
+    contentNode = schema.nodes[type].create({ id, ...block2.props }, children);
   } else {
     if (!block2.content) {
       contentNode = schema.nodes[type].create(block2.props);
@@ -25998,8 +25998,14 @@ function customBlockToNode(block2, schema) {
       contentNode = schema.nodes[type].create(block2.props, nodes);
     }
   }
-  const groupNode = schema.nodes["blockGroup"].create({}, children);
-  const result = tableBlocks.includes(type.toString()) ? contentNode : children.length > 0 ? groupNode : contentNode;
+  const containerNode = schema.nodes["blockContainer"].create(
+    {
+      id,
+      ...block2.props
+    },
+    children.length > 0 ? [contentNode, schema.nodes["blockGroup"].create({}, children)] : contentNode
+  );
+  const result = tableBlocks.includes(type.toString()) ? contentNode : containerNode;
   return result;
 }
 function contentNodeToInlineContent(contentNode) {
@@ -26193,6 +26199,9 @@ function nodeToBlock(node2, blockSchema, blockCache) {
 }
 function customNodeToBlock(node2, blockSchema, blockCache, containerId) {
   var _a;
+  if (node2.type.name === "blockContainer") {
+    return nodeToBlock(node2, blockSchema, blockCache);
+  }
   const cachedBlock = blockCache == null ? void 0 : blockCache.get(node2);
   if (cachedBlock) {
     return cachedBlock;
@@ -26440,7 +26449,7 @@ const BlockContainer = Node2.create({
   name: "blockContainer",
   group: "blockContainer",
   // A block always contains content, and optionally a blockGroup which contains nested blocks
-  content: "block | blockContent blockGroup?",
+  content: "(blockContent blockGroup?) | block",
   // Ensures content-specific keyboard handlers trigger first.
   priority: 50,
   defining: true,
@@ -49007,11 +49016,14 @@ function simplifyBlocks(options) {
     ...options.unorderedListItemBlockTypes
   ]);
   const simplifyBlocksHelper = (tree) => {
+    var _a;
     let numChildElements = tree.children.length;
     let activeList;
     for (let i = 0; i < numChildElements; i++) {
       const blockOuter2 = tree.children[i];
       const blockContainer = blockOuter2.children[0];
+      if (((_a = blockContainer == null ? void 0 : blockContainer.properties) == null ? void 0 : _a.dataContentType) !== "blockContainer")
+        continue;
       const blockContent2 = blockContainer.children[0];
       const blockGroup2 = blockContainer.children.length === 2 ? blockContainer.children[1] : null;
       const isListItemBlock = listItemBlockTypes.has(
@@ -49182,7 +49194,7 @@ function parse(blockConfig) {
     }
   ];
 }
-function render(blockConfig, HTMLAttributes) {
+function render(blockConfig, HTMLAttributes, node2) {
   const blockContent2 = document.createElement("div");
   blockContent2.setAttribute("data-content-type", blockConfig.type);
   for (const [attribute, value] of Object.entries(HTMLAttributes)) {
@@ -49194,6 +49206,9 @@ function render(blockConfig, HTMLAttributes) {
     blockContent2.appendChild(contentDOM);
   } else {
     contentDOM = void 0;
+    if (blockConfig.renderInnerHTML) {
+      blockContent2.appendChild(blockConfig.renderInnerHTML(node2.attrs));
+    }
   }
   return contentDOM !== void 0 ? {
     dom: blockContent2,
@@ -49211,10 +49226,10 @@ function createBlockSpec(blockConfig) {
       return propsToAttributes(blockConfig);
     },
     parseHTML() {
-      return parse(blockConfig);
+      return blockConfig.parse ? blockConfig.parse() : parse(blockConfig);
     },
-    renderHTML({ HTMLAttributes }) {
-      return render(blockConfig, HTMLAttributes);
+    renderHTML({ HTMLAttributes, node: node22 }) {
+      return render(blockConfig, HTMLAttributes, node22);
     },
     addNodeView() {
       return ({ HTMLAttributes, getPos }) => {
@@ -49402,7 +49417,7 @@ const Heading = {
   node: HeadingBlockContent,
   propSchema: headingPropSchema
 };
-const handleEnter = (editor) => {
+const handleEnter$1 = (editor) => {
   const { node: node2, contentType } = getBlockInfoFromPos(
     editor.state.doc,
     editor.state.selection.from
@@ -49459,7 +49474,7 @@ const BulletListItemBlockContent = createTipTapBlock({
   },
   addKeyboardShortcuts() {
     return {
-      Enter: () => handleEnter(this.editor),
+      Enter: () => handleEnter$1(this.editor),
       "Mod-Shift-7": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
         type: "bulletListItem",
         props: {}
@@ -49620,7 +49635,7 @@ const NumberedListItemBlockContent = createTipTapBlock({
   },
   addKeyboardShortcuts() {
     return {
-      Enter: () => handleEnter(this.editor),
+      Enter: () => handleEnter$1(this.editor),
       "Mod-Shift-8": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
         type: "numberedListItem",
         props: {}
@@ -52616,54 +52631,24 @@ const tablePropSchema = {
   ...defaultProps,
   cols: { default: 3 },
   rows: { default: 3 },
-  withHeaderRow: { default: true }
+  withHeaderRow: { default: true },
+  handleWidth: { default: 5 },
+  cellMinWidth: { default: 25 },
+  resizable: { default: false },
+  lastColumnResizable: { default: true },
+  allowTableNodeSelection: { default: false }
 };
 const CustomTable = Table$1.extend({
   addAttributes() {
-    var _a;
-    return {
-      ...(_a = this.parent) == null ? void 0 : _a.call(this),
-      cols: {
-        default: 3,
-        parseHTML: (element2) => element2.getAttribute("data-cols"),
-        renderHTML: (attributes) => {
-          return {
-            "data-cols": attributes.cols
-          };
-        }
-      },
-      rows: {
-        default: 3,
-        parseHTML: (element2) => element2.getAttribute("data-rows"),
-        renderHTML: (attributes) => {
-          return {
-            "data-rows": attributes.rows
-          };
-        }
-      },
-      withHeaderRow: {
-        default: true,
-        parseHTML: (element2) => element2.getAttribute("data-with-header-row"),
-        renderHTML: (attributes) => {
-          return {
-            "data-with-header-row": attributes.withHeaderRow ?? true
-          };
-        }
-      },
-      resizable: {
-        default: false,
-        parseHTML: (element2) => element2.getAttribute("data-resizable"),
-        renderHTML: (attributes) => {
-          return {
-            "data-resizable": attributes.resizable ?? false
-          };
-        }
-      }
-    };
+    return propsToAttributes({
+      type: "table",
+      propSchema: tablePropSchema,
+      containsInlineContent: false
+    });
   }
 });
 const Table = {
-  node: CustomTable,
+  node: CustomTable.configure({ resizable: true, cellMinWidth: 100 }),
   propSchema: tablePropSchema
 };
 const TableRow$1 = Node2.create({
@@ -52736,17 +52721,46 @@ const TableCell$1 = Node2.create({
     return ["td", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
   }
 });
+const handleEnter = (editor) => {
+  const { node: node2, contentType } = getBlockInfoFromPos(
+    editor.state.doc,
+    editor.state.selection.from
+  );
+  const selectionEmpty = editor.state.selection.anchor === editor.state.selection.head;
+  if (contentType.name !== "table" || !selectionEmpty) {
+    return false;
+  }
+  return editor.commands.first(({ state, chain, commands: commands2 }) => [
+    () => commands2.command(() => {
+      if (node2.textContent.length === 0) {
+        return commands2.BNUpdateBlock(state.selection.from, {
+          type: "paragraph",
+          props: {}
+        });
+      }
+      return false;
+    }),
+    () => commands2.command(() => {
+      if (node2.textContent.length > 0) {
+        chain().deleteSelection().insertContent({ type: "paragraph", content: [] }).run();
+        return true;
+      }
+      return false;
+    })
+  ]);
+};
 const tableCellPropSchema = {
-  ...defaultProps
+  ...defaultProps,
+  colwidth: { default: null }
 };
 const CustomTableCell = TableCell$1.extend({
-  content: "blockContent blockGroup?",
+  content: "blockContainer+",
   addAttributes() {
     var _a;
     return {
       ...(_a = this.parent) == null ? void 0 : _a.call(this),
       backgroundColor: {
-        default: null,
+        default: "default",
         parseHTML: (element2) => element2.getAttribute("data-background-color"),
         renderHTML: (attributes) => {
           return {
@@ -52754,7 +52768,35 @@ const CustomTableCell = TableCell$1.extend({
             style: `background-color: ${attributes.backgroundColor}`
           };
         }
+      },
+      textColor: {
+        default: "default",
+        parseHTML: (element2) => element2.getAttribute("data-text-color"),
+        renderHTML: (attributes) => {
+          return {
+            "data-text-color": attributes.textColor,
+            style: `color: ${attributes.textColor}`
+          };
+        }
+      },
+      colwidth: {
+        default: null,
+        parseHTML: (element2) => {
+          const colwidth = element2.getAttribute("colwidth");
+          const value = colwidth ? [parseInt(colwidth, 10)] : null;
+          return value;
+        },
+        renderHTML: (attributes) => {
+          return {
+            "data-colwidth": attributes.colwidth
+          };
+        }
       }
+    };
+  },
+  addKeyboardShortcuts() {
+    return {
+      Enter: () => handleEnter(this.editor)
     };
   }
 });
@@ -52800,13 +52842,48 @@ const TableHeader$1 = Node2.create({
   }
 });
 const tableHeaderPropSchema = {
-  ...defaultProps
+  ...defaultProps,
+  colwidth: { default: null }
 };
 const CustomTableHeader = TableHeader$1.extend({
+  content: "blockContainer+",
   addAttributes() {
     var _a;
     return {
-      ...(_a = this.parent) == null ? void 0 : _a.call(this)
+      ...(_a = this.parent) == null ? void 0 : _a.call(this),
+      backgroundColor: {
+        default: "default",
+        parseHTML: (element2) => element2.getAttribute("data-background-color"),
+        renderHTML: (attributes) => {
+          return {
+            "data-background-color": attributes.backgroundColor,
+            style: `background-color: ${attributes.backgroundColor}`
+          };
+        }
+      },
+      textColor: {
+        default: "default",
+        parseHTML: (element2) => element2.getAttribute("data-text-color"),
+        renderHTML: (attributes) => {
+          return {
+            "data-text-color": attributes.textColor,
+            style: `color: ${attributes.textColor}`
+          };
+        }
+      },
+      colwidth: {
+        default: null,
+        parseHTML: (element2) => {
+          const colwidth = element2.getAttribute("colwidth");
+          const value = colwidth ? [parseInt(colwidth, 10)] : null;
+          return value;
+        },
+        renderHTML: (attributes) => {
+          return {
+            "data-colwidth": attributes.colwidth
+          };
+        }
+      }
     };
   }
 });
@@ -53204,6 +53281,130 @@ class HyperlinkToolbarProsemirrorPlugin extends EventEmitter2 {
       key: hyperlinkToolbarPluginKey,
       view: (editorView) => {
         this.view = new HyperlinkToolbarView(editor, editorView, (state) => {
+          this.emit("update", state);
+        });
+        return this.view;
+      }
+    });
+  }
+  onUpdate(callback) {
+    return this.on("update", callback);
+  }
+}
+class TableToolbarView {
+  constructor(editor, pmView, updateTableToolbar) {
+    __publicField(this, "tableToolbarState");
+    __publicField(this, "updateTableToolbar");
+    __publicField(this, "prevWasEditable", null);
+    __publicField(this, "shouldShow", (state) => {
+      const closestTable = findParentNodeClosestToPos(
+        state.selection.$from,
+        (node2) => {
+          return node2.type.name === "table";
+        }
+      );
+      return !!(closestTable == null ? void 0 : closestTable.node);
+    });
+    // For dragging the whole editor.
+    __publicField(this, "dragstartHandler", () => {
+      var _a;
+      if ((_a = this.tableToolbarState) == null ? void 0 : _a.show) {
+        this.tableToolbarState.show = false;
+        this.updateTableToolbar();
+      }
+    });
+    __publicField(this, "blurHandler", (event) => {
+      var _a;
+      const editorWrapper = this.pmView.dom.parentElement;
+      if (
+        // An element is clicked.
+        event && event.relatedTarget && // Element is inside the editor.
+        (editorWrapper === event.relatedTarget || editorWrapper.contains(event.relatedTarget))
+      ) {
+        return;
+      }
+      if ((_a = this.tableToolbarState) == null ? void 0 : _a.show) {
+        this.tableToolbarState.show = false;
+        this.updateTableToolbar();
+      }
+    });
+    __publicField(this, "scrollHandler", () => {
+      var _a;
+      if ((_a = this.tableToolbarState) == null ? void 0 : _a.show) {
+        this.tableToolbarState.referencePos = this.getSelectionBoundingBox();
+        this.updateTableToolbar();
+      }
+    });
+    __publicField(this, "mouseupHandler", () => {
+      setTimeout(() => this.update(this.pmView));
+    });
+    this.editor = editor;
+    this.pmView = pmView;
+    this.updateTableToolbar = () => {
+      if (!this.tableToolbarState) {
+        throw new Error("Attempting to update uninitialized table toolbar");
+      }
+      updateTableToolbar(this.tableToolbarState);
+    };
+    pmView.dom.addEventListener("dragstart", this.dragstartHandler);
+    pmView.dom.addEventListener("mouseup", this.mouseupHandler);
+    pmView.dom.addEventListener("blur", this.blurHandler);
+    document.addEventListener("scroll", this.scrollHandler);
+  }
+  update(view, oldState) {
+    var _a, _b, _c;
+    const { state, composing } = view;
+    const { doc: doc2, selection } = state;
+    const isSame = oldState && oldState.doc.eq(doc2) && oldState.selection.eq(selection);
+    if (composing || isSame) {
+      return;
+    }
+    const shouldShow = (_a = this.shouldShow) == null ? void 0 : _a.call(this, state);
+    if (shouldShow) {
+      this.tableToolbarState = {
+        show: true,
+        referencePos: this.getSelectionBoundingBox()
+      };
+      this.updateTableToolbar();
+      return;
+    }
+    if (((_b = this.tableToolbarState) == null ? void 0 : _b.show) && (!shouldShow || !((_c = this.editor) == null ? void 0 : _c.isEditable))) {
+      this.tableToolbarState.show = false;
+      this.updateTableToolbar();
+      return;
+    }
+  }
+  getSelectionBoundingBox() {
+    const { state } = this.pmView;
+    const { selection } = state;
+    const { ranges } = selection;
+    const from3 = Math.min(...ranges.map((range) => range.$from.pos));
+    const to = Math.max(...ranges.map((range) => range.$to.pos));
+    if (isNodeSelection(selection)) {
+      const node2 = this.pmView.nodeDOM(from3);
+      if (node2) {
+        return node2.getBoundingClientRect();
+      }
+    }
+    return posToDOMRect(this.pmView, from3, to);
+  }
+  destroy() {
+    this.pmView.dom.removeEventListener("dragstart", this.dragstartHandler);
+    this.pmView.dom.removeEventListener("blur", this.blurHandler);
+    this.pmView.dom.removeEventListener("mouseup", this.mouseupHandler);
+    document.removeEventListener("scroll", this.scrollHandler);
+  }
+}
+const tableToolbarPluginKey = new PluginKey("TableToolbarPlugin");
+class TableToolbarProsemirrorPlugin extends EventEmitter2 {
+  constructor(editor) {
+    super();
+    __publicField(this, "view");
+    __publicField(this, "plugin");
+    this.plugin = new Plugin({
+      key: tableToolbarPluginKey,
+      view: (editorView) => {
+        this.view = new TableToolbarView(editor, editorView, (state) => {
           this.emit("update", state);
         });
         return this.view;
@@ -53759,12 +53960,14 @@ const getDefaultSlashMenuItems = (schema = defaultBlockSchema) => {
         editor.insertBlocks(
           [
             {
-              type: "table"
+              type: "table",
+              props: {}
             }
           ],
           currentBlock,
           "after"
         );
+        editor.setTextCursorPosition(editor.getTextCursorPosition().nextBlock);
       }
     });
   }
@@ -53816,6 +54019,7 @@ class BlockNoteEditor {
     __publicField(this, "slashMenu");
     __publicField(this, "hyperlinkToolbar");
     __publicField(this, "imageToolbar");
+    __publicField(this, "tableToolbar");
     __publicField(this, "uploadFile");
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
     this.options = options;
@@ -53837,6 +54041,7 @@ class BlockNoteEditor {
     );
     this.hyperlinkToolbar = new HyperlinkToolbarProsemirrorPlugin(this);
     this.imageToolbar = new ImageToolbarProsemirrorPlugin(this);
+    this.tableToolbar = new TableToolbarProsemirrorPlugin(this);
     const extensions2 = getBlockNoteExtensions({
       editor: this,
       domAttributes: newOptions.domAttributes || {},
@@ -53851,7 +54056,8 @@ class BlockNoteEditor {
           this.formattingToolbar.plugin,
           this.slashMenu.plugin,
           this.hyperlinkToolbar.plugin,
-          this.imageToolbar.plugin
+          this.imageToolbar.plugin,
+          this.tableToolbar.plugin
         ];
       }
     });
@@ -54058,7 +54264,9 @@ class BlockNoteEditor {
    * @param placement Whether the text cursor should be placed at the start or end of the block.
    */
   setTextCursorPosition(targetBlock, placement = "start") {
-    const id = typeof targetBlock === "string" ? targetBlock : targetBlock.id;
+    const id = typeof targetBlock === "string" ? targetBlock : targetBlock == null ? void 0 : targetBlock.id;
+    if (!id)
+      return;
     const { posBeforeNode } = getNodeById(id, this._tiptapEditor.state.doc);
     const { startPos, contentNode } = getBlockInfoFromPos(
       this._tiptapEditor.state.doc,
@@ -54369,6 +54577,8 @@ export {
   SideMenuProsemirrorPlugin,
   SideMenuView,
   SlashMenuProsemirrorPlugin,
+  TableToolbarProsemirrorPlugin,
+  TableToolbarView,
   UnreachableCaseError,
   Block_module as blockStyles,
   camelToDataKebab,
@@ -54390,6 +54600,7 @@ export {
   setupSuggestionsMenu,
   sideMenuPluginKey,
   slashMenuPluginKey,
+  tableToolbarPluginKey,
   uploadToTmpFilesDotOrg_DEV_ONLY
 };
 //# sourceMappingURL=blocknote.bundled.js.map

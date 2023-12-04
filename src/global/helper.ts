@@ -11,3 +11,13 @@ export function formatKeyboardShortcut(shortcut: string) {
     return shortcut.replace("Mod", "Ctrl");
   }
 }
+
+export const parseStringToObject = (value: string) => {
+  try {
+    const utf8String = decodeURIComponent(value);
+    const decodedString = window.atob(utf8String);
+    const newData = JSON.parse(decodedString);
+    return { ...newData };
+  } catch {}
+  return null;
+}

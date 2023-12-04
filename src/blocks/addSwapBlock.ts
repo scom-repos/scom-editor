@@ -1,8 +1,24 @@
 import { Panel } from "@ijstech/components";
 import ScomSwap from '@scom/scom-swap';
-import { Block, BlockNoteEditor } from "../global/index";
-import { ScomEditorSideMenu } from "../components/index";
+import { Block, BlockNoteEditor, parseStringToObject } from "../global/index";
+import { ScomEditorSideMenu, getWidgetEmbedUrl } from "../components/index";
 
+function getData(element: HTMLElement) {
+  const href = element.getAttribute('href');
+  const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
+  if (href.startsWith(WIDGET_LOADER_URL)) {
+    const [_, params = ''] = href.split('?');
+    const dataStr = params.replace('data=', '');
+    const widgetData = dataStr ? parseStringToObject(dataStr) : null;
+    if (widgetData) {
+      const { module, properties } = widgetData;
+      return {
+        ...properties
+      }
+    }
+  }
+  return false;
+}
 export const addSwapBlock = (blocknote: any) => {
   const SwapBlock = blocknote.createBlockSpec({
     type: "swap",
@@ -19,10 +35,10 @@ export const addSwapBlock = (blocknote: any) => {
       wallets: { default: [] },
       commissions: { default: [] },
       defaultInputValue: { default: '' },
-      defaultOutputValue: { default: '' }
-      // defaultInputToken?: ITokenConfig;
-      // defaultOutputToken?: ITokenConfig;
-      // apiEndpoints?: Record<string, string>;
+      defaultOutputValue: { default: '' },
+      defaultInputToken: { default: null },
+      defaultOutputToken: { default: null },
+      apiEndpoints: { default: null }
     },
     containsInlineContent: false,
     render: (block: Block, editor: BlockNoteEditor) => {
@@ -43,8 +59,52 @@ export const addSwapBlock = (blocknote: any) => {
         {
           tag: "div[data-content-type=swap]",
           node: 'swap'
-        }
+        },
+        {
+          tag: "a",
+          getAttrs: (element2: any) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            if (element2.getAttribute('href')) {
+              return getData(element2);
+            }
+            return false;
+          },
+          priority: 402,
+          node: 'swap'
+        },
+        {
+          tag: "p",
+          getAttrs: (element2: any) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            const child = element2.firstChild;
+            if (!child) {
+              return false;
+            }
+            if (child.nodeName === 'A' && child.getAttribute('href')) {
+              return getData(child);
+            }
+            return false;
+          },
+          priority: 403,
+          node: 'imageWidget'
+        },
       ]
+    },
+    renderInnerHTML: (attrs: any) => {
+      const link = document.createElement("a");
+      const url = getWidgetEmbedUrl(
+        {
+          type: 'swap',
+          props: {...(attrs || {})}
+        }
+      );
+      link.setAttribute("href", url);
+      link.textContent = 'swap';
+      return link;
     }
   });
   const SwapSlashItem = {

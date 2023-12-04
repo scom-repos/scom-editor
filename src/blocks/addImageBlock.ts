@@ -44,7 +44,7 @@ export function addImageBlock(blocknote: any) {
               return false;
             }
             const child = element2.firstChild;
-            if (child === null) {
+            if (!child) {
               return false;
             }
             if (child.nodeName === 'IMG') {
@@ -60,9 +60,30 @@ export function addImageBlock(blocknote: any) {
         },
         {
           tag: "img",
+          getAttrs: (element2: any) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            if (element2.nodeName === 'IMG') {
+              return {
+                url: element2.getAttribute('src'),
+                altText: element2.getAttribute('alt')
+              };
+            }
+            return false;
+          },
           node: 'imageWidget'
         }
       ]
+    },
+    // For render node to DOM (serializer.serializeNode(node))
+    renderInnerHTML: (attrs: any) => {
+      const imageTag = document.createElement("img");
+      const src = attrs.url || "";
+      const alt = attrs.altText || "";
+      imageTag.setAttribute("src", src);
+      imageTag.setAttribute("alt", alt);
+      return imageTag;
     }
   });
   const ImageSlashItem = {
