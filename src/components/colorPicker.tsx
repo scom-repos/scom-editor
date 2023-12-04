@@ -185,7 +185,7 @@ export class ScomEditorColorPicker extends Module {
   }
 
   private handleClose() {
-    getModalContainer().removeChild(this.mdColorPicker);
+    if (this.mdColorPicker) this.mdColorPicker.remove();
   }
 
   init() {

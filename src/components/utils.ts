@@ -1,5 +1,5 @@
 import { Button, Control, HStack, Styles, IconName, Modal } from "@ijstech/components";
-import { formatKeyboardShortcut } from "../global/index";
+import { PartialBlock, formatKeyboardShortcut } from "../global/index";
 import { buttonHoverStyle } from "./index.css";
 const Theme = Styles.Theme.ThemeVars;
 
@@ -230,11 +230,12 @@ const textAlignmentToPlacement = (textAlignment: string) => {
 };
 
 export const getPlacement = (block: any) => {
+  const props = block?.props || {};
   let placement = '';
-  if (!("textAlignment" in block.props)) {
+  if (!("textAlignment" in props)) {
     placement = 'bottom';
   } else {
-    placement = textAlignmentToPlacement(block.props.textAlignment);
+    placement = textAlignmentToPlacement(props.textAlignment);
   }
   return placement;
 }
@@ -259,4 +260,19 @@ export const WidgetMapping: {[key: string]: any} = {
     name: '@scom/scom-swap',
     localPath: 'scom-swap'
   },
+}
+
+const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
+export const getWidgetEmbedUrl = (block: PartialBlock) => {
+  const type = block.type as string;
+  let module = WidgetMapping[type];
+  if (module) {
+    const widgetData = {
+      module,
+      properties: { ...block.props },
+    };
+    const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
+    return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
+  }
+  return '';
 }

@@ -97,7 +97,7 @@ export class ScomEditorMdLink extends Module {
   }
 
   private handleClosed() {
-    getModalContainer().removeChild(this.mdLink);
+    if (this.mdLink) this.mdLink.remove();
   }
 
   init() {

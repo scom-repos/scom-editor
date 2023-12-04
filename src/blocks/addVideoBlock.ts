@@ -33,30 +33,34 @@ export const addVideoBlock = (blocknote: any) => {
           node: 'video'
         },
         {
-          tag: "p",
+          tag: "a",
           getAttrs: (element2: any) => {
             if (typeof element2 === "string") {
               return false;
             }
-            const child = element2.firstChild;
-            if (child === null) {
-              return false;
-            }
-            if (child.nodeName === 'VIDEO') {
-              return {
-                url: child.getAttribute('src')
-              };
+            if (element2.getAttribute('href')) {
+              const href = element2.getAttribute('href');
+              const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+              const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+              if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
+                return {
+                  url: href
+                }
+              }
             }
             return false;
           },
           priority: 400,
           node: 'video'
-        },
-        {
-          tag: "video",
-          node: 'video'
         }
       ]
+    },
+    renderInnerHTML: (attrs: any) => {
+      const link = document.createElement("a");
+      const url = attrs.url || "";
+      link.setAttribute("href", url);
+      link.textContent = 'video';
+      return link;
     }
   });
   const VideoSlashItem = {

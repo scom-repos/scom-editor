@@ -2,6 +2,7 @@
 declare module "@scom/scom-editor/global/helper.ts" {
     export const isAppleOS: () => boolean;
     export function formatKeyboardShortcut(shortcut: string): string;
+    export const parseStringToObject: (value: string) => any;
 }
 /// <amd-module name="@scom/scom-editor/global/coreType.ts" />
 declare module "@scom/scom-editor/global/coreType.ts" {
@@ -121,6 +122,7 @@ declare module "@scom/scom-editor/components/index.css.ts" {
 /// <amd-module name="@scom/scom-editor/components/utils.ts" />
 declare module "@scom/scom-editor/components/utils.ts" {
     import { Button, Control, HStack, IconName, Modal } from "@ijstech/components";
+    import { PartialBlock } from "@scom/scom-editor/global/index.ts";
     export type IToolbarDropdownItem = {
         text: string;
         icon?: {
@@ -249,6 +251,7 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const WidgetMapping: {
         [key: string]: any;
     };
+    export const getWidgetEmbedUrl: (block: PartialBlock) => string;
 }
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
@@ -346,6 +349,7 @@ declare module "@scom/scom-editor/components/toolbarDropdown.tsx" {
     import { IToolbarDropdownItem } from "@scom/scom-editor/components/utils.ts";
     interface ScomEditorToolbarDropdownElement extends ControlElement {
         items?: IToolbarDropdownItem[];
+        caption?: string;
     }
     global {
         namespace JSX {
@@ -356,17 +360,19 @@ declare module "@scom/scom-editor/components/toolbarDropdown.tsx" {
     }
     interface IToolbarDropdown {
         items?: IToolbarDropdownItem[];
+        caption?: string;
     }
     export class ScomEditorToolbarDropdown extends Module {
         private mdDropdown;
         private btnSelected;
         private pnlOptions;
-        private pnlDropdown;
         private _data;
         static create(options?: ScomEditorToolbarDropdownElement, parent?: Container): Promise<ScomEditorToolbarDropdown>;
         constructor(parent?: Container, options?: any);
         get items(): IToolbarDropdownItem[];
         set items(value: IToolbarDropdownItem[]);
+        get caption(): string;
+        set caption(value: string);
         get selectedItem(): IToolbarDropdownItem;
         setData(value: IToolbarDropdown): Promise<void>;
         getData(): IToolbarDropdown;
@@ -784,6 +790,43 @@ declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
         render(): any;
     }
 }
+/// <amd-module name="@scom/scom-editor/components/tableToolbar.tsx" />
+declare module "@scom/scom-editor/components/tableToolbar.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    interface ScomEditorTableToolbarElement extends ControlElement {
+        editor?: BlockNoteEditor;
+    }
+    interface ITableToolbar {
+        editor: BlockNoteEditor;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-table-toolbar']: ScomEditorTableToolbarElement;
+            }
+        }
+    }
+    export class ScomEditorTableToolbar extends Module {
+        private pnlTableToolbar;
+        private _data;
+        private _oldBlock;
+        private _block;
+        static create(options?: ScomEditorTableToolbarElement, parent?: Container): Promise<ScomEditorTableToolbar>;
+        constructor(parent?: Container, options?: any);
+        get editor(): BlockNoteEditor;
+        set editor(value: BlockNoteEditor);
+        private getToolbarButtons;
+        private getDropdownItems;
+        setData(value: ITableToolbar): void;
+        onRefresh(): void;
+        private renderUI;
+        private updateBlock;
+        private renderList;
+        init(): void;
+        render(): any;
+    }
+}
 /// <amd-module name="@scom/scom-editor/components/index.ts" />
 declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorColor } from "@scom/scom-editor/components/colorButton.tsx";
@@ -795,6 +838,7 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ColorType, ScomEditorColorPicker } from "@scom/scom-editor/components/colorPicker.tsx";
     export { ScomEditorFormattingToolbar } from "@scom/scom-editor/components/formattingToolbar.tsx";
     export { ScomEditorImageToolbar } from "@scom/scom-editor/components/imageToolbar.tsx";
+    export { ScomEditorTableToolbar } from "@scom/scom-editor/components/tableToolbar.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
     export { buttonHoverStyle } from "@scom/scom-editor/components/index.css.ts";
 }
@@ -873,6 +917,11 @@ declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
 declare module "@scom/scom-editor/index.css.ts" {
     export const customEditorStyle: string;
 }
+/// <amd-module name="@scom/scom-editor/blocks/addTableToolbar.ts" />
+declare module "@scom/scom-editor/blocks/addTableToolbar.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addTableToolbar: (editor: BlockNoteEditor) => Promise<void>;
+}
 /// <amd-module name="@scom/scom-editor" />
 declare module "@scom/scom-editor" {
     import { Module, ControlElement, Container } from '@ijstech/components';
@@ -904,19 +953,11 @@ declare module "@scom/scom-editor" {
         static create(options?: ScomEditorElement, parent?: Container): Promise<ScomEditor>;
         private initEditor;
         private renderEditor;
-        private isEmptyBlock;
         private onEditorChanged;
-        private getMarkdown;
-        private blockToMarkdown;
         private addCSS;
         private loadPlugin;
         private getData;
         private setData;
-        private markdownToBlocks;
-        private getContentType;
-        private getMarkdownStr;
-        private getWidgetEmbedUrl;
-        private parseData;
         private updateTag;
         private setTag;
         private updateStyle;

@@ -20,9 +20,10 @@ import {
   addImageBlock
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
-import { CustomBlockTypes, TypeMapping, WidgetMapping, getModalContainer } from './components/index';
+import { CustomBlockTypes, TypeMapping, WidgetMapping, getModalContainer, getWidgetEmbedUrl } from './components/index';
 import { addSwapBlock } from './blocks/addSwapBlock';
 import { customEditorStyle } from './index.css';
+import { addTableToolbar } from './blocks/addTableToolbar';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
@@ -138,60 +139,63 @@ export class ScomEditor extends Module {
     };
     if (initialContent) editorConfig.initialContent = initialContent;
     this._editor = new this._blocknoteObj.BlockNoteEditor(editorConfig);
-    console.log(this._editor)
     addSideMenu(this._editor);
     addFormattingToolbar(this._editor);
     addSlashMenu(this._editor);
     addHyperlinkToolbar(this._editor);
     // addImageToolbar(this._editor);
+    addTableToolbar(this._editor);
   }
 
-  private isEmptyBlock(block: Block) {
-    let result = false;
-    let type = block.type as string;
-    if (type === 'paragraph') return !block.content?.length && !block.children?.length;
-    return result;
-  }
+  // private isEmptyBlock(block: Block) {
+  //   let result = false;
+  //   let type = block.type as string;
+  //   if (type === 'paragraph') return !block.content?.length && !block.children?.length;
+  //   return result;
+  // }
 
   private async onEditorChanged(editor: BlockNoteEditor) {
     let value = '';
-    for (let block of editor.topLevelBlocks) {
-      if (!this.isEmptyBlock(block)) {
-        value += await this.blockToMarkdown(block, '', true);
-      }
-    }
+    // for (let block of editor.topLevelBlocks) {
+    //   if (!this.isEmptyBlock(block)) {
+    //     value += await this.blockToMarkdown(block, '', true);
+    //   }
+    // }
+    const blocks = editor.topLevelBlocks;
+    blocks.pop();
+    value = await editor.blocksToMarkdown(blocks);
     this.value = value;
-    console.log(this.value);
+    console.log(JSON.stringify({ value: this.value }))
     if (this.onChanged) this.onChanged(this.value);
   }
 
-  private async getMarkdown(block: Block, isStart?: boolean) {
-    let value = '';
-    try {
-      const blockType = block.type as string;
-      if (CustomBlockTypes.includes(blockType)) {
-        const mdString = this.getMarkdownStr(block);
-        value += `\\n\\n${mdString}\\n\\n`;
-      } else if (!this.isEmptyBlock(block)) {
-        const blockValue = await this._editor.blocksToMarkdown([block]);
-        value += `${!isStart ? '\\n\\n' : ''}${blockValue}`;
-      }
-    } catch {}
-    return value
-  }
+  // private async getMarkdown(block: Block, isStart?: boolean) {
+  //   let value = '';
+  //   try {
+  //     const blockType = block.type as string;
+  //     if (CustomBlockTypes.includes(blockType)) {
+  //       const mdString = this.getMarkdownStr(block);
+  //       value += `\\n\\n${mdString}\\n\\n`;
+  //     } else if (!this.isEmptyBlock(block)) {
+  //       const blockValue = await this._editor.blocksToMarkdown([block]);
+  //       value += `${!isStart ? '\\n\\n' : ''}${blockValue}`;
+  //     }
+  //   } catch {}
+  //   return value
+  // }
 
-  private async blockToMarkdown(block: Block, result: string, isStart?: boolean) {
-    if (this.isEmptyBlock(block)) return result;
-    const clonedBlock = JSON.parse(JSON.stringify(block));
-    clonedBlock.children = [];
-    result += await this.getMarkdown(clonedBlock, isStart);
-    if (block.children?.length) {
-      for (const child of block.children) {
-        result += await this.blockToMarkdown(child, '');
-      }
-    }
-    return result;
-  }
+  // private async blockToMarkdown(block: Block, result: string, isStart?: boolean) {
+  //   if (this.isEmptyBlock(block)) return result;
+  //   const clonedBlock = JSON.parse(JSON.stringify(block));
+  //   clonedBlock.children = [];
+  //   result += await this.getMarkdown(clonedBlock, isStart);
+  //   if (block.children?.length) {
+  //     for (const child of block.children) {
+  //       result += await this.blockToMarkdown(child, '');
+  //     }
+  //   }
+  //   return result;
+  // }
 
   private addCSS(href: string, name: string) {
     const css = document.head.querySelector(`[name="${name}"]`);
@@ -221,106 +225,82 @@ export class ScomEditor extends Module {
     this._data = data;
     if (!this._editor) await this.initEditor();
     if (data.value) {
-      const blocks = await this.markdownToBlocks(data.value);
-      this.renderEditor(blocks);
+      const blocks: Block[] = await this._editor.markdownToBlocks(data.value);
+      this.renderEditor(JSON.parse(JSON.stringify(blocks)));
     }
   }
 
-  private async markdownToBlocks(markdown: string) {
-    if (!this._editor) return [];
-    const blocks: Block[] = await this._editor.markdownToBlocks(markdown);
-    let formattedBlocks = [];
-    for (let block of blocks) {
-      let text = '';
-      if (block.type === 'paragraph') {
-        text =
-          block.content[0]?.type === 'text'
-            ? block.content[0]?.text
-            : block.content[0]?.type === 'link'
-            ? block.content[0]?.href || block.content[0]?.content[0]?.text
-            : '';
-      }
-      text = (text || '').trim();
-      const customType = text === 'video' ? 'video' : this.getContentType(text);
-      if (customType) {
-        if (customType === 'widget') {
-          const [_, params = ''] = text.split('?');
-          const dataStr = params.replace('data=', '');
-          const widgetData = dataStr ? this.parseData(dataStr) : null;
-          if (widgetData) {
-            const { module, properties } = widgetData;
-            formattedBlocks.push({
-              type: TypeMapping[module.name],
-              props: properties
-            });
-          }
-        } else {
-          formattedBlocks.push({
-            type: customType,
-            props: {
-              url: text
-            }
-          });
-        }
-      } else {
-        formattedBlocks.push(block);
-      }
-    }
-    return JSON.parse(JSON.stringify(formattedBlocks));
-  }
+  // private async markdownToBlocks(markdown: string) {
+  //   if (!this._editor) return [];
+  //   const blocks: Block[] = await this._editor.markdownToBlocks(markdown);
+  //   let formattedBlocks = [];
+  //   for (let block of blocks) {
+  //     let text = '';
+  //     if (block.type === 'paragraph') {
+  //       text =
+  //         block.content[0]?.type === 'text'
+  //           ? block.content[0]?.text
+  //           : block.content[0]?.type === 'link'
+  //           ? block.content[0]?.href || block.content[0]?.content[0]?.text
+  //           : '';
+  //     }
+  //     text = (text || '').trim();
+  //     const customType = text === 'video' ? 'video' : this.getContentType(text);
+  //     if (customType) {
+  //       if (customType === 'widget') {
+  //         const [_, params = ''] = text.split('?');
+  //         const dataStr = params.replace('data=', '');
+  //         const widgetData = dataStr ? this.parseData(dataStr) : null;
+  //         if (widgetData) {
+  //           const { module, properties } = widgetData;
+  //           formattedBlocks.push({
+  //             type: TypeMapping[module.name],
+  //             props: properties
+  //           });
+  //         }
+  //       } else {
+  //         formattedBlocks.push({
+  //           type: customType,
+  //           props: {
+  //             url: text
+  //           }
+  //         });
+  //       }
+  //     } else {
+  //       formattedBlocks.push(block);
+  //     }
+  //   }
+  //   return JSON.parse(JSON.stringify(blocks));
+  // }
 
-  private getContentType(content: string) {
-    const imageUrlRegex = /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g;
-    const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
-    const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
-    if (imageUrlRegex.test(content)) return 'imageWidget';
-    if (videoUrlRegex.test(content)) return 'video';
-    if (youtubeUrlRegex.test(content)) return 'video';
-    if (content.startsWith(WIDGET_LOADER_URL)) return 'widget';
-    return '';
-  }
+  // private getContentType(content: string) {
+  //   const imageUrlRegex = /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g;
+  //   const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+  //   const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+  //   if (imageUrlRegex.test(content)) return 'imageWidget';
+  //   if (videoUrlRegex.test(content)) return 'video';
+  //   if (youtubeUrlRegex.test(content)) return 'video';
+  //   if (content.startsWith(WIDGET_LOADER_URL)) return 'widget';
+  //   return '';
+  // }
 
-  private getMarkdownStr(block: Block) {
-    const type = block.type;
-    let mdString = '';
-    const { altText = '', url } = block.props;
-    switch(type) {
-      case 'video':
-        mdString = `[video](${url})`;
-        break;
-      case 'imageWidget':
-        mdString = `![${altText || ''}](${url})`;
-        break;
-      case 'swap':
-        mdString = this.getWidgetEmbedUrl(block);
-        break;
-    }
-    return mdString;
-  }
-
-  private getWidgetEmbedUrl(block: Block) {
-    const type = block.type as string;
-    let module = WidgetMapping[type];
-    if (module) {
-      const widgetData = {
-        module,
-        properties: { ...block.props },
-      };
-      const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
-      return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
-    }
-    return '';
-  }
-
-  private parseData(value: string) {
-    try {
-      const utf8String = decodeURIComponent(value);
-      const decodedString = window.atob(utf8String);
-      const newData = JSON.parse(decodedString);
-      return { ...newData };
-    } catch {}
-    return null;
-  }
+  // private getMarkdownStr(block: Block) {
+  //   const type = block.type;
+  //   let mdString = '';
+  //   const { altText = '', url } = block.props;
+  //   switch(type) {
+  //     case 'video':
+  //       mdString = `[video](${url})`;
+  //       break;
+  //     case 'imageWidget':
+  //       mdString = `![${altText || ''}](${url})`;
+  //       break;
+  //     case 'swap':
+  //       mdString = getWidgetEmbedUrl(block);
+  //       break;
+  //   }
+  //   return mdString;
+  // }
 
   private updateTag(type: 'light' | 'dark', value: any) {
     this.tag[type] = this.tag[type] ?? {};

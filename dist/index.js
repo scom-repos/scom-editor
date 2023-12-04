@@ -21,7 +21,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 define("@scom/scom-editor/global/helper.ts", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.formatKeyboardShortcut = exports.isAppleOS = void 0;
+    exports.parseStringToObject = exports.formatKeyboardShortcut = exports.isAppleOS = void 0;
     ///<amd-module name='@scom/scom-editor/global/helper.ts'/> 
     const isAppleOS = () => typeof navigator !== "undefined" &&
         (/Mac/.test(navigator.platform) ||
@@ -37,6 +37,17 @@ define("@scom/scom-editor/global/helper.ts", ["require", "exports"], function (r
         }
     }
     exports.formatKeyboardShortcut = formatKeyboardShortcut;
+    const parseStringToObject = (value) => {
+        try {
+            const utf8String = decodeURIComponent(value);
+            const decodedString = window.atob(utf8String);
+            const newData = JSON.parse(decodedString);
+            return { ...newData };
+        }
+        catch { }
+        return null;
+    };
+    exports.parseStringToObject = parseStringToObject;
 });
 define("@scom/scom-editor/global/coreType.ts", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -64,7 +75,7 @@ define("@scom/scom-editor/components/index.css.ts", ["require", "exports", "@ijs
 define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.css.ts"], function (require, exports, components_2, index_1, index_css_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.WidgetMapping = exports.TypeMapping = exports.MediaBlockTypes = exports.CustomBlockTypes = exports.getPlacement = exports.getModalContainer = exports.createModal = exports.createParent = exports.createButton = exports.getExtraFields = exports.defaultBlockTypeItems = void 0;
+    exports.getWidgetEmbedUrl = exports.WidgetMapping = exports.TypeMapping = exports.MediaBlockTypes = exports.CustomBlockTypes = exports.getPlacement = exports.getModalContainer = exports.createModal = exports.createParent = exports.createButton = exports.getExtraFields = exports.defaultBlockTypeItems = void 0;
     const Theme = components_2.Styles.Theme.ThemeVars;
     exports.defaultBlockTypeItems = [
         {
@@ -262,12 +273,13 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
         }
     };
     const getPlacement = (block) => {
+        const props = block?.props || {};
         let placement = '';
-        if (!("textAlignment" in block.props)) {
+        if (!("textAlignment" in props)) {
             placement = 'bottom';
         }
         else {
-            placement = textAlignmentToPlacement(block.props.textAlignment);
+            placement = textAlignmentToPlacement(props.textAlignment);
         }
         return placement;
     };
@@ -293,6 +305,21 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
             localPath: 'scom-swap'
         },
     };
+    const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
+    const getWidgetEmbedUrl = (block) => {
+        const type = block.type;
+        let module = exports.WidgetMapping[type];
+        if (module) {
+            const widgetData = {
+                module,
+                properties: { ...block.props },
+            };
+            const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
+            return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
+        }
+        return '';
+    };
+    exports.getWidgetEmbedUrl = getWidgetEmbedUrl;
 });
 define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts"], function (require, exports, components_3, utils_1) {
     "use strict";
@@ -398,7 +425,8 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
                 this.onSelected(type, color);
         }
         handleClose() {
-            (0, utils_1.getModalContainer)().removeChild(this.mdColorPicker);
+            if (this.mdColorPicker)
+                this.mdColorPicker.remove();
         }
         init() {
             super.init();
@@ -504,6 +532,12 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
         set items(value) {
             this._data.items = value ?? [];
         }
+        get caption() {
+            return this._data.caption ?? '';
+        }
+        set caption(value) {
+            this._data.caption = value ?? '';
+        }
         get selectedItem() {
             return this.items.filter((p) => p.isSelected)[0];
         }
@@ -544,9 +578,13 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
             this.updateSelected();
         }
         updateSelected() {
-            this.btnSelected.caption = this.selectedItem?.text || '';
-            if (this.selectedItem?.icon?.name)
+            this.btnSelected.caption = this.caption || this.selectedItem?.text || '';
+            if (this.selectedItem?.icon?.name && !this.caption) {
                 this.btnSelected.icon.name = this.selectedItem.icon.name;
+            }
+            else {
+                this.btnSelected.icon.visible = false;
+            }
         }
         showModal() {
             (0, utils_2.getModalContainer)().appendChild(this.mdDropdown);
@@ -558,12 +596,14 @@ define("@scom/scom-editor/components/toolbarDropdown.tsx", ["require", "exports"
             this.mdDropdown.visible = true;
         }
         handleClosed() {
-            (0, utils_2.getModalContainer)().removeChild(this.mdDropdown);
+            if (this.mdDropdown)
+                this.mdDropdown.remove();
         }
         init() {
             super.init();
             const items = this.getAttribute('items', true);
-            this.setData({ items });
+            const caption = this.getAttribute('caption', true);
+            this.setData({ items, caption });
         }
         render() {
             return (this.$render("i-panel", { id: "pnlDropdown", width: 'auto', height: '100%', display: 'inline-block' },
@@ -699,7 +739,8 @@ define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ij
             }
         }
         handleClosed() {
-            (0, utils_4.getModalContainer)().removeChild(this.mdLink);
+            if (this.mdLink)
+                this.mdLink.remove();
         }
         init() {
             super.init();
@@ -1676,12 +1717,227 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
     ], ScomEditorFormattingToolbar);
     exports.ScomEditorFormattingToolbar = ScomEditorFormattingToolbar;
 });
-define("@scom/scom-editor/components/index.ts", ["require", "exports", "@scom/scom-editor/components/colorButton.tsx", "@scom/scom-editor/components/toolbarDropdown.tsx", "@scom/scom-editor/components/blockTypeButton.tsx", "@scom/scom-editor/components/linkButton.tsx", "@scom/scom-editor/components/sideMenu.tsx", "@scom/scom-editor/components/slashMenu.tsx", "@scom/scom-editor/components/colorPicker.tsx", "@scom/scom-editor/components/formattingToolbar.tsx", "@scom/scom-editor/components/imageToolbar.tsx", "@scom/scom-editor/components/utils.ts", "@scom/scom-editor/components/index.css.ts"], function (require, exports, colorButton_2, toolbarDropdown_1, blockTypeButton_2, linkButton_2, sideMenu_1, slashMenu_1, colorPicker_1, formattingToolbar_1, imageToolbar_1, utils_8, index_css_4) {
+define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/utils.ts", "@scom/scom-editor/components/toolbarDropdown.tsx", "@scom/scom-editor/components/index.css.ts"], function (require, exports, components_15, utils_8, toolbarDropdown_1, index_css_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.buttonHoverStyle = exports.ScomEditorImageToolbar = exports.ScomEditorFormattingToolbar = exports.ScomEditorColorPicker = exports.ScomEditorSlashMenu = exports.ScomEditorSideMenu = exports.ScomEditorLink = exports.ScomEditorBlockType = exports.ScomEditorToolbarDropdown = exports.ScomEditorColor = void 0;
+    exports.ScomEditorTableToolbar = void 0;
+    const Theme = components_15.Styles.Theme.ThemeVars;
+    let ScomEditorTableToolbar = class ScomEditorTableToolbar extends components_15.Module {
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
+        constructor(parent, options) {
+            super(parent, options);
+            this._oldBlock = {
+                id: '',
+                type: '',
+                props: undefined,
+                content: [],
+                children: []
+            };
+            this._block = {
+                id: '',
+                type: '',
+                props: undefined,
+                content: [],
+                children: []
+            };
+        }
+        get editor() {
+            return this._data.editor;
+        }
+        set editor(value) {
+            this._data.editor = value;
+        }
+        getToolbarButtons(editor) {
+            const iconProps = { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary };
+            const toolTipProps = { placement: 'bottom' };
+            const customProps = {
+                display: 'inline-flex',
+                grid: { verticalAlignment: 'center' },
+                height: '100%',
+                minHeight: '1.875rem',
+                padding: { top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem' }
+            };
+            return [
+                {
+                    icon: { ...iconProps, name: 'expand-alt' },
+                    tooltip: { ...toolTipProps, content: `Fix table to page width` },
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().fixTables().run();
+                    }
+                },
+                {
+                    customControl: () => {
+                        let dropdown = new toolbarDropdown_1.ScomEditorToolbarDropdown(undefined, {
+                            ...customProps,
+                            caption: 'Options',
+                            items: this.getDropdownItems(this.editor),
+                            class: index_css_4.buttonHoverStyle
+                        });
+                        return dropdown;
+                    }
+                }
+            ];
+        }
+        getDropdownItems(editor) {
+            const items = [
+                {
+                    icon: { name: 'plus-circle' },
+                    text: `Insert column before`,
+                    isDisabled: !editor._tiptapEditor.can().addColumnBefore(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().addColumnBefore().run();
+                    }
+                },
+                {
+                    icon: { name: 'plus-circle' },
+                    text: `Insert column after`,
+                    isDisabled: !editor._tiptapEditor.can().addColumnAfter(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().addColumnAfter().run();
+                    }
+                },
+                {
+                    icon: { name: 'minus-circle' },
+                    text: `Delete column`,
+                    isDisabled: !editor._tiptapEditor.can().deleteColumn(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().deleteColumn().run();
+                    }
+                },
+                {
+                    icon: { name: 'plus-circle' },
+                    text: `Insert row before`,
+                    isDisabled: !editor._tiptapEditor.can().addRowBefore(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().addRowBefore().run();
+                    }
+                },
+                {
+                    icon: { name: 'plus-circle' },
+                    text: `Insert row after`,
+                    isDisabled: !editor._tiptapEditor.can().addRowBefore(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().addRowBefore().run();
+                    }
+                },
+                {
+                    icon: { name: 'times' },
+                    text: `Delete row`,
+                    isDisabled: !editor._tiptapEditor.can().deleteRow(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().deleteRow().run();
+                    }
+                },
+                {
+                    icon: { name: 'times' },
+                    text: `Delete table`,
+                    isDisabled: !editor._tiptapEditor.can().deleteTable(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().deleteTable().run();
+                    }
+                },
+                {
+                    icon: { name: 'object-ungroup' },
+                    text: `Split cell`,
+                    isDisabled: !editor._tiptapEditor.can().splitCell(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().splitCell().run();
+                    }
+                },
+                {
+                    icon: { name: 'columns' },
+                    text: `Merge cells`,
+                    isDisabled: !editor._tiptapEditor.can().mergeCells(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().mergeCells().run();
+                    }
+                },
+                {
+                    icon: { name: 'toggle-on' },
+                    text: `Toggle header column`,
+                    isDisabled: !editor._tiptapEditor.can().toggleHeaderColumn(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().toggleHeaderColumn().run();
+                    }
+                },
+                {
+                    icon: { name: 'toggle-on' },
+                    text: `Toggle header row`,
+                    isDisabled: !editor._tiptapEditor.can().toggleHeaderColumn(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().toggleHeaderColumn().run();
+                    }
+                },
+                {
+                    icon: { name: 'toggle-on' },
+                    text: `Toggle header cells`,
+                    isDisabled: !editor._tiptapEditor.can().toggleHeaderCell(),
+                    onClick: () => {
+                        editor._tiptapEditor.chain().focus().toggleHeaderCell().run();
+                    }
+                }
+            ];
+            return items;
+        }
+        setData(value) {
+            this._data = value;
+            this.renderUI();
+        }
+        onRefresh() {
+            this.updateBlock();
+            if (this._oldBlock?.id !== this._block?.id) {
+                this.renderList();
+            }
+        }
+        renderUI() {
+            this.updateBlock();
+            this.renderList();
+        }
+        updateBlock() {
+            this._oldBlock = { ...this._block };
+            const block = this.editor.getTextCursorPosition().block;
+            this._block = block;
+        }
+        async renderList() {
+            this.pnlTableToolbar.clearInnerHTML();
+            let buttonList = this.getToolbarButtons(this.editor);
+            for (let props of buttonList) {
+                if (props.customControl) {
+                    const elm = props.customControl();
+                    this.pnlTableToolbar.appendChild(elm);
+                }
+                else {
+                    const btn = (0, utils_8.createButton)(props, this.pnlTableToolbar);
+                    this.pnlTableToolbar.appendChild(btn);
+                }
+            }
+        }
+        init() {
+            super.init();
+            const editor = this.getAttribute('editor', true);
+            if (editor)
+                this.setData({ editor });
+        }
+        render() {
+            return (this.$render("i-panel", null,
+                this.$render("i-hstack", { id: "pnlTableToolbar", width: '100%', verticalAlignment: 'center', gap: "0.125rem", overflow: 'hidden' })));
+        }
+    };
+    ScomEditorTableToolbar = __decorate([
+        (0, components_15.customElements)('i-scom-editor-table-toolbar')
+    ], ScomEditorTableToolbar);
+    exports.ScomEditorTableToolbar = ScomEditorTableToolbar;
+});
+define("@scom/scom-editor/components/index.ts", ["require", "exports", "@scom/scom-editor/components/colorButton.tsx", "@scom/scom-editor/components/toolbarDropdown.tsx", "@scom/scom-editor/components/blockTypeButton.tsx", "@scom/scom-editor/components/linkButton.tsx", "@scom/scom-editor/components/sideMenu.tsx", "@scom/scom-editor/components/slashMenu.tsx", "@scom/scom-editor/components/colorPicker.tsx", "@scom/scom-editor/components/formattingToolbar.tsx", "@scom/scom-editor/components/imageToolbar.tsx", "@scom/scom-editor/components/tableToolbar.tsx", "@scom/scom-editor/components/utils.ts", "@scom/scom-editor/components/index.css.ts"], function (require, exports, colorButton_2, toolbarDropdown_2, blockTypeButton_2, linkButton_2, sideMenu_1, slashMenu_1, colorPicker_1, formattingToolbar_1, imageToolbar_1, tableToolbar_1, utils_9, index_css_5) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.buttonHoverStyle = exports.ScomEditorTableToolbar = exports.ScomEditorImageToolbar = exports.ScomEditorFormattingToolbar = exports.ScomEditorColorPicker = exports.ScomEditorSlashMenu = exports.ScomEditorSideMenu = exports.ScomEditorLink = exports.ScomEditorBlockType = exports.ScomEditorToolbarDropdown = exports.ScomEditorColor = void 0;
     Object.defineProperty(exports, "ScomEditorColor", { enumerable: true, get: function () { return colorButton_2.ScomEditorColor; } });
-    Object.defineProperty(exports, "ScomEditorToolbarDropdown", { enumerable: true, get: function () { return toolbarDropdown_1.ScomEditorToolbarDropdown; } });
+    Object.defineProperty(exports, "ScomEditorToolbarDropdown", { enumerable: true, get: function () { return toolbarDropdown_2.ScomEditorToolbarDropdown; } });
     Object.defineProperty(exports, "ScomEditorBlockType", { enumerable: true, get: function () { return blockTypeButton_2.ScomEditorBlockType; } });
     Object.defineProperty(exports, "ScomEditorLink", { enumerable: true, get: function () { return linkButton_2.ScomEditorLink; } });
     Object.defineProperty(exports, "ScomEditorSideMenu", { enumerable: true, get: function () { return sideMenu_1.ScomEditorSideMenu; } });
@@ -1689,8 +1945,9 @@ define("@scom/scom-editor/components/index.ts", ["require", "exports", "@scom/sc
     Object.defineProperty(exports, "ScomEditorColorPicker", { enumerable: true, get: function () { return colorPicker_1.ScomEditorColorPicker; } });
     Object.defineProperty(exports, "ScomEditorFormattingToolbar", { enumerable: true, get: function () { return formattingToolbar_1.ScomEditorFormattingToolbar; } });
     Object.defineProperty(exports, "ScomEditorImageToolbar", { enumerable: true, get: function () { return imageToolbar_1.ScomEditorImageToolbar; } });
-    __exportStar(utils_8, exports);
-    Object.defineProperty(exports, "buttonHoverStyle", { enumerable: true, get: function () { return index_css_4.buttonHoverStyle; } });
+    Object.defineProperty(exports, "ScomEditorTableToolbar", { enumerable: true, get: function () { return tableToolbar_1.ScomEditorTableToolbar; } });
+    __exportStar(utils_9, exports);
+    Object.defineProperty(exports, "buttonHoverStyle", { enumerable: true, get: function () { return index_css_5.buttonHoverStyle; } });
 });
 define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_3) {
     "use strict";
@@ -1847,11 +2104,11 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
     };
     exports.addSlashMenu = addSlashMenu;
 });
-define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts"], function (require, exports, components_15, index_6) {
+define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts"], function (require, exports, components_16, index_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addHyperlinkToolbar = void 0;
-    const Theme = components_15.Styles.Theme.ThemeVars;
+    const Theme = components_16.Styles.Theme.ThemeVars;
     const getToolbarButtons = (editor, hyperlinkToolbarState, modal) => {
         const iconProps = { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary };
         const toolTipProps = { placement: 'bottom' };
@@ -1911,7 +2168,7 @@ define("@scom/scom-editor/blocks/addHyperlinkToolbar.ts", ["require", "exports",
                 (0, index_6.getModalContainer)().appendChild(modal);
             }
             if (!element) {
-                element = await components_15.Panel.create({ minWidth: 'max-content' });
+                element = await components_16.Panel.create({ minWidth: 'max-content' });
                 buttonList = getToolbarButtons(editor, hyperlinkToolbarState, modal);
                 for (let props of buttonList) {
                     if (props.customControl) {
@@ -1988,7 +2245,7 @@ define("@scom/scom-editor/blocks/addImageToolbar.tsx", ["require", "exports", "@
     };
     exports.addImageToolbar = addImageToolbar;
 });
-define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-video", "@scom/scom-editor/components/index.ts"], function (require, exports, components_16, scom_video_1, index_8) {
+define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-video", "@scom/scom-editor/components/index.ts"], function (require, exports, components_17, scom_video_1, index_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addVideoBlock = void 0;
@@ -2003,7 +2260,7 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
             },
             containsInlineContent: false,
             render: (block, editor) => {
-                const wrapper = new components_16.Panel();
+                const wrapper = new components_17.Panel();
                 const { url } = JSON.parse(JSON.stringify(block.props));
                 const video = new scom_video_1.default(wrapper, { url });
                 wrapper.appendChild(video);
@@ -2023,30 +2280,34 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
                         node: 'video'
                     },
                     {
-                        tag: "p",
+                        tag: "a",
                         getAttrs: (element2) => {
                             if (typeof element2 === "string") {
                                 return false;
                             }
-                            const child = element2.firstChild;
-                            if (child === null) {
-                                return false;
-                            }
-                            if (child.nodeName === 'VIDEO') {
-                                return {
-                                    url: child.getAttribute('src')
-                                };
+                            if (element2.getAttribute('href')) {
+                                const href = element2.getAttribute('href');
+                                const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+                                const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+                                if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
+                                    return {
+                                        url: href
+                                    };
+                                }
                             }
                             return false;
                         },
                         priority: 400,
                         node: 'video'
-                    },
-                    {
-                        tag: "video",
-                        node: 'video'
                     }
                 ];
+            },
+            renderInnerHTML: (attrs) => {
+                const link = document.createElement("a");
+                const url = attrs.url || "";
+                link.setAttribute("href", url);
+                link.textContent = 'video';
+                return link;
             }
         });
         const VideoSlashItem = {
@@ -2070,7 +2331,7 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
     };
     exports.addVideoBlock = addVideoBlock;
 });
-define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-image", "@scom/scom-editor/components/index.ts"], function (require, exports, components_17, scom_image_1, index_9) {
+define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-image", "@scom/scom-editor/components/index.ts"], function (require, exports, components_18, scom_image_1, index_9) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addImageBlock = void 0;
@@ -2090,7 +2351,7 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
             },
             containsInlineContent: false,
             render: (block, editor) => {
-                const wrapper = new components_17.Panel();
+                const wrapper = new components_18.Panel();
                 const { url, cid, link, altText, keyword, photoId, backgroundColor } = JSON.parse(JSON.stringify(block.props));
                 const image = new scom_image_1.default(wrapper, { url, cid, link, altText, keyword, photoId, backgroundColor });
                 wrapper.appendChild(image);
@@ -2116,7 +2377,7 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
                                 return false;
                             }
                             const child = element2.firstChild;
-                            if (child === null) {
+                            if (!child) {
                                 return false;
                             }
                             if (child.nodeName === 'IMG') {
@@ -2132,9 +2393,30 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
                     },
                     {
                         tag: "img",
+                        getAttrs: (element2) => {
+                            if (typeof element2 === "string") {
+                                return false;
+                            }
+                            if (element2.nodeName === 'IMG') {
+                                return {
+                                    url: element2.getAttribute('src'),
+                                    altText: element2.getAttribute('alt')
+                                };
+                            }
+                            return false;
+                        },
                         node: 'imageWidget'
                     }
                 ];
+            },
+            // For render node to DOM (serializer.serializeNode(node))
+            renderInnerHTML: (attrs) => {
+                const imageTag = document.createElement("img");
+                const src = attrs.url || "";
+                const alt = attrs.altText || "";
+                imageTag.setAttribute("src", src);
+                imageTag.setAttribute("alt", alt);
+                return imageTag;
             }
         });
         const ImageSlashItem = {
@@ -2171,10 +2453,26 @@ define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-e
     Object.defineProperty(exports, "addVideoBlock", { enumerable: true, get: function () { return addVideoBlock_1.addVideoBlock; } });
     Object.defineProperty(exports, "addImageBlock", { enumerable: true, get: function () { return addImageBlock_1.addImageBlock; } });
 });
-define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-swap"], function (require, exports, components_18, scom_swap_1) {
+define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-swap", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.ts"], function (require, exports, components_19, scom_swap_1, index_10, index_11) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSwapBlock = void 0;
+    function getData(element) {
+        const href = element.getAttribute('href');
+        const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
+        if (href.startsWith(WIDGET_LOADER_URL)) {
+            const [_, params = ''] = href.split('?');
+            const dataStr = params.replace('data=', '');
+            const widgetData = dataStr ? (0, index_10.parseStringToObject)(dataStr) : null;
+            if (widgetData) {
+                const { module, properties } = widgetData;
+                return {
+                    ...properties
+                };
+            }
+        }
+        return false;
+    }
     const addSwapBlock = (blocknote) => {
         const SwapBlock = blocknote.createBlockSpec({
             type: "swap",
@@ -2191,14 +2489,14 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                 wallets: { default: [] },
                 commissions: { default: [] },
                 defaultInputValue: { default: '' },
-                defaultOutputValue: { default: '' }
-                // defaultInputToken?: ITokenConfig;
-                // defaultOutputToken?: ITokenConfig;
-                // apiEndpoints?: Record<string, string>;
+                defaultOutputValue: { default: '' },
+                defaultInputToken: { default: null },
+                defaultOutputToken: { default: null },
+                apiEndpoints: { default: null }
             },
             containsInlineContent: false,
             render: (block, editor) => {
-                const wrapper = new components_18.Panel();
+                const wrapper = new components_19.Panel();
                 const props = JSON.parse(JSON.stringify(block.props));
                 const swapEl = new scom_swap_1.default(wrapper, props);
                 wrapper.appendChild(swapEl);
@@ -2216,8 +2514,50 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                     {
                         tag: "div[data-content-type=swap]",
                         node: 'swap'
-                    }
+                    },
+                    {
+                        tag: "a",
+                        getAttrs: (element2) => {
+                            if (typeof element2 === "string") {
+                                return false;
+                            }
+                            if (element2.getAttribute('href')) {
+                                return getData(element2);
+                            }
+                            return false;
+                        },
+                        priority: 402,
+                        node: 'swap'
+                    },
+                    {
+                        tag: "p",
+                        getAttrs: (element2) => {
+                            if (typeof element2 === "string") {
+                                return false;
+                            }
+                            const child = element2.firstChild;
+                            if (!child) {
+                                return false;
+                            }
+                            if (child.nodeName === 'A' && child.getAttribute('href')) {
+                                return getData(child);
+                            }
+                            return false;
+                        },
+                        priority: 403,
+                        node: 'imageWidget'
+                    },
                 ];
+            },
+            renderInnerHTML: (attrs) => {
+                const link = document.createElement("a");
+                const url = (0, index_11.getWidgetEmbedUrl)({
+                    type: 'swap',
+                    props: { ...(attrs || {}) }
+                });
+                link.setAttribute("href", url);
+                link.textContent = 'swap';
+                return link;
             }
         });
         const SwapSlashItem = {
@@ -2285,12 +2625,12 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
     };
     exports.addSwapBlock = addSwapBlock;
 });
-define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_19) {
+define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_20) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.customEditorStyle = void 0;
-    const Theme = components_19.Styles.Theme.ThemeVars;
-    exports.customEditorStyle = components_19.Styles.style({
+    const Theme = components_20.Styles.Theme.ThemeVars;
+    exports.customEditorStyle = components_20.Styles.style({
         $nest: {
             'table': {
                 borderCollapse: "collapse",
@@ -2314,14 +2654,60 @@ define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/compon
         }
     });
 });
-define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts"], function (require, exports, components_20, index_10, index_11, addSwapBlock_1, index_css_5) {
+define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_12) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.addTableToolbar = void 0;
+    const addTableToolbar = async (editor) => {
+        let modal;
+        let tableToolbar;
+        editor.tableToolbar.onUpdate(async (tableToolbarState) => {
+            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+            const block = selectedBlocks[0];
+            const blockID = block?.id;
+            if (!modal) {
+                modal = await (0, index_12.createModal)({
+                    popupPlacement: 'topRight',
+                    overflow: 'hidden',
+                    maxHeight: '2rem'
+                });
+                modal.id = 'mdTableToolbar';
+                (0, index_12.getModalContainer)().appendChild(modal);
+            }
+            if (tableToolbar) {
+                tableToolbar.onRefresh();
+            }
+            else {
+                tableToolbar = await index_12.ScomEditorTableToolbar.create({
+                    editor: editor
+                });
+                modal.item = tableToolbar;
+            }
+            if (tableToolbarState.show) {
+                const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+                const table = blockEl.querySelector('table') || blockEl?.closest('table');
+                if (table) {
+                    modal.linkTo = table;
+                    modal.position = 'fixed';
+                    if (!modal.visible)
+                        modal.visible = true;
+                }
+                else {
+                    modal.visible = false;
+                }
+            }
+        });
+    };
+    exports.addTableToolbar = addTableToolbar;
+});
+define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts", "@scom/scom-editor/blocks/addTableToolbar.ts"], function (require, exports, components_21, index_13, index_14, addSwapBlock_1, index_css_6, addTableToolbar_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditor = void 0;
-    const Theme = components_20.Styles.Theme.ThemeVars;
+    const Theme = components_21.Styles.Theme.ThemeVars;
     const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
-    const path = components_20.application.currentModuleDir;
-    components_20.RequireJS.config({
+    const path = components_21.application.currentModuleDir;
+    components_21.RequireJS.config({
         paths: {
             'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
         }
@@ -2330,7 +2716,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         'blocknote'
     ];
     const cssPath = `${path}/lib/@blocknote/style.css`;
-    let ScomEditor = class ScomEditor extends components_20.Module {
+    let ScomEditor = class ScomEditor extends components_21.Module {
         constructor(parent, options) {
             super(parent, options);
             this.tag = {};
@@ -2363,9 +2749,9 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._blocknoteObj)
                 return;
             this.pnlEditor.clearInnerHTML();
-            (0, index_11.getModalContainer)().innerHTML = '';
-            const { VideoSlashItem, VideoBlock } = (0, index_10.addVideoBlock)(this._blocknoteObj);
-            const { ImageSlashItem, ImageBlock } = (0, index_10.addImageBlock)(this._blocknoteObj);
+            (0, index_14.getModalContainer)().innerHTML = '';
+            const { VideoSlashItem, VideoBlock } = (0, index_13.addVideoBlock)(this._blocknoteObj);
+            const { ImageSlashItem, ImageBlock } = (0, index_13.addImageBlock)(this._blocknoteObj);
             const { SwapSlashItem, SwapBlock } = (0, addSwapBlock_1.addSwapBlock)(this._blocknoteObj);
             const customSchema = {
                 ...this._blocknoteObj.defaultBlockSchema,
@@ -2391,68 +2777,67 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 },
                 domAttributes: {
                     editor: {
-                        class: index_css_5.customEditorStyle,
+                        class: index_css_6.customEditorStyle,
                     },
                 },
             };
             if (initialContent)
                 editorConfig.initialContent = initialContent;
             this._editor = new this._blocknoteObj.BlockNoteEditor(editorConfig);
-            console.log(this._editor);
-            (0, index_10.addSideMenu)(this._editor);
-            (0, index_10.addFormattingToolbar)(this._editor);
-            (0, index_10.addSlashMenu)(this._editor);
-            (0, index_10.addHyperlinkToolbar)(this._editor);
+            (0, index_13.addSideMenu)(this._editor);
+            (0, index_13.addFormattingToolbar)(this._editor);
+            (0, index_13.addSlashMenu)(this._editor);
+            (0, index_13.addHyperlinkToolbar)(this._editor);
             // addImageToolbar(this._editor);
+            (0, addTableToolbar_1.addTableToolbar)(this._editor);
         }
-        isEmptyBlock(block) {
-            let result = false;
-            let type = block.type;
-            if (type === 'paragraph')
-                return !block.content?.length && !block.children?.length;
-            return result;
-        }
+        // private isEmptyBlock(block: Block) {
+        //   let result = false;
+        //   let type = block.type as string;
+        //   if (type === 'paragraph') return !block.content?.length && !block.children?.length;
+        //   return result;
+        // }
         async onEditorChanged(editor) {
             let value = '';
-            for (let block of editor.topLevelBlocks) {
-                if (!this.isEmptyBlock(block)) {
-                    value += await this.blockToMarkdown(block, '', true);
-                }
-            }
+            // for (let block of editor.topLevelBlocks) {
+            //   if (!this.isEmptyBlock(block)) {
+            //     value += await this.blockToMarkdown(block, '', true);
+            //   }
+            // }
+            const blocks = editor.topLevelBlocks;
+            blocks.pop();
+            value = await editor.blocksToMarkdown(blocks);
             this.value = value;
-            console.log(this.value);
+            console.log(JSON.stringify({ value: this.value }));
             if (this.onChanged)
                 this.onChanged(this.value);
         }
-        async getMarkdown(block, isStart) {
-            let value = '';
-            try {
-                const blockType = block.type;
-                if (index_11.CustomBlockTypes.includes(blockType)) {
-                    const mdString = this.getMarkdownStr(block);
-                    value += `\\n\\n${mdString}\\n\\n`;
-                }
-                else if (!this.isEmptyBlock(block)) {
-                    const blockValue = await this._editor.blocksToMarkdown([block]);
-                    value += `${!isStart ? '\\n\\n' : ''}${blockValue}`;
-                }
-            }
-            catch { }
-            return value;
-        }
-        async blockToMarkdown(block, result, isStart) {
-            if (this.isEmptyBlock(block))
-                return result;
-            const clonedBlock = JSON.parse(JSON.stringify(block));
-            clonedBlock.children = [];
-            result += await this.getMarkdown(clonedBlock, isStart);
-            if (block.children?.length) {
-                for (const child of block.children) {
-                    result += await this.blockToMarkdown(child, '');
-                }
-            }
-            return result;
-        }
+        // private async getMarkdown(block: Block, isStart?: boolean) {
+        //   let value = '';
+        //   try {
+        //     const blockType = block.type as string;
+        //     if (CustomBlockTypes.includes(blockType)) {
+        //       const mdString = this.getMarkdownStr(block);
+        //       value += `\\n\\n${mdString}\\n\\n`;
+        //     } else if (!this.isEmptyBlock(block)) {
+        //       const blockValue = await this._editor.blocksToMarkdown([block]);
+        //       value += `${!isStart ? '\\n\\n' : ''}${blockValue}`;
+        //     }
+        //   } catch {}
+        //   return value
+        // }
+        // private async blockToMarkdown(block: Block, result: string, isStart?: boolean) {
+        //   if (this.isEmptyBlock(block)) return result;
+        //   const clonedBlock = JSON.parse(JSON.stringify(block));
+        //   clonedBlock.children = [];
+        //   result += await this.getMarkdown(clonedBlock, isStart);
+        //   if (block.children?.length) {
+        //     for (const child of block.children) {
+        //       result += await this.blockToMarkdown(child, '');
+        //     }
+        //   }
+        //   return result;
+        // }
         addCSS(href, name) {
             const css = document.head.querySelector(`[name="${name}"]`);
             if (css)
@@ -2467,7 +2852,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         loadPlugin() {
             return new Promise((resolve, reject) => {
-                components_20.RequireJS.require(libPlugins, (blocknote) => {
+                components_21.RequireJS.require(libPlugins, (blocknote) => {
                     resolve(blocknote);
                 });
             });
@@ -2480,109 +2865,79 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._editor)
                 await this.initEditor();
             if (data.value) {
-                const blocks = await this.markdownToBlocks(data.value);
-                this.renderEditor(blocks);
+                const blocks = await this._editor.markdownToBlocks(data.value);
+                this.renderEditor(JSON.parse(JSON.stringify(blocks)));
             }
         }
-        async markdownToBlocks(markdown) {
-            if (!this._editor)
-                return [];
-            const blocks = await this._editor.markdownToBlocks(markdown);
-            let formattedBlocks = [];
-            for (let block of blocks) {
-                let text = '';
-                if (block.type === 'paragraph') {
-                    text =
-                        block.content[0]?.type === 'text'
-                            ? block.content[0]?.text
-                            : block.content[0]?.type === 'link'
-                                ? block.content[0]?.href || block.content[0]?.content[0]?.text
-                                : '';
-                }
-                text = (text || '').trim();
-                const customType = text === 'video' ? 'video' : this.getContentType(text);
-                if (customType) {
-                    if (customType === 'widget') {
-                        const [_, params = ''] = text.split('?');
-                        const dataStr = params.replace('data=', '');
-                        const widgetData = dataStr ? this.parseData(dataStr) : null;
-                        if (widgetData) {
-                            const { module, properties } = widgetData;
-                            formattedBlocks.push({
-                                type: index_11.TypeMapping[module.name],
-                                props: properties
-                            });
-                        }
-                    }
-                    else {
-                        formattedBlocks.push({
-                            type: customType,
-                            props: {
-                                url: text
-                            }
-                        });
-                    }
-                }
-                else {
-                    formattedBlocks.push(block);
-                }
-            }
-            return JSON.parse(JSON.stringify(formattedBlocks));
-        }
-        getContentType(content) {
-            const imageUrlRegex = /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g;
-            const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
-            const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
-            if (imageUrlRegex.test(content))
-                return 'imageWidget';
-            if (videoUrlRegex.test(content))
-                return 'video';
-            if (youtubeUrlRegex.test(content))
-                return 'video';
-            if (content.startsWith(WIDGET_LOADER_URL))
-                return 'widget';
-            return '';
-        }
-        getMarkdownStr(block) {
-            const type = block.type;
-            let mdString = '';
-            const { altText = '', url } = block.props;
-            switch (type) {
-                case 'video':
-                    mdString = `[video](${url})`;
-                    break;
-                case 'imageWidget':
-                    mdString = `![${altText || ''}](${url})`;
-                    break;
-                case 'swap':
-                    mdString = this.getWidgetEmbedUrl(block);
-                    break;
-            }
-            return mdString;
-        }
-        getWidgetEmbedUrl(block) {
-            const type = block.type;
-            let module = index_11.WidgetMapping[type];
-            if (module) {
-                const widgetData = {
-                    module,
-                    properties: { ...block.props },
-                };
-                const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
-                return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
-            }
-            return '';
-        }
-        parseData(value) {
-            try {
-                const utf8String = decodeURIComponent(value);
-                const decodedString = window.atob(utf8String);
-                const newData = JSON.parse(decodedString);
-                return { ...newData };
-            }
-            catch { }
-            return null;
-        }
+        // private async markdownToBlocks(markdown: string) {
+        //   if (!this._editor) return [];
+        //   const blocks: Block[] = await this._editor.markdownToBlocks(markdown);
+        //   let formattedBlocks = [];
+        //   for (let block of blocks) {
+        //     let text = '';
+        //     if (block.type === 'paragraph') {
+        //       text =
+        //         block.content[0]?.type === 'text'
+        //           ? block.content[0]?.text
+        //           : block.content[0]?.type === 'link'
+        //           ? block.content[0]?.href || block.content[0]?.content[0]?.text
+        //           : '';
+        //     }
+        //     text = (text || '').trim();
+        //     const customType = text === 'video' ? 'video' : this.getContentType(text);
+        //     if (customType) {
+        //       if (customType === 'widget') {
+        //         const [_, params = ''] = text.split('?');
+        //         const dataStr = params.replace('data=', '');
+        //         const widgetData = dataStr ? this.parseData(dataStr) : null;
+        //         if (widgetData) {
+        //           const { module, properties } = widgetData;
+        //           formattedBlocks.push({
+        //             type: TypeMapping[module.name],
+        //             props: properties
+        //           });
+        //         }
+        //       } else {
+        //         formattedBlocks.push({
+        //           type: customType,
+        //           props: {
+        //             url: text
+        //           }
+        //         });
+        //       }
+        //     } else {
+        //       formattedBlocks.push(block);
+        //     }
+        //   }
+        //   return JSON.parse(JSON.stringify(blocks));
+        // }
+        // private getContentType(content: string) {
+        //   const imageUrlRegex = /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g;
+        //   const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+        //   const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+        //   if (imageUrlRegex.test(content)) return 'imageWidget';
+        //   if (videoUrlRegex.test(content)) return 'video';
+        //   if (youtubeUrlRegex.test(content)) return 'video';
+        //   if (content.startsWith(WIDGET_LOADER_URL)) return 'widget';
+        //   return '';
+        // }
+        // private getMarkdownStr(block: Block) {
+        //   const type = block.type;
+        //   let mdString = '';
+        //   const { altText = '', url } = block.props;
+        //   switch(type) {
+        //     case 'video':
+        //       mdString = `[video](${url})`;
+        //       break;
+        //     case 'imageWidget':
+        //       mdString = `![${altText || ''}](${url})`;
+        //       break;
+        //     case 'swap':
+        //       mdString = getWidgetEmbedUrl(block);
+        //       break;
+        //   }
+        //   return mdString;
+        // }
         updateTag(type, value) {
             this.tag[type] = this.tag[type] ?? {};
             for (let prop in value) {
@@ -2745,7 +3100,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
     };
     ScomEditor = __decorate([
-        (0, components_20.customElements)('i-scom-editor')
+        (0, components_21.customElements)('i-scom-editor')
     ], ScomEditor);
     exports.ScomEditor = ScomEditor;
 });

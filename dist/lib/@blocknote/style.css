@@ -508,16 +508,27 @@ NESTED BLOCKS
   color: var(--text-secondary);
 }
 
-._isEmpty_nstdf_297 ._inlineContent_nstdf_297, ._isFilter_nstdf_298 ._inlineContent_nstdf_297 {
+/* TODO: update empty block */
+._isEmpty_nstdf_297 ._inlineContent_nstdf_297 {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  width: 100%;
+  display: block;
 }
 
 /* TODO: would be nicer if defined from code */
 
+._blockContent_nstdf_22._isEmpty_nstdf_297 {
+  width: 100%;
+  display: block;
+}
+
 ._blockContent_nstdf_22._isEmpty_nstdf_297._hasAnchor_nstdf_310 ._inlineContent_nstdf_297:before {
   content: "Enter text or type '/' for commands";
+  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  text-overflow: ellipsis;
 }
 
 ._blockContent_nstdf_22._isFilter_nstdf_298._hasAnchor_nstdf_310 ._inlineContent_nstdf_297:before {
