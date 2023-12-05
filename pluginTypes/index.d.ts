@@ -118,6 +118,7 @@ declare module "@scom/scom-editor/global/index.ts" {
 /// <amd-module name="@scom/scom-editor/components/index.css.ts" />
 declare module "@scom/scom-editor/components/index.css.ts" {
     export const buttonHoverStyle: string;
+    export const settingStyle: string;
 }
 /// <amd-module name="@scom/scom-editor/components/utils.ts" />
 declare module "@scom/scom-editor/components/utils.ts" {
@@ -226,6 +227,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        Chart: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -243,15 +251,15 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const getPlacement: (block: any) => string;
     export const CustomBlockTypes: string[];
     export const MediaBlockTypes: string[];
-    export const TypeMapping: {
-        '@scom/scom-video': string;
-        '@scom/scom-image': string;
-        '@scom/scom-swap': string;
-    };
     export const WidgetMapping: {
         [key: string]: any;
     };
     export const getWidgetEmbedUrl: (block: PartialBlock) => string;
+    export const ChartTypes: string[];
+    export const getChartTypeOptions: () => {
+        value: string;
+        label: string;
+    }[];
 }
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
@@ -589,6 +597,8 @@ declare module "@scom/scom-editor/components/settingsForm.tsx" {
     export class ScomEditorSettingsForm extends Module {
         private pnlForm;
         private actionForm;
+        private inputTitle;
+        private cbName;
         private _data;
         static create(options?: ScomEditorSettingsFormElement, parent?: Container): Promise<ScomEditorSettingsForm>;
         constructor(parent?: Container, options?: any);
@@ -827,6 +837,60 @@ declare module "@scom/scom-editor/components/tableToolbar.tsx" {
         render(): any;
     }
 }
+/// <amd-module name="@scom/scom-editor/components/chart.tsx" />
+declare module "@scom/scom-editor/components/chart.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    enum ModeType {
+        LIVE = "Live",
+        SNAPSHOT = "Snapshot"
+    }
+    interface IChartConfig {
+        name?: string;
+        dataSource: string;
+        queryId?: string;
+        apiEndpoint?: string;
+        title: string;
+        description?: string;
+        options: any;
+        file?: {
+            cid: string;
+            name: string;
+        };
+        mode: ModeType;
+    }
+    interface ScomEditorChartElement extends ControlElement {
+        data: IChartConfig;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-chart']: ScomEditorChartElement;
+            }
+        }
+    }
+    export class ScomEditorChart extends Module {
+        private chartWrapper;
+        private chartEl;
+        private _data;
+        private currentType;
+        static create(options?: ScomEditorChartElement, parent?: Container): Promise<ScomEditorChart>;
+        constructor(parent?: Container, options?: any);
+        getData(): IChartConfig;
+        setData(data: IChartConfig): Promise<void>;
+        getChartElm(): any;
+        private renderChart;
+        getConfigurators(): {
+            name: string;
+            target: string;
+            getActions: any;
+            getData: any;
+            setData: any;
+        }[];
+        private getActions;
+        init(): Promise<void>;
+        render(): void;
+    }
+}
 /// <amd-module name="@scom/scom-editor/components/index.ts" />
 declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorColor } from "@scom/scom-editor/components/colorButton.tsx";
@@ -839,6 +903,7 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorFormattingToolbar } from "@scom/scom-editor/components/formattingToolbar.tsx";
     export { ScomEditorImageToolbar } from "@scom/scom-editor/components/imageToolbar.tsx";
     export { ScomEditorTableToolbar } from "@scom/scom-editor/components/tableToolbar.tsx";
+    export { ScomEditorChart } from "@scom/scom-editor/components/chart.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
     export { buttonHoverStyle } from "@scom/scom-editor/components/index.css.ts";
 }
@@ -891,6 +956,23 @@ declare module "@scom/scom-editor/blocks/addImageBlock.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-editor/blocks/addTableToolbar.ts" />
+declare module "@scom/scom-editor/blocks/addTableToolbar.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addTableToolbar: (editor: BlockNoteEditor) => Promise<void>;
+}
+/// <amd-module name="@scom/scom-editor/blocks/addChartBlock.ts" />
+declare module "@scom/scom-editor/blocks/addChartBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addChartBlock: (blocknote: any) => {
+        ChartBlock: any;
+        ChartSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFormattingToolbar } from "@scom/scom-editor/blocks/addFormattingToolbar.ts";
@@ -900,6 +982,8 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addImageToolbar } from "@scom/scom-editor/blocks/addImageToolbar.tsx";
     export { addVideoBlock } from "@scom/scom-editor/blocks/addVideoBlock.ts";
     export { addImageBlock } from "@scom/scom-editor/blocks/addImageBlock.ts";
+    export { addTableToolbar } from "@scom/scom-editor/blocks/addTableToolbar.ts";
+    export { addChartBlock } from "@scom/scom-editor/blocks/addChartBlock.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
 declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
@@ -916,11 +1000,6 @@ declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
 /// <amd-module name="@scom/scom-editor/index.css.ts" />
 declare module "@scom/scom-editor/index.css.ts" {
     export const customEditorStyle: string;
-}
-/// <amd-module name="@scom/scom-editor/blocks/addTableToolbar.ts" />
-declare module "@scom/scom-editor/blocks/addTableToolbar.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
-    export const addTableToolbar: (editor: BlockNoteEditor) => Promise<void>;
 }
 /// <amd-module name="@scom/scom-editor" />
 declare module "@scom/scom-editor" {

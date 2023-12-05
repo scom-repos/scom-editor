@@ -5,3 +5,5 @@ export { addHyperlinkToolbar } from './addHyperlinkToolbar';
 export { addImageToolbar } from './addImageToolbar';
 export { addVideoBlock } from './addVideoBlock';
 export { addImageBlock } from './addImageBlock';
+export { addTableToolbar } from './addTableToolbar';
+export { addChartBlock } from './addChartBlock';

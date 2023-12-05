@@ -6,7 +6,22 @@ export const customEditorStyle = Styles.style({
     '.tableWrapper': {
       maxWidth: '100%',
       overflowX: 'auto',
-      padding: '1rem 0'
+      padding: '1rem 0',
+      $nest: {
+        '&::-webkit-scrollbar': {
+          width:  7,
+          height: 7
+        },
+        '&::-webkit-scrollbar-track': {
+          borderRadius: '10px',
+          border: '1px solid transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: Theme.colors.primary.main,
+          borderRadius: '10px',
+          outline: '1px solid transparent'
+        }
+      }
     },
     'table': {
       borderCollapse: "collapse",

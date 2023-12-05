@@ -54617,4 +54617,4 @@ img.ProseMirror-separator {
   exports2.uploadToTmpFilesDotOrg_DEV_ONLY = uploadToTmpFilesDotOrg_DEV_ONLY;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });
-//# sourceMappingURL=blocknote.bundled.umd.cjs.map
+//# sourceMappingURL=blocknote.bundled.umd.js.map

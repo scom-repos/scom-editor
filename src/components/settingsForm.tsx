@@ -5,9 +5,14 @@ import {
   Module,
   Container,
   Form,
-  Panel
+  VStack,
+  ComboBox,
+  Input,
+  IComboItem
 } from '@ijstech/components';
 import { Block } from '../global/index';
+import { settingStyle } from './index.css';
+import { getChartTypeOptions } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSettingsFormElement extends ControlElement {
@@ -30,8 +35,10 @@ declare global {
 
 @customElements('i-scom-editor-settings-form')
 export class ScomEditorSettingsForm extends Module {
-  private pnlForm: Panel;
+  private pnlForm: VStack;
   private actionForm: Form;
+  private inputTitle: Input;
+  private cbName: ComboBox;
 
   private _data: ISettingsForm;
 
@@ -63,6 +70,34 @@ export class ScomEditorSettingsForm extends Module {
     this.actionForm.visible = false;
     this.pnlForm.clearInnerHTML();
     if (action.customUI) {
+      if (block.type === 'chart') {
+        const types = getChartTypeOptions();
+        const selectedValue = types.find(item => block.props.name && item.value === block.props.name) || undefined;
+        this.pnlForm.append(
+          <i-vstack gap={'0.625rem'} width={'100%'}>
+            <i-label caption='Chart Type'></i-label>
+            <i-combo-box
+              id="cbName"
+              items={types}
+              selectedItem={selectedValue}
+              width={'100%'}
+              height={'2.625rem'}
+            ></i-combo-box>
+          </i-vstack>
+        )
+        this.pnlForm.append(
+          <i-vstack gap={'0.625rem'} width={'100%'}>
+            <i-label caption='Chart Title'></i-label>
+            <i-input
+              id='inputTitle'
+              width={'100%'}
+              height={'2.625rem'}
+              placeholder='Enter Title'
+              value={block.props?.title || ''}
+            ></i-input>
+          </i-vstack>
+        )
+      }
       let element = await action.customUI.render({ ...block.props }, this.onSave.bind(this));
       this.pnlForm.append(element);
       this.pnlForm.visible = true;
@@ -100,6 +135,10 @@ export class ScomEditorSettingsForm extends Module {
 
   private onSave(result: boolean, data: any) {
     const { onConfirm, block } = this.data;
+    if (block.type === 'chart') {
+      data.title = this.inputTitle.value || '';
+      data.name = (this.cbName.selectedItem as IComboItem).value;
+    }
     if (onConfirm && result) onConfirm(block, {...data});
   }
 
@@ -113,7 +152,13 @@ export class ScomEditorSettingsForm extends Module {
     return (
       <i-panel padding={{top: '1rem', bottom: '1rem', left: '1rem', right: '1rem'}}>
         <i-form id="actionForm" visible={false}></i-form>
-        <i-panel id="pnlForm" visible={false}></i-panel>
+        <i-vstack
+          id="pnlForm"
+          gap={'0.625rem'}
+          width={'100%'}
+          visible={false}
+          class={settingStyle}
+        ></i-vstack>
       </i-panel>
     )
   }

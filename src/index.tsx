@@ -15,15 +15,15 @@ import {
   addFormattingToolbar,
   addSideMenu,
   addHyperlinkToolbar,
-  addImageToolbar,
   addVideoBlock,
-  addImageBlock
+  addImageBlock,
+  addTableToolbar,
+  addChartBlock
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
-import { CustomBlockTypes, TypeMapping, WidgetMapping, getModalContainer, getWidgetEmbedUrl } from './components/index';
+import { getModalContainer } from './components/index';
 import { addSwapBlock } from './blocks/addSwapBlock';
 import { customEditorStyle } from './index.css';
-import { addTableToolbar } from './blocks/addTableToolbar';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
@@ -37,8 +37,6 @@ interface ScomEditorElement extends ControlElement {
 interface IEditor {
   value?: string;
 }
-
-const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4'
 
 declare global {
   namespace JSX {
@@ -109,12 +107,14 @@ export class ScomEditor extends Module {
     const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
     const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
     const { SwapSlashItem, SwapBlock } =  addSwapBlock(this._blocknoteObj);
+    const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
 
     const customSchema = {
       ...this._blocknoteObj.defaultBlockSchema,
       video: VideoBlock,
       imageWidget: ImageBlock,
-      swap: SwapBlock
+      swap: SwapBlock,
+      chart: ChartBlock
     };
     const editorConfig: BlockNoteEditorOptions = {
       parentElement: this.pnlEditor,
@@ -123,7 +123,8 @@ export class ScomEditor extends Module {
         ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
         VideoSlashItem,
         ImageSlashItem,
-        SwapSlashItem
+        SwapSlashItem,
+        ChartSlashItem
       ],
       onEditorContentChange: (editor: any) => {
         if (this.timer) clearTimeout(this.timer);

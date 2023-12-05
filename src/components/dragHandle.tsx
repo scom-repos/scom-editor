@@ -36,7 +36,8 @@ declare global {
 
 @customElements('i-scom-editor-drag-handle')
 export class ScomEditorDragHandle extends Module {
-  private mdMenu: Modal;
+  private mdMenu: Modal; 
+  // Load mdMenu outside
   private menuElm: Menu;
   private mdPicker: ScomEditorColorPicker;
 
