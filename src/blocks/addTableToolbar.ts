@@ -30,10 +30,10 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
     }
 
     if (tableToolbarState.show) {
-      const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-      const table = blockEl.querySelector('table') || blockEl?.closest('table');
-      if (table) {
-        modal.linkTo = table;
+      const blockEl = blockID && editor.domElement.querySelector(`[data-id="${blockID}"]`);
+      // const table = blockEl.querySelector('table') || blockEl?.closest('table');
+      if (blockEl) {
+        modal.linkTo = blockEl;
         modal.position = 'fixed';
         if (!modal.visible) modal.visible = true;
       } else {

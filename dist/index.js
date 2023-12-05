@@ -1762,13 +1762,13 @@ define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "
                 padding: { top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem' }
             };
             return [
-                {
-                    icon: { ...iconProps, name: 'expand-alt' },
-                    tooltip: { ...toolTipProps, content: `Fix table to page width` },
-                    onClick: () => {
-                        editor._tiptapEditor.chain().focus().fixTables().run();
-                    }
-                },
+                // {
+                //   icon: {...iconProps, name: 'expand-alt'},
+                //   tooltip: {...toolTipProps, content: `Fix table to page width`},
+                //   onClick: () => {
+                //     editor._tiptapEditor.chain().focus().fixTables().run();
+                //   }
+                // },
                 {
                     customControl: () => {
                         let dropdown = new toolbarDropdown_1.ScomEditorToolbarDropdown(undefined, {
@@ -2632,11 +2632,17 @@ define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/compon
     const Theme = components_20.Styles.Theme.ThemeVars;
     exports.customEditorStyle = components_20.Styles.style({
         $nest: {
+            '.tableWrapper': {
+                maxWidth: '100%',
+                overflowX: 'auto',
+                padding: '1rem 0'
+            },
             'table': {
                 borderCollapse: "collapse",
                 overflow: 'hidden',
-                tableLayout: 'fixed',
-                width: '100%'
+                margin: 0
+                // tableLayout: 'fixed',
+                // width: '100%'
             },
             'td, th': {
                 border: `1px solid ${Theme.divider}`,
@@ -2650,6 +2656,29 @@ define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/compon
                 fontWeight: 600,
                 textAlign: 'left',
                 background: Theme.background.default
+            },
+            '.selectedCell:after': {
+                zIndex: 2,
+                position: 'absolute',
+                content: "''",
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+                background: Theme.action.selectedBackground,
+                pointerEvents: 'none'
+            },
+            '.column-resize-handle': {
+                position: 'absolute',
+                right: -1,
+                top: 0,
+                bottom: -1,
+                width: 2,
+                backgroundColor: Theme.colors.primary.light,
+                cursor: 'col-resize'
+            },
+            '.resize-cursor': {
+                cursor: 'col-resize'
             }
         }
     });
@@ -2684,10 +2713,10 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
                 modal.item = tableToolbar;
             }
             if (tableToolbarState.show) {
-                const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-                const table = blockEl.querySelector('table') || blockEl?.closest('table');
-                if (table) {
-                    modal.linkTo = table;
+                const blockEl = blockID && editor.domElement.querySelector(`[data-id="${blockID}"]`);
+                // const table = blockEl.querySelector('table') || blockEl?.closest('table');
+                if (blockEl) {
+                    modal.linkTo = blockEl;
                     modal.position = 'fixed';
                     if (!modal.visible)
                         modal.visible = true;

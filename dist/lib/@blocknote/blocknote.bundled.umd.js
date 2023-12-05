@@ -25719,6 +25719,21 @@ img.ProseMirror-separator {
                 let _a;
                 const id = (_a = tr2.doc.nodeAt(pos)) === null || _a === void 0 ? void 0 : _a.attrs[attributeName];
                 if (id === null) {
+                  const initialDoc = oldState.doc.type.createAndFill().content;
+                  const wasInitial = oldState.doc.content.findDiffStart(initialDoc) === null;
+                  if (wasInitial) {
+                    const jsonNode = JSON.parse(
+                      JSON.stringify(newState.doc.toJSON())
+                    );
+                    jsonNode.content[0].content[0].attrs.id = "initialBlockId";
+                    if (JSON.stringify(jsonNode.content) === JSON.stringify(initialDoc.toJSON())) {
+                      tr2.setNodeMarkup(pos, void 0, {
+                        ...node2.attrs,
+                        [attributeName]: "initialBlockId"
+                      });
+                      return;
+                    }
+                  }
                   tr2.setNodeMarkup(pos, void 0, {
                     ...node2.attrs,
                     [attributeName]: generateID()
@@ -49026,7 +49041,7 @@ img.ProseMirror-separator {
       for (let i2 = 0; i2 < numChildElements; i2++) {
         const blockOuter2 = tree.children[i2];
         const blockContainer = blockOuter2.children[0];
-        if (((_a = blockContainer == null ? void 0 : blockContainer.properties) == null ? void 0 : _a.dataContentType) !== "blockContainer")
+        if (((_a = blockContainer == null ? void 0 : blockContainer.properties) == null ? void 0 : _a.dataNodeType) !== "blockContainer")
           continue;
         const blockContent2 = blockContainer.children[0];
         const blockGroup2 = blockContainer.children.length === 2 ? blockContainer.children[1] : null;
@@ -53886,12 +53901,7 @@ img.ProseMirror-separator {
         "Slash Menu open in a block that doesn't contain inline content."
       );
     }
-    if (currentBlock.content.length === 1 && currentBlock.content[0].type === "text" && currentBlock.content[0].text === "/" || currentBlock.content.length === 0) {
-      editor.updateBlock(currentBlock, block2);
-    } else {
-      editor.insertBlocks([block2], currentBlock, "after");
-      editor.setTextCursorPosition(editor.getTextCursorPosition().nextBlock);
-    }
+    editor.updateBlock(currentBlock, block2);
   }
   const getDefaultSlashMenuItems = (schema = defaultBlockSchema) => {
     var _a, _b, _c;

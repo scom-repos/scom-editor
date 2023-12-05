@@ -78,13 +78,13 @@ export class ScomEditorTableToolbar extends Module {
     }
 
     return [
-      {
-        icon: {...iconProps, name: 'expand-alt'},
-        tooltip: {...toolTipProps, content: `Fix table to page width`},
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().fixTables().run();
-        }
-      },
+      // {
+      //   icon: {...iconProps, name: 'expand-alt'},
+      //   tooltip: {...toolTipProps, content: `Fix table to page width`},
+      //   onClick: () => {
+      //     editor._tiptapEditor.chain().focus().fixTables().run();
+      //   }
+      // },
       {
         customControl: () => {
           let dropdown = new ScomEditorToolbarDropdown(undefined, {
@@ -226,7 +226,7 @@ export class ScomEditorTableToolbar extends Module {
 
   private async renderList() {
     this.pnlTableToolbar.clearInnerHTML();
-    let buttonList = this.getToolbarButtons(this.editor);
+    let buttonList: any = this.getToolbarButtons(this.editor);
     for (let props of buttonList) {
       if (props.customControl) {
         const elm = props.customControl();

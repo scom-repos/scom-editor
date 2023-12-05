@@ -25,7 +25,7 @@ export default class Module1 extends Module {
           border={{radius: '0.5rem', width: '1px', style: 'solid', color: Theme.divider}}
           // font={{color: Theme.text.primary}}
           // background={{color: Theme.background.main}}
-          value={this._value}
+          // value={this._value}
         />
       </i-vstack>
     );

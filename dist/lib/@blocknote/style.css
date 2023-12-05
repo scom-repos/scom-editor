@@ -509,7 +509,7 @@ NESTED BLOCKS
 }
 
 /* TODO: update empty block */
-._isEmpty_nstdf_297 ._inlineContent_nstdf_297 {
+._blockContent_nstdf_22[data-content-type="paragraph"]._isEmpty_nstdf_297 ._inlineContent_nstdf_297 {
   white-space: nowrap;
   width: 100%;
   display: block;
