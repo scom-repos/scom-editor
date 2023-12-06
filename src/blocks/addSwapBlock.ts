@@ -12,13 +12,12 @@ function getData(element: HTMLElement) {
     const widgetData = dataStr ? parseStringToObject(dataStr) : null;
     if (widgetData) {
       const { module, properties } = widgetData;
-      return {
-        ...properties
-      }
+      if (module.path === 'scom-swap') return {...properties};
     }
   }
   return false;
 }
+
 export const addSwapBlock = (blocknote: any) => {
   const SwapBlock = blocknote.createBlockSpec({
     type: "swap",
@@ -90,7 +89,7 @@ export const addSwapBlock = (blocknote: any) => {
             return false;
           },
           priority: 403,
-          node: 'imageWidget'
+          node: 'swap'
         },
       ]
     },

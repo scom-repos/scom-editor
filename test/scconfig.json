@@ -17,6 +17,16 @@
     "@ijstech/eth-contract": "*",
     "@ijstech/eth-wallet": "*"
   },
+  "packages": [
+    "@scom/scom-chart-data-source-setup",
+    "@scom/scom-bar-chart",
+    "@scom/scom-area-chart",
+    "@scom/scom-line-chart",
+    "@scom/scom-mixed-chart",
+    "@scom/scom-pie-chart",
+    "@scom/scom-scatter-chart",
+    "@scom/scom-counter"
+  ],
   "menus": [
     {
       "caption": "Module 1",

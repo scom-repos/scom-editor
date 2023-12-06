@@ -8,5 +8,6 @@ export { ColorType, ScomEditorColorPicker } from './colorPicker';
 export { ScomEditorFormattingToolbar } from './formattingToolbar';
 export { ScomEditorImageToolbar } from './imageToolbar';
 export { ScomEditorTableToolbar } from './tableToolbar';
+export { ScomEditorChart } from './chart';
 export * from './utils';
 export { buttonHoverStyle } from './index.css';

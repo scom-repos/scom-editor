@@ -133,6 +133,11 @@ export function getExtraFields () {
       icon: { name: 'table' },
       hint: "Create a table"
     },
+    Chart: {
+      group: "Widget",
+      icon: {name: 'chart-line'},
+      hint: "Insert a chart widget",
+    },
   };
   return extraFields;
 }
@@ -240,13 +245,13 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap'];
-export const MediaBlockTypes = ['video', 'image', 'imageWidget', 'swap'];
-export const TypeMapping = {
-  '@scom/scom-video': 'video',
-  '@scom/scom-image': 'imageWidget',
-  '@scom/scom-swap': 'swap'
-}
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart'];
+export const MediaBlockTypes = ['video', 'image', 'imageWidget', 'swap', 'chart'];
+// export const TypeMapping = {
+//   '@scom/scom-video': 'video',
+//   '@scom/scom-image': 'imageWidget',
+//   '@scom/scom-swap': 'swap'
+// }
 export const WidgetMapping: {[key: string]: any} = {
   video: {
     name: '@scom/scom-video',
@@ -259,13 +264,21 @@ export const WidgetMapping: {[key: string]: any} = {
   swap: {
     name: '@scom/scom-swap',
     localPath: 'scom-swap'
-  },
+  }
 }
 
 const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
 export const getWidgetEmbedUrl = (block: PartialBlock) => {
   const type = block.type as string;
-  let module = WidgetMapping[type];
+  let module = null;
+  if (type === 'chart') {
+    module = {
+      name: `@scom/${block.props?.name || 'scom-line-chart'}`,
+      localPath: `${block.props?.name || 'scom-line-chart'}`
+    }
+  } else {
+    module = WidgetMapping[type];
+  }
   if (module) {
     const widgetData = {
       module,
@@ -275,4 +288,10 @@ export const getWidgetEmbedUrl = (block: PartialBlock) => {
     return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
   }
   return '';
+}
+
+export const ChartTypes = ['scom-pie-chart', 'scom-line-chart', 'scom-bar-chart', 'scom-area-chart', 'scom-mixed-chart', 'scom-scatter-chart', 'scom-counter'];
+
+export const getChartTypeOptions = () => {
+  return [...ChartTypes].map(type => ({ value: type, label: type.split('-')[1]}))
 }

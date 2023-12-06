@@ -157,11 +157,16 @@ export class ScomEditorSideMenu extends Module {
         module = blockEl.querySelector('i-scom-swap');
         editAction = this.getActions(module)[0];
         break;
+      case 'chart':
+        module = blockEl.querySelector('i-scom-editor-chart');
+        editAction = this.getActions(module)[0];
+        break;
     }
     this.showConfigModal(this.block, editAction);
   }
 
   private showConfigModal(block: Block, editAction: any) {
+    if (!editAction) return;
     const formConfig: ISettingsForm = {
       action: {...editAction},
       block: JSON.parse(JSON.stringify(block)),
@@ -177,6 +182,9 @@ export class ScomEditorSideMenu extends Module {
         } else if (block.type === 'swap') {
           const { tokens, networks, title, logo, category, providers } = newProps;
           this.updateBlock(block, { tokens, networks, title, logo, category, providers });
+        }  else if (block.type === 'chart') {
+          const { name, apiEndpoint, dataSource, queryId, title, options, mode } = newProps;
+          this.updateBlock(block, { name, apiEndpoint, dataSource, queryId, title, options, mode });
         }
         this.actionForm.closeModal();
       }
@@ -199,6 +207,7 @@ export class ScomEditorSideMenu extends Module {
     } else {
       this.actionForm = new ScomEditorSettingsForm(undefined, { data });
     }
+    this.actionForm.refresh();
     this.actionForm.openModal({
       title: 'Edit',
       width: '40rem'
