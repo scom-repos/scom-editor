@@ -53901,6 +53901,7 @@ img.ProseMirror-separator {
         "Slash Menu open in a block that doesn't contain inline content."
       );
     }
+    console.log(currentBlock)
     editor.updateBlock(currentBlock, block2);
   }
   const getDefaultSlashMenuItems = (schema = defaultBlockSchema) => {

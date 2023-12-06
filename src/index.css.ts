@@ -27,8 +27,7 @@ export const customEditorStyle = Styles.style({
       borderCollapse: "collapse",
       overflow: 'hidden',
       tableLayout: 'fixed',
-      width: '100%',
-      margin: 0
+      width: 'auto !important'
     },
     'td, th': {
       border: `1px solid ${Theme.divider}`,

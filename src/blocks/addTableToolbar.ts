@@ -12,7 +12,7 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
     const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
-        popupPlacement: 'topRight',
+        popupPlacement: 'top',
         overflow: 'hidden',
         maxHeight: '2rem'
       })

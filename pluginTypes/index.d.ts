@@ -527,7 +527,7 @@ declare module "@scom/scom-editor/components/linkButton.tsx" {
 }
 /// <amd-module name="@scom/scom-editor/components/dragHandle.tsx" />
 declare module "@scom/scom-editor/components/dragHandle.tsx" {
-    import { ControlElement, Module, Container } from '@ijstech/components';
+    import { ControlElement, Module, Container, Control } from '@ijstech/components';
     import { ColorType } from "@scom/scom-editor/components/colorPicker.tsx";
     import { Block } from "@scom/scom-editor/global/index.ts";
     type deletedCallback = () => void;
@@ -566,7 +566,7 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         setData(value: ISideMenu): void;
         private renderUI;
         private handleMenu;
-        onShowMenu(): void;
+        onShowMenu(parent: Control): void;
         onHideMenu(): void;
         private onModalClose;
         private onModalOpen;
@@ -586,6 +586,7 @@ declare module "@scom/scom-editor/components/settingsForm.tsx" {
         action: any;
         block: Block;
         onConfirm: (block: Block, props: any) => void;
+        onTypeChanged?: any;
     }
     global {
         namespace JSX {
@@ -599,13 +600,16 @@ declare module "@scom/scom-editor/components/settingsForm.tsx" {
         private actionForm;
         private inputTitle;
         private cbName;
+        private customForm;
         private _data;
+        private chartActions;
         static create(options?: ScomEditorSettingsFormElement, parent?: Container): Promise<ScomEditorSettingsForm>;
         constructor(parent?: Container, options?: any);
         get data(): ISettingsForm;
         set data(value: ISettingsForm);
         setData(value: ISettingsForm): void;
         private renderForm;
+        private onChartNameChanged;
         private onSave;
         init(): void;
         render(): any;
@@ -636,10 +640,10 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         private btnEdit;
         private dragHandle;
         private actionForm;
+        private currentModule;
         private _data;
         private _isShowing;
         private initedMap;
-        private configurator;
         static create(options?: ScomEditorSideMenuElement, parent?: Container): Promise<ScomEditorSideMenu>;
         constructor(parent?: Container, options?: any);
         get block(): Block;
@@ -659,6 +663,7 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         private handleEditBlock;
         private showConfigModal;
         private getActions;
+        private onTypeChanged;
         private renderForm;
         private updateBlock;
         init(): void;
@@ -871,6 +876,7 @@ declare module "@scom/scom-editor/components/chart.tsx" {
     export class ScomEditorChart extends Module {
         private chartWrapper;
         private chartEl;
+        private updatedChart;
         private _data;
         private currentType;
         static create(options?: ScomEditorChartElement, parent?: Container): Promise<ScomEditorChart>;
@@ -882,10 +888,11 @@ declare module "@scom/scom-editor/components/chart.tsx" {
         getConfigurators(): {
             name: string;
             target: string;
-            getActions: any;
+            getActions: () => any[];
             getData: any;
             setData: any;
         }[];
+        updateType(type: string): Promise<any[]>;
         private getActions;
         init(): Promise<void>;
         render(): void;
