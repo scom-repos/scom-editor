@@ -876,7 +876,7 @@ declare module "@scom/scom-editor/components/chart.tsx" {
     export class ScomEditorChart extends Module {
         private chartWrapper;
         private chartEl;
-        private updatedChart;
+        private tempChart;
         private _data;
         private currentType;
         static create(options?: ScomEditorChartElement, parent?: Container): Promise<ScomEditorChart>;
@@ -938,6 +938,11 @@ declare module "@scom/scom-editor/blocks/addHyperlinkToolbar.ts" {
 declare module "@scom/scom-editor/blocks/addImageToolbar.tsx" {
     import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     export const addImageToolbar: (editor: BlockNoteEditor) => void;
+}
+/// <amd-module name="@scom/scom-editor/blocks/utils.ts" />
+declare module "@scom/scom-editor/blocks/utils.ts" {
+    import { BlockNoteEditor, PartialBlock } from "@scom/scom-editor/global/index.ts";
+    export const execCustomBLock: (editor: BlockNoteEditor, block: PartialBlock) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addVideoBlock.ts" />
 declare module "@scom/scom-editor/blocks/addVideoBlock.ts" {

@@ -53,7 +53,7 @@ declare global {
 export class ScomEditorChart extends Module {
   private chartWrapper: Panel;
   private chartEl: any;
-  private updatedChart: any;
+  private tempChart: any;
 
   private _data: IChartConfig = DefaultData;
   private currentType: string = '';
@@ -111,17 +111,18 @@ export class ScomEditorChart extends Module {
       return this.getActions(this.chartEl);
     } else {
       const newData = {...this._data, name: type};
-      this.updatedChart = await application.createElement(newData.name);
+      this.tempChart = await application.createElement(newData.name);
       try {
-        await this.updatedChart.setData(JSON.parse(JSON.stringify(newData)));
+        await this.tempChart.setData(JSON.parse(JSON.stringify(newData)));
       } catch {}
-      return this.getActions(this.updatedChart);
+      return this.getActions(this.tempChart);
     }
   }
 
   private getActions(chartEl: any) {
     if (chartEl?.getConfigurators) {
       const configs = chartEl.getConfigurators() || [];
+      // TODO: update target Editor
       const configurator = configs.find((conf: any) => conf.target === 'Builders');
       const action = configurator?.getActions && configurator.getActions().find((action: any) => action.name === 'Data');
       return action ? [action] : [];

@@ -9636,7 +9636,7 @@ var __publicField = (obj, key, value) => {
           let start = children[i3] + baseOffset - moved;
           if (oldEnd >= start) {
             children[i3 + 1] = oldStart <= start ? -2 : -1;
-          } else if (newStart >= offset && dSize) {
+          } else if (oldStart >= baseOffset && dSize) {
             children[i3] += dSize;
             children[i3 + 1] += dSize;
           }
@@ -14203,7 +14203,7 @@ var __publicField = (obj, key, value) => {
   const Keymap = Extension.create({
     name: "keymap",
     addKeyboardShortcuts() {
-      const handleBackspace = () => this.editor.commands.first(({ commands: commands2 }) => [
+      const handleBackspace2 = () => this.editor.commands.first(({ commands: commands2 }) => [
         () => commands2.undoInputRule(),
         // maybe convert first text block node to default node
         () => commands2.command(({ tr: tr2 }) => {
@@ -14238,9 +14238,9 @@ var __publicField = (obj, key, value) => {
       const baseKeymap = {
         Enter: handleEnter2,
         "Mod-Enter": () => this.editor.commands.exitCode(),
-        Backspace: handleBackspace,
-        "Mod-Backspace": handleBackspace,
-        "Shift-Backspace": handleBackspace,
+        Backspace: handleBackspace2,
+        "Mod-Backspace": handleBackspace2,
+        "Shift-Backspace": handleBackspace2,
         Delete: handleDelete2,
         "Mod-Delete": handleDelete2,
         "Mod-a": () => this.editor.commands.selectAll()
@@ -14250,8 +14250,8 @@ var __publicField = (obj, key, value) => {
       };
       const macKeymap = {
         ...baseKeymap,
-        "Ctrl-h": handleBackspace,
-        "Alt-Backspace": handleBackspace,
+        "Ctrl-h": handleBackspace2,
+        "Alt-Backspace": handleBackspace2,
         "Ctrl-d": handleDelete2,
         "Ctrl-Alt-Backspace": handleDelete2,
         "Alt-Delete": handleDelete2,
@@ -25211,6 +25211,10 @@ img.ProseMirror-separator {
       return [{ tag: 'a[href]:not([href *= "javascript:" i])' }];
     },
     renderHTML({ HTMLAttributes }) {
+      var _a;
+      if ((_a = HTMLAttributes.href) === null || _a === void 0 ? void 0 : _a.startsWith("javascript:")) {
+        return ["a", mergeAttributes(this.options.HTMLAttributes, { ...HTMLAttributes, href: "" }), 0];
+      }
       return ["a", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
     },
     addCommands() {
@@ -26724,7 +26728,7 @@ img.ProseMirror-separator {
       return [PreviousBlockTypePlugin(), NonEditableBlockPlugin()];
     },
     addKeyboardShortcuts() {
-      const handleBackspace = () => this.editor.commands.first(({ commands: commands2 }) => [
+      const handleBackspace2 = () => this.editor.commands.first(({ commands: commands2 }) => [
         // Deletes the selection if it's not empty.
         () => commands2.deleteSelection(),
         // Undoes an input rule if one was triggered in the last editor state change.
@@ -26850,7 +26854,7 @@ img.ProseMirror-separator {
         })
       ]);
       return {
-        Backspace: handleBackspace,
+        Backspace: handleBackspace2,
         Delete: handleDelete2,
         Enter: handleEnter2,
         // Always returning true for tab key presses ensures they're not captured by the browser. Otherwise, they blur the
@@ -52768,6 +52772,52 @@ img.ProseMirror-separator {
       })
     ]);
   };
+  const handleBackspace = (editor) => editor.commands.first(({ commands: commands2 }) => [
+    // Deletes the selection if it's not empty.
+    () => commands2.deleteSelection(),
+    // Undoes an input rule if one was triggered in the last editor state change.
+    () => commands2.undoInputRule(),
+    // Reverts block content type to a paragraph if the selection is at the start of the block.
+    () => commands2.command(({ state }) => {
+      const { contentType } = getBlockInfoFromPos(
+        state.doc,
+        state.selection.from
+      );
+      const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+      const isParagraph = contentType.name === "paragraph";
+      if (selectionAtBlockStart && !isParagraph) {
+        return commands2.BNUpdateBlock(state.selection.from, {
+          type: "paragraph",
+          props: {}
+        });
+      }
+      return false;
+    }),
+    // Removes a level of nesting if the block is indented if the selection is at the start of the block.
+    () => commands2.command(({ state }) => {
+      const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+      if (selectionAtBlockStart) {
+        return commands2.liftListItem("blockContainer");
+      }
+      return false;
+    }),
+    // Merges block with the previous one if it isn't indented, isn't the first block in the doc, and the selection
+    // is at the start of the block.
+    () => commands2.command(({ state }) => {
+      const { depth, startPos } = getBlockInfoFromPos(
+        state.doc,
+        state.selection.from
+      );
+      const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+      const selectionEmpty = state.selection.anchor === state.selection.head;
+      const blockAtDocStart = startPos === 2;
+      const posBetweenBlocks = startPos - 1;
+      if (!blockAtDocStart && selectionAtBlockStart && selectionEmpty && depth > 1) {
+        return commands2.BNMergeBlocks(posBetweenBlocks);
+      }
+      return false;
+    })
+  ]);
   const tableCellPropSchema = {
     ...defaultProps,
     colwidth: { default: null }
@@ -52815,7 +52865,8 @@ img.ProseMirror-separator {
     },
     addKeyboardShortcuts() {
       return {
-        Enter: () => handleEnter(this.editor)
+        Enter: () => handleEnter(this.editor),
+        Backspace: () => handleBackspace(this.editor)
       };
     }
   });
@@ -52928,11 +52979,8 @@ img.ProseMirror-separator {
       __publicField(this, "preventHide", false);
       __publicField(this, "preventShow", false);
       __publicField(this, "prevWasEditable", null);
-      __publicField(this, "shouldShow", ({ view, state, from: from2, to }) => {
-        const { doc: doc2, selection } = state;
-        const { empty: empty2 } = selection;
-        const isEmptyTextBlock = !doc2.textBetween(from2, to).length && isTextSelection(state.selection);
-        return !(!view.hasFocus() || empty2 || isEmptyTextBlock);
+      __publicField(this, "shouldShow", ({ state }) => {
+        return !state.selection.empty;
       });
       __publicField(this, "viewMousedownHandler", () => {
         this.preventShow = true;
@@ -53314,7 +53362,9 @@ img.ProseMirror-separator {
     constructor(editor, pmView, updateTableToolbar) {
       __publicField(this, "tableToolbarState");
       __publicField(this, "updateTableToolbar");
-      __publicField(this, "prevWasEditable", null);
+      __publicField(this, "tableId");
+      __publicField(this, "tablePos");
+      __publicField(this, "menuFrozen", false);
       __publicField(this, "shouldShow", (state) => {
         const closestTable = findParentNodeClosestToPos(
           state.selection.$from,
@@ -53323,6 +53373,12 @@ img.ProseMirror-separator {
           }
         );
         return !!(closestTable == null ? void 0 : closestTable.node);
+      });
+      __publicField(this, "shouldFormattingShow", ({ view, state, from: from2, to }) => {
+        const { doc: doc2, selection } = state;
+        const { empty: empty2 } = selection;
+        const isEmptyTextBlock = !doc2.textBetween(from2, to).length && isTextSelection(state.selection);
+        return !(!view.hasFocus() || empty2 || isEmptyTextBlock);
       });
       // For dragging the whole editor.
       __publicField(this, "dragstartHandler", () => {
@@ -53350,7 +53406,7 @@ img.ProseMirror-separator {
       __publicField(this, "scrollHandler", () => {
         var _a;
         if ((_a = this.tableToolbarState) == null ? void 0 : _a.show) {
-          this.tableToolbarState.referencePos = this.getSelectionBoundingBox();
+          this.tableToolbarState.referencePosCell = this.getSelectionBoundingBox();
           this.updateTableToolbar();
         }
       });
@@ -53370,8 +53426,73 @@ img.ProseMirror-separator {
       pmView.dom.addEventListener("blur", this.blurHandler);
       document.addEventListener("scroll", this.scrollHandler);
     }
+    // mouseMoveHandler = (event: MouseEvent) => {
+    //   if (this.menuFrozen) {
+    //     return;
+    //   }
+    //   const target = domCellAround(event.target as HTMLElement);
+    //   if (!target || !this.editor.isEditable) {
+    //     if (this.tableToolbarState?.show) {
+    //       this.tableToolbarState.show = false;
+    //       this.updateTableToolbar();
+    //     }
+    //     return;
+    //   }
+    //   const colIndex = getChildIndex(target);
+    //   const rowIndex = getChildIndex(target.parentElement!);
+    //   const cellRect = target.getBoundingClientRect();
+    //   const tableRect =
+    //     target.parentElement!.parentElement!.getBoundingClientRect();
+    //   // const el = getDraggableBlockFromCoords(cellRect, this.pmView);
+    //   const blockEl = target
+    //     .closest("table")
+    //     ?.closest('[data-node-type="blockContainer"]');
+    //   if (!blockEl) {
+    //     throw new Error(
+    //       "Found table cell element, but could not find surrounding blockContent element."
+    //     );
+    //   }
+    //   this.tableId = blockEl.getAttribute("data-id") || "";
+    //   if (
+    //     this.tableToolbarState !== undefined &&
+    //     this.tableToolbarState.show
+    //     // this.tableId === blockEl.id &&
+    //     // this.tableToolbarState.rowIndex === rowIndex &&
+    //     // this.tableToolbarState.colIndex === colIndex
+    //   ) {
+    //     return;
+    //   }
+    //   let block: Block<BSchema> | undefined = undefined;
+    //   // Copied from `getBlock`. We don't use `getBlock` since we also need the PM
+    //   // node for the table, so we would effectively be doing the same work twice.
+    //   this.editor._tiptapEditor.state.doc.descendants((node, pos) => {
+    //     if (typeof block !== "undefined") {
+    //       return false;
+    //     }
+    //     if (
+    //       node.type.name !== "blockContainer" ||
+    //       node.attrs.id !== this.tableId
+    //     ) {
+    //       return true;
+    //     }
+    //     block = nodeToBlock(node, this.editor.schema, this.editor.blockCache);
+    //     this.tablePos = pos + 1;
+    //     return false;
+    //   });
+    //   this.tableToolbarState = {
+    //     show: true,
+    //     referencePosCell: cellRect,
+    //     referencePosTable: tableRect,
+    //     block: block! as any,
+    //     colIndex: colIndex,
+    //     rowIndex: rowIndex,
+    //     draggingState: undefined,
+    //   };
+    //   this.updateTableToolbar();
+    //   return false;
+    // };
     update(view, oldState) {
-      var _a, _b, _c;
+      var _a, _b, _c, _d;
       const { state, composing } = view;
       const { doc: doc2, selection } = state;
       const isSame = oldState && oldState.doc.eq(doc2) && oldState.selection.eq(selection);
@@ -53379,15 +53500,24 @@ img.ProseMirror-separator {
         return;
       }
       const shouldShow = (_a = this.shouldShow) == null ? void 0 : _a.call(this, state);
-      if (shouldShow) {
+      const { ranges } = selection;
+      const from2 = Math.min(...ranges.map((range) => range.$from.pos));
+      const to = Math.max(...ranges.map((range) => range.$to.pos));
+      const shouldFormattingShow = (_b = this.shouldFormattingShow) == null ? void 0 : _b.call(this, {
+        view,
+        state,
+        from: from2,
+        to
+      });
+      if (shouldShow && !shouldFormattingShow) {
         this.tableToolbarState = {
           show: true,
-          referencePos: this.getSelectionBoundingBox()
+          referencePosCell: this.getSelectionBoundingBox()
         };
         this.updateTableToolbar();
         return;
       }
-      if (((_b = this.tableToolbarState) == null ? void 0 : _b.show) && (!shouldShow || !((_c = this.editor) == null ? void 0 : _c.isEditable))) {
+      if (((_c = this.tableToolbarState) == null ? void 0 : _c.show) && (!shouldShow || !((_d = this.editor) == null ? void 0 : _d.isEditable))) {
         this.tableToolbarState.show = false;
         this.updateTableToolbar();
         return;
@@ -53420,6 +53550,16 @@ img.ProseMirror-separator {
       super();
       __publicField(this, "view");
       __publicField(this, "plugin");
+      /**
+       * Freezes the drag handles. When frozen, they will stay attached to the same
+       * cell regardless of which cell is hovered by the mouse cursor.
+       */
+      __publicField(this, "freezeHandles", () => this.view.menuFrozen = true);
+      /**
+       * Unfreezes the drag handles. When frozen, they will stay attached to the
+       * same cell regardless of which cell is hovered by the mouse cursor.
+       */
+      __publicField(this, "unfreezeHandles", () => this.view.menuFrozen = false);
       this.plugin = new Plugin({
         key: tableToolbarPluginKey,
         view: (editorView) => {
@@ -53700,7 +53840,7 @@ img.ProseMirror-separator {
         this.menuFrozen = false;
       });
       __publicField(this, "onMouseMove", (event) => {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f;
         if (this.menuFrozen) {
           return;
         }
@@ -53726,15 +53866,22 @@ img.ProseMirror-separator {
           // take middle of editor
           top: event.clientY
         };
-        const block2 = getDraggableBlockFromCoords(coords, this.pmView);
+        let block2 = getDraggableBlockFromCoords(coords, this.pmView);
+        const outsideTable = (_b = block2 == null ? void 0 : block2.node.closest("table")) == null ? void 0 : _b.closest('[data-node-type="blockContainer"]');
+        if (outsideTable) {
+          block2 = {
+            node: outsideTable,
+            id: outsideTable.getAttribute("data-id") || ""
+          };
+        }
         if (!block2 || !this.editor.isEditable) {
-          if ((_b = this.sideMenuState) == null ? void 0 : _b.show) {
+          if ((_c = this.sideMenuState) == null ? void 0 : _c.show) {
             this.sideMenuState.show = false;
             this.updateSideMenu(this.sideMenuState);
           }
           return;
         }
-        if (((_c = this.sideMenuState) == null ? void 0 : _c.show) && ((_d = this.hoveredBlock) == null ? void 0 : _d.hasAttribute("data-id")) && ((_e = this.hoveredBlock) == null ? void 0 : _e.getAttribute("data-id")) === block2.id) {
+        if (((_d = this.sideMenuState) == null ? void 0 : _d.show) && ((_e = this.hoveredBlock) == null ? void 0 : _e.hasAttribute("data-id")) && ((_f = this.hoveredBlock) == null ? void 0 : _f.getAttribute("data-id")) === block2.id) {
           return;
         }
         this.hoveredBlock = block2.node;
@@ -53809,9 +53956,10 @@ img.ProseMirror-separator {
       this.menuFrozen = true;
       const blockContent2 = this.hoveredBlock.firstChild;
       const blockContentBoundingBox = blockContent2.getBoundingClientRect();
+      const isTable = blockContent2.querySelector("table");
       const pos = this.pmView.posAtCoords({
         left: blockContentBoundingBox.left + blockContentBoundingBox.width / 2,
-        top: blockContentBoundingBox.top + blockContentBoundingBox.height / 2
+        top: isTable ? blockContentBoundingBox.top + blockContentBoundingBox.height : blockContentBoundingBox.top + blockContentBoundingBox.height / 2
       });
       if (!pos) {
         return;
@@ -53896,12 +54044,19 @@ img.ProseMirror-separator {
   }
   function insertOrUpdateBlock(editor, block2) {
     const currentBlock = editor.getTextCursorPosition().block;
+    if (currentBlock.type === "table") {
+      editor.insertBlocks([block2], currentBlock, "after");
+      editor.setTextCursorPosition(
+        editor.getTextCursorPosition().nextBlock,
+        "end"
+      );
+      return;
+    }
     if (currentBlock.content === void 0) {
       throw new Error(
         "Slash Menu open in a block that doesn't contain inline content."
       );
     }
-    console.log(currentBlock)
     editor.updateBlock(currentBlock, block2);
   }
   const getDefaultSlashMenuItems = (schema = defaultBlockSchema) => {
@@ -54604,6 +54759,7 @@ img.ProseMirror-separator {
   exports2.formattingToolbarPluginKey = formattingToolbarPluginKey;
   exports2.getBlockNoteExtensions = getBlockNoteExtensions;
   exports2.getDefaultSlashMenuItems = getDefaultSlashMenuItems;
+  exports2.getDraggableBlockFromCoords = getDraggableBlockFromCoords;
   exports2.hyperlinkToolbarPluginKey = hyperlinkToolbarPluginKey;
   exports2.imageToolbarPluginKey = imageToolbarPluginKey;
   exports2.isAppleOS = isAppleOS;

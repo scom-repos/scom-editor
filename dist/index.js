@@ -1634,7 +1634,7 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                         let blockType = new blockTypeButton_1.ScomEditorBlockType(undefined, {
                             ...customProps,
                             block: this._block,
-                            visible: !this.isMediaBlock,
+                            visible: !this.isMediaBlock && this._block.type !== 'table',
                             stack: { shrink: '0' },
                             onItemClicked: (item) => this.setBlockType(editor, item),
                             onValidate: (item) => {
@@ -1738,7 +1738,7 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                             ...customProps,
                             tooltip: { content: `Create Link <br />  ${(0, index_2.formatKeyboardShortcut)("Mod+K")}`, placement: 'bottom' },
                             editor: editor,
-                            visible: !this.isMediaBlock,
+                            visible: !this.isMediaBlock && this._block.type !== 'table',
                             setLink: (text, url) => {
                                 this.setLink(editor, text, url);
                             },
@@ -2107,14 +2107,18 @@ define("@scom/scom-editor/components/chart.tsx", ["require", "exports", "@ijstec
             }
             else {
                 const newData = { ...this._data, name: type };
-                this.updatedChart = await components_16.application.createElement(newData.name);
-                await this.updatedChart.setData(JSON.parse(JSON.stringify(newData)));
-                return this.getActions(this.updatedChart);
+                this.tempChart = await components_16.application.createElement(newData.name);
+                try {
+                    await this.tempChart.setData(JSON.parse(JSON.stringify(newData)));
+                }
+                catch { }
+                return this.getActions(this.tempChart);
             }
         }
         getActions(chartEl) {
             if (chartEl?.getConfigurators) {
                 const configs = chartEl.getConfigurators() || [];
+                // TODO: update target Editor
                 const configurator = configs.find((conf) => conf.target === 'Builders');
                 const action = configurator?.getActions && configurator.getActions().find((action) => action.name === 'Data');
                 return action ? [action] : [];
@@ -2450,7 +2454,27 @@ define("@scom/scom-editor/blocks/addImageToolbar.tsx", ["require", "exports", "@
     };
     exports.addImageToolbar = addImageToolbar;
 });
-define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-video", "@scom/scom-editor/components/index.ts"], function (require, exports, components_18, scom_video_1, index_8) {
+define("@scom/scom-editor/blocks/utils.ts", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.execCustomBLock = void 0;
+    const execCustomBLock = (editor, block) => {
+        const currentBlock = editor.getTextCursorPosition().block;
+        if (Array.isArray(currentBlock.content) &&
+            ((currentBlock.content.length === 1 &&
+                currentBlock.content[0].type === "text" &&
+                (currentBlock.content[0].text === "/" || !currentBlock.content[0].text)) ||
+                currentBlock.content.length === 0)) {
+            editor.updateBlock(currentBlock, block);
+        }
+        else {
+            editor.insertBlocks([block], currentBlock, "after");
+        }
+        editor.setTextCursorPosition(editor.getTextCursorPosition().nextBlock, "end");
+    };
+    exports.execCustomBLock = execCustomBLock;
+});
+define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-video", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_18, scom_video_1, index_8, utils_12) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addVideoBlock = void 0;
@@ -2518,14 +2542,8 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
         const VideoSlashItem = {
             name: "Video",
             execute: (editor) => {
-                editor.insertBlocks([
-                    {
-                        type: "video",
-                        props: {
-                            url: ""
-                        }
-                    }
-                ], editor.getTextCursorPosition().block, "after");
+                const block = { type: "video", props: { url: "" } };
+                (0, utils_12.execCustomBLock)(editor, block);
             },
             aliases: ["video", "media"]
         };
@@ -2536,7 +2554,7 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
     };
     exports.addVideoBlock = addVideoBlock;
 });
-define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-image", "@scom/scom-editor/components/index.ts"], function (require, exports, components_19, scom_image_1, index_9) {
+define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-image", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_19, scom_image_1, index_9, utils_13) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addImageBlock = void 0;
@@ -2627,14 +2645,8 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
         const ImageSlashItem = {
             name: "Image Widget",
             execute: (editor) => {
-                editor.insertBlocks([
-                    {
-                        type: "imageWidget",
-                        props: {
-                            url: ""
-                        }
-                    }
-                ], editor.getTextCursorPosition().block, "after");
+                const block = { type: "imageWidget", props: { url: "" } };
+                (0, utils_13.execCustomBLock)(editor, block);
             },
             aliases: ["image", "media"]
         };
@@ -2677,7 +2689,6 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
             }
             if (tableToolbarState.show) {
                 const blockEl = blockID && editor.domElement.querySelector(`[data-id="${blockID}"]`);
-                // const table = blockEl.querySelector('table') || blockEl?.closest('table');
                 if (blockEl) {
                     modal.linkTo = blockEl;
                     modal.position = 'fixed';
@@ -2692,7 +2703,7 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
     };
     exports.addTableToolbar = addTableToolbar;
 });
-define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.ts"], function (require, exports, components_20, index_11, index_12) {
+define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_20, index_11, index_12, utils_14) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addChartBlock = void 0;
@@ -2733,10 +2744,6 @@ define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijs
                 const data = JSON.parse(JSON.stringify(block.props));
                 const chart = new index_12.ScomEditorChart(wrapper, { data });
                 wrapper.appendChild(chart);
-                // if (!data.apiEndpoint) {
-                //   const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as ScomEditorSideMenu;
-                //   if (sideMenu) sideMenu.openConfig(block, chart);
-                // }
                 return {
                     dom: wrapper
                 };
@@ -2795,59 +2802,58 @@ define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijs
         const ChartSlashItem = {
             name: "Chart",
             execute: (editor) => {
-                editor.insertBlocks([
-                    {
-                        type: "chart",
-                        props: {
-                            name: 'scom-area-chart',
-                            "dataSource": "Dune",
-                            "queryId": "2030745",
-                            title: 'ETH Staked - Cumulative',
-                            options: {
-                                xColumn: {
-                                    key: 'date',
-                                    type: 'time'
+                const block = {
+                    type: "chart",
+                    props: {
+                        name: 'scom-area-chart',
+                        "dataSource": "Dune",
+                        "queryId": "2030745",
+                        title: 'ETH Staked - Cumulative',
+                        options: {
+                            xColumn: {
+                                key: 'date',
+                                type: 'time'
+                            },
+                            yColumns: [
+                                'total_eth',
+                            ],
+                            stacking: true,
+                            groupBy: 'depositor_entity_category',
+                            seriesOptions: [
+                                {
+                                    key: 'CEX',
+                                    color: '#d52828'
                                 },
-                                yColumns: [
-                                    'total_eth',
-                                ],
-                                stacking: true,
-                                groupBy: 'depositor_entity_category',
-                                seriesOptions: [
-                                    {
-                                        key: 'CEX',
-                                        color: '#d52828'
-                                    },
-                                    {
-                                        key: 'Liquid Staking',
-                                        color: '#d2da25'
-                                    },
-                                    {
-                                        key: 'Others',
-                                        color: '#000000'
-                                    },
-                                    {
-                                        key: 'Staking Pools',
-                                        color: '#49a34f'
-                                    },
-                                    {
-                                        key: 'Unidentified',
-                                        color: '#bcb8b8'
-                                    }
-                                ],
-                                xAxis: {
-                                    title: 'Date',
-                                    tickFormat: 'MMM YYYY'
+                                {
+                                    key: 'Liquid Staking',
+                                    color: '#d2da25'
                                 },
-                                yAxis: {
-                                    title: 'ETH deposited',
-                                    labelFormat: '0,000.00ma',
-                                    position: 'left'
+                                {
+                                    key: 'Others',
+                                    color: '#000000'
+                                },
+                                {
+                                    key: 'Staking Pools',
+                                    color: '#49a34f'
+                                },
+                                {
+                                    key: 'Unidentified',
+                                    color: '#bcb8b8'
                                 }
+                            ],
+                            xAxis: {
+                                title: 'Date',
+                                tickFormat: 'MMM YYYY'
+                            },
+                            yAxis: {
+                                title: 'ETH deposited',
+                                labelFormat: '0,000.00ma',
+                                position: 'left'
                             }
                         }
                     }
-                ], editor.getTextCursorPosition().block, "after");
+                };
+                (0, utils_14.execCustomBLock)(editor, block);
             },
             aliases: ["chart", "widget"]
         };
@@ -2872,7 +2878,7 @@ define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-e
     Object.defineProperty(exports, "addTableToolbar", { enumerable: true, get: function () { return addTableToolbar_1.addTableToolbar; } });
     Object.defineProperty(exports, "addChartBlock", { enumerable: true, get: function () { return addChartBlock_1.addChartBlock; } });
 });
-define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-swap", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.ts"], function (require, exports, components_21, scom_swap_1, index_13, index_14) {
+define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-swap", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_21, scom_swap_1, index_13, index_14, utils_15) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSwapBlock = void 0;
@@ -2981,58 +2987,57 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
         const SwapSlashItem = {
             name: "Swap",
             execute: (editor) => {
-                editor.insertBlocks([
-                    {
-                        type: "swap",
-                        props: {
-                            "providers": [
-                                {
-                                    "key": "OpenSwap",
-                                    "chainId": 97
-                                },
-                                {
-                                    "key": "OpenSwap",
-                                    "chainId": 43113
-                                }
-                            ],
-                            "category": "fixed-pair",
-                            "tokens": [
-                                {
-                                    "address": "0x29386B60e0A9A1a30e1488ADA47256577ca2C385",
-                                    "chainId": 97
-                                },
-                                {
-                                    "address": "0x45eee762aaeA4e5ce317471BDa8782724972Ee19",
-                                    "chainId": 97
-                                },
-                                {
-                                    "address": "0xb9C31Ea1D475c25E58a1bE1a46221db55E5A7C6e",
-                                    "chainId": 43113
-                                },
-                                {
-                                    "address": "0x78d9D80E67bC80A11efbf84B7c8A65Da51a8EF3C",
-                                    "chainId": 43113
-                                }
-                            ],
-                            "defaultChainId": 43113,
-                            "networks": [
-                                {
-                                    "chainId": 43113
-                                },
-                                {
-                                    "chainId": 97
-                                }
-                            ],
-                            "wallets": [
-                                {
-                                    "name": "metamask"
-                                }
-                            ],
-                            "showHeader": true,
-                            "showFooter": true
-                        }
+                const block = {
+                    type: "swap",
+                    props: {
+                        "providers": [
+                            {
+                                "key": "OpenSwap",
+                                "chainId": 97
+                            },
+                            {
+                                "key": "OpenSwap",
+                                "chainId": 43113
+                            }
+                        ],
+                        "category": "fixed-pair",
+                        "tokens": [
+                            {
+                                "address": "0x29386B60e0A9A1a30e1488ADA47256577ca2C385",
+                                "chainId": 97
+                            },
+                            {
+                                "address": "0x45eee762aaeA4e5ce317471BDa8782724972Ee19",
+                                "chainId": 97
+                            },
+                            {
+                                "address": "0xb9C31Ea1D475c25E58a1bE1a46221db55E5A7C6e",
+                                "chainId": 43113
+                            },
+                            {
+                                "address": "0x78d9D80E67bC80A11efbf84B7c8A65Da51a8EF3C",
+                                "chainId": 43113
+                            }
+                        ],
+                        "defaultChainId": 43113,
+                        "networks": [
+                            {
+                                "chainId": 43113
+                            },
+                            {
+                                "chainId": 97
+                            }
+                        ],
+                        "wallets": [
+                            {
+                                "name": "metamask"
+                            }
+                        ],
+                        "showHeader": true,
+                        "showFooter": true
                     }
-                ], editor.getTextCursorPosition().block, "after");
+                };
+                (0, utils_15.execCustomBLock)(editor, block);
             },
             aliases: ["swap", "widget"]
         };
@@ -3074,7 +3079,7 @@ define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/compon
                 borderCollapse: "collapse",
                 overflow: 'hidden',
                 tableLayout: 'fixed',
-                width: 'auto !important'
+                width: '100%'
             },
             'td, th': {
                 border: `1px solid ${Theme.divider}`,
