@@ -1,6 +1,7 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor, parseStringToObject } from "../global/index";
 import { ChartTypes, ScomEditorChart, getWidgetEmbedUrl } from "../components/index";
+import { execCustomBLock } from "./utils";
 
 function getData(element: HTMLElement) {
   const href = element.getAttribute('href');
@@ -40,10 +41,6 @@ export const addChartBlock = (blocknote: any) => {
       const data = JSON.parse(JSON.stringify(block.props));
       const chart = new ScomEditorChart(wrapper, { data });
       wrapper.appendChild(chart);
-      // if (!data.apiEndpoint) {
-      //   const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as ScomEditorSideMenu;
-      //   if (sideMenu) sideMenu.openConfig(block, chart);
-      // }
       return {
         dom: wrapper
       };
@@ -104,63 +101,58 @@ export const addChartBlock = (blocknote: any) => {
   const ChartSlashItem = {
     name: "Chart",
     execute: (editor: BlockNoteEditor) => {
-      editor.insertBlocks(
-        [
-          {
-            type: "chart",
-            props: {
-              name: 'scom-area-chart',
-              "dataSource": "Dune",
-              "queryId": "2030745",
-              title: 'ETH Staked - Cumulative',
-              options: {
-                xColumn: {
-                  key: 'date',
-                  type: 'time'
-                },
-                yColumns: [
-                  'total_eth',
-                ],
-                stacking: true,
-                groupBy: 'depositor_entity_category',
-                seriesOptions: [
-                  {
-                    key: 'CEX',
-                    color: '#d52828'
-                  },
-                  {
-                    key: 'Liquid Staking',
-                    color: '#d2da25'
-                  },
-                  {
-                    key: 'Others',
-                    color: '#000000'
-                  },
-                  {
-                    key: 'Staking Pools',
-                    color: '#49a34f'
-                  },
-                  {
-                    key: 'Unidentified',
-                    color: '#bcb8b8'
-                  }
-                ],
-                xAxis: {
-                  title: 'Date',
-                  tickFormat: 'MMM YYYY'
-                },
-                yAxis: {
-                  title: 'ETH deposited',
-                  labelFormat: '0,000.00ma',
-                  position: 'left'
-                }
+      const block: any =  {
+        type: "chart",
+        props: {
+          name: 'scom-area-chart',
+          "dataSource": "Dune",
+          "queryId": "2030745",
+          title: 'ETH Staked - Cumulative',
+          options: {
+            xColumn: {
+              key: 'date',
+              type: 'time'
+            },
+            yColumns: [
+              'total_eth',
+            ],
+            stacking: true,
+            groupBy: 'depositor_entity_category',
+            seriesOptions: [
+              {
+                key: 'CEX',
+                color: '#d52828'
+              },
+              {
+                key: 'Liquid Staking',
+                color: '#d2da25'
+              },
+              {
+                key: 'Others',
+                color: '#000000'
+              },
+              {
+                key: 'Staking Pools',
+                color: '#49a34f'
+              },
+              {
+                key: 'Unidentified',
+                color: '#bcb8b8'
               }
+            ],
+            xAxis: {
+              title: 'Date',
+              tickFormat: 'MMM YYYY'
+            },
+            yAxis: {
+              title: 'ETH deposited',
+              labelFormat: '0,000.00ma',
+              position: 'left'
             }
           }
-        ],
-        editor.getTextCursorPosition().block,
-        "after"
-      );
+        }
+      }
+      execCustomBLock(editor, block);
     },
     aliases: ["chart", "widget"]
   }

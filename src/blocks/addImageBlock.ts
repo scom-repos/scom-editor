@@ -2,6 +2,7 @@ import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor } from "../global/index";
 import ScomImage from "@scom/scom-image";
 import { ScomEditorSideMenu, getModalContainer } from "../components/index";
+import { execCustomBLock } from "./utils";
 
 export function addImageBlock(blocknote: any) {
   const ImageBlock = blocknote.createBlockSpec({
@@ -89,18 +90,8 @@ export function addImageBlock(blocknote: any) {
   const ImageSlashItem = {
     name: "Image Widget",
     execute: (editor: BlockNoteEditor) => {
-      editor.insertBlocks(
-        [
-          {
-            type: "imageWidget",
-            props: {
-              url: ""
-            }
-          }
-        ],
-        editor.getTextCursorPosition().block,
-        "after"
-      );
+      const block = { type: "imageWidget", props: { url: "" }};
+      execCustomBLock(editor, block);
     },
     aliases: ["image", "media"]
   }

@@ -23,6 +23,7 @@ export interface ISettingsForm {
   action: any;
   block: Block;
   onConfirm: (block: Block, props: any) => void;
+  onTypeChanged?: any;
 }
 
 declare global {
@@ -39,8 +40,10 @@ export class ScomEditorSettingsForm extends Module {
   private actionForm: Form;
   private inputTitle: Input;
   private cbName: ComboBox;
+  private customForm: any;
 
   private _data: ISettingsForm;
+  private chartActions: Map<string, any> = new Map();
 
   static async create(options?: ScomEditorSettingsFormElement, parent?: Container) {
     let self = new this(parent, options);
@@ -50,6 +53,7 @@ export class ScomEditorSettingsForm extends Module {
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
+    this.onChartNameChanged = this.onChartNameChanged.bind(this);
   }
 
   get data() {
@@ -73,6 +77,7 @@ export class ScomEditorSettingsForm extends Module {
       if (block.type === 'chart') {
         const types = getChartTypeOptions();
         const selectedValue = types.find(item => block.props.name && item.value === block.props.name) || undefined;
+        this.chartActions.set(block.props.name, action);
         this.pnlForm.append(
           <i-vstack gap={'0.625rem'} width={'100%'}>
             <i-label caption='Chart Type'></i-label>
@@ -82,6 +87,7 @@ export class ScomEditorSettingsForm extends Module {
               selectedItem={selectedValue}
               width={'100%'}
               height={'2.625rem'}
+              onChanged={this.onChartNameChanged}
             ></i-combo-box>
           </i-vstack>
         )
@@ -98,8 +104,8 @@ export class ScomEditorSettingsForm extends Module {
           </i-vstack>
         )
       }
-      let element = await action.customUI.render({ ...block.props }, this.onSave.bind(this));
-      this.pnlForm.append(element);
+      this.customForm = await action.customUI.render({ ...block.props }, this.onSave.bind(this));
+      this.pnlForm.append(this.customForm);
       this.pnlForm.visible = true;
     } else {
       this.actionForm.uiSchema = action.userInputUISchema;
@@ -130,6 +136,23 @@ export class ScomEditorSettingsForm extends Module {
       this.actionForm.clearFormData();
       this.actionForm.setFormData({ ...block.props });
       this.actionForm.visible = true;
+    }
+  }
+
+  private async onChartNameChanged(target: ComboBox) {
+    const { block, onTypeChanged } = this.data;
+    const name = (target.selectedItem as IComboItem).value;
+    if (name === block.props.name) return;
+    if (this.customForm) this.customForm.remove();
+    if (this.chartActions.has(name)) {
+      this.customForm = await this.chartActions.get(name).customUI.render({ ...block.props }, this.onSave.bind(this));
+      this.pnlForm.append(this.customForm);
+    } else if (onTypeChanged) {
+      const newAction = await onTypeChanged(name);
+      if (newAction) {
+        this.customForm = await newAction.customUI.render({ ...block.props }, this.onSave.bind(this));
+        this.pnlForm.append(this.customForm);
+      }
     }
   }
 

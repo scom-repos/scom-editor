@@ -12,7 +12,7 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
     const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
-        popupPlacement: 'topRight',
+        popupPlacement: 'top',
         overflow: 'hidden',
         maxHeight: '2rem'
       })
@@ -31,7 +31,6 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
 
     if (tableToolbarState.show) {
       const blockEl = blockID && editor.domElement.querySelector(`[data-id="${blockID}"]`);
-      // const table = blockEl.querySelector('table') || blockEl?.closest('table');
       if (blockEl) {
         modal.linkTo = blockEl;
         modal.position = 'fixed';

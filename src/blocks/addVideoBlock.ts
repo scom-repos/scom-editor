@@ -2,6 +2,7 @@ import { Panel } from "@ijstech/components";
 import ScomVideo from '@scom/scom-video';
 import { Block, BlockNoteEditor } from "../global/index";
 import { ScomEditorSideMenu, getModalContainer } from "../components/index";
+import { execCustomBLock } from "./utils";
 
 export const addVideoBlock = (blocknote: any) => {
   const VideoBlock = blocknote.createBlockSpec({
@@ -66,18 +67,8 @@ export const addVideoBlock = (blocknote: any) => {
   const VideoSlashItem = {
     name: "Video",
     execute: (editor: BlockNoteEditor) => {
-      editor.insertBlocks(
-        [
-          {
-            type: "video",
-            props: {
-              url: ""
-            }
-          }
-        ],
-        editor.getTextCursorPosition().block,
-        "after"
-      );
+      const block = { type: "video", props: { url: "" }};
+      execCustomBLock(editor, block);
     },
     aliases: ["video", "media"]
   }

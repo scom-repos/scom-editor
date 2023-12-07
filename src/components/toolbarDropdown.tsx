@@ -184,6 +184,7 @@ export class ScomEditorToolbarDropdown extends Module {
           boxShadow={Theme.shadows[1]}
           margin={{top: '1rem'}}
           showBackdrop={false}
+          visible={false}
           zIndex={30001}
           onClose={this.handleClosed}
         >

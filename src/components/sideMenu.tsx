@@ -39,11 +39,11 @@ export class ScomEditorSideMenu extends Module {
   private btnEdit: Button;
   private dragHandle: ScomEditorDragHandle;
   private actionForm: ScomEditorSettingsForm;
+  private currentModule: any;
 
   private _data: ISideMenu;
   private _isShowing: boolean = false;
   private initedMap: Map<string, boolean> = new Map();
-  private configurator: any;
 
   static async create(options?: ScomEditorSideMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -58,6 +58,7 @@ export class ScomEditorSideMenu extends Module {
     this.showDragMenu = this.showDragMenu.bind(this);
     this.handleSetColor = this.handleSetColor.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+    this.onTypeChanged = this.onTypeChanged.bind(this);
   }
 
   get block() {
@@ -107,6 +108,7 @@ export class ScomEditorSideMenu extends Module {
     const isCustomBlock = block?.type && CustomBlockTypes.includes(block.type as string)
     if (isCustomBlock && !this.initedMap.has(block.id)) {
       const editAction = this.getActions(module)[0];
+      this.currentModule = module;
       this.showConfigModal(block, editAction);
       this.initedMap.set(block.id, true);
     }
@@ -130,7 +132,7 @@ export class ScomEditorSideMenu extends Module {
   }
 
   private showDragMenu() {
-    this.dragHandle.onShowMenu();
+    this.dragHandle.onShowMenu(this);
     this._isShowing = true;
   }
 
@@ -162,6 +164,7 @@ export class ScomEditorSideMenu extends Module {
         editAction = this.getActions(module)[0];
         break;
     }
+    this.currentModule = module;
     this.showConfigModal(this.block, editAction);
   }
 
@@ -189,16 +192,27 @@ export class ScomEditorSideMenu extends Module {
         this.actionForm.closeModal();
       }
     }
-    if (formConfig) this.renderForm(formConfig);
+    if (block.type === 'chart') {
+      formConfig.onTypeChanged = this.onTypeChanged;
+    }
+    this.renderForm(formConfig);
   }
 
   private getActions(component: any) {
     if (component?.getConfigurators) {
       const configs = component.getConfigurators() || [];
-      this.configurator = configs.find((conf: any) => conf.target === 'Editor');
-      if (this.configurator?.getActions) return this.configurator.getActions();
+      const configurator = configs.find((conf: any) => conf.target === 'Editor');
+      if (configurator?.getActions) return configurator.getActions();
     }
     return [];
+  }
+
+  private async onTypeChanged(name: string) {
+    if (this.currentModule?.updateType) {
+      const actions = await this.currentModule.updateType(name);
+      return actions[0];
+    }
+    return null;
   }
 
   private renderForm(data: ISettingsForm) {
@@ -207,7 +221,6 @@ export class ScomEditorSideMenu extends Module {
     } else {
       this.actionForm = new ScomEditorSettingsForm(undefined, { data });
     }
-    this.actionForm.refresh();
     this.actionForm.openModal({
       title: 'Edit',
       width: '40rem'

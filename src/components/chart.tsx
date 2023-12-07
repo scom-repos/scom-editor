@@ -1,7 +1,6 @@
 import {
   customElements,
   ControlElement,
-  Styles,
   Module,
   Container,
   Panel,
@@ -54,6 +53,7 @@ declare global {
 export class ScomEditorChart extends Module {
   private chartWrapper: Panel;
   private chartEl: any;
+  private tempChart: any;
 
   private _data: IChartConfig = DefaultData;
   private currentType: string = '';
@@ -74,22 +74,22 @@ export class ScomEditorChart extends Module {
 
   async setData(data: IChartConfig) {
     this._data = data;
-    await this.renderChart();
+    await this.renderChart(this._data);
   }
 
   getChartElm() {
     return this.chartEl;
   }
 
-  private async renderChart() {
-    const { name } = this._data;
+  private async renderChart(data: IChartConfig) {
+    const { name } = data;
     if (!this.chartEl || (this.chartEl && name !== this.currentType)) {
       this.chartEl = await application.createElement(name);
       this.currentType = name;
       this.chartWrapper.clearInnerHTML();
       this.chartWrapper.appendChild(this.chartEl);
     }
-    await this.chartEl.setData(JSON.parse(JSON.stringify(this._data)));
+    await this.chartEl.setData(JSON.parse(JSON.stringify(data)));
   }
 
   getConfigurators() {
@@ -97,16 +97,32 @@ export class ScomEditorChart extends Module {
       {
         name: 'Editor',
         target: 'Editor',
-        getActions: this.getActions.bind(this),
+        getActions: () => {
+          return this.getActions(this.chartEl);
+        },
         getData: this.getData.bind(this),
         setData: this.setData.bind(this)
       }
     ]
   }
 
-  private getActions() {
-    if (this.chartEl?.getConfigurators) {
-      const configs = this.chartEl.getConfigurators() || [];
+  async updateType(type: string) {
+    if (this.currentType === type) {
+      return this.getActions(this.chartEl);
+    } else {
+      const newData = {...this._data, name: type};
+      this.tempChart = await application.createElement(newData.name);
+      try {
+        await this.tempChart.setData(JSON.parse(JSON.stringify(newData)));
+      } catch {}
+      return this.getActions(this.tempChart);
+    }
+  }
+
+  private getActions(chartEl: any) {
+    if (chartEl?.getConfigurators) {
+      const configs = chartEl.getConfigurators() || [];
+      // TODO: update target Editor
       const configurator = configs.find((conf: any) => conf.target === 'Builders');
       const action = configurator?.getActions && configurator.getActions().find((action: any) => action.name === 'Data');
       return action ? [action] : [];

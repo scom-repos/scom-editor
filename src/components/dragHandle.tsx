@@ -5,10 +5,12 @@ import {
   Module,
   Container,
   Menu,
-  Modal
+  Modal,
+  Control
 } from '@ijstech/components';
 import { ColorType, ScomEditorColorPicker } from './colorPicker';
 import { Block } from '../global/index';
+import { getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 type deletedCallback = () => void;
@@ -37,7 +39,6 @@ declare global {
 @customElements('i-scom-editor-drag-handle')
 export class ScomEditorDragHandle extends Module {
   private mdMenu: Modal; 
-  // Load mdMenu outside
   private menuElm: Menu;
   private mdPicker: ScomEditorColorPicker;
 
@@ -106,11 +107,17 @@ export class ScomEditorDragHandle extends Module {
     }
   }
 
-  onShowMenu() {
+  onShowMenu(parent: Control) {
+    getModalContainer().appendChild(this.mdMenu);
+    this.mdMenu.linkTo = parent;
+    this.mdMenu.isChildFixed = true;
+    this.mdMenu.closeOnScrollChildFixed = true;
+    this.mdMenu.position = 'fixed';
     this.mdMenu.visible = true;
   }
 
   onHideMenu() {
+    if (this.mdMenu) this.mdMenu.remove();
     this.mdMenu.visible = false;
   }
 
@@ -140,10 +147,11 @@ export class ScomEditorDragHandle extends Module {
     return (
       <i-modal
         id="mdMenu"
-        popupPlacement="left"
+        popupPlacement="topLeft"
         showBackdrop={false}
         minWidth={'6.25rem'}
         maxWidth={'100%'}
+        visible={false}
         onOpen={this.onModalOpen}
         onClose={this.onModalClose}
       >

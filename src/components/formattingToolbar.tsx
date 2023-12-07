@@ -132,10 +132,11 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         customControl: (element: Container) => {
+          const currentBlock = this.editor.getTextCursorPosition().block;
           let blockType = new ScomEditorBlockType(undefined, {
             ...customProps,
             block: this._block,
-            visible: !this.isMediaBlock,
+            visible: !this.isMediaBlock && this._block.type !== 'table',
             stack: {shrink: '0'},
             onItemClicked: (item: IBlockTypeItem) => this.setBlockType(editor, item),
             onValidate: (item: IBlockTypeItem) => {
@@ -239,7 +240,7 @@ export class ScomEditorFormattingToolbar extends Module {
             ...customProps,
             tooltip: { content: `Create Link <br />  ${formatKeyboardShortcut("Mod+K")}`, placement: 'bottom' },
             editor: editor,
-            visible: !this.isMediaBlock,
+            visible: !this.isMediaBlock && this._block.type !== 'table',
             setLink: (text: string, url: string) => {
               this.setLink(editor, text, url);
             },
