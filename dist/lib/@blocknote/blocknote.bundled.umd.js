@@ -49315,6 +49315,52 @@ img.ProseMirror-separator {
             destroy: rendered.destroy
           };
         };
+      },
+      addPasteRules() {
+        var _a;
+        if ((_a = blockConfig == null ? void 0 : blockConfig.pasteRules) == null ? void 0 : _a.length) {
+          return [...blockConfig.pasteRules].map((config) => {
+            return new PasteRule({
+              find: config.find,
+              handler: (props) => {
+                const { state, range, match, pasteEvent } = props;
+                const attributes = callOrReturn(
+                  config.getAttributes,
+                  void 0,
+                  match,
+                  pasteEvent
+                );
+                if (attributes === false || attributes === null) {
+                  return null;
+                }
+                const { tr: tr2 } = state;
+                const captureGroup = match[match.length - 1];
+                const fullMatch = match[0];
+                console.log(attributes);
+                if (captureGroup) {
+                  const startSpaces = fullMatch.search(/\S/);
+                  const textStart = range.from + fullMatch.indexOf(captureGroup);
+                  const textEnd = textStart + captureGroup.length;
+                  const excludedMarks = getMarksBetween(
+                    range.from,
+                    range.to,
+                    state.doc
+                  );
+                  if (excludedMarks.length) {
+                    return null;
+                  }
+                  if (textEnd < range.to) {
+                    tr2.delete(textEnd, range.to);
+                  }
+                  if (textStart > range.from) {
+                    tr2.delete(range.from + startSpaces, textStart);
+                  }
+                }
+              }
+            });
+          });
+        }
+        return [];
       }
     });
     return {
@@ -54774,4 +54820,4 @@ img.ProseMirror-separator {
   exports2.uploadToTmpFilesDotOrg_DEV_ONLY = uploadToTmpFilesDotOrg_DEV_ONLY;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });
-//# sourceMappingURL=blocknote.bundled.umd.js.map
+//# sourceMappingURL=blocknote.bundled.umd.cjs.map

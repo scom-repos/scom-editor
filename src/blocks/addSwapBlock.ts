@@ -1,7 +1,6 @@
 import { Panel } from "@ijstech/components";
-import ScomSwap from '@scom/scom-swap';
 import { Block, BlockNoteEditor, parseStringToObject } from "../global/index";
-import { ScomEditorSideMenu, getWidgetEmbedUrl } from "../components/index";
+import { ScomEditorCustomBlock, getWidgetEmbedUrl } from "../components/index";
 import { execCustomBLock } from "./utils";
 
 function getData(element: HTMLElement) {
@@ -44,12 +43,13 @@ export const addSwapBlock = (blocknote: any) => {
     render: (block: Block, editor: BlockNoteEditor) => {
       const wrapper = new Panel();
       const props = JSON.parse(JSON.stringify(block.props));
-      const swapEl = new ScomSwap(wrapper, props);
-      wrapper.appendChild(swapEl);
-      if (!props?.providers?.length) {
-        const sideMenu = editor.domElement?.parentElement?.querySelector('i-scom-editor-side-menu') as ScomEditorSideMenu;
-        if (sideMenu) sideMenu.openConfig(block, swapEl);
+      const data = {
+        module: 'scom-swap',
+        properties: { ...props },
+        block: {...block}
       }
+      const customElm = new ScomEditorCustomBlock(wrapper, { data });
+      wrapper.appendChild(customElm);
       return {
         dom: wrapper
       };

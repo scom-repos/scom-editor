@@ -9,5 +9,6 @@ export { ScomEditorFormattingToolbar } from './formattingToolbar';
 export { ScomEditorImageToolbar } from './imageToolbar';
 export { ScomEditorTableToolbar } from './tableToolbar';
 export { ScomEditorChart } from './chart';
+export { ScomEditorCustomBlock } from './customBlock';
 export * from './utils';
 export { buttonHoverStyle } from './index.css';

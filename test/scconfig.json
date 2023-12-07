@@ -25,7 +25,10 @@
     "@scom/scom-mixed-chart",
     "@scom/scom-pie-chart",
     "@scom/scom-scatter-chart",
-    "@scom/scom-counter"
+    "@scom/scom-counter",
+    "@scom/scom-image",
+    "@scom/scom-video",
+    "@scom/scom-swap"
   ],
   "menus": [
     {

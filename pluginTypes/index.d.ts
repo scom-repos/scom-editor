@@ -898,6 +898,40 @@ declare module "@scom/scom-editor/components/chart.tsx" {
         render(): void;
     }
 }
+/// <amd-module name="@scom/scom-editor/components/customBlock.tsx" />
+declare module "@scom/scom-editor/components/customBlock.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    import { Block } from "@scom/scom-editor/global/index.ts";
+    interface ICustomBlockConfig {
+        module: string;
+        properties: any;
+        block: Block;
+    }
+    interface ScomEditorCustomBlockElement extends ControlElement {
+        data: ICustomBlockConfig;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-custom-block']: ScomEditorCustomBlockElement;
+            }
+        }
+    }
+    export class ScomEditorCustomBlock extends Module {
+        private blockWrapper;
+        private blockEl;
+        private _data;
+        private currentModule;
+        static create(options?: ScomEditorCustomBlockElement, parent?: Container): Promise<ScomEditorCustomBlock>;
+        constructor(parent?: Container, options?: any);
+        getData(): ICustomBlockConfig;
+        setData(data: ICustomBlockConfig): Promise<void>;
+        private renderUI;
+        getActions(): any;
+        init(): Promise<void>;
+        render(): void;
+    }
+}
 /// <amd-module name="@scom/scom-editor/components/index.ts" />
 declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorColor } from "@scom/scom-editor/components/colorButton.tsx";
@@ -911,6 +945,7 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorImageToolbar } from "@scom/scom-editor/components/imageToolbar.tsx";
     export { ScomEditorTableToolbar } from "@scom/scom-editor/components/tableToolbar.tsx";
     export { ScomEditorChart } from "@scom/scom-editor/components/chart.tsx";
+    export { ScomEditorCustomBlock } from "@scom/scom-editor/components/customBlock.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
     export { buttonHoverStyle } from "@scom/scom-editor/components/index.css.ts";
 }
