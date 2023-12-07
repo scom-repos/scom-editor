@@ -1631,6 +1631,7 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                 },
                 {
                     customControl: (element) => {
+                        const currentBlock = this.editor.getTextCursorPosition().block;
                         let blockType = new blockTypeButton_1.ScomEditorBlockType(undefined, {
                             ...customProps,
                             block: this._block,
@@ -2537,6 +2538,24 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
                 link.setAttribute("href", url);
                 link.textContent = 'video';
                 return link;
+            },
+            addInputRules() {
+                console.log(blocknote);
+                return [
+                // Creates an unordered list when starting with "-", "+", or "*".
+                // new blocknote InputRule({
+                //   find: new RegExp(`^[-+*]\\s$`),
+                //   handler: ({ state, chain, range }) => {
+                //     chain()
+                //       .BNUpdateBlock(state.selection.from, {
+                //         type: "bulletListItem",
+                //         props: {},
+                //       })
+                //       // Removes the "-", "+", or "*" character used to set the list.
+                //       .deleteRange({ from: range.from, to: range.to });
+                //   },
+                // }),
+                ];
             }
         });
         const VideoSlashItem = {

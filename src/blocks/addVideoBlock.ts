@@ -62,6 +62,24 @@ export const addVideoBlock = (blocknote: any) => {
       link.setAttribute("href", url);
       link.textContent = 'video';
       return link;
+    },
+    addInputRules() {
+      console.log(blocknote)
+      return [
+        // Creates an unordered list when starting with "-", "+", or "*".
+        // new blocknote InputRule({
+        //   find: new RegExp(`^[-+*]\\s$`),
+        //   handler: ({ state, chain, range }) => {
+        //     chain()
+        //       .BNUpdateBlock(state.selection.from, {
+        //         type: "bulletListItem",
+        //         props: {},
+        //       })
+        //       // Removes the "-", "+", or "*" character used to set the list.
+        //       .deleteRange({ from: range.from, to: range.to });
+        //   },
+        // }),
+      ];
     }
   });
   const VideoSlashItem = {
