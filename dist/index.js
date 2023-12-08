@@ -787,7 +787,7 @@ define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ij
             this.setData({ text, url });
         }
         render() {
-            return (this.$render("i-modal", { id: "mdLink", popupPlacement: "bottom", minWidth: '18.75rem', maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], margin: { top: '1rem' }, isChildFixed: true, closeOnScrollChildFixed: true, showBackdrop: false, onClose: this.handleClosed },
+            return (this.$render("i-modal", { id: "mdLink", popupPlacement: "bottom", minWidth: '18.75rem', maxWidth: 'max-content', border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], margin: { top: '1rem' }, isChildFixed: true, closeOnScrollChildFixed: true, showBackdrop: false, overflow: 'hidden', onClose: this.handleClosed },
                 this.$render("i-vstack", { id: "pnlLink", maxHeight: '37.488rem', overflow: { y: 'auto' }, gap: '0.25rem' },
                     this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.5rem", border: { radius: '0.25rem' }, background: { color: Theme.background.modal } },
                         this.$render("i-icon", { name: "paperclip", width: '0.75rem', height: '0.75rem', fill: Theme.text.primary, stack: { basis: '1.875rem', shrink: '0' } }),
@@ -2526,10 +2526,10 @@ define("@scom/scom-editor/blocks/addImageToolbar.tsx", ["require", "exports", "@
     };
     exports.addImageToolbar = addImageToolbar;
 });
-define("@scom/scom-editor/blocks/utils.ts", ["require", "exports"], function (require, exports) {
+define("@scom/scom-editor/blocks/utils.ts", ["require", "exports", "@scom/scom-editor/global/index.ts"], function (require, exports, index_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.execCustomBLock = void 0;
+    exports.parseUrl = exports.execCustomBLock = void 0;
     const execCustomBLock = (editor, block) => {
         const currentBlock = editor.getTextCursorPosition().block;
         if (Array.isArray(currentBlock.content) &&
@@ -2545,8 +2545,18 @@ define("@scom/scom-editor/blocks/utils.ts", ["require", "exports"], function (re
         editor.setTextCursorPosition(editor.getTextCursorPosition().nextBlock, "end");
     };
     exports.execCustomBLock = execCustomBLock;
+    function parseUrl(href) {
+        const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
+        if (href.startsWith(WIDGET_LOADER_URL)) {
+            const [_, params = ''] = href.split('?');
+            const dataStr = params.replace('data=', '');
+            return dataStr ? (0, index_8.parseStringToObject)(dataStr) : null;
+        }
+        return null;
+    }
+    exports.parseUrl = parseUrl;
 });
-define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_19, index_8, utils_13) {
+define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_19, index_9, utils_13) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addVideoBlock = void 0;
@@ -2568,7 +2578,7 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
                     properties: { url },
                     block: { ...block }
                 };
-                const customElm = new index_8.ScomEditorCustomBlock(wrapper, { data });
+                const customElm = new index_9.ScomEditorCustomBlock(wrapper, { data });
                 wrapper.appendChild(customElm);
                 return {
                     dom: wrapper
@@ -2612,7 +2622,17 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
             },
             pasteRules: [
                 {
-                    find: /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g
+                    find: /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g,
+                    handler(props) {
+                        const { state, chain, range } = props;
+                        const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+                        chain().BNUpdateBlock(state.selection.from, {
+                            type: "video",
+                            props: {
+                                url: textContent
+                            },
+                        }).setTextSelection(range.from + 1);
+                    }
                 }
             ]
         });
@@ -2631,7 +2651,7 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
     };
     exports.addVideoBlock = addVideoBlock;
 });
-define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_20, index_9, utils_14) {
+define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_20, index_10, utils_14) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addImageBlock = void 0;
@@ -2658,7 +2678,7 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
                     properties: { url, cid, link, altText, keyword, photoId, backgroundColor },
                     block: { ...block }
                 };
-                const customElm = new index_9.ScomEditorCustomBlock(wrapper, { data });
+                const customElm = new index_10.ScomEditorCustomBlock(wrapper, { data });
                 wrapper.appendChild(customElm);
                 return {
                     dom: wrapper
@@ -2717,7 +2737,22 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
                 imageTag.setAttribute("src", src);
                 imageTag.setAttribute("alt", alt);
                 return imageTag;
-            }
+            },
+            pasteRules: [
+                {
+                    find: /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g,
+                    handler(props) {
+                        const { state, chain, range } = props;
+                        const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+                        chain().BNUpdateBlock(state.selection.from, {
+                            type: "imageWidget",
+                            props: {
+                                url: textContent
+                            },
+                        }).setTextSelection(range.from + 1);
+                    }
+                },
+            ]
         });
         const ImageSlashItem = {
             name: "Image Widget",
@@ -2735,7 +2770,7 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
     exports.addImageBlock = addImageBlock;
     ;
 });
-define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_10) {
+define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_11) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addTableToolbar = void 0;
@@ -2747,19 +2782,19 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
             const block = selectedBlocks[0];
             const blockID = block?.id;
             if (!modal) {
-                modal = await (0, index_10.createModal)({
+                modal = await (0, index_11.createModal)({
                     popupPlacement: 'top',
                     overflow: 'hidden',
                     maxHeight: '2rem'
                 });
                 modal.id = 'mdTableToolbar';
-                (0, index_10.getModalContainer)().appendChild(modal);
+                (0, index_11.getModalContainer)().appendChild(modal);
             }
             if (tableToolbar) {
                 tableToolbar.onRefresh();
             }
             else {
-                tableToolbar = await index_10.ScomEditorTableToolbar.create({
+                tableToolbar = await index_11.ScomEditorTableToolbar.create({
                     editor: editor
                 });
                 modal.item = tableToolbar;
@@ -2780,23 +2815,16 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
     };
     exports.addTableToolbar = addTableToolbar;
 });
-define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_21, index_11, index_12, utils_15) {
+define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_21, index_12, utils_15) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addChartBlock = void 0;
-    function getData(element) {
-        const href = element.getAttribute('href');
-        const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
-        if (href.startsWith(WIDGET_LOADER_URL)) {
-            const [_, params = ''] = href.split('?');
-            const dataStr = params.replace('data=', '');
-            const widgetData = dataStr ? (0, index_11.parseStringToObject)(dataStr) : null;
-            if (widgetData) {
-                const { _, properties } = widgetData;
-                return {
-                    ...properties
-                };
-            }
+    function getData(href) {
+        const widgetData = (0, utils_15.parseUrl)(href);
+        if (widgetData) {
+            const { module, properties } = widgetData;
+            if (module.path !== 'scom-swap')
+                return { ...properties };
         }
         return false;
     }
@@ -2955,22 +2983,16 @@ define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-e
     Object.defineProperty(exports, "addTableToolbar", { enumerable: true, get: function () { return addTableToolbar_1.addTableToolbar; } });
     Object.defineProperty(exports, "addChartBlock", { enumerable: true, get: function () { return addChartBlock_1.addChartBlock; } });
 });
-define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/global/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_22, index_13, index_14, utils_16) {
+define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_22, index_13, utils_16) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSwapBlock = void 0;
-    function getData(element) {
-        const href = element.getAttribute('href');
-        const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
-        if (href.startsWith(WIDGET_LOADER_URL)) {
-            const [_, params = ''] = href.split('?');
-            const dataStr = params.replace('data=', '');
-            const widgetData = dataStr ? (0, index_13.parseStringToObject)(dataStr) : null;
-            if (widgetData) {
-                const { module, properties } = widgetData;
-                if (module.path === 'scom-swap')
-                    return { ...properties };
-            }
+    function getData(href) {
+        const widgetData = (0, utils_16.parseUrl)(href);
+        if (widgetData) {
+            const { module, properties } = widgetData;
+            if (module.path === 'scom-swap')
+                return { ...properties };
         }
         return false;
     }
@@ -3004,7 +3026,7 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                     properties: { ...props },
                     block: { ...block }
                 };
-                const customElm = new index_14.ScomEditorCustomBlock(wrapper, { data });
+                const customElm = new index_13.ScomEditorCustomBlock(wrapper, { data });
                 wrapper.appendChild(customElm);
                 return {
                     dom: wrapper
@@ -3023,7 +3045,8 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                                 return false;
                             }
                             if (element2.getAttribute('href')) {
-                                return getData(element2);
+                                const href = element2.getAttribute('href');
+                                return getData(href);
                             }
                             return false;
                         },
@@ -3041,7 +3064,8 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                                 return false;
                             }
                             if (child.nodeName === 'A' && child.getAttribute('href')) {
-                                return getData(child);
+                                const href = child.getAttribute('href');
+                                return getData(href);
                             }
                             return false;
                         },
@@ -3052,14 +3076,34 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
             },
             renderInnerHTML: (attrs) => {
                 const link = document.createElement("a");
-                const url = (0, index_14.getWidgetEmbedUrl)({
+                const url = (0, index_13.getWidgetEmbedUrl)({
                     type: 'swap',
                     props: { ...(attrs || {}) }
                 });
                 link.setAttribute("href", url);
                 link.textContent = 'swap';
                 return link;
-            }
+            },
+            pasteRules: [
+                {
+                    find: /https:\/\/ipfs\.scom\.dev\/ipfs\/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4\?data\=.*/g,
+                    handler(props) {
+                        const { state, chain, range } = props;
+                        const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+                        const widgetData = (0, utils_16.parseUrl)(textContent);
+                        if (!widgetData)
+                            return null;
+                        const { module, properties } = widgetData;
+                        const type = module.path === 'scom-swap' ? 'swap' : 'chart';
+                        chain().BNUpdateBlock(state.selection.from, {
+                            type,
+                            props: {
+                                ...properties
+                            },
+                        }).setTextSelection(range.from + 1);
+                    }
+                }
+            ]
         });
         const SwapSlashItem = {
             name: "Swap",
@@ -3197,7 +3241,7 @@ define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/compon
         }
     });
 });
-define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts"], function (require, exports, components_24, index_15, index_16, addSwapBlock_1, index_css_7) {
+define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts"], function (require, exports, components_24, index_14, index_15, addSwapBlock_1, index_css_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditor = void 0;
@@ -3245,11 +3289,11 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._blocknoteObj)
                 return;
             this.pnlEditor.clearInnerHTML();
-            (0, index_16.getModalContainer)().innerHTML = '';
-            const { VideoSlashItem, VideoBlock } = (0, index_15.addVideoBlock)(this._blocknoteObj);
-            const { ImageSlashItem, ImageBlock } = (0, index_15.addImageBlock)(this._blocknoteObj);
+            (0, index_15.getModalContainer)().innerHTML = '';
+            const { VideoSlashItem, VideoBlock } = (0, index_14.addVideoBlock)(this._blocknoteObj);
+            const { ImageSlashItem, ImageBlock } = (0, index_14.addImageBlock)(this._blocknoteObj);
             const { SwapSlashItem, SwapBlock } = (0, addSwapBlock_1.addSwapBlock)(this._blocknoteObj);
-            const { ChartSlashItem, ChartBlock } = (0, index_15.addChartBlock)(this._blocknoteObj);
+            const { ChartSlashItem, ChartBlock } = (0, index_14.addChartBlock)(this._blocknoteObj);
             const customSchema = {
                 ...this._blocknoteObj.defaultBlockSchema,
                 video: VideoBlock,
@@ -3283,12 +3327,12 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (initialContent)
                 editorConfig.initialContent = initialContent;
             this._editor = new this._blocknoteObj.BlockNoteEditor(editorConfig);
-            (0, index_15.addSideMenu)(this._editor);
-            (0, index_15.addFormattingToolbar)(this._editor);
-            (0, index_15.addSlashMenu)(this._editor);
-            (0, index_15.addHyperlinkToolbar)(this._editor);
+            (0, index_14.addSideMenu)(this._editor);
+            (0, index_14.addFormattingToolbar)(this._editor);
+            (0, index_14.addSlashMenu)(this._editor);
+            (0, index_14.addHyperlinkToolbar)(this._editor);
             // addImageToolbar(this._editor);
-            (0, index_15.addTableToolbar)(this._editor);
+            (0, index_14.addTableToolbar)(this._editor);
         }
         // private isEmptyBlock(block: Block) {
         //   let result = false;

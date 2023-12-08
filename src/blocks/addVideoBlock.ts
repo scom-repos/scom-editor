@@ -65,7 +65,18 @@ export const addVideoBlock = (blocknote: any) => {
     },
     pasteRules: [
       {
-        find: /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g
+        find: /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g,
+        handler(props: any) {
+          const { state, chain, range } = props;
+          const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+
+          chain().BNUpdateBlock(state.selection.from, {
+            type: "video",
+            props: {
+              url: textContent
+            },
+          }).setTextSelection(range.from + 1);
+        }
       }
     ]
   });

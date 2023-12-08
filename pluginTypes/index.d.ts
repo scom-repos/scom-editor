@@ -978,6 +978,7 @@ declare module "@scom/scom-editor/blocks/addImageToolbar.tsx" {
 declare module "@scom/scom-editor/blocks/utils.ts" {
     import { BlockNoteEditor, PartialBlock } from "@scom/scom-editor/global/index.ts";
     export const execCustomBLock: (editor: BlockNoteEditor, block: PartialBlock) => void;
+    export function parseUrl(href: string): any;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addVideoBlock.ts" />
 declare module "@scom/scom-editor/blocks/addVideoBlock.ts" {

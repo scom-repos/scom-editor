@@ -1,19 +1,13 @@
 import { Panel } from "@ijstech/components";
-import { Block, BlockNoteEditor, parseStringToObject } from "../global/index";
+import { Block, BlockNoteEditor } from "../global/index";
 import { ScomEditorCustomBlock, getWidgetEmbedUrl } from "../components/index";
-import { execCustomBLock } from "./utils";
+import { execCustomBLock, parseUrl } from "./utils";
 
-function getData(element: HTMLElement) {
-  const href = element.getAttribute('href');
-  const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
-  if (href.startsWith(WIDGET_LOADER_URL)) {
-    const [_, params = ''] = href.split('?');
-    const dataStr = params.replace('data=', '');
-    const widgetData = dataStr ? parseStringToObject(dataStr) : null;
-    if (widgetData) {
-      const { module, properties } = widgetData;
-      if (module.path === 'scom-swap') return {...properties};
-    }
+function getData(href: string) {
+  const widgetData = parseUrl(href);
+  if (widgetData) {
+    const { module, properties } = widgetData;
+    if (module.path === 'scom-swap') return {...properties};
   }
   return false;
 }
@@ -67,7 +61,8 @@ export const addSwapBlock = (blocknote: any) => {
               return false;
             }
             if (element2.getAttribute('href')) {
-              return getData(element2);
+              const href = element2.getAttribute('href');
+              return getData(href);
             }
             return false;
           },
@@ -85,7 +80,8 @@ export const addSwapBlock = (blocknote: any) => {
               return false;
             }
             if (child.nodeName === 'A' && child.getAttribute('href')) {
-              return getData(child);
+              const href = child.getAttribute('href');
+              return getData(href);
             }
             return false;
           },
@@ -105,7 +101,26 @@ export const addSwapBlock = (blocknote: any) => {
       link.setAttribute("href", url);
       link.textContent = 'swap';
       return link;
-    }
+    },
+    pasteRules: [
+      {
+        find: /https:\/\/ipfs\.scom\.dev\/ipfs\/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4\?data\=.*/g,
+        handler(props: any) {
+          const { state, chain, range } = props;
+          const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+          const widgetData = parseUrl(textContent);
+          if (!widgetData) return null;
+          const { module, properties } = widgetData;
+          const type = module.path === 'scom-swap' ? 'swap' : 'chart';
+          chain().BNUpdateBlock(state.selection.from, {
+            type,
+            props: {
+              ...properties
+            },
+          }).setTextSelection(range.from + 1);
+        }
+      }
+    ]
   });
   const SwapSlashItem = {
     name: "Swap",

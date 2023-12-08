@@ -85,7 +85,23 @@ export function addImageBlock(blocknote: any) {
       imageTag.setAttribute("src", src);
       imageTag.setAttribute("alt", alt);
       return imageTag;
-    }
+    },
+    pasteRules: [
+      {
+        find: /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g,
+        handler(props: any) {
+          const { state, chain, range } = props;
+          const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+
+          chain().BNUpdateBlock(state.selection.from, {
+            type: "imageWidget",
+            props: {
+              url: textContent
+            },
+          }).setTextSelection(range.from + 1);
+        }
+      },
+    ]
   });
   const ImageSlashItem = {
     name: "Image Widget",
