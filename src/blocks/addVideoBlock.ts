@@ -1,7 +1,6 @@
 import { Panel } from "@ijstech/components";
-import ScomVideo from '@scom/scom-video';
 import { Block, BlockNoteEditor } from "../global/index";
-import { ScomEditorSideMenu, getModalContainer } from "../components/index";
+import { ScomEditorCustomBlock } from "../components/index";
 import { execCustomBLock } from "./utils";
 
 export const addVideoBlock = (blocknote: any) => {
@@ -17,12 +16,13 @@ export const addVideoBlock = (blocknote: any) => {
     render: (block: Block, editor: BlockNoteEditor) => {
       const wrapper = new Panel();
       const { url } = JSON.parse(JSON.stringify(block.props));
-      const video = new ScomVideo(wrapper, { url });
-      wrapper.appendChild(video);
-      if (!url) {
-        const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as ScomEditorSideMenu;
-        if (sideMenu) sideMenu.openConfig(block, video);
+      const data = {
+        module: 'scom-video',
+        properties: { url },
+        block: {...block}
       }
+      const customElm = new ScomEditorCustomBlock(wrapper, { data });
+      wrapper.appendChild(customElm);
       return {
         dom: wrapper
       };
@@ -62,7 +62,23 @@ export const addVideoBlock = (blocknote: any) => {
       link.setAttribute("href", url);
       link.textContent = 'video';
       return link;
-    }
+    },
+    pasteRules: [
+      {
+        find: /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g,
+        handler(props: any) {
+          const { state, chain, range } = props;
+          const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+
+          chain().BNUpdateBlock(state.selection.from, {
+            type: "video",
+            props: {
+              url: textContent
+            },
+          }).setTextSelection(range.from + 1);
+        }
+      }
+    ]
   });
   const VideoSlashItem = {
     name: "Video",

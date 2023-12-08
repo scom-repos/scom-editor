@@ -122,6 +122,7 @@ export class ScomEditorMdLink extends Module {
         isChildFixed={true}
         closeOnScrollChildFixed={true}
         showBackdrop={false}
+        overflow={'hidden'}
         onClose={this.handleClosed}
       >
         <i-vstack

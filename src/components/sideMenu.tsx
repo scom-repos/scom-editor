@@ -107,7 +107,7 @@ export class ScomEditorSideMenu extends Module {
   openConfig(block: Block, module: any) {
     const isCustomBlock = block?.type && CustomBlockTypes.includes(block.type as string)
     if (isCustomBlock && !this.initedMap.has(block.id)) {
-      const editAction = this.getActions(module)[0];
+      const editAction = module.getActions()[0];
       this.currentModule = module;
       this.showConfigModal(block, editAction);
       this.initedMap.set(block.id, true);
@@ -148,16 +148,10 @@ export class ScomEditorSideMenu extends Module {
     let editAction: any;
     switch(this.block.type) {
       case 'video':
-        module = blockEl.querySelector('i-scom-video');
-        editAction = this.getActions(module)[0];
-        break;
       case 'imageWidget':
-        module = blockEl.querySelector('i-scom-image');
-        editAction = this.getActions(module)[0];
-        break;
       case 'swap':
-        module = blockEl.querySelector('i-scom-swap');
-        editAction = this.getActions(module)[0];
+        module = blockEl.querySelector('i-scom-editor-custom-block');
+        editAction = module.getActions()[0];
         break;
       case 'chart':
         module = blockEl.querySelector('i-scom-editor-chart');

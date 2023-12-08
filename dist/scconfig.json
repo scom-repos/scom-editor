@@ -3,27 +3,6 @@
     "type": "widget",
     "version": "0.1.0",
     "dependencies": [
-        "@ijstech/components",
-        "@scom/scom-video",
-        "@scom/scom-image",
-        "@scom/scom-token-list",
-        "@scom/scom-network-list",
-        "@scom/scom-wallet-modal",
-        "@scom/oswap-openswap-contract",
-        "@scom/oswap-bakery-swap-contract",
-        "@scom/oswap-trader-joe-contract",
-        "@scom/oswap-impossible-swap-contract",
-        "@scom/scom-dex-list",
-        "@scom/scom-commission-proxy-contract",
-        "@scom/oswap-cross-chain-bridge-contract",
-        "@scom/oswap-chainlink-contract",
-        "@scom/scom-network-picker",
-        "@scom/scom-token-modal",
-        "@scom/scom-token-input",
-        "@scom/scom-multicall",
-        "@scom/scom-dapp-container",
-        "@scom/scom-commission-fee-setup",
-        "@scom/scom-tx-status-modal",
-        "@scom/scom-swap"
+        "@ijstech/components"
     ]
 }

@@ -27495,6 +27495,67 @@ img.ProseMirror-separator {
       ];
     }
   });
+  const acceptedMIMETypes = [
+    "blocknote/html",
+    "text/html",
+    "text/plain"
+  ];
+  const createPasteFromClipboardExtension = (editor) => Extension.create({
+    name: "pasteFromClipboard",
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          props: {
+            handleDOMEvents: {
+              paste(_view, event) {
+                event.preventDefault();
+                let format = null;
+                for (const mimeType of acceptedMIMETypes) {
+                  if (event.clipboardData.types.includes(mimeType)) {
+                    format = mimeType;
+                    break;
+                  }
+                }
+                if (format !== null) {
+                  const data = event.clipboardData.getData(format);
+                  if (format === "text/html") {
+                    console.log("paste", data);
+                  }
+                  editor._tiptapEditor.view.pasteHTML(data);
+                }
+                return true;
+              }
+            }
+          }
+        })
+      ];
+    }
+  });
+  const createCopyToClipboardExtension = (editor) => Extension.create({
+    name: "copyToClipboard",
+    addProseMirrorPlugins() {
+      const tiptap = this.editor;
+      return [
+        new Plugin({
+          props: {
+            handleDOMEvents: {
+              copy(_view, event) {
+                event.preventDefault();
+                event.clipboardData.clearData();
+                const selectedFragment = tiptap.state.selection.content().content;
+                event.clipboardData.setData(
+                  "text/plain",
+                  selectedFragment.textBetween(0, selectedFragment.size)
+                );
+                console.log(editor, selectedFragment);
+                return true;
+              }
+            }
+          }
+        })
+      ];
+    }
+  });
   const getBlockNoteExtensions = (opts) => {
     var _a;
     const ret = [
@@ -27547,6 +27608,8 @@ img.ProseMirror-separator {
         })
       ),
       CustomBlockSerializerExtension,
+      createCopyToClipboardExtension(opts.editor),
+      createPasteFromClipboardExtension(opts.editor),
       Dropcursor.configure({ width: 5, color: "#ddeeff" }),
       // This needs to be at the bottom of this list, because Key events (such as enter, when selecting a /command),
       // should be handled before Enter handlers in other components like splitListItem
@@ -49315,6 +49378,19 @@ img.ProseMirror-separator {
             destroy: rendered.destroy
           };
         };
+      },
+      addPasteRules() {
+        if (!blockConfig.pasteRules) {
+          return [];
+        }
+        return blockConfig.pasteRules.map((rule) => {
+          return new PasteRule({
+            find: rule.find,
+            handler(props) {
+              rule.handler(props);
+            }
+          });
+        });
       }
     });
     return {
@@ -52980,7 +53056,7 @@ img.ProseMirror-separator {
       __publicField(this, "preventShow", false);
       __publicField(this, "prevWasEditable", null);
       __publicField(this, "shouldShow", ({ state }) => {
-        return !state.selection.empty;
+        return !state.selection.empty && !isNodeSelection(state.selection);
       });
       __publicField(this, "viewMousedownHandler", () => {
         this.preventShow = true;

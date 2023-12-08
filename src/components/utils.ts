@@ -247,11 +247,6 @@ export const getPlacement = (block: any) => {
 
 export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart'];
 export const MediaBlockTypes = ['video', 'image', 'imageWidget', 'swap', 'chart'];
-// export const TypeMapping = {
-//   '@scom/scom-video': 'video',
-//   '@scom/scom-image': 'imageWidget',
-//   '@scom/scom-swap': 'swap'
-// }
 export const WidgetMapping: {[key: string]: any} = {
   video: {
     name: '@scom/scom-video',

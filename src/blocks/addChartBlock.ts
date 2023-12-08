@@ -1,21 +1,13 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor, parseStringToObject } from "../global/index";
 import { ChartTypes, ScomEditorChart, getWidgetEmbedUrl } from "../components/index";
-import { execCustomBLock } from "./utils";
+import { execCustomBLock, parseUrl } from "./utils";
 
-function getData(element: HTMLElement) {
-  const href = element.getAttribute('href');
-  const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
-  if (href.startsWith(WIDGET_LOADER_URL)) {
-    const [_, params = ''] = href.split('?');
-    const dataStr = params.replace('data=', '');
-    const widgetData = dataStr ? parseStringToObject(dataStr) : null;
-    if (widgetData) {
-      const { _, properties } = widgetData;
-      return {
-        ...properties
-      }
-    }
+function getData(href: string) {
+  const widgetData = parseUrl(href);
+  if (widgetData) {
+    const { module, properties } = widgetData;
+    if (module.path !== 'scom-swap') return {...properties};
   }
   return false;
 }
