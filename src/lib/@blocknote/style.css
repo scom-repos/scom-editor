@@ -111,12 +111,18 @@
 ._bnEditor_12je0_3 {
   outline: none;
   padding-inline: 54px;
+  height: 100%;
 
   /* Define a set of colors to be used throughout the app for consistency
   see https://atlassian.design/foundations/color for more info */
   --N800: #172b4d; /* Dark neutral used for tooltips and text on light background */
   --N40: #dfe1e6; /* Light neutral used for subtle borders and text on dark background */
 }
+
+.ProseMirror{
+  overflow-x: unset;
+  overflow-y: unset;
+ }
 
 /*
 bnRoot should be applied to all top-level elements
@@ -222,7 +228,7 @@ BASIC STYLES
 }
 
 ._blockContent_nstdf_22 {
-  padding: 3px 0;
+  /* padding: 3px 0; */
   flex-grow: 1;
   transition: font-size 0.2s;
   width: 100%;
