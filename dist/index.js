@@ -2341,6 +2341,7 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                 menuElm = await index_5.ScomEditorSlashMenu.create({
                     items: [...items],
                     selectedIndex: selected,
+                    border: { radius: 'inherit' },
                     onItemClicked: (item) => onClick(item)
                 });
                 modal.item = menuElm;
@@ -3334,19 +3335,8 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             // addImageToolbar(this._editor);
             (0, index_14.addTableToolbar)(this._editor);
         }
-        // private isEmptyBlock(block: Block) {
-        //   let result = false;
-        //   let type = block.type as string;
-        //   if (type === 'paragraph') return !block.content?.length && !block.children?.length;
-        //   return result;
-        // }
         async onEditorChanged(editor) {
             let value = '';
-            // for (let block of editor.topLevelBlocks) {
-            //   if (!this.isEmptyBlock(block)) {
-            //     value += await this.blockToMarkdown(block, '', true);
-            //   }
-            // }
             const blocks = editor.topLevelBlocks;
             blocks.pop();
             value = await editor.blocksToMarkdown(blocks);
@@ -3355,32 +3345,6 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (this.onChanged)
                 this.onChanged(this.value);
         }
-        // private async getMarkdown(block: Block, isStart?: boolean) {
-        //   let value = '';
-        //   try {
-        //     const blockType = block.type as string;
-        //     if (CustomBlockTypes.includes(blockType)) {
-        //       const mdString = this.getMarkdownStr(block);
-        //       value += `\\n\\n${mdString}\\n\\n`;
-        //     } else if (!this.isEmptyBlock(block)) {
-        //       const blockValue = await this._editor.blocksToMarkdown([block]);
-        //       value += `${!isStart ? '\\n\\n' : ''}${blockValue}`;
-        //     }
-        //   } catch {}
-        //   return value
-        // }
-        // private async blockToMarkdown(block: Block, result: string, isStart?: boolean) {
-        //   if (this.isEmptyBlock(block)) return result;
-        //   const clonedBlock = JSON.parse(JSON.stringify(block));
-        //   clonedBlock.children = [];
-        //   result += await this.getMarkdown(clonedBlock, isStart);
-        //   if (block.children?.length) {
-        //     for (const child of block.children) {
-        //       result += await this.blockToMarkdown(child, '');
-        //     }
-        //   }
-        //   return result;
-        // }
         addCSS(href, name) {
             const css = document.head.querySelector(`[name="${name}"]`);
             if (css)
@@ -3412,75 +3376,14 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 this.renderEditor(JSON.parse(JSON.stringify(blocks)));
             }
         }
-        // private async markdownToBlocks(markdown: string) {
-        //   if (!this._editor) return [];
-        //   const blocks: Block[] = await this._editor.markdownToBlocks(markdown);
-        //   let formattedBlocks = [];
-        //   for (let block of blocks) {
-        //     let text = '';
-        //     if (block.type === 'paragraph') {
-        //       text =
-        //         block.content[0]?.type === 'text'
-        //           ? block.content[0]?.text
-        //           : block.content[0]?.type === 'link'
-        //           ? block.content[0]?.href || block.content[0]?.content[0]?.text
-        //           : '';
-        //     }
-        //     text = (text || '').trim();
-        //     const customType = text === 'video' ? 'video' : this.getContentType(text);
-        //     if (customType) {
-        //       if (customType === 'widget') {
-        //         const [_, params = ''] = text.split('?');
-        //         const dataStr = params.replace('data=', '');
-        //         const widgetData = dataStr ? this.parseData(dataStr) : null;
-        //         if (widgetData) {
-        //           const { module, properties } = widgetData;
-        //           formattedBlocks.push({
-        //             type: TypeMapping[module.name],
-        //             props: properties
-        //           });
-        //         }
-        //       } else {
-        //         formattedBlocks.push({
-        //           type: customType,
-        //           props: {
-        //             url: text
-        //           }
-        //         });
-        //       }
-        //     } else {
-        //       formattedBlocks.push(block);
-        //     }
-        //   }
-        //   return JSON.parse(JSON.stringify(blocks));
-        // }
-        // private getContentType(content: string) {
-        //   const imageUrlRegex = /https:\/\/\S+\.(jpg|jpeg|png|gif|webp|svg)/g;
-        //   const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
-        //   const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
-        //   if (imageUrlRegex.test(content)) return 'imageWidget';
-        //   if (videoUrlRegex.test(content)) return 'video';
-        //   if (youtubeUrlRegex.test(content)) return 'video';
-        //   if (content.startsWith(WIDGET_LOADER_URL)) return 'widget';
-        //   return '';
-        // }
-        // private getMarkdownStr(block: Block) {
-        //   const type = block.type;
-        //   let mdString = '';
-        //   const { altText = '', url } = block.props;
-        //   switch(type) {
-        //     case 'video':
-        //       mdString = `[video](${url})`;
-        //       break;
-        //     case 'imageWidget':
-        //       mdString = `![${altText || ''}](${url})`;
-        //       break;
-        //     case 'swap':
-        //       mdString = getWidgetEmbedUrl(block);
-        //       break;
-        //   }
-        //   return mdString;
-        // }
+        async setValue(value) {
+            this.value = value;
+            if (!this._editor)
+                return;
+            const blocks = await this._editor.markdownToBlocks(value);
+            console.log(value, blocks);
+            this._editor.replaceBlocks(this._editor.topLevelBlocks, blocks);
+        }
         updateTag(type, value) {
             this.tag[type] = this.tag[type] ?? {};
             for (let prop in value) {
@@ -3628,6 +3531,10 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         onHide() {
             if (this.timer)
                 clearTimeout(this.timer);
+            const children = (0, index_15.getModalContainer)().children;
+            for (let child of children) {
+                child.visible = false;
+            }
         }
         async init() {
             super.init();

@@ -19,6 +19,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
       menuElm = await ScomEditorSlashMenu.create({
         items: [...items],
         selectedIndex: selected,
+        border: {radius: 'inherit'},
         onItemClicked: (item: any) => onClick(item)
       });
       modal.item = menuElm;

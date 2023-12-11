@@ -1085,6 +1085,7 @@ declare module "@scom/scom-editor" {
         private loadPlugin;
         private getData;
         private setData;
+        setValue(value: string): Promise<void>;
         private updateTag;
         private setTag;
         private updateStyle;
