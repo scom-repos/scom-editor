@@ -171,13 +171,15 @@ export class ScomEditorSlashMenu extends Module {
     const items = this.getAttribute('items', true);
     const selectedIndex = this.getAttribute('selectedIndex', true);
     if (items) this.setData({items, selectedIndex});
-    this.style.height = 'auto';
   }
 
   render() {
     return (
       <i-panel id="pnlWrap" minWidth={300} maxWidth={'100%'} height="auto">
-        <i-vstack id="pnlSlash" width={'100%'} overflow={{y: 'auto'}}/>
+        <i-vstack id="pnlSlash"
+          width={'100%'} overflow={{y: 'auto'}}
+          border={{radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light}}
+        />
       </i-panel>
     )
   }

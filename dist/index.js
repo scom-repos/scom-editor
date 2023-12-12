@@ -1419,11 +1419,10 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
             const selectedIndex = this.getAttribute('selectedIndex', true);
             if (items)
                 this.setData({ items, selectedIndex });
-            this.style.height = 'auto';
         }
         render() {
             return (this.$render("i-panel", { id: "pnlWrap", minWidth: 300, maxWidth: '100%', height: "auto" },
-                this.$render("i-vstack", { id: "pnlSlash", width: '100%', overflow: { y: 'auto' } })));
+                this.$render("i-vstack", { id: "pnlSlash", width: '100%', overflow: { y: 'auto' }, border: { radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light } })));
         }
     };
     ScomEditorSlashMenu = __decorate([
@@ -2296,25 +2295,27 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
                 sideMenu = await index_4.ScomEditorSideMenu.create({
                     block: sideMenuState.block,
                     editor: editor,
-                    position: 'fixed'
+                    position: 'fixed',
+                    visible: false
                 });
                 (0, index_4.getModalContainer)().appendChild(sideMenu);
             }
+            const isFocused = editor.domElement.classList.contains('ProseMirror-focused');
             if (sideMenuState.show) {
                 if (sideMenu.isShowing)
                     editor.sideMenu.freezeMenu();
                 else
                     editor.sideMenu.unfreezeMenu();
                 sideMenu.block = sideMenuState.block;
-                const blockEl = sideMenuState?.block?.id && editor.domElement.querySelector(`[data-id="${sideMenuState.block.id}"]`);
-                if (blockEl) {
-                    sideMenu.style.top = `${sideMenuState.referencePos.y + blockEl.offsetHeight / 2 - sideMenu.offsetHeight / 2}px`;
-                    sideMenu.style.left = `${sideMenuState.referencePos.x - sideMenu.offsetWidth}px`;
-                    sideMenu.visible = true;
-                }
-                else {
-                    sideMenu.visible = false;
-                }
+                sideMenu.visible = isFocused;
+            }
+            const blockEl = sideMenuState?.block?.id && editor.domElement.querySelector(`[data-id="${sideMenuState.block.id}"]`);
+            if (blockEl) {
+                sideMenu.style.top = `${sideMenuState.referencePos.y + blockEl.offsetHeight / 2 - sideMenu.offsetHeight / 2}px`;
+                sideMenu.style.left = `${sideMenuState.referencePos.x - sideMenu.offsetWidth}px`;
+            }
+            else {
+                sideMenu.visible = false;
             }
         });
     };
@@ -2324,6 +2325,11 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSlashMenu = void 0;
+    const closeModal = () => {
+        const sideMenu = (0, index_5.getModalContainer)().querySelector('i-scom-editor-side-menu');
+        if (sideMenu && sideMenu.visible)
+            sideMenu.visible = false;
+    };
     const addSlashMenu = (editor) => {
         let modal;
         let menuElm;
@@ -2342,6 +2348,7 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                     items: [...items],
                     selectedIndex: selected,
                     border: { radius: 'inherit' },
+                    height: 'auto',
                     onItemClicked: (item) => onClick(item)
                 });
                 modal.item = menuElm;
@@ -2357,7 +2364,10 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
             if (!modal) {
                 modal = await (0, index_5.createModal)({
                     popupPlacement,
-                    padding: { left: 0, top: 0, right: 0, bottom: 0 }
+                    padding: { left: 0, top: 0, right: 0, bottom: 0 },
+                    border: { radius: 0, style: 'none' },
+                    onClose: closeModal,
+                    onOpen: closeModal
                 });
                 modal.id = 'mdSlash';
                 (0, index_5.getModalContainer)().appendChild(modal);
@@ -2373,9 +2383,6 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                             modal.refresh();
                         else
                             modal.visible = true;
-                        const sideMenu = editor.domElement?.parentElement?.querySelector('#pnlSideMenu');
-                        if (sideMenu)
-                            sideMenu.visible = false;
                     }
                 }
                 else {
@@ -3332,8 +3339,9 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             (0, index_14.addFormattingToolbar)(this._editor);
             (0, index_14.addSlashMenu)(this._editor);
             (0, index_14.addHyperlinkToolbar)(this._editor);
-            // addImageToolbar(this._editor);
             (0, index_14.addTableToolbar)(this._editor);
+            // this._editor.domElement.addEventListener("blur", () => {
+            // })
         }
         async onEditorChanged(editor) {
             let value = '';
@@ -3344,6 +3352,9 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             console.log(JSON.stringify({ value: this.value }));
             if (this.onChanged)
                 this.onChanged(this.value);
+            const sideMenu = (0, index_15.getModalContainer)().querySelector('i-scom-editor-side-menu');
+            if (sideMenu && sideMenu.visible)
+                sideMenu.visible = false;
         }
         addCSS(href, name) {
             const css = document.head.querySelector(`[name="${name}"]`);
@@ -3381,7 +3392,6 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._editor)
                 return;
             const blocks = await this._editor.markdownToBlocks(value);
-            console.log(value, blocks);
             this._editor.replaceBlocks(this._editor.topLevelBlocks, blocks);
         }
         updateTag(type, value) {

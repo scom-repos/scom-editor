@@ -1,6 +1,11 @@
-import { Modal } from "@ijstech/components";
+import { Control, Modal } from "@ijstech/components";
 import { ScomEditorSlashMenu, createModal, getModalContainer } from "../components/index";
 import { BlockNoteEditor, CustomSlashMenuState } from "../global/index";
+
+const closeModal = () => {
+  const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
+  if (sideMenu && sideMenu.visible) sideMenu.visible = false;
+}
 
 export const addSlashMenu = (editor: BlockNoteEditor) => {
   let modal: Modal;
@@ -20,6 +25,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         items: [...items],
         selectedIndex: selected,
         border: {radius: 'inherit'},
+        height:'auto',
         onItemClicked: (item: any) => onClick(item)
       });
       modal.item = menuElm;
@@ -36,7 +42,10 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
     if (!modal) {
       modal = await createModal({
         popupPlacement,
-        padding: {left: 0, top: 0, right: 0, bottom: 0}
+        padding: {left: 0, top: 0, right: 0, bottom: 0},
+        border: {radius: 0, style: 'none'},
+        onClose: closeModal,
+        onOpen: closeModal
       })
       modal.id = 'mdSlash';
       getModalContainer().appendChild(modal);
@@ -56,8 +65,6 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
           modal.position = 'fixed';
           if (modal.visible) modal.refresh();
           else modal.visible = true;
-          const sideMenu = editor.domElement?.parentElement?.querySelector('#pnlSideMenu');
-          if (sideMenu) sideMenu.visible = false;
         }
       } else {
         modal.visible = false;
