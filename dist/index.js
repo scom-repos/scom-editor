@@ -3340,8 +3340,6 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             (0, index_14.addSlashMenu)(this._editor);
             (0, index_14.addHyperlinkToolbar)(this._editor);
             (0, index_14.addTableToolbar)(this._editor);
-            // this._editor.domElement.addEventListener("blur", () => {
-            // })
         }
         async onEditorChanged(editor) {
             let value = '';
