@@ -138,6 +138,11 @@ export function getExtraFields () {
       icon: {name: 'chart-line'},
       hint: "Insert a chart widget",
     },
+    Tweet: {
+      group: "Widget",
+      icon: {image: {url: 'https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGO_400x400.jpg', width: '100%', height: '100%'}},
+      hint: "Insert a twitter post",
+    },
   };
   return extraFields;
 }
@@ -245,8 +250,8 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart'];
-export const MediaBlockTypes = ['video', 'image', 'imageWidget', 'swap', 'chart'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'tweet'];
+export const MediaBlockTypes = ['image', ...CustomBlockTypes];
 export const WidgetMapping: {[key: string]: any} = {
   video: {
     name: '@scom/scom-video',

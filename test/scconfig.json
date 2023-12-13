@@ -28,7 +28,8 @@
     "@scom/scom-counter",
     "@scom/scom-image",
     "@scom/scom-video",
-    "@scom/scom-swap"
+    "@scom/scom-swap",
+    "@scom/scom-twitter-post"
   ],
   "menus": [
     {

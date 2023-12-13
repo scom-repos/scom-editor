@@ -79,6 +79,7 @@ export class ScomEditorCustomBlock extends Module {
     switch(module) {
       case "scom-image":
       case "scom-video":
+      case "scom-twitter-post":
         if (sideMenu && !properties?.url) sideMenu.openConfig(block, this);
         break;
       case "scom-swap":

@@ -150,6 +150,7 @@ export class ScomEditorSideMenu extends Module {
       case 'video':
       case 'imageWidget':
       case 'swap':
+      case 'tweet':
         module = blockEl.querySelector('i-scom-editor-custom-block');
         editAction = module.getActions()[0];
         break;
@@ -169,7 +170,7 @@ export class ScomEditorSideMenu extends Module {
       block: JSON.parse(JSON.stringify(block)),
       onConfirm: (block: Block, data: any) => {
         const newProps = {...data};
-        if (block.type === 'video') {
+        if (block.type === 'video' || block.type === 'tweet') {
           if (data.url !== block.props.url) {
             this.updateBlock(block, { url: data.url });
           }

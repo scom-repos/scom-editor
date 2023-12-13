@@ -234,6 +234,17 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        Tweet: {
+            group: string;
+            icon: {
+                image: {
+                    url: string;
+                    width: string;
+                    height: string;
+                };
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -1021,6 +1032,18 @@ declare module "@scom/scom-editor/blocks/addChartBlock.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-editor/blocks/addTweetBlock.ts" />
+declare module "@scom/scom-editor/blocks/addTweetBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addTweetBlock: (blocknote: any) => {
+        TweetBlock: any;
+        TweetSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFormattingToolbar } from "@scom/scom-editor/blocks/addFormattingToolbar.ts";
@@ -1032,6 +1055,7 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addImageBlock } from "@scom/scom-editor/blocks/addImageBlock.ts";
     export { addTableToolbar } from "@scom/scom-editor/blocks/addTableToolbar.ts";
     export { addChartBlock } from "@scom/scom-editor/blocks/addChartBlock.ts";
+    export { addTweetBlock } from "@scom/scom-editor/blocks/addTweetBlock.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
 declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {

@@ -19,7 +19,8 @@ import {
   addVideoBlock,
   addImageBlock,
   addTableToolbar,
-  addChartBlock
+  addChartBlock,
+  addTweetBlock
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
 import { getModalContainer } from './components/index';
@@ -109,13 +110,15 @@ export class ScomEditor extends Module {
     const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
     const { SwapSlashItem, SwapBlock } =  addSwapBlock(this._blocknoteObj);
     const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
+    const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
 
     const customSchema = {
       ...this._blocknoteObj.defaultBlockSchema,
       video: VideoBlock,
       imageWidget: ImageBlock,
       swap: SwapBlock,
-      chart: ChartBlock
+      chart: ChartBlock,
+      tweet: TweetBlock
     };
     const editorConfig: BlockNoteEditorOptions = {
       parentElement: this.pnlEditor,
@@ -125,7 +128,8 @@ export class ScomEditor extends Module {
         VideoSlashItem,
         ImageSlashItem,
         SwapSlashItem,
-        ChartSlashItem
+        ChartSlashItem,
+        TweetSlashItem
       ],
       onEditorContentChange: (editor: BlockNoteEditor) => {
         if (this.timer) clearTimeout(this.timer);
