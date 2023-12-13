@@ -127,7 +127,7 @@ export class ScomEditor extends Module {
         SwapSlashItem,
         ChartSlashItem
       ],
-      onEditorContentChange: (editor: any) => {
+      onEditorContentChange: (editor: BlockNoteEditor) => {
         if (this.timer) clearTimeout(this.timer);
         this.timer = setTimeout(() => {
           this.onEditorChanged(editor);
@@ -145,7 +145,6 @@ export class ScomEditor extends Module {
     addFormattingToolbar(this._editor);
     addSlashMenu(this._editor);
     addHyperlinkToolbar(this._editor);
-    // addImageToolbar(this._editor);
     addTableToolbar(this._editor);
   }
 
@@ -155,8 +154,10 @@ export class ScomEditor extends Module {
     blocks.pop();
     value = await editor.blocksToMarkdown(blocks);
     this.value = value;
-    console.log(JSON.stringify({ value: this.value }))
+    console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
+    const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
+    if (sideMenu && sideMenu.visible) sideMenu.visible = false;
   }
 
   private addCSS(href: string, name: string) {
@@ -196,7 +197,6 @@ export class ScomEditor extends Module {
     this.value = value;
     if (!this._editor) return;
     const blocks: Block[] = await this._editor.markdownToBlocks(value);
-    console.log(value, blocks)
     this._editor.replaceBlocks(this._editor.topLevelBlocks, blocks);
   }
 
