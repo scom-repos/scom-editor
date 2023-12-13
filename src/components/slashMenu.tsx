@@ -7,7 +7,8 @@ import {
   VStack,
   HStack,
   Panel,
-  Control
+  Control,
+  Icon
 } from '@ijstech/components';
 import { getExtraFields, getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
@@ -119,6 +120,7 @@ export class ScomEditorSlashMenu extends Module {
       for (let i = 0; i < this.groupData[group].length; i++) {
         const item = this.groupData[group][i];
         const isSelected = this.items[this.selectedIndex]?.name === item.name;
+        const icon = new Icon(undefined, { ...item.icon, width: '1rem', height: '1rem' });
         const hstack = <i-hstack
           padding={{top: '0.75rem', bottom: '0.75rem', left: '1rem', right: '1rem'}}
           cursor="pointer"
@@ -138,7 +140,7 @@ export class ScomEditorSlashMenu extends Module {
           }}
         >
           <i-hstack width={'100%'} gap={'1rem'} verticalAlignment="center">
-            <i-icon name={item.icon.name} width={'1rem'} height={'1rem'} fill={Theme.text.primary}></i-icon>
+            {icon}
             <i-vstack gap={'0.25rem'}>
               <i-label caption={item.name} font={{size: '0.875rem', weight: 500}}></i-label>
               <i-label caption={item.hint} font={{size: '0.625rem', weight: 400}}></i-label>
