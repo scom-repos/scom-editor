@@ -95,14 +95,19 @@ export class ScomEditorColorPicker extends Module {
   }
 
   showModal(parent?: Control, popupPlacement?: string) {
+    const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
+    if (sideMenu && !sideMenu.visible) sideMenu.visible = true;
     getModalContainer().appendChild(this.mdColorPicker);
     this.mdColorPicker.position = 'fixed';
     if (parent) this.mdColorPicker.linkTo = parent;
     const { top, height } = this.getBoundingClientRect();
     const maxHeight = window.innerHeight - (top + height);
     this.pnlColors.maxHeight = maxHeight <= 200 ? 200 : maxHeight;
-    if (popupPlacement) this.mdColorPicker.popupPlacement = popupPlacement as any;
-    else this.mdColorPicker.popupPlacement = maxHeight <= 200 ? 'top' : 'bottom';
+    if (maxHeight <= 200) {
+      this.mdColorPicker.popupPlacement = 'rightTop'
+    } else {
+      this.mdColorPicker.popupPlacement = popupPlacement as any || 'bottom';
+    }
     this.mdColorPicker.visible = true;
   }
 

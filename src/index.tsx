@@ -150,6 +150,20 @@ export class ScomEditor extends Module {
     addSlashMenu(this._editor);
     addHyperlinkToolbar(this._editor);
     addTableToolbar(this._editor);
+    this._editor.domElement.addEventListener('focus', () => {
+      this._editor.sideMenu.unfreezeMenu();
+      const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
+      if (sideMenu) {
+        sideMenu.visible = true;
+        sideMenu.opacity = 1;
+      }
+    })
+
+    this._editor.domElement.addEventListener("blur", (event: MouseEvent) => {
+      this._editor.sideMenu.freezeMenu();
+      const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
+      if (sideMenu) sideMenu.opacity = 0;
+    })
   }
 
   private async onEditorChanged(editor: BlockNoteEditor) {

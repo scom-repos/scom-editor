@@ -2,15 +2,20 @@ import { Control, Modal } from "@ijstech/components";
 import { ScomEditorSlashMenu, createModal, getModalContainer } from "../components/index";
 import { BlockNoteEditor, CustomSlashMenuState } from "../global/index";
 
-const closeModal = () => {
+const closeSideMenu = () => {
   const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
   if (sideMenu && sideMenu.visible) sideMenu.visible = false;
+}
+
+const openSideMenu = () => {
+  const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
+  if (sideMenu && !sideMenu.visible) sideMenu.visible = true;
 }
 
 export const addSlashMenu = (editor: BlockNoteEditor) => {
   let modal: Modal;
   let menuElm: ScomEditorSlashMenu;
-  let popupPlacement: 'topLeft'|'bottomLeft' = 'topLeft';
+  // let popupPlacement: 'topLeft'|'bottomLeft' = 'topLeft';
 
   async function updateItems(items: any[], onClick: (item: any) => void, selected: number, referencePos: any) {
     const { bottom = 0 } = referencePos;
@@ -31,21 +36,22 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
       modal.item = menuElm;
     }
     menuElm.updateMaxHeight(maxHeight <= 200 ? 200 : maxHeight);
-    popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
-    modal.popupPlacement = popupPlacement;
+    // popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
+    // modal.popupPlacement = popupPlacement;
   }
 
   editor.slashMenu.onUpdate(async (slashMenuState: CustomSlashMenuState) => {
-    const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
-    const block = selectedBlocks[0];
-    const blockID = block?.id;
+    // const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+    // const block = selectedBlocks[0];
+    // const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
-        popupPlacement,
+        popupPlacement: "rightTop",
         padding: {left: 0, top: 0, right: 0, bottom: 0},
         border: {radius: 0, style: 'none'},
-        onClose: closeModal,
-        onOpen: closeModal
+        isChildFixed: true,
+        closeOnScrollChildFixed: true,
+        onClose: closeSideMenu
       })
       modal.id = 'mdSlash';
       getModalContainer().appendChild(modal);
@@ -58,14 +64,16 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         slashMenuState.keyboardHoveredItemIndex,
         slashMenuState.referencePos
       );
-      if (blockID) {
-        const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-        if (blockEl) {
-          modal.linkTo = blockEl;
-          modal.position = 'fixed';
-          if (modal.visible) modal.refresh();
-          else modal.visible = true;
-        }
+
+      const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
+      // const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`) as any;
+      const linkTo = sideMenu;
+      if (linkTo) {
+        openSideMenu();
+        modal.linkTo = linkTo;
+        modal.position = 'fixed';
+        if (modal.visible) modal.refresh();
+        else modal.visible = true;
       } else {
         modal.visible = false;
       }

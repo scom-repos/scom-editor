@@ -4,7 +4,8 @@ import {
   Styles,
   Module,
   Container,
-  Button
+  Button,
+  Control
 } from '@ijstech/components';
 import { ScomEditorDragHandle } from './dragHandle';
 import { ColorType } from './colorPicker';
@@ -42,7 +43,6 @@ export class ScomEditorSideMenu extends Module {
   private currentModule: any;
 
   private _data: ISideMenu;
-  private _isShowing: boolean = false;
   private initedMap: Map<string, boolean> = new Map();
 
   static async create(options?: ScomEditorSideMenuElement, parent?: Container) {
@@ -83,10 +83,6 @@ export class ScomEditorSideMenu extends Module {
     return this.block?.type && CustomBlockTypes.includes(this.block.type as string)
   }
 
-  get isShowing() {
-    return this._isShowing ?? false;
-  }
-
   setData(value: ISideMenu) {
     this._data = value;
     this.dragHandle.freezeMenu = this.editor.sideMenu.freezeMenu;
@@ -115,6 +111,7 @@ export class ScomEditorSideMenu extends Module {
   }
 
   private handleSetColor(type: ColorType, color: string) {
+    this.editor.focus();
     const prop = type === 'text' ? 'textColor' : 'backgroundColor';
     this.editor.updateBlock(this.block, {
       props: { [prop]: color }
@@ -123,25 +120,28 @@ export class ScomEditorSideMenu extends Module {
   }
 
   private handleDelete() {
+    this.editor.focus();
     this.editor.removeBlocks([this.block]);
     this.hideDragMenu();
   }
 
   private handleAddBlock() {
+    this.editor.focus();
     this.editor.sideMenu.addBlock();
   }
 
-  private showDragMenu() {
+  private showDragMenu(target: Control, event: MouseEvent) {
+    event.preventDefault();
+    this.editor.focus();
     this.dragHandle.onShowMenu(this);
-    this._isShowing = true;
   }
 
   private hideDragMenu() {
     this.dragHandle.onHideMenu();
-    this._isShowing = false;
   }
 
   private handleEditBlock() {
+    this.editor.focus();
     const blockEl = this.editor.domElement.querySelector(`[data-id="${this.block.id}"]`) as HTMLElement;
     if (!blockEl) return;
     let module: any;

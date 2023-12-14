@@ -15,18 +15,14 @@ export const addSideMenu = (editor: BlockNoteEditor) => {
       getModalContainer().appendChild(sideMenu);
     }
 
-    const isFocused = editor.domElement.classList.contains('ProseMirror-focused');
-
     if (sideMenuState.show) {
-      if (sideMenu.isShowing) editor.sideMenu.freezeMenu();
-      else editor.sideMenu.unfreezeMenu();
       sideMenu.block = sideMenuState.block;
-      sideMenu.visible = isFocused;
+      sideMenu.visible = editor.isFocused();
     }
 
     const blockEl = sideMenuState?.block?.id && editor.domElement.querySelector(`[data-id="${sideMenuState.block.id}"]`) as HTMLElement;
     if (blockEl) {
-      sideMenu.style.top = `${ sideMenuState.referencePos.y + blockEl.offsetHeight / 2 - sideMenu.offsetHeight / 2 }px`;
+      sideMenu.style.top = `${sideMenuState.referencePos.y + blockEl.offsetHeight / 2 - sideMenu.offsetHeight / 2}px`;
       sideMenu.style.left = `${sideMenuState.referencePos.x - sideMenu.offsetWidth}px`;
     } else {
       sideMenu.visible = false;

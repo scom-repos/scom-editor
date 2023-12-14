@@ -413,6 +413,9 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
             return this._data;
         }
         showModal(parent, popupPlacement) {
+            const sideMenu = (0, utils_1.getModalContainer)().querySelector('i-scom-editor-side-menu');
+            if (sideMenu && !sideMenu.visible)
+                sideMenu.visible = true;
             (0, utils_1.getModalContainer)().appendChild(this.mdColorPicker);
             this.mdColorPicker.position = 'fixed';
             if (parent)
@@ -420,10 +423,12 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
             const { top, height } = this.getBoundingClientRect();
             const maxHeight = window.innerHeight - (top + height);
             this.pnlColors.maxHeight = maxHeight <= 200 ? 200 : maxHeight;
-            if (popupPlacement)
-                this.mdColorPicker.popupPlacement = popupPlacement;
-            else
-                this.mdColorPicker.popupPlacement = maxHeight <= 200 ? 'top' : 'bottom';
+            if (maxHeight <= 200) {
+                this.mdColorPicker.popupPlacement = 'rightTop';
+            }
+            else {
+                this.mdColorPicker.popupPlacement = popupPlacement || 'bottom';
+            }
             this.mdColorPicker.visible = true;
         }
         closeModal() {
@@ -955,8 +960,6 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
         onShowMenu(parent) {
             (0, utils_5.getModalContainer)().appendChild(this.mdMenu);
             this.mdMenu.linkTo = parent;
-            this.mdMenu.isChildFixed = true;
-            this.mdMenu.closeOnScrollChildFixed = true;
             this.mdMenu.position = 'fixed';
             this.mdMenu.visible = true;
         }
@@ -988,7 +991,7 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
                 this.setData({ block });
         }
         render() {
-            return (this.$render("i-modal", { id: "mdMenu", popupPlacement: "topLeft", showBackdrop: false, minWidth: '6.25rem', maxWidth: '100%', visible: false, onOpen: this.onModalOpen, onClose: this.onModalClose },
+            return (this.$render("i-modal", { id: "mdMenu", popupPlacement: "left", showBackdrop: false, minWidth: '6.25rem', maxWidth: '100%', visible: false, isChildFixed: true, closeOnScrollChildFixed: true, onOpen: this.onModalOpen, onClose: this.onModalClose },
                 this.$render("i-panel", null,
                     this.$render("i-menu", { id: "menuElm", padding: { top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem' }, font: { color: Theme.text.primary, size: '0.75rem' }, boxShadow: Theme.shadows[1], width: '100%', mode: "vertical", data: this._menuData, background: { color: Theme.background.modal }, onItemClick: this.handleMenu }),
                     this.$render("i-scom-editor-color-picker", { id: "mdPicker", onSelected: this.onColorClicked }))));
@@ -1136,7 +1139,6 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         }
         constructor(parent, options) {
             super(parent, options);
-            this._isShowing = false;
             this.initedMap = new Map();
             this.handleAddBlock = this.handleAddBlock.bind(this);
             this.handleEditBlock = this.handleEditBlock.bind(this);
@@ -1165,9 +1167,6 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         get isEditShown() {
             return this.block?.type && utils_7.CustomBlockTypes.includes(this.block.type);
         }
-        get isShowing() {
-            return this._isShowing ?? false;
-        }
         setData(value) {
             this._data = value;
             this.dragHandle.freezeMenu = this.editor.sideMenu.freezeMenu;
@@ -1193,6 +1192,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             }
         }
         handleSetColor(type, color) {
+            this.editor.focus();
             const prop = type === 'text' ? 'textColor' : 'backgroundColor';
             this.editor.updateBlock(this.block, {
                 props: { [prop]: color }
@@ -1200,21 +1200,24 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             this.hideDragMenu();
         }
         handleDelete() {
+            this.editor.focus();
             this.editor.removeBlocks([this.block]);
             this.hideDragMenu();
         }
         handleAddBlock() {
+            this.editor.focus();
             this.editor.sideMenu.addBlock();
         }
-        showDragMenu() {
+        showDragMenu(target, event) {
+            event.preventDefault();
+            this.editor.focus();
             this.dragHandle.onShowMenu(this);
-            this._isShowing = true;
         }
         hideDragMenu() {
             this.dragHandle.onHideMenu();
-            this._isShowing = false;
         }
         handleEditBlock() {
+            this.editor.focus();
             const blockEl = this.editor.domElement.querySelector(`[data-id="${this.block.id}"]`);
             if (!blockEl)
                 return;
@@ -2308,14 +2311,9 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
                 });
                 (0, index_4.getModalContainer)().appendChild(sideMenu);
             }
-            const isFocused = editor.domElement.classList.contains('ProseMirror-focused');
             if (sideMenuState.show) {
-                if (sideMenu.isShowing)
-                    editor.sideMenu.freezeMenu();
-                else
-                    editor.sideMenu.unfreezeMenu();
                 sideMenu.block = sideMenuState.block;
-                sideMenu.visible = isFocused;
+                sideMenu.visible = editor.isFocused();
             }
             const blockEl = sideMenuState?.block?.id && editor.domElement.querySelector(`[data-id="${sideMenuState.block.id}"]`);
             if (blockEl) {
@@ -2333,15 +2331,20 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSlashMenu = void 0;
-    const closeModal = () => {
+    const closeSideMenu = () => {
         const sideMenu = (0, index_5.getModalContainer)().querySelector('i-scom-editor-side-menu');
         if (sideMenu && sideMenu.visible)
             sideMenu.visible = false;
     };
+    const openSideMenu = () => {
+        const sideMenu = (0, index_5.getModalContainer)().querySelector('i-scom-editor-side-menu');
+        if (sideMenu && !sideMenu.visible)
+            sideMenu.visible = true;
+    };
     const addSlashMenu = (editor) => {
         let modal;
         let menuElm;
-        let popupPlacement = 'topLeft';
+        // let popupPlacement: 'topLeft'|'bottomLeft' = 'topLeft';
         async function updateItems(items, onClick, selected, referencePos) {
             const { bottom = 0 } = referencePos;
             const maxHeight = window.innerHeight - bottom - 32;
@@ -2362,36 +2365,38 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                 modal.item = menuElm;
             }
             menuElm.updateMaxHeight(maxHeight <= 200 ? 200 : maxHeight);
-            popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
-            modal.popupPlacement = popupPlacement;
+            // popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
+            // modal.popupPlacement = popupPlacement;
         }
         editor.slashMenu.onUpdate(async (slashMenuState) => {
-            const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
-            const block = selectedBlocks[0];
-            const blockID = block?.id;
+            // const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+            // const block = selectedBlocks[0];
+            // const blockID = block?.id;
             if (!modal) {
                 modal = await (0, index_5.createModal)({
-                    popupPlacement,
+                    popupPlacement: "rightTop",
                     padding: { left: 0, top: 0, right: 0, bottom: 0 },
                     border: { radius: 0, style: 'none' },
-                    onClose: closeModal,
-                    onOpen: closeModal
+                    isChildFixed: true,
+                    closeOnScrollChildFixed: true,
+                    onClose: closeSideMenu
                 });
                 modal.id = 'mdSlash';
                 (0, index_5.getModalContainer)().appendChild(modal);
             }
             if (slashMenuState.show) {
                 updateItems(slashMenuState.filteredItems, editor.slashMenu.itemCallback, slashMenuState.keyboardHoveredItemIndex, slashMenuState.referencePos);
-                if (blockID) {
-                    const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-                    if (blockEl) {
-                        modal.linkTo = blockEl;
-                        modal.position = 'fixed';
-                        if (modal.visible)
-                            modal.refresh();
-                        else
-                            modal.visible = true;
-                    }
+                const sideMenu = (0, index_5.getModalContainer)().querySelector('i-scom-editor-side-menu');
+                // const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`) as any;
+                const linkTo = sideMenu;
+                if (linkTo) {
+                    openSideMenu();
+                    modal.linkTo = linkTo;
+                    modal.position = 'fixed';
+                    if (modal.visible)
+                        modal.refresh();
+                    else
+                        modal.visible = true;
                 }
                 else {
                     modal.visible = false;
@@ -3446,6 +3451,20 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             (0, index_15.addSlashMenu)(this._editor);
             (0, index_15.addHyperlinkToolbar)(this._editor);
             (0, index_15.addTableToolbar)(this._editor);
+            this._editor.domElement.addEventListener('focus', () => {
+                this._editor.sideMenu.unfreezeMenu();
+                const sideMenu = (0, index_16.getModalContainer)().querySelector('i-scom-editor-side-menu');
+                if (sideMenu) {
+                    sideMenu.visible = true;
+                    sideMenu.opacity = 1;
+                }
+            });
+            this._editor.domElement.addEventListener("blur", (event) => {
+                this._editor.sideMenu.freezeMenu();
+                const sideMenu = (0, index_16.getModalContainer)().querySelector('i-scom-editor-side-menu');
+                if (sideMenu)
+                    sideMenu.opacity = 0;
+            });
         }
         async onEditorChanged(editor) {
             let value = '';

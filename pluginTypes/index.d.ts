@@ -653,7 +653,6 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         private actionForm;
         private currentModule;
         private _data;
-        private _isShowing;
         private initedMap;
         static create(options?: ScomEditorSideMenuElement, parent?: Container): Promise<ScomEditorSideMenu>;
         constructor(parent?: Container, options?: any);
@@ -662,7 +661,6 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
         get editor(): BlockNoteEditor;
         set editor(value: BlockNoteEditor);
         get isEditShown(): boolean;
-        get isShowing(): boolean;
         setData(value: ISideMenu): void;
         private updateButtons;
         openConfig(block: Block, module: any): void;
