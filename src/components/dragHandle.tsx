@@ -110,8 +110,6 @@ export class ScomEditorDragHandle extends Module {
   onShowMenu(parent: Control) {
     getModalContainer().appendChild(this.mdMenu);
     this.mdMenu.linkTo = parent;
-    this.mdMenu.isChildFixed = true;
-    this.mdMenu.closeOnScrollChildFixed = true;
     this.mdMenu.position = 'fixed';
     this.mdMenu.visible = true;
   }
@@ -147,11 +145,13 @@ export class ScomEditorDragHandle extends Module {
     return (
       <i-modal
         id="mdMenu"
-        popupPlacement="topLeft"
+        popupPlacement="left"
         showBackdrop={false}
         minWidth={'6.25rem'}
         maxWidth={'100%'}
         visible={false}
+        isChildFixed={true}
+        closeOnScrollChildFixed={true}
         onOpen={this.onModalOpen}
         onClose={this.onModalClose}
       >
