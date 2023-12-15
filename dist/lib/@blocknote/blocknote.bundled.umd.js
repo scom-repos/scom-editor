@@ -49107,9 +49107,23 @@ img.ProseMirror-separator {
       let activeList;
       for (let i2 = 0; i2 < numChildElements; i2++) {
         const blockOuter2 = tree.children[i2];
-        const blockContainer = blockOuter2.children[0];
-        if (((_a = blockContainer == null ? void 0 : blockContainer.properties) == null ? void 0 : _a.dataNodeType) !== "blockContainer")
+        if (blockOuter2.tagName === "table") {
+          for (let i22 = 0; i22 < blockOuter2.children.length; i22++) {
+            const rowEl = blockOuter2.children[i22];
+            for (let j = 0; j < rowEl.children.length; j++) {
+              const cellEl = rowEl.children[j];
+              for (let t = 0; t < cellEl.children.length; t++) {
+                const blockInner = cellEl.children[t];
+                simplifyBlocksHelper(blockInner);
+              }
+            }
+          }
           continue;
+        }
+        const blockContainer = blockOuter2.children[0];
+        if (((_a = blockContainer == null ? void 0 : blockContainer.properties) == null ? void 0 : _a.dataNodeType) !== "blockContainer") {
+          continue;
+        }
         const blockContent2 = blockContainer.children[0];
         const blockGroup2 = blockContainer.children.length === 2 ? blockContainer.children[1] : null;
         const isListItemBlock = listItemBlockTypes.has(
@@ -52747,7 +52761,10 @@ img.ProseMirror-separator {
     }
   });
   const Table = {
-    node: CustomTable.configure({ resizable: true, cellMinWidth: 100 }),
+    node: CustomTable.configure({
+      resizable: true,
+      cellMinWidth: 100
+    }),
     propSchema: tablePropSchema
   };
   const TableRow$1 = Node.create({
@@ -53502,10 +53519,11 @@ img.ProseMirror-separator {
       pmView.dom.addEventListener("blur", this.blurHandler);
       document.addEventListener("scroll", this.scrollHandler);
     }
-    // mouseMoveHandler = (event: MouseEvent) => {
+    // mouseMoveHandler = (_event: MouseEvent) => {
     //   if (this.menuFrozen) {
     //     return;
     //   }
+    // };
     //   const target = domCellAround(event.target as HTMLElement);
     //   if (!target || !this.editor.isEditable) {
     //     if (this.tableToolbarState?.show) {
@@ -53917,6 +53935,10 @@ img.ProseMirror-separator {
       });
       __publicField(this, "onMouseMove", (event) => {
         var _a, _b, _c, _d, _e, _f;
+        const target = event.target;
+        if (target.tagName === "TH" || target.tagName === "TD") {
+          return;
+        }
         if (this.menuFrozen) {
           return;
         }
