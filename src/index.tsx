@@ -151,7 +151,7 @@ export class ScomEditor extends Module {
     addHyperlinkToolbar(this._editor);
     addTableToolbar(this._editor);
     this._editor.domElement.addEventListener('focus', () => {
-      this._editor.sideMenu.unfreezeMenu();
+      // this._editor.sideMenu.unfreezeMenu();
       const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
       if (sideMenu) {
         sideMenu.visible = true;
@@ -160,7 +160,7 @@ export class ScomEditor extends Module {
     })
 
     this._editor.domElement.addEventListener("blur", (event: MouseEvent) => {
-      this._editor.sideMenu.freezeMenu();
+      // this._editor.sideMenu.freezeMenu();
       const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
       if (sideMenu) sideMenu.opacity = 0;
     })
