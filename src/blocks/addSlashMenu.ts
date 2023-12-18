@@ -15,7 +15,6 @@ const openSideMenu = () => {
 export const addSlashMenu = (editor: BlockNoteEditor) => {
   let modal: Modal;
   let menuElm: ScomEditorSlashMenu;
-  // let popupPlacement: 'topLeft'|'bottomLeft' = 'topLeft';
 
   async function updateItems(items: any[], onClick: (item: any) => void, selected: number, referencePos: any) {
     const { bottom = 0 } = referencePos;
@@ -36,14 +35,12 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
       modal.item = menuElm;
     }
     menuElm.updateMaxHeight(maxHeight <= 200 ? 200 : maxHeight);
-    // popupPlacement = window.innerHeight - bottom <= 200 ? 'topLeft' : 'bottomLeft';
-    // modal.popupPlacement = popupPlacement;
   }
 
   editor.slashMenu.onUpdate(async (slashMenuState: CustomSlashMenuState) => {
-    // const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
-    // const block = selectedBlocks[0];
-    // const blockID = block?.id;
+    const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
+    const block = selectedBlocks[0];
+    const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
         popupPlacement: "rightTop",
@@ -66,12 +63,27 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
       );
 
       const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
-      // const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`) as any;
-      const linkTo = sideMenu;
-      if (linkTo) {
+      const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`) as Control;
+      const isTable = blockEl.closest('table');
+      if (sideMenu) {
         openSideMenu();
-        modal.linkTo = linkTo;
+        editor.sideMenu.freezeMenu();
+        modal.linkTo = sideMenu;
+        modal.popupPlacement = isTable ? 'topLeft' : 'rightTop';
         modal.position = 'fixed';
+        let innerMdX = 0;
+        let innerMdY = 0;
+        if (isTable) {
+          const { x: blockX, y: blockY, height: blockHeight } = blockEl.getBoundingClientRect();
+          const { x: sideMenuX, y: sideMenuY } = sideMenu.getBoundingClientRect();
+          innerMdX = blockX - sideMenuX;
+          innerMdY = blockY - sideMenuY - blockHeight;
+        }
+        const innerModal = modal.querySelector('.modal') as HTMLElement;
+        if (innerModal) {
+          innerModal.style.left = `${innerMdX}px`;
+          innerModal.style.top = `${innerMdY}px`;
+        }
         if (modal.visible) modal.refresh();
         else modal.visible = true;
       } else {

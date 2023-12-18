@@ -1,6 +1,7 @@
 import { Button, Control, HStack, Styles, IconName, Modal } from "@ijstech/components";
 import { PartialBlock, formatKeyboardShortcut } from "../global/index";
 import { buttonHoverStyle } from "./index.css";
+import assets from "../assets";
 const Theme = Styles.Theme.ThemeVars;
 
 export type IToolbarDropdownItem = {
@@ -140,7 +141,7 @@ export function getExtraFields () {
     },
     Tweet: {
       group: "Widget",
-      icon: {image: {url: 'https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGO_400x400.jpg', width: '100%', height: '100%'}},
+      icon: {image: {url: assets.fullPath('img/twitter.svg'), width: '100%', height: '100%', display: 'inline-block'}},
       hint: "Insert a twitter post",
     },
   };

@@ -120,6 +120,14 @@ declare module "@scom/scom-editor/components/index.css.ts" {
     export const buttonHoverStyle: string;
     export const settingStyle: string;
 }
+/// <amd-module name="@scom/scom-editor/assets.ts" />
+declare module "@scom/scom-editor/assets.ts" {
+    function fullPath(path: string): string;
+    const _default: {
+        fullPath: typeof fullPath;
+    };
+    export default _default;
+}
 /// <amd-module name="@scom/scom-editor/components/utils.ts" />
 declare module "@scom/scom-editor/components/utils.ts" {
     import { Button, Control, HStack, IconName, Modal } from "@ijstech/components";
@@ -241,6 +249,7 @@ declare module "@scom/scom-editor/components/utils.ts" {
                     url: string;
                     width: string;
                     height: string;
+                    display: string;
                 };
             };
             hint: string;
