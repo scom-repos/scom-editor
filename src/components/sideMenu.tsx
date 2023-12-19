@@ -220,6 +220,7 @@ export class ScomEditorSideMenu extends Module {
       title: 'Edit',
       width: '40rem'
     });
+    this.actionForm.refresh();
   }
 
   private async updateBlock (block: Block, props: Record<string, string>) {

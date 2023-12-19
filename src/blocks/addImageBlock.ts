@@ -3,6 +3,16 @@ import { Block, BlockNoteEditor } from "../global/index";
 import { ScomEditorCustomBlock } from "../components/index";
 import { execCustomBLock } from "./utils";
 
+function getData(element: HTMLElement) {
+  if (element.nodeName === 'IMG') {
+    return {
+      url: element.getAttribute('src'),
+      altText: element.getAttribute('alt')
+    };
+  }
+  return false;
+}
+
 export function addImageBlock(blocknote: any) {
   const ImageBlock = blocknote.createBlockSpec({
     type: "imageWidget",
@@ -17,8 +27,10 @@ export function addImageBlock(blocknote: any) {
       width: {default: 512},
       height: {default: 'auto'}
     },
-    containsInlineContent: false,
-    render: (block: Block, editor: BlockNoteEditor) => {
+    content: "none"
+  },
+  {
+    render: (block: Block) => {
       const wrapper = new Panel();
       const { url, cid, link, altText, keyword, photoId, backgroundColor } = JSON.parse(JSON.stringify(block.props))
       const data = {
@@ -32,59 +44,45 @@ export function addImageBlock(blocknote: any) {
         dom: wrapper
       };
     },
-    parse: () => {
+    parseFn: () => {
       return [
         {
           tag: "div[data-content-type=imageWidget]",
-          node: 'imageWidget'
+          contentElement: "[data-editable]"
         },
         {
           tag: "p",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            const child = element2.firstChild;
-            if (!child) {
-              return false;
-            }
-            if (child.nodeName === 'IMG') {
-              return {
-                url: child.getAttribute('src'),
-                altText: child.getAttribute('alt')
-              };
-            }
-            return false;
+          getAttrs: (element: string | HTMLElement) => {
+            if (typeof element === "string") return false;
+            const child = element.firstChild as HTMLElement;
+            if (!child) return false;
+            return getData(child);
           },
           priority: 400,
           node: 'imageWidget'
         },
         {
           tag: "img",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            if (element2.nodeName === 'IMG') {
-              return {
-                url: element2.getAttribute('src'),
-                altText: element2.getAttribute('alt')
-              };
-            }
-            return false;
+          getAttrs: (element: string | HTMLElement) => {
+            if (typeof element === "string") return false;
+            return getData(element);
           },
+          priority: 401,
           node: 'imageWidget'
         }
       ]
     },
-    // For render node to DOM (serializer.serializeNode(node))
-    renderInnerHTML: (attrs: any) => {
+    toExternalHTML: (block: any, editor: any) => {
       const imageTag = document.createElement("img");
-      const src = attrs.url || "";
-      const alt = attrs.altText || "";
+      const src = block.props.url || "";
+      const alt = block.props.altText || "";
       imageTag.setAttribute("src", src);
       imageTag.setAttribute("alt", alt);
-      return imageTag;
+      const wrapper = document.createElement("p");
+      wrapper.appendChild(imageTag);
+      return {
+        dom: wrapper
+      }
     },
     pasteRules: [
       {

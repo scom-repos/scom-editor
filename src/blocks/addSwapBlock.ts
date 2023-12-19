@@ -3,6 +3,7 @@ import { Block, BlockNoteEditor } from "../global/index";
 import { ScomEditorCustomBlock, getWidgetEmbedUrl } from "../components/index";
 import { execCustomBLock, parseUrl } from "./utils";
 
+const swapRegex = /https:\/\/ipfs\.scom\.dev\/ipfs\/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4\?data\=.*/g;
 function getData(href: string) {
   const widgetData = parseUrl(href);
   if (widgetData) {
@@ -33,8 +34,10 @@ export const addSwapBlock = (blocknote: any) => {
       defaultOutputToken: { default: null },
       apiEndpoints: { default: null }
     },
-    containsInlineContent: false,
-    render: (block: Block, editor: BlockNoteEditor) => {
+    content: "none"
+  },
+  {
+    render: (block: Block) => {
       const wrapper = new Panel();
       const props = JSON.parse(JSON.stringify(block.props));
       const data = {
@@ -48,7 +51,7 @@ export const addSwapBlock = (blocknote: any) => {
         dom: wrapper
       };
     },
-    parse: () => {
+    parseFn: () => {
       return [
         {
           tag: "div[data-content-type=swap]",
@@ -56,14 +59,12 @@ export const addSwapBlock = (blocknote: any) => {
         },
         {
           tag: "a",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
+          getAttrs: (element: string|HTMLElement) => {
+            if (typeof element === "string") {
               return false;
             }
-            if (element2.getAttribute('href')) {
-              const href = element2.getAttribute('href');
-              return getData(href);
-            }
+            const href = element.getAttribute('href');
+            if (href) return getData(href);
             return false;
           },
           priority: 402,
@@ -71,16 +72,14 @@ export const addSwapBlock = (blocknote: any) => {
         },
         {
           tag: "p",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
+          getAttrs: (element: string|HTMLElement) => {
+            if (typeof element === "string") {
               return false;
             }
-            const child = element2.firstChild;
-            if (!child) {
-              return false;
-            }
-            if (child.nodeName === 'A' && child.getAttribute('href')) {
-              const href = child.getAttribute('href');
+            const child = element.firstChild as HTMLElement;
+            if (!child) return false;
+            const href = child.getAttribute('href');
+            if (child.nodeName === 'A' && href) {
               return getData(href);
             }
             return false;
@@ -90,21 +89,23 @@ export const addSwapBlock = (blocknote: any) => {
         },
       ]
     },
-    renderInnerHTML: (attrs: any) => {
+    toExternalHTML: (block: any, editor: any) => {
       const link = document.createElement("a");
       const url = getWidgetEmbedUrl(
         {
           type: 'swap',
-          props: {...(attrs || {})}
+          props: {...(block.props || {})}
         }
       );
       link.setAttribute("href", url);
       link.textContent = 'swap';
-      return link;
+      const wrapper = document.createElement("p");
+      wrapper.appendChild(link);
+      return { dom: wrapper };
     },
     pasteRules: [
       {
-        find: /https:\/\/ipfs\.scom\.dev\/ipfs\/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4\?data\=.*/g,
+        find: swapRegex,
         handler(props: any) {
           const { state, chain, range } = props;
           const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;

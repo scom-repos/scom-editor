@@ -1,5 +1,5 @@
 import { Panel } from "@ijstech/components";
-import { Block, BlockNoteEditor, parseStringToObject } from "../global/index";
+import { Block, BlockNoteEditor } from "../global/index";
 import { ChartTypes, ScomEditorChart, getWidgetEmbedUrl } from "../components/index";
 import { execCustomBLock, parseUrl } from "./utils";
 
@@ -27,8 +27,10 @@ export const addChartBlock = (blocknote: any) => {
       width: {default: '100%'},
       height: {default: 'auto'}
     },
-    containsInlineContent: false,
-    render: (block: Block, editor: BlockNoteEditor) => {
+    content: "none"
+  },
+  {
+    render: (block: Block) => {
       const wrapper = new Panel();
       const data = JSON.parse(JSON.stringify(block.props));
       const chart = new ScomEditorChart(wrapper, { data });
@@ -37,21 +39,20 @@ export const addChartBlock = (blocknote: any) => {
         dom: wrapper
       };
     },
-    parse: () => {
+    parseFn: () => {
       return [
         {
           tag: "div[data-content-type=chart]",
-          node: 'chart'
+          contentElement: "[data-editable]"
         },
         {
           tag: "a",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
+          getAttrs: (element: string|HTMLElement) => {
+            if (typeof element === "string") {
               return false;
             }
-            if (element2.getAttribute('href')) {
-              return getData(element2);
-            }
+            const href = element.getAttribute('href');
+            if (href) return getData(href);
             return false;
           },
           priority: 404,
@@ -59,16 +60,15 @@ export const addChartBlock = (blocknote: any) => {
         },
         {
           tag: "p",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
+          getAttrs: (element: string|HTMLElement) => {
+            if (typeof element === "string") {
               return false;
             }
-            const child = element2.firstChild;
-            if (!child) {
-              return false;
-            }
-            if (child.nodeName === 'A' && child.getAttribute('href')) {
-              return getData(child);
+            const child = element.firstChild as HTMLElement;
+            if (!child) return false;
+            const href = child.getAttribute('href');
+            if (child.nodeName === 'A' && href) {
+              return getData(href);
             }
             return false;
           },
@@ -77,17 +77,21 @@ export const addChartBlock = (blocknote: any) => {
         },
       ]
     },
-    renderInnerHTML: (attrs: any) => {
+    toExternalHTML: (block: any, editor: any) => {
       const link = document.createElement("a");
       const url = getWidgetEmbedUrl(
         {
           type: 'chart',
-          props: {...(attrs || {})}
+          props: {...(block.props || {})}
         }
       );
       link.setAttribute("href", url);
       link.textContent = 'chart';
-      return link;
+      const wrapper = document.createElement("p");
+      wrapper.appendChild(link);
+      return {
+        dom: wrapper
+      }
     }
   });
   const ChartSlashItem = {
