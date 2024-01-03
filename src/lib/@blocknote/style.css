@@ -110,7 +110,7 @@
 
 ._bnEditor_12je0_3 {
   outline: none;
-  padding-inline: 54px;
+  padding-inline: clamp(2.188rem, 1.849rem + 1.696vw, 3.375rem);
   height: 100%;
 
   /* Define a set of colors to be used throughout the app for consistency

@@ -2319,6 +2319,7 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
                     block: sideMenuState.block,
                     editor: editor,
                     position: 'fixed',
+                    zIndex: 9999,
                     visible: false
                 });
                 (0, index_4.getModalContainer)().appendChild(sideMenu);
@@ -2329,8 +2330,10 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
             }
             const blockEl = sideMenuState?.block?.id && editor.domElement.querySelector(`[data-id="${sideMenuState.block.id}"]`);
             if (blockEl) {
-                sideMenu.style.top = `${sideMenuState.referencePos.y + blockEl.offsetHeight / 2 - sideMenu.offsetHeight / 2}px`;
-                sideMenu.style.left = `${sideMenuState.referencePos.x - sideMenu.offsetWidth}px`;
+                const menuHeight = sideMenu.offsetHeight || 20;
+                const menuWidth = sideMenu.offsetWidth || 50;
+                sideMenu.style.top = `${sideMenuState.referencePos.y + blockEl.offsetHeight / 2 - menuHeight / 2}px`;
+                sideMenu.style.left = `${sideMenuState.referencePos.x - menuWidth}px`;
             }
             else {
                 sideMenu.visible = false;
