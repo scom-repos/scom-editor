@@ -20,8 +20,9 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
         closeOnScrollChildFixed: false
       })
       modal.id = 'mdFormatting';
-      getModalContainer().appendChild(modal);
     }
+    if (!getModalContainer().contains(modal))
+      getModalContainer().appendChild(modal);
 
     if (formattingToolbar) {
       formattingToolbar.onRefresh();

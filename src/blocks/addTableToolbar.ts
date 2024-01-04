@@ -1,6 +1,6 @@
 import { Modal } from "@ijstech/components";
 import { BlockNoteEditor } from '../global/index';
-import { ScomEditorTableToolbar, createModal, getModalContainer } from '../components/index';
+import { ScomEditorTableToolbar, createModal, getModalContainer, setToolbar } from '../components/index';
 
 export const addTableToolbar = async (editor: BlockNoteEditor) => {
   let modal: Modal;
@@ -16,7 +16,10 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         overflow: 'hidden',
         maxHeight: '2rem'
       })
-      modal.id = 'mdTableToolbar';
+      setToolbar('table', modal);
+    }
+
+    if (!getModalContainer().contains(modal)) {
       getModalContainer().appendChild(modal);
     }
 

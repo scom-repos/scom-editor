@@ -23,7 +23,7 @@ import {
   addTweetBlock
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
-import { getModalContainer } from './components/index';
+import { getModalContainer, getToolbar, getToolbars, removeContainer } from './components/index';
 import { addSwapBlock } from './blocks/addSwapBlock';
 import { customEditorStyle } from './index.css';
 const Theme = Styles.Theme.ThemeVars;
@@ -105,7 +105,7 @@ export class ScomEditor extends Module {
   private async renderEditor(initialContent?: PartialBlock[]) {
     if (!this._blocknoteObj) return;
     this.pnlEditor.clearInnerHTML();
-    getModalContainer().innerHTML = '';
+    removeContainer();
     const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
     const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
     const { SwapSlashItem, SwapBlock } =  addSwapBlock(this._blocknoteObj);
@@ -152,17 +152,16 @@ export class ScomEditor extends Module {
     addTableToolbar(this._editor);
     this._editor.domElement.addEventListener('focus', () => {
       // this._editor.sideMenu.unfreezeMenu();
-      const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
-      if (sideMenu) {
-        sideMenu.visible = true;
-        sideMenu.opacity = 1;
-      }
+      const sideMenu = getToolbar('sideMenu');
+      if (sideMenu) sideMenu.opacity = 1;
     })
 
     this._editor.domElement.addEventListener("blur", (event: MouseEvent) => {
       // this._editor.sideMenu.freezeMenu();
-      const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
-      if (sideMenu) sideMenu.opacity = 0;
+      const sideMenus = getModalContainer().querySelectorAll('i-scom-editor-side-menu');
+      for (let menu of sideMenus) {
+        (menu as Control).opacity = 0;
+      }
     })
   }
 
@@ -174,8 +173,8 @@ export class ScomEditor extends Module {
     this.value = value;
     console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
-    const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
-    if (sideMenu && sideMenu.visible) sideMenu.visible = false;
+    const sideMenu = getToolbar('sideMenu');
+    if (sideMenu) sideMenu.opacity = 0;
   }
 
   private addCSS(href: string, name: string) {
@@ -369,14 +368,13 @@ export class ScomEditor extends Module {
 
   onHide(): void {
     if (this.timer) clearTimeout(this.timer);
-    const children = getModalContainer().children;
-    for (let child of children) {
-      (child as Control).visible = false;
-    }
+    removeContainer();
+    getToolbars().clear();
   }
 
   async init() {
     super.init();
+    removeContainer();
     this.onChanged = this.getAttribute('onChanged', true) || this.onChanged;
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
