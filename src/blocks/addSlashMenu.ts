@@ -1,15 +1,15 @@
 import { Control, Modal } from "@ijstech/components";
-import { ScomEditorSlashMenu, createModal, getModalContainer } from "../components/index";
+import { ScomEditorSlashMenu, createModal, getModalContainer, getToolbar, setToolbar } from "../components/index";
 import { BlockNoteEditor, CustomSlashMenuState } from "../global/index";
 
 const closeSideMenu = () => {
-  const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
-  if (sideMenu && sideMenu.visible) sideMenu.visible = false;
+  const sideMenu = getToolbar('sideMenu');
+  if (sideMenu) sideMenu.opacity = 0;
 }
 
 const openSideMenu = () => {
-  const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
-  if (sideMenu && !sideMenu.visible) sideMenu.visible = true;
+  const sideMenu = getToolbar('sideMenu');
+  if (sideMenu) sideMenu.opacity = 1;
 }
 
 export const addSlashMenu = (editor: BlockNoteEditor) => {
@@ -46,11 +46,16 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         popupPlacement: "rightTop",
         padding: {left: 0, top: 0, right: 0, bottom: 0},
         border: {radius: 0, style: 'none'},
-        isChildFixed: true,
-        closeOnScrollChildFixed: true,
+        position: 'absolute',
+        // isChildFixed: true,
+        // closeOnScrollChildFixed: true,
+        zIndex: 9999,
         onClose: closeSideMenu
       })
-      modal.id = 'mdSlash';
+      setToolbar('slashMenu', modal);
+    }
+
+    if (!getModalContainer().contains(modal)) {
       getModalContainer().appendChild(modal);
     }
 
@@ -62,7 +67,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         slashMenuState.referencePos
       );
 
-      const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
+      const sideMenu = getToolbar('sideMenu');
       const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`) as Control;
       const isTable = blockEl.closest('table');
       if (sideMenu) {
@@ -70,7 +75,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         editor.sideMenu.freezeMenu();
         modal.linkTo = sideMenu;
         modal.popupPlacement = isTable ? 'topLeft' : 'rightTop';
-        modal.position = 'fixed';
+        // modal.position = 'fixed';
         let innerMdX = 0;
         let innerMdY = 0;
         if (isTable) {

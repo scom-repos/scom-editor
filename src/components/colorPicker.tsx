@@ -8,7 +8,7 @@ import {
   Container,
   Modal
 } from '@ijstech/components';
-import { getModalContainer } from './utils';
+import { getModalContainer, getToolbar } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 export type onSelectedCallback = (type: ColorType, color: string) => void;
@@ -95,8 +95,8 @@ export class ScomEditorColorPicker extends Module {
   }
 
   showModal(parent?: Control, popupPlacement?: string) {
-    const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as Control;
-    if (sideMenu && !sideMenu.visible) sideMenu.visible = true;
+    // const sideMenu = getToolbar('sideMenu');
+    // if (sideMenu && !sideMenu.visible) sideMenu.visible = true;
     getModalContainer().appendChild(this.mdColorPicker);
     this.mdColorPicker.position = 'fixed';
     if (parent) this.mdColorPicker.linkTo = parent;

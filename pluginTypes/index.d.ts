@@ -119,6 +119,7 @@ declare module "@scom/scom-editor/global/index.ts" {
 declare module "@scom/scom-editor/components/index.css.ts" {
     export const buttonHoverStyle: string;
     export const settingStyle: string;
+    export const customModalStyle: string;
 }
 /// <amd-module name="@scom/scom-editor/assets.ts" />
 declare module "@scom/scom-editor/assets.ts" {
@@ -267,7 +268,12 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const createButton: (props: IButtonProps, parent: Control) => Button;
     export const createParent: (props?: {}) => Promise<HStack>;
     export const createModal: (props?: {}) => Promise<Modal>;
+    export const getToolbar: (id: string) => Control;
+    export const removeToolbar: (id: string) => void;
+    export const setToolbar: (id: string, toolbar: Control) => void;
+    export const getToolbars: () => Map<string, Control>;
     export const getModalContainer: () => HTMLElement;
+    export const removeContainer: () => void;
     export const getPlacement: (block: any) => string;
     export const CustomBlockTypes: string[];
     export const MediaBlockTypes: string[];
@@ -549,11 +555,12 @@ declare module "@scom/scom-editor/components/linkButton.tsx" {
 declare module "@scom/scom-editor/components/dragHandle.tsx" {
     import { ControlElement, Module, Container, Control } from '@ijstech/components';
     import { ColorType } from "@scom/scom-editor/components/colorPicker.tsx";
-    import { Block } from "@scom/scom-editor/global/index.ts";
+    import { Block, BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     type deletedCallback = () => void;
     type setColorCallback = (type: ColorType, color: string) => void;
     interface ScomEditorDragHandleElement extends ControlElement {
         block?: Block;
+        editor?: BlockNoteEditor;
         onDeleted?: deletedCallback;
         onSetColor?: setColorCallback;
         unfreezeMenu?: any;
@@ -561,6 +568,7 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
     }
     interface ISideMenu {
         block: Block;
+        editor?: BlockNoteEditor;
     }
     global {
         namespace JSX {
@@ -583,6 +591,8 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         constructor(parent?: Container, options?: any);
         get block(): Block;
         set block(value: Block);
+        get editor(): BlockNoteEditor;
+        set editor(value: BlockNoteEditor);
         setData(value: ISideMenu): void;
         private renderUI;
         private handleMenu;
@@ -965,7 +975,7 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorChart } from "@scom/scom-editor/components/chart.tsx";
     export { ScomEditorCustomBlock } from "@scom/scom-editor/components/customBlock.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
-    export { buttonHoverStyle } from "@scom/scom-editor/components/index.css.ts";
+    export { buttonHoverStyle, customModalStyle } from "@scom/scom-editor/components/index.css.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addFormattingToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addFormattingToolbar.ts" {
@@ -986,11 +996,6 @@ declare module "@scom/scom-editor/blocks/addSlashMenu.ts" {
 declare module "@scom/scom-editor/blocks/addHyperlinkToolbar.ts" {
     import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     export const addHyperlinkToolbar: (editor: BlockNoteEditor) => Promise<void>;
-}
-/// <amd-module name="@scom/scom-editor/blocks/addImageToolbar.tsx" />
-declare module "@scom/scom-editor/blocks/addImageToolbar.tsx" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
-    export const addImageToolbar: (editor: BlockNoteEditor) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/utils.ts" />
 declare module "@scom/scom-editor/blocks/utils.ts" {
@@ -1057,7 +1062,6 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addSideMenu } from "@scom/scom-editor/blocks/addSideMenu.ts";
     export { addSlashMenu } from "@scom/scom-editor/blocks/addSlashMenu.ts";
     export { addHyperlinkToolbar } from "@scom/scom-editor/blocks/addHyperlinkToolbar.ts";
-    export { addImageToolbar } from "@scom/scom-editor/blocks/addImageToolbar.tsx";
     export { addVideoBlock } from "@scom/scom-editor/blocks/addVideoBlock.ts";
     export { addImageBlock } from "@scom/scom-editor/blocks/addImageBlock.ts";
     export { addTableToolbar } from "@scom/scom-editor/blocks/addTableToolbar.ts";

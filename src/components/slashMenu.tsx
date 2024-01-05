@@ -6,11 +6,10 @@ import {
   Container,
   VStack,
   HStack,
-  Panel,
   Control,
   Icon
 } from '@ijstech/components';
-import { getExtraFields, getModalContainer } from './utils';
+import { getExtraFields, getModalContainer, getToolbar } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSlashMenuElement extends ControlElement {
@@ -77,8 +76,9 @@ export class ScomEditorSlashMenu extends Module {
     for (let item of this.items) {
       const executeFn = item.execute;
       item.execute = (editor: any) => {
-        const slashMenu = getModalContainer().querySelector('#mdSlash') as Control;
+        const slashMenu = getToolbar('slashMenu');
         if (slashMenu) slashMenu.visible = false;
+        editor.focus();
         executeFn(editor);
       }
       const field = fieldData[item.name] || {};
