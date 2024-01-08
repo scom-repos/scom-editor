@@ -49457,6 +49457,30 @@ img.ProseMirror-separator {
         })
       ];
     },
+    addPasteRules() {
+      return [
+        new PasteRule({
+          find: /.*/g,
+          handler: ({ state, chain, range, pasteEvent }) => {
+            var _a;
+            const { node: node2 } = getBlockInfoFromPos(
+              state.doc,
+              state.selection.from
+            );
+            const id = node2.attrs.id;
+            const { posBeforeNode } = getNodeById(id, state.doc);
+            const nodeAfter = state.doc.resolve(range.from).nodeAfter;
+            const text2 = ((_a = pasteEvent.clipboardData) == null ? void 0 : _a.getData("text")) || (nodeAfter == null ? void 0 : nodeAfter.textContent) || "";
+            chain().deleteRange({ from: range.from, to: range.to }).run();
+            parseMardown(text2, posBeforeNode, this.editor, {
+              state,
+              chain,
+              range
+            });
+          }
+        })
+      ];
+    },
     addKeyboardShortcuts() {
       return {
         "Mod-Alt-1": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
@@ -49529,6 +49553,25 @@ img.ProseMirror-separator {
   const Heading = {
     node: HeadingBlockContent,
     propSchema: headingPropSchema
+  };
+  const parseMardown = async (content2, posBeforeNode, editor, props) => {
+    const { state, range } = props;
+    const blocksToInsert = await markdownToBlocks(
+      content2,
+      defaultBlockSchema,
+      state.schema
+    );
+    if (blocksToInsert == null ? void 0 : blocksToInsert.length) {
+      const nodesToInsert = [];
+      for (const blockSpec of blocksToInsert) {
+        nodesToInsert.push(blockToNode(blockSpec, editor.schema));
+      }
+      if (range.from === range.to) {
+        editor.view.dispatch(
+          editor.state.tr.insert(posBeforeNode, nodesToInsert)
+        );
+      }
+    }
   };
   const handleEnter$1 = (editor) => {
     const { node: node2, contentType } = getBlockInfoFromPos(
@@ -52761,10 +52804,7 @@ img.ProseMirror-separator {
     }
   });
   const Table = {
-    node: CustomTable.configure({
-      resizable: true,
-      cellMinWidth: 100
-    }),
+    node: CustomTable.configure({ resizable: true, cellMinWidth: 100 }),
     propSchema: tablePropSchema
   };
   const TableRow$1 = Node.create({
@@ -53519,11 +53559,10 @@ img.ProseMirror-separator {
       pmView.dom.addEventListener("blur", this.blurHandler);
       document.addEventListener("scroll", this.scrollHandler);
     }
-    // mouseMoveHandler = (_event: MouseEvent) => {
+    // mouseMoveHandler = (event: MouseEvent) => {
     //   if (this.menuFrozen) {
     //     return;
     //   }
-    // };
     //   const target = domCellAround(event.target as HTMLElement);
     //   if (!target || !this.editor.isEditable) {
     //     if (this.tableToolbarState?.show) {
@@ -53935,10 +53974,6 @@ img.ProseMirror-separator {
       });
       __publicField(this, "onMouseMove", (event) => {
         var _a, _b, _c, _d, _e, _f;
-        const target = event.target;
-        if (target.tagName === "TH" || target.tagName === "TD") {
-          return;
-        }
         if (this.menuFrozen) {
           return;
         }
