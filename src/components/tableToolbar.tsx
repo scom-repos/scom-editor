@@ -85,108 +85,6 @@ export class ScomEditorTableToolbar extends Module {
     this._data.orientation = value;
   }
 
-  // private getDropdownItems(editor: BlockNoteEditor) {
-  //   const items: IToolbarDropdownItem[] = [
-  //     {
-  //       icon: {name: 'plus-circle'},
-  //       text: `Insert column before`,
-  //       isDisabled: !editor._tiptapEditor.can().addColumnBefore(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().addColumnBefore().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'plus-circle'},
-  //       text: `Insert column after`,
-  //       isDisabled: !editor._tiptapEditor.can().addColumnAfter(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().addColumnAfter().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'minus-circle'},
-  //       text: `Delete column`,
-  //       isDisabled: !editor._tiptapEditor.can().deleteColumn(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().deleteColumn().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'plus-circle'},
-  //       text: `Insert row before`,
-  //       isDisabled: !editor._tiptapEditor.can().addRowBefore(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().addRowBefore().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'plus-circle'},
-  //       text: `Insert row after`,
-  //       isDisabled: !editor._tiptapEditor.can().addRowBefore(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().addRowBefore().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'times'},
-  //       text: `Delete row`,
-  //       isDisabled: !editor._tiptapEditor.can().deleteRow(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().deleteRow().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'times'},
-  //       text: `Delete table`,
-  //       isDisabled: !editor._tiptapEditor.can().deleteTable(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().deleteTable().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'object-ungroup'},
-  //       text: `Split cell`,
-  //       isDisabled: !editor._tiptapEditor.can().splitCell(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().splitCell().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'columns'},
-  //       text: `Merge cells`,
-  //       isDisabled: !editor._tiptapEditor.can().mergeCells(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().mergeCells().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'toggle-on'},
-  //       text: `Toggle header column`,
-  //       isDisabled: !editor._tiptapEditor.can().toggleHeaderColumn(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().toggleHeaderColumn().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'toggle-on'},
-  //       text: `Toggle header row`,
-  //       isDisabled: !editor._tiptapEditor.can().toggleHeaderColumn(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().toggleHeaderColumn().run();
-  //       }
-  //     },
-  //     {
-  //       icon: {name: 'toggle-on'},
-  //       text: `Toggle header cells`,
-  //       isDisabled: !editor._tiptapEditor.can().toggleHeaderCell(),
-  //       onClick: () => {
-  //         editor._tiptapEditor.chain().focus().toggleHeaderCell().run();
-  //       }
-  //     }
-  //   ]
-  //   return items;
-  // }
-
   setData(value: ITableToolbar) {
     this._data = value;
   }
@@ -196,6 +94,7 @@ export class ScomEditorTableToolbar extends Module {
       this.tableMenu.setData({...this._data});
     } else {
       this.tableMenu = new ScomEditorTableMenu(undefined, {...this._data});
+      this.tableMenu.onClose = () => this.tableMenu.closeModal();
     }
     this.tableMenu.openModal({
       showBackdrop: false,

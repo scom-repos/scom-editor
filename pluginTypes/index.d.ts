@@ -832,6 +832,7 @@ declare module "@scom/scom-editor/components/tableMenu.tsx" {
         editor: BlockNoteEditor;
         block: any;
         index: number;
+        onClose?: () => void;
     }
     interface ITableMenu {
         orientation: "row" | "column";
@@ -850,6 +851,7 @@ declare module "@scom/scom-editor/components/tableMenu.tsx" {
         private menuElm;
         private _data;
         private _menuData;
+        onClose: () => void;
         static create(options?: ScomEditorTableMenuElement, parent?: Container): Promise<ScomEditorTableMenu>;
         constructor(parent?: Container, options?: any);
         get block(): any;

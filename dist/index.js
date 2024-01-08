@@ -1903,11 +1903,11 @@ define("@scom/scom-editor/components/tableMenu.tsx", ["require", "exports", "@ij
                         id: 'delete'
                     },
                     {
-                        title: `Add ${this.orientation} left`,
+                        title: `Add ${this.orientation} ${this.orientation === 'column' ? 'left' : 'above'}`,
                         id: 'addLeft'
                     },
                     {
-                        title: `Add ${this.orientation} right`,
+                        title: `Add ${this.orientation} ${this.orientation === 'column' ? 'right' : 'below'}`,
                         id: 'addRight'
                     },
                 ];
@@ -1915,15 +1915,66 @@ define("@scom/scom-editor/components/tableMenu.tsx", ["require", "exports", "@ij
             }
         }
         handleMenu(target, item) {
-            if (item.id === 'delete') {
+            if (this.onClose)
+                this.onClose();
+            if (this.orientation === 'row') {
+                if (item.id === 'delete') {
+                    const content = {
+                        type: "tableContent",
+                        rows: this.block.content.rows.filter((_, index) => index !== this.index),
+                    };
+                    this.editor.updateBlock(this.block, {
+                        type: "table",
+                        content,
+                    });
+                }
+                else {
+                    const emptyCol = this.block.content.rows[this.index].cells.map(() => []);
+                    const rows = [...this.block.content.rows];
+                    rows.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, {
+                        cells: emptyCol,
+                    });
+                    this.editor.updateBlock(this.block, {
+                        type: "table",
+                        content: {
+                            type: "tableContent",
+                            rows,
+                        },
+                    });
+                }
             }
-            else if (item.id === 'addLeft') {
-            }
-            else if (item.id === 'addRight') {
+            else if (this.orientation === 'column') {
+                if (item.id === 'delete') {
+                    const content = {
+                        type: "tableContent",
+                        rows: this.block.content.rows.map((row) => ({
+                            cells: row.cells.filter((_, index) => index !== this.index),
+                        })),
+                    };
+                    this.editor.updateBlock(this.block, {
+                        type: "table",
+                        content,
+                    });
+                }
+                else {
+                    const content = {
+                        type: "tableContent",
+                        rows: this.block.content.rows.map((row) => {
+                            const cells = [...row.cells];
+                            cells.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, []);
+                            return { cells };
+                        }),
+                    };
+                    this.editor.updateBlock(this.block, {
+                        type: "table",
+                        content: content,
+                    });
+                }
             }
         }
         async init() {
             super.init();
+            this.onClose = this.getAttribute('onClose', true) || this.onClose;
             const block = this.getAttribute('block', true);
             const editor = this.getAttribute('editor', true);
             const index = this.getAttribute('index', true);
@@ -1979,136 +2030,6 @@ define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "
         set orientation(value) {
             this._data.orientation = value;
         }
-        // private getToolbarButtons(editor: BlockNoteEditor) {
-        //   const customProps = {
-        //     display: 'inline-flex',
-        //     grid: {verticalAlignment: 'center'},
-        //     height: '100%',
-        //     minHeight: '1.875rem',
-        //     padding: {top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem'}
-        //   }
-        //   return [
-        //     // {
-        //     //   icon: {...iconProps, name: 'expand-alt'},
-        //     //   tooltip: {...toolTipProps, content: `Fix table to page width`},
-        //     //   onClick: () => {
-        //     //     editor._tiptapEditor.chain().focus().fixTables().run();
-        //     //   }
-        //     // },
-        //     {
-        //       customControl: () => {
-        //         let dropdown = new ScomEditorToolbarDropdown(undefined, {
-        //           ...customProps,
-        //           caption: 'Options',
-        //           items: this.getDropdownItems(this.editor),
-        //           class: buttonHoverStyle
-        //         });
-        //         return dropdown;
-        //       }
-        //     }
-        //   ]
-        // }
-        // private getDropdownItems(editor: BlockNoteEditor) {
-        //   const items: IToolbarDropdownItem[] = [
-        //     {
-        //       icon: {name: 'plus-circle'},
-        //       text: `Insert column before`,
-        //       isDisabled: !editor._tiptapEditor.can().addColumnBefore(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().addColumnBefore().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'plus-circle'},
-        //       text: `Insert column after`,
-        //       isDisabled: !editor._tiptapEditor.can().addColumnAfter(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().addColumnAfter().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'minus-circle'},
-        //       text: `Delete column`,
-        //       isDisabled: !editor._tiptapEditor.can().deleteColumn(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().deleteColumn().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'plus-circle'},
-        //       text: `Insert row before`,
-        //       isDisabled: !editor._tiptapEditor.can().addRowBefore(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().addRowBefore().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'plus-circle'},
-        //       text: `Insert row after`,
-        //       isDisabled: !editor._tiptapEditor.can().addRowBefore(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().addRowBefore().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'times'},
-        //       text: `Delete row`,
-        //       isDisabled: !editor._tiptapEditor.can().deleteRow(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().deleteRow().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'times'},
-        //       text: `Delete table`,
-        //       isDisabled: !editor._tiptapEditor.can().deleteTable(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().deleteTable().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'object-ungroup'},
-        //       text: `Split cell`,
-        //       isDisabled: !editor._tiptapEditor.can().splitCell(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().splitCell().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'columns'},
-        //       text: `Merge cells`,
-        //       isDisabled: !editor._tiptapEditor.can().mergeCells(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().mergeCells().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'toggle-on'},
-        //       text: `Toggle header column`,
-        //       isDisabled: !editor._tiptapEditor.can().toggleHeaderColumn(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().toggleHeaderColumn().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'toggle-on'},
-        //       text: `Toggle header row`,
-        //       isDisabled: !editor._tiptapEditor.can().toggleHeaderColumn(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().toggleHeaderColumn().run();
-        //       }
-        //     },
-        //     {
-        //       icon: {name: 'toggle-on'},
-        //       text: `Toggle header cells`,
-        //       isDisabled: !editor._tiptapEditor.can().toggleHeaderCell(),
-        //       onClick: () => {
-        //         editor._tiptapEditor.chain().focus().toggleHeaderCell().run();
-        //       }
-        //     }
-        //   ]
-        //   return items;
-        // }
         setData(value) {
             this._data = value;
         }
@@ -2118,6 +2039,7 @@ define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "
             }
             else {
                 this.tableMenu = new tableMenu_1.ScomEditorTableMenu(undefined, { ...this._data });
+                this.tableMenu.onClose = () => this.tableMenu.closeModal();
             }
             this.tableMenu.openModal({
                 showBackdrop: false,
@@ -2944,7 +2866,6 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
         let hideRow = false;
         let hideCol = false;
         editor.tableHandles.onUpdate(async (tableToolbarState) => {
-            console.log('tableHandlesState', tableToolbarState);
             const { referencePosCell, referencePosTable, draggingState, colIndex, rowIndex, block, show } = tableToolbarState;
             if (draggingState) {
                 draggedCellOrientation = draggingState.draggedCellOrientation;
@@ -2975,8 +2896,10 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
             const { x: columnX, y: columnY } = getReferenceClientRectColumn()?.();
             const { width: cellWidth, height: cellHeight } = referencePosCell;
             if (columnTableHandle) {
-                columnTableHandle.style.left = `${columnX + cellWidth / 2 - columnTableHandle.offsetWidth / 2}px`; //
-                columnTableHandle.style.top = `${columnY - columnTableHandle.offsetHeight / 2}px`;
+                const offsetHeight = columnTableHandle.offsetHeight || 20;
+                const offsetWidth = columnTableHandle.offsetWidth || 24;
+                columnTableHandle.style.left = `${columnX + cellWidth / 2 - offsetWidth / 2}px`; //
+                columnTableHandle.style.top = `${columnY - offsetHeight / 2}px`;
                 columnTableHandle.setData({ editor, block, index: colIndex, orientation: 'column' });
                 columnTableHandle.visible = show && draggedCellOrientation !== "row" && !hideCol;
             }
@@ -3000,8 +2923,10 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
             }
             const { x: rowX, y: rowY } = getReferenceClientRectRow()?.();
             if (rowTableHandle) {
-                rowTableHandle.style.left = `${rowX - rowTableHandle.offsetWidth / 2}px`;
-                rowTableHandle.style.top = `${rowY + cellHeight / 2 - rowTableHandle.offsetHeight / 2}px`;
+                const offsetHeight = rowTableHandle.offsetHeight || 20;
+                const offsetWidth = rowTableHandle.offsetWidth || 24;
+                rowTableHandle.style.left = `${rowX - offsetWidth / 2}px`;
+                rowTableHandle.style.top = `${rowY + cellHeight / 2 - offsetHeight / 2}px`;
                 rowTableHandle.setData({ editor, block, index: rowIndex, orientation: 'row' });
                 rowTableHandle.visible = show && draggedCellOrientation !== "col" && !hideRow;
             }

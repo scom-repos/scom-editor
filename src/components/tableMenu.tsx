@@ -16,6 +16,7 @@ interface ScomEditorTableMenuElement extends ControlElement {
   editor: BlockNoteEditor;
   block: any;
   index: number;
+  onClose?: () => void;
 }
 
 interface ITableMenu {
@@ -49,6 +50,7 @@ export class ScomEditorTableMenu extends Module {
       id: 'delete'
     }
   ];
+  onClose: () => void;
 
   static async create(options?: ScomEditorTableMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -107,11 +109,11 @@ export class ScomEditorTableMenu extends Module {
           id: 'delete'
         },
         {
-          title: `Add ${this.orientation} left`,
+          title: `Add ${this.orientation} ${this.orientation === 'column' ? 'left' : 'above'}`,
           id: 'addLeft'
         },
         {
-          title: `Add ${this.orientation} right`,
+          title: `Add ${this.orientation} ${this.orientation === 'column' ? 'right' : 'below'}`,
           id: 'addRight'
         },
       ]
@@ -120,16 +122,71 @@ export class ScomEditorTableMenu extends Module {
   }
 
   private handleMenu(target: Menu, item: any) {
-    if (item.id === 'delete') {
-    } else if (item.id === 'addLeft') {
-
-    } else if (item.id === 'addRight') {
-
+    if (this.onClose) this.onClose();
+    if (this.orientation === 'row') {
+      if (item.id === 'delete') {
+        const content = {
+          type: "tableContent",
+          rows: this.block.content.rows.filter(
+            (_, index) => index !== this.index
+          ),
+        };
+  
+        this.editor.updateBlock(this.block, {
+          type: "table",
+          content,
+        });
+      } else {
+        const emptyCol = this.block.content.rows[this.index].cells.map(
+          () => []
+        );
+        const rows = [...this.block.content.rows];
+        rows.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, {
+          cells: emptyCol,
+        });
+  
+        this.editor.updateBlock(this.block, {
+          type: "table",
+          content: {
+            type: "tableContent",
+            rows,
+          },
+        });
+      }
+    } else if (this.orientation === 'column') {
+      if (item.id === 'delete') {
+        const content = {
+          type: "tableContent",
+          rows: this.block.content.rows.map((row) => ({
+            cells: row.cells.filter((_, index) => index !== this.index),
+          })),
+        };
+  
+        this.editor.updateBlock(this.block, {
+          type: "table",
+          content,
+        });
+      } else {
+        const content = {
+          type: "tableContent",
+          rows: this.block.content.rows.map((row) => {
+            const cells = [...row.cells];
+            cells.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, []);
+            return { cells };
+          }),
+        };
+  
+        this.editor.updateBlock(this.block, {
+          type: "table",
+          content: content,
+        });
+      }
     }
   }
 
   async init() {
     super.init();
+    this.onClose = this.getAttribute('onClose', true) || this.onClose;
     const block = this.getAttribute('block', true);
     const editor = this.getAttribute('editor', true);
     const index = this.getAttribute('index', true);

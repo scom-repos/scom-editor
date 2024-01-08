@@ -71,8 +71,10 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
     const { x: columnX, y: columnY } = getReferenceClientRectColumn()?.();
     const { width: cellWidth, height: cellHeight } = referencePosCell;
     if (columnTableHandle) {
-      columnTableHandle.style.left = `${columnX + cellWidth / 2 - columnTableHandle.offsetWidth / 2}px`; //
-      columnTableHandle.style.top = `${columnY - columnTableHandle.offsetHeight / 2}px`;
+      const offsetHeight = columnTableHandle.offsetHeight || 20;
+      const offsetWidth = columnTableHandle.offsetWidth || 24;
+      columnTableHandle.style.left = `${columnX + cellWidth / 2 - offsetWidth / 2}px`; //
+      columnTableHandle.style.top = `${columnY - offsetHeight / 2}px`;
       columnTableHandle.setData({ editor, block, index: colIndex, orientation: 'column' });
       columnTableHandle.visible = show && draggedCellOrientation !== "row" && !hideCol;
     } else {
@@ -96,8 +98,10 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
 
     const { x: rowX, y: rowY } = getReferenceClientRectRow()?.();
     if (rowTableHandle) {
-      rowTableHandle.style.left = `${rowX - rowTableHandle.offsetWidth / 2}px`;
-      rowTableHandle.style.top = `${rowY + cellHeight / 2 - rowTableHandle.offsetHeight / 2}px`;
+      const offsetHeight = rowTableHandle.offsetHeight || 20;
+      const offsetWidth = rowTableHandle.offsetWidth || 24;
+      rowTableHandle.style.left = `${rowX - offsetWidth / 2}px`;
+      rowTableHandle.style.top = `${rowY + cellHeight / 2 - offsetHeight / 2}px`;
       rowTableHandle.setData({ editor, block, index: rowIndex, orientation: 'row' });
       rowTableHandle.visible = show && draggedCellOrientation !== "col" && !hideRow;
     } else {
