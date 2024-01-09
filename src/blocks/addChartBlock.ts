@@ -50,7 +50,8 @@ export const addChartBlock = (blocknote: any) => {
               return false;
             }
             if (element2.getAttribute('href')) {
-              return getData(element2);
+              const href = element2.getAttribute('href');
+              return getData(href);
             }
             return false;
           },
@@ -68,7 +69,8 @@ export const addChartBlock = (blocknote: any) => {
               return false;
             }
             if (child.nodeName === 'A' && child.getAttribute('href')) {
-              return getData(child);
+              const href = child.getAttribute('href');
+              return getData(href);
             }
             return false;
           },

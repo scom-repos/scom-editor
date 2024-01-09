@@ -53,7 +53,32 @@ export const addVideoBlock = (blocknote: any) => {
           },
           priority: 400,
           node: 'video'
-        }
+        },
+        {
+          tag: "p",
+          getAttrs: (element2: any) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            const child = element2.firstChild;
+            if (!child) {
+              return false;
+            }
+            if (child.getAttribute('href')) {
+              const href = child.getAttribute('href');
+              const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+              const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+              if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
+                return {
+                  url: href
+                }
+              }
+            }
+            return false;
+          },
+          priority: 410,
+          node: 'video'
+        },
       ]
     },
     renderInnerHTML: (attrs: any) => {

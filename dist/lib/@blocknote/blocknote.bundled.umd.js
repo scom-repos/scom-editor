@@ -49471,12 +49471,14 @@ img.ProseMirror-separator {
             const { posBeforeNode } = getNodeById(id, state.doc);
             const nodeAfter = state.doc.resolve(range.from).nodeAfter;
             const text2 = ((_a = pasteEvent.clipboardData) == null ? void 0 : _a.getData("text")) || (nodeAfter == null ? void 0 : nodeAfter.textContent) || "";
-            chain().deleteRange({ from: range.from, to: range.to }).run();
-            parseMardown(text2, posBeforeNode, this.editor, {
-              state,
-              chain,
-              range
-            });
+            if (text2) {
+              chain().deleteRange({ from: range.from, to: range.to }).run();
+              parseMardown(text2, posBeforeNode, this.editor, {
+                state,
+                chain,
+                range
+              });
+            }
           }
         })
       ];
@@ -49566,7 +49568,7 @@ img.ProseMirror-separator {
       for (const blockSpec of blocksToInsert) {
         nodesToInsert.push(blockToNode(blockSpec, editor.schema));
       }
-      if (range.from === range.to) {
+      if (range.from !== range.to) {
         editor.view.dispatch(
           editor.state.tr.insert(posBeforeNode, nodesToInsert)
         );
