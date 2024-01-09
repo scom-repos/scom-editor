@@ -2698,7 +2698,32 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
                         },
                         priority: 400,
                         node: 'video'
-                    }
+                    },
+                    {
+                        tag: "p",
+                        getAttrs: (element2) => {
+                            if (typeof element2 === "string") {
+                                return false;
+                            }
+                            const child = element2.firstChild;
+                            if (!child) {
+                                return false;
+                            }
+                            if (child.getAttribute('href')) {
+                                const href = child.getAttribute('href');
+                                const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+                                const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+                                if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
+                                    return {
+                                        url: href
+                                    };
+                                }
+                            }
+                            return false;
+                        },
+                        priority: 410,
+                        node: 'video'
+                    },
                 ];
             },
             renderInnerHTML: (attrs) => {
@@ -2956,7 +2981,8 @@ define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijs
                                 return false;
                             }
                             if (element2.getAttribute('href')) {
-                                return getData(element2);
+                                const href = element2.getAttribute('href');
+                                return getData(href);
                             }
                             return false;
                         },
@@ -2974,7 +3000,8 @@ define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijs
                                 return false;
                             }
                             if (child.nodeName === 'A' && child.getAttribute('href')) {
-                                return getData(child);
+                                const href = child.getAttribute('href');
+                                return getData(href);
                             }
                             return false;
                         },
