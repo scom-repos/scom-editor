@@ -1917,6 +1917,12 @@ define("@scom/scom-editor/components/tableMenu.tsx", ["require", "exports", "@ij
         handleMenu(target, item) {
             if (this.onClose)
                 this.onClose();
+            const emptyParagraph = {
+                children: [],
+                content: [],
+                type: 'paragraph',
+                props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' }
+            };
             if (this.orientation === 'row') {
                 if (item.id === 'delete') {
                     const content = {
@@ -1929,7 +1935,7 @@ define("@scom/scom-editor/components/tableMenu.tsx", ["require", "exports", "@ij
                     });
                 }
                 else {
-                    const emptyCol = this.block.content.rows[this.index].cells.map(() => []);
+                    const emptyCol = this.block.content.rows[this.index].cells.map(() => [{ ...emptyParagraph }]);
                     const rows = [...this.block.content.rows];
                     rows.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, {
                         cells: emptyCol,
@@ -1961,7 +1967,7 @@ define("@scom/scom-editor/components/tableMenu.tsx", ["require", "exports", "@ij
                         type: "tableContent",
                         rows: this.block.content.rows.map((row) => {
                             const cells = [...row.cells];
-                            cells.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, []);
+                            cells.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, [{ ...emptyParagraph }]);
                             return { cells };
                         }),
                     };

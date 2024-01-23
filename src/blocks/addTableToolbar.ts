@@ -67,7 +67,6 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         );
     }
 
-
     const { x: columnX, y: columnY } = getReferenceClientRectColumn()?.();
     const { width: cellWidth, height: cellHeight } = referencePosCell;
     if (columnTableHandle) {

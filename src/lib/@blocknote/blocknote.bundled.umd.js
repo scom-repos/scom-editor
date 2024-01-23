@@ -9652,6 +9652,7 @@ var __publicField = (obj, key, value) => {
       autoComplete: spaceSeparated,
       autoFocus: boolean,
       autoPlay: boolean,
+      blocking: spaceSeparated,
       capture: boolean,
       charSet: null,
       checked: boolean,
@@ -9677,6 +9678,7 @@ var __publicField = (obj, key, value) => {
       draggable: booleanish,
       encType: null,
       enterKeyHint: null,
+      fetchPriority: null,
       form: null,
       formAction: null,
       formEncType: null,
@@ -9694,6 +9696,7 @@ var __publicField = (obj, key, value) => {
       id: null,
       imageSizes: null,
       imageSrcSet: null,
+      inert: boolean,
       inputMode: null,
       integrity: null,
       is: null,
@@ -9729,6 +9732,7 @@ var __publicField = (obj, key, value) => {
       onAuxClick: null,
       onBeforeMatch: null,
       onBeforePrint: null,
+      onBeforeToggle: null,
       onBeforeUnload: null,
       onBlur: null,
       onCancel: null,
@@ -9817,6 +9821,9 @@ var __publicField = (obj, key, value) => {
       ping: spaceSeparated,
       placeholder: null,
       playsInline: boolean,
+      popover: null,
+      popoverTarget: null,
+      popoverTargetAction: null,
       poster: null,
       preload: null,
       readOnly: boolean,
@@ -9831,6 +9838,8 @@ var __publicField = (obj, key, value) => {
       scoped: boolean,
       seamless: boolean,
       selected: boolean,
+      shadowRootDelegatesFocus: boolean,
+      shadowRootMode: null,
       shape: null,
       size: number,
       sizes: null,
@@ -10130,6 +10139,7 @@ var __publicField = (obj, key, value) => {
       textAnchor: "text-anchor",
       textDecoration: "text-decoration",
       textRendering: "text-rendering",
+      transformOrigin: "transform-origin",
       typeOf: "typeof",
       underlinePosition: "underline-position",
       underlineThickness: "underline-thickness",
@@ -10495,6 +10505,7 @@ var __publicField = (obj, key, value) => {
       typeOf: commaOrSpaceSeparated,
       to: null,
       transform: null,
+      transformOrigin: null,
       u1: null,
       u2: null,
       underlinePosition: number,
@@ -10964,7 +10975,7 @@ var __publicField = (obj, key, value) => {
           /** @type {P5Element} */
           node2
         );
-        result = element$4(state, reference);
+        result = element$5(state, reference);
         return result;
       }
     }
@@ -10977,7 +10988,7 @@ var __publicField = (obj, key, value) => {
     }
     return result;
   }
-  function element$4(state, node2) {
+  function element$5(state, node2) {
     const schema = state.schema;
     state.schema = node2.namespaceURI === webNamespaces.svg ? svg : html$4;
     let index2 = -1;
@@ -11916,7 +11927,7 @@ var __publicField = (obj, key, value) => {
     }
     return count;
   }
-  function whitespace$1(thing) {
+  function whitespace$2(thing) {
     const value = (
       // @ts-expect-error looks like a node.
       thing && typeof thing === "object" && thing.type === "text" ? (
@@ -11935,7 +11946,7 @@ var __publicField = (obj, key, value) => {
       let offset = (index2 || 0) + increment2;
       let next = siblings2 && siblings2[offset];
       if (!includeWhitespace) {
-        while (next && whitespace$1(next)) {
+        while (next && whitespace$2(next)) {
           offset += increment2;
           next = siblings2[offset];
         }
@@ -11974,7 +11985,7 @@ var __publicField = (obj, key, value) => {
   });
   function headOrColgroupOrCaption(_, index2, parent) {
     const next = siblingAfter(parent, index2, true);
-    return !next || next.type !== "comment" && !(next.type === "text" && whitespace$1(next.value.charAt(0)));
+    return !next || next.type !== "comment" && !(next.type === "text" && whitespace$2(next.value.charAt(0)));
   }
   function html$3(_, index2, parent) {
     const next = siblingAfter(parent, index2);
@@ -12063,7 +12074,7 @@ var __publicField = (obj, key, value) => {
   }
   function body(node2) {
     const head2 = siblingAfter(node2, -1, true);
-    return !head2 || head2.type !== "comment" && !(head2.type === "text" && whitespace$1(head2.value.charAt(0))) && !(head2.type === "element" && (head2.tagName === "meta" || head2.tagName === "link" || head2.tagName === "script" || head2.tagName === "style" || head2.tagName === "template"));
+    return !head2 || head2.type !== "comment" && !(head2.type === "text" && whitespace$2(head2.value.charAt(0))) && !(head2.type === "element" && (head2.tagName === "meta" || head2.tagName === "link" || head2.tagName === "script" || head2.tagName === "style" || head2.tagName === "template"));
   }
   function colgroup(node2, index2, parent) {
     const previous2 = siblingBefore(parent, index2);
@@ -12104,7 +12115,7 @@ var __publicField = (obj, key, value) => {
       ['\0"&'.split(""), "\0\"&'`".split("")]
     ]
   };
-  function element$3(node2, index2, parent, state) {
+  function element$4(node2, index2, parent, state) {
     const schema = state.schema;
     const omit = schema.space === "svg" ? false : state.settings.omitOptionalTags;
     let selfClosing = schema.space === "svg" ? state.settings.closeEmptyElements : state.settings.voids.includes(node2.tagName.toLowerCase());
@@ -12227,7 +12238,7 @@ var __publicField = (obj, key, value) => {
   const handle$2 = zwitch("type", {
     invalid: invalid$1,
     unknown: unknown$2,
-    handlers: { comment: comment$2, doctype: doctype$1, element: element$3, raw, root: root$4, text: text$7 }
+    handlers: { comment: comment$2, doctype: doctype$1, element: element$4, raw, root: root$4, text: text$7 }
   });
   function invalid$1(node2) {
     throw new Error("Expected node, not `" + node2 + "`");
@@ -14200,17 +14211,25 @@ var __publicField = (obj, key, value) => {
   }
   function clearIncompatible(tr2, pos, parentType, match = parentType.contentMatch) {
     let node2 = tr2.doc.nodeAt(pos);
-    let delSteps = [], cur = pos + 1;
+    let replSteps = [], cur = pos + 1;
     for (let i2 = 0; i2 < node2.childCount; i2++) {
       let child = node2.child(i2), end = cur + child.nodeSize;
       let allowed = match.matchType(child.type);
       if (!allowed) {
-        delSteps.push(new ReplaceStep(cur, end, Slice.empty));
+        replSteps.push(new ReplaceStep(cur, end, Slice.empty));
       } else {
         match = allowed;
         for (let j = 0; j < child.marks.length; j++)
           if (!parentType.allowsMarkType(child.marks[j].type))
             tr2.step(new RemoveMarkStep(cur, end, child.marks[j]));
+        if (child.isText && !parentType.spec.code) {
+          let m, newline = /\r?\n|\r/g, slice;
+          while (m = newline.exec(child.text)) {
+            if (!slice)
+              slice = new Slice(Fragment.from(parentType.schema.text(" ", parentType.allowedMarks(child.marks))), 0, 0);
+            replSteps.push(new ReplaceStep(cur + m.index, cur + m.index + m[0].length, slice));
+          }
+        }
       }
       cur = end;
     }
@@ -14218,8 +14237,8 @@ var __publicField = (obj, key, value) => {
       let fill = match.fillBefore(Fragment.empty, true);
       tr2.replace(cur, cur, new Slice(fill, 0, 0));
     }
-    for (let i2 = delSteps.length - 1; i2 >= 0; i2--)
-      tr2.step(delSteps[i2]);
+    for (let i2 = replSteps.length - 1; i2 >= 0; i2--)
+      tr2.step(replSteps[i2]);
   }
   function canCut(node2, start, end) {
     return (start == 0 || node2.canReplace(start, node2.childCount)) && (end == node2.childCount || node2.canReplace(0, end));
@@ -14347,9 +14366,10 @@ var __publicField = (obj, key, value) => {
       if (node2.type.spec.isolating)
         return false;
       let rest = node2.content.cutByIndex(index3, node2.childCount);
+      let overrideChild = typesAfter && typesAfter[i2 + 1];
+      if (overrideChild)
+        rest = rest.replaceChild(0, overrideChild.type.create(overrideChild.attrs));
       let after = typesAfter && typesAfter[i2] || node2;
-      if (after != node2)
-        rest = rest.replaceChild(0, after.type.create(after.attrs));
       if (!node2.canReplace(index3 + 1, node2.childCount) || !after.type.validContent(rest))
         return false;
     }
@@ -14729,10 +14749,10 @@ var __publicField = (obj, key, value) => {
       content2 = node2.content;
     }
     for (let d = preferredDepth - 1; d >= 0; d--) {
-      let type = leftNodes[d].type, def = definesContent(type);
-      if (def && $from.node(preferredTargetIndex).type != type)
+      let leftNode = leftNodes[d], def = definesContent(leftNode.type);
+      if (def && !leftNode.sameMarkup($from.node(Math.abs(preferredTarget) - 1)))
         preferredDepth = d;
-      else if (def || !type.isTextblock)
+      else if (def || !leftNode.type.isTextblock)
         break;
     }
     for (let j = slice.openStart; j >= 0; j--) {
@@ -14851,6 +14871,42 @@ var __publicField = (obj, key, value) => {
     }
   }
   Step.jsonID("attr", AttrStep);
+  class DocAttrStep extends Step {
+    /**
+    Construct an attribute step.
+    */
+    constructor(attr, value) {
+      super();
+      this.attr = attr;
+      this.value = value;
+    }
+    apply(doc2) {
+      let attrs = /* @__PURE__ */ Object.create(null);
+      for (let name in doc2.attrs)
+        attrs[name] = doc2.attrs[name];
+      attrs[this.attr] = this.value;
+      let updated = doc2.type.create(attrs, doc2.content, doc2.marks);
+      return StepResult.ok(updated);
+    }
+    getMap() {
+      return StepMap.empty;
+    }
+    invert(doc2) {
+      return new DocAttrStep(this.attr, doc2.attrs[this.attr]);
+    }
+    map(mapping) {
+      return this;
+    }
+    toJSON() {
+      return { stepType: "docAttr", attr: this.attr, value: this.value };
+    }
+    static fromJSON(schema, json) {
+      if (typeof json.attr != "string")
+        throw new RangeError("Invalid input for DocAttrStep.fromJSON");
+      return new DocAttrStep(json.attr, json.value);
+    }
+  }
+  Step.jsonID("docAttr", DocAttrStep);
   let TransformError = class extends Error {
   };
   TransformError = function TransformError2(message) {
@@ -15032,9 +15088,18 @@ var __publicField = (obj, key, value) => {
     }
     /**
     Set a single attribute on a given node to a new value.
+    The `pos` addresses the document content. Use `setDocAttribute`
+    to set attributes on the document itself.
     */
     setNodeAttribute(pos, attr, value) {
       this.step(new AttrStep(pos, attr, value));
+      return this;
+    }
+    /**
+    Set a single attribute on the document to a new value.
+    */
+    setDocAttribute(attr, value) {
+      this.step(new DocAttrStep(attr, value));
       return this;
     }
     /**
@@ -16128,7 +16193,7 @@ var __publicField = (obj, key, value) => {
   const gecko = !ie$1 && /gecko\/(\d+)/i.test(agent);
   gecko && +(/Firefox\/(\d+)/.exec(agent) || [0, 0])[1];
   const _chrome = !ie$1 && /Chrome\/(\d+)/.exec(agent);
-  const chrome$1 = !!_chrome;
+  const chrome = !!_chrome;
   const chrome_version = _chrome ? +_chrome[1] : 0;
   const safari = !ie$1 && !!nav && /Apple Computer/.test(nav.vendor);
   const ios = safari && (/Mobile\/\w+/.test(agent) || !!nav && nav.maxTouchPoints > 2);
@@ -16174,7 +16239,7 @@ var __publicField = (obj, key, value) => {
       if (rect.top < bounding.top + getSide(scrollThreshold, "top"))
         moveY = -(bounding.top - rect.top + getSide(scrollMargin, "top"));
       else if (rect.bottom > bounding.bottom - getSide(scrollThreshold, "bottom"))
-        moveY = rect.bottom - bounding.bottom + getSide(scrollMargin, "bottom");
+        moveY = rect.bottom - rect.top > bounding.bottom - bounding.top ? rect.top + getSide(scrollMargin, "top") - bounding.top : rect.bottom - bounding.bottom + getSide(scrollMargin, "bottom");
       if (rect.left < bounding.left + getSide(scrollThreshold, "left"))
         moveX = -(bounding.left - rect.left + getSide(scrollMargin, "left"));
       else if (rect.right > bounding.right - getSide(scrollThreshold, "right"))
@@ -16192,7 +16257,7 @@ var __publicField = (obj, key, value) => {
           rect = { left: rect.left - dX, top: rect.top - dY, right: rect.right - dX, bottom: rect.bottom - dY };
         }
       }
-      if (atTop)
+      if (atTop || /^(fixed|sticky)$/.test(getComputedStyle(parent).position))
         break;
     }
   }
@@ -16348,7 +16413,7 @@ var __publicField = (obj, key, value) => {
           else if (rect.right < coords.left || rect.bottom < coords.top)
             outsideBlock = desc.posAfter;
         }
-        if (!desc.contentDOM && outsideBlock < 0) {
+        if (!desc.contentDOM && outsideBlock < 0 && !desc.node.isText) {
           let before = desc.node.isBlock ? coords.top < (rect.top + rect.bottom) / 2 : coords.left < (rect.left + rect.right) / 2;
           return before ? desc.posBefore : desc.posAfter;
         }
@@ -16406,6 +16471,9 @@ var __publicField = (obj, key, value) => {
             offset++;
         }
       }
+      let prev;
+      if (webkit && offset && node2.nodeType == 1 && (prev = node2.childNodes[offset - 1]).nodeType == 1 && prev.contentEditable == "false" && prev.getBoundingClientRect().top >= coords.top)
+        offset--;
       if (node2 == view.dom && offset == node2.childNodes.length - 1 && node2.lastChild.nodeType == 1 && coords.top > node2.lastChild.getBoundingClientRect().bottom)
         pos = view.state.doc.content.size;
       else if (offset == 0 || node2.nodeType != 1 || node2.childNodes[offset - 1].nodeName != "BR")
@@ -16869,6 +16937,18 @@ var __publicField = (obj, key, value) => {
         let { node: node2, offset } = anchorDOM;
         if (node2.nodeType == 3) {
           brKludge = !!(offset && node2.nodeValue[offset - 1] == "\n");
+          if (brKludge && offset == node2.nodeValue.length) {
+            for (let scan = node2, after; scan; scan = scan.parentNode) {
+              if (after = scan.nextSibling) {
+                if (after.nodeName == "BR")
+                  anchorDOM = headDOM = { node: after.parentNode, offset: domIndex(after) + 1 };
+                break;
+              }
+              let desc = scan.pmViewDesc;
+              if (desc && desc.node && desc.node.isBlock)
+                break;
+            }
+          }
         } else {
           let prev = node2.childNodes[offset - 1];
           brKludge = prev && (prev.nodeName == "BR" || prev.contentEditable == "false");
@@ -17031,7 +17111,7 @@ var __publicField = (obj, key, value) => {
     parseRule() {
       if (this.dirty & NODE_DIRTY || this.mark.type.spec.reparseInView)
         return null;
-      return { mark: this.mark.type.name, attrs: this.mark.attrs, contentElement: this.contentDOM || void 0 };
+      return { mark: this.mark.type.name, attrs: this.mark.attrs, contentElement: this.contentDOM };
     }
     matchesMark(mark2) {
       return this.dirty != NODE_DIRTY && this.mark.eq(mark2);
@@ -17638,9 +17718,11 @@ var __publicField = (obj, key, value) => {
             return true;
           } else if (!locked && (updated = this.recreateWrapper(next, node2, outerDeco, innerDeco, view, pos))) {
             this.top.children[this.index] = updated;
-            updated.dirty = CONTENT_DIRTY;
-            updated.updateChildren(view, pos + 1);
-            updated.dirty = NOT_DIRTY;
+            if (updated.contentDOM) {
+              updated.dirty = CONTENT_DIRTY;
+              updated.updateChildren(view, pos + 1);
+              updated.dirty = NOT_DIRTY;
+            }
             this.changed = true;
             this.index++;
             return true;
@@ -17656,13 +17738,13 @@ var __publicField = (obj, key, value) => {
       if (next.dirty || node2.isAtom || !next.children.length || !next.node.content.eq(node2.content))
         return null;
       let wrapper = NodeViewDesc.create(this.top, node2, outerDeco, innerDeco, view, pos);
-      if (!wrapper.contentDOM)
-        return null;
-      wrapper.children = next.children;
-      next.children = [];
+      if (wrapper.contentDOM) {
+        wrapper.children = next.children;
+        next.children = [];
+        for (let ch of wrapper.children)
+          ch.parent = wrapper;
+      }
       next.destroy();
-      for (let ch of wrapper.children)
-        ch.parent = wrapper;
       return wrapper;
     }
     // Insert the node as a newly created node desc.
@@ -17693,7 +17775,7 @@ var __publicField = (obj, key, value) => {
       }
       if (!lastChild || // Empty textblock
       !(lastChild instanceof TextViewDesc) || /\n$/.test(lastChild.node.text) || this.view.requiresGeckoHackNode && /\s$/.test(lastChild.node.text)) {
-        if ((safari || chrome$1) && lastChild && lastChild.dom.contentEditable == "false")
+        if ((safari || chrome) && lastChild && lastChild.dom.contentEditable == "false")
           this.addHackNode("IMG", parent);
         this.addHackNode("BR", this.top);
       }
@@ -17771,10 +17853,17 @@ var __publicField = (obj, key, value) => {
     }
     let decoIndex = 0, active = [], restNode = null;
     for (let parentIndex = 0; ; ) {
-      if (decoIndex < locals.length && locals[decoIndex].to == offset) {
-        let widget = locals[decoIndex++], widgets;
-        while (decoIndex < locals.length && locals[decoIndex].to == offset)
-          (widgets || (widgets = [widget])).push(locals[decoIndex++]);
+      let widget, widgets;
+      while (decoIndex < locals.length && locals[decoIndex].to == offset) {
+        let next = locals[decoIndex++];
+        if (next.widget) {
+          if (!widget)
+            widget = next;
+          else
+            (widgets || (widgets = [widget])).push(next);
+        }
+      }
+      if (widget) {
         if (widgets) {
           widgets.sort(compareSide);
           for (let i2 = 0; i2 < widgets.length; i2++)
@@ -17813,6 +17902,9 @@ var __publicField = (obj, key, value) => {
           end = cutAt;
           index2 = -1;
         }
+      } else {
+        while (decoIndex < locals.length && locals[decoIndex].to < end)
+          decoIndex++;
       }
       let outerDeco = child.isInline && !child.isLeaf ? active.filter((d) => !d.inline) : active.slice();
       onNode(child, outerDeco, deco.forChild(offset, child), index2);
@@ -17859,6 +17951,8 @@ var __publicField = (obj, key, value) => {
         str += next.text;
       }
       if (pos >= from2) {
+        if (pos >= to && str.slice(to - text2.length - childStart, to - childStart) == text2)
+          return to - text2.length;
         let found2 = childStart < to ? str.lastIndexOf(text2, to - childStart - 1) : -1;
         if (found2 >= 0 && found2 + text2.length + childStart >= from2)
           return childStart + found2;
@@ -17925,7 +18019,7 @@ var __publicField = (obj, key, value) => {
     syncNodeSelection(view, sel);
     if (!editorOwnsSelection(view))
       return;
-    if (!force && view.input.mouseDown && view.input.mouseDown.allowDefault && chrome$1) {
+    if (!force && view.input.mouseDown && view.input.mouseDown.allowDefault && chrome) {
       let domSel = view.domSelectionRange(), curSel = view.domObserver.currentSelection;
       if (domSel.anchorNode && curSel.anchorNode && isEquivalentPosition(domSel.anchorNode, domSel.anchorOffset, curSel.anchorNode, curSel.anchorOffset)) {
         view.input.mouseDown.delayedSelectionSync = true;
@@ -17962,7 +18056,7 @@ var __publicField = (obj, key, value) => {
     view.domObserver.setCurSelection();
     view.domObserver.connectSelection();
   }
-  const brokenSelectBetweenUneditable = safari || chrome$1 && chrome_version < 63;
+  const brokenSelectBetweenUneditable = safari || chrome && chrome_version < 63;
   function temporarilyEditableNear(view, pos) {
     let { node: node2, offset } = view.docView.domFromPos(pos, 0);
     let after = offset < node2.childNodes.length ? node2.childNodes[offset] : null;
@@ -18077,7 +18171,13 @@ var __publicField = (obj, key, value) => {
   function selectHorizontally(view, dir, mods) {
     let sel = view.state.selection;
     if (sel instanceof TextSelection) {
-      if (!sel.empty || mods.indexOf("s") > -1) {
+      if (mods.indexOf("s") > -1) {
+        let { $head } = sel, node2 = $head.textOffset ? null : dir < 0 ? $head.nodeBefore : $head.nodeAfter;
+        if (!node2 || node2.isText || !node2.isLeaf)
+          return false;
+        let $newHead = view.state.doc.resolve($head.pos + node2.nodeSize * (dir < 0 ? -1 : 1));
+        return apply(view, new TextSelection(sel.$anchor, $newHead));
+      } else if (!sel.empty) {
         return false;
       } else if (view.endOfTextblock(dir > 0 ? "forward" : "backward")) {
         let next = moveSelectionBlock(view.state, dir);
@@ -18111,9 +18211,9 @@ var __publicField = (obj, key, value) => {
   function nodeLen(node2) {
     return node2.nodeType == 3 ? node2.nodeValue.length : node2.childNodes.length;
   }
-  function isIgnorable(dom) {
+  function isIgnorable(dom, dir) {
     let desc = dom.pmViewDesc;
-    return desc && desc.size == 0 && (dom.nextSibling || dom.nodeName != "BR");
+    return desc && desc.size == 0 && (dir < 0 || dom.nextSibling || dom.nodeName != "BR");
   }
   function skipIgnoredNodes(view, dir) {
     return dir < 0 ? skipIgnoredNodesBefore(view) : skipIgnoredNodesAfter(view);
@@ -18124,7 +18224,7 @@ var __publicField = (obj, key, value) => {
     if (!node2)
       return;
     let moveNode, moveOffset, force = false;
-    if (gecko && node2.nodeType == 1 && offset < nodeLen(node2) && isIgnorable(node2.childNodes[offset]))
+    if (gecko && node2.nodeType == 1 && offset < nodeLen(node2) && isIgnorable(node2.childNodes[offset], -1))
       force = true;
     for (; ; ) {
       if (offset > 0) {
@@ -18132,7 +18232,7 @@ var __publicField = (obj, key, value) => {
           break;
         } else {
           let before = node2.childNodes[offset - 1];
-          if (isIgnorable(before)) {
+          if (isIgnorable(before, -1)) {
             moveNode = node2;
             moveOffset = --offset;
           } else if (before.nodeType == 3) {
@@ -18145,7 +18245,7 @@ var __publicField = (obj, key, value) => {
         break;
       } else {
         let prev = node2.previousSibling;
-        while (prev && isIgnorable(prev)) {
+        while (prev && isIgnorable(prev, -1)) {
           moveNode = node2.parentNode;
           moveOffset = domIndex(prev);
           prev = prev.previousSibling;
@@ -18178,7 +18278,7 @@ var __publicField = (obj, key, value) => {
         if (node2.nodeType != 1)
           break;
         let after = node2.childNodes[offset];
-        if (isIgnorable(after)) {
+        if (isIgnorable(after, 1)) {
           moveNode = node2;
           moveOffset = ++offset;
         } else
@@ -18187,7 +18287,7 @@ var __publicField = (obj, key, value) => {
         break;
       } else {
         let next = node2.nextSibling;
-        while (next && isIgnorable(next)) {
+        while (next && isIgnorable(next, 1)) {
           moveNode = next.parentNode;
           moveOffset = domIndex(next) + 1;
           next = next.nextSibling;
@@ -18211,7 +18311,47 @@ var __publicField = (obj, key, value) => {
     let desc = dom.pmViewDesc;
     return desc && desc.node && desc.node.isBlock;
   }
+  function textNodeAfter(node2, offset) {
+    while (node2 && offset == node2.childNodes.length && !hasBlockDesc(node2)) {
+      offset = domIndex(node2) + 1;
+      node2 = node2.parentNode;
+    }
+    while (node2 && offset < node2.childNodes.length) {
+      let next = node2.childNodes[offset];
+      if (next.nodeType == 3)
+        return next;
+      if (next.nodeType == 1 && next.contentEditable == "false")
+        break;
+      node2 = next;
+      offset = 0;
+    }
+  }
+  function textNodeBefore(node2, offset) {
+    while (node2 && !offset && !hasBlockDesc(node2)) {
+      offset = domIndex(node2);
+      node2 = node2.parentNode;
+    }
+    while (node2 && offset) {
+      let next = node2.childNodes[offset - 1];
+      if (next.nodeType == 3)
+        return next;
+      if (next.nodeType == 1 && next.contentEditable == "false")
+        break;
+      node2 = next;
+      offset = node2.childNodes.length;
+    }
+  }
   function setSelFocus(view, node2, offset) {
+    if (node2.nodeType != 3) {
+      let before, after;
+      if (after = textNodeAfter(node2, offset)) {
+        node2 = after;
+        offset = 0;
+      } else if (before = textNodeBefore(node2, offset)) {
+        node2 = before;
+        offset = before.nodeValue.length;
+      }
+    }
     let sel = view.domSelection();
     if (selectionCollapsed(sel)) {
       let range = document.createRange();
@@ -18231,7 +18371,7 @@ var __publicField = (obj, key, value) => {
   }
   function findDirection(view, pos) {
     let $pos = view.state.doc.resolve(pos);
-    if (!(chrome$1 || windows) && $pos.parent.inlineContent) {
+    if (!(chrome || windows) && $pos.parent.inlineContent) {
       let coords = view.coordsAtPos(pos);
       if (pos > $pos.start()) {
         let before = view.coordsAtPos(pos - 1);
@@ -18322,7 +18462,7 @@ var __publicField = (obj, key, value) => {
     let code2 = event.keyCode, mods = getMods(event);
     if (code2 == 8 || mac$2 && code2 == 72 && mods == "c") {
       return stopNativeHorizontalDelete(view, -1) || skipIgnoredNodes(view, -1);
-    } else if (code2 == 46 || mac$2 && code2 == 68 && mods == "c") {
+    } else if (code2 == 46 && !event.shiftKey || mac$2 && code2 == 68 && mods == "c") {
       return stopNativeHorizontalDelete(view, 1) || skipIgnoredNodes(view, 1);
     } else if (code2 == 13 || code2 == 27) {
       return true;
@@ -18335,7 +18475,7 @@ var __publicField = (obj, key, value) => {
     } else if (code2 == 38 || mac$2 && code2 == 80 && mods == "c") {
       return selectVertically(view, -1, mods) || skipIgnoredNodes(view, -1);
     } else if (code2 == 40 || mac$2 && code2 == 78 && mods == "c") {
-      return safariDownArrowBug(view) || selectVertically(view, 1, mods) || skipIgnoredNodesAfter(view);
+      return safariDownArrowBug(view) || selectVertically(view, 1, mods) || skipIgnoredNodes(view, 1);
     } else if (mods == (mac$2 ? "m" : "c") && (code2 == 66 || code2 == 73 || code2 == 89 || code2 == 90)) {
       return true;
     }
@@ -18545,7 +18685,7 @@ var __publicField = (obj, key, value) => {
     return elt;
   }
   function restoreReplacedSpaces(dom) {
-    let nodes = dom.querySelectorAll(chrome$1 ? "span:not([class]):not([style])" : "span.Apple-converted-space");
+    let nodes = dom.querySelectorAll(chrome ? "span:not([class]):not([style])" : "span.Apple-converted-space");
     for (let i2 = 0; i2 < nodes.length; i2++) {
       let node2 = nodes[i2];
       if (node2.childNodes.length == 1 && node2.textContent == " " && node2.parentNode)
@@ -18594,6 +18734,7 @@ var __publicField = (obj, key, value) => {
       this.compositionNodes = [];
       this.compositionEndedAt = -2e8;
       this.compositionID = 1;
+      this.compositionPendingChanges = 0;
       this.domChangeCount = 0;
       this.eventHandlers = /* @__PURE__ */ Object.create(null);
       this.hideSelectionGuard = null;
@@ -18656,7 +18797,7 @@ var __publicField = (obj, key, value) => {
       return;
     view.input.lastKeyCode = event.keyCode;
     view.input.lastKeyCodeTime = Date.now();
-    if (android && chrome$1 && event.keyCode == 13)
+    if (android && chrome && event.keyCode == 13)
       return;
     if (event.keyCode != 229)
       view.domObserver.forceFlush();
@@ -18897,7 +19038,7 @@ var __publicField = (obj, key, value) => {
       // (hidden) cursor is doesn't change the selection, and
       // thus doesn't get a reaction from ProseMirror. This
       // works around that.
-      chrome$1 && !this.view.state.selection.visible && Math.min(Math.abs(pos.pos - this.view.state.selection.from), Math.abs(pos.pos - this.view.state.selection.to)) <= 2)) {
+      chrome && !this.view.state.selection.visible && Math.min(Math.abs(pos.pos - this.view.state.selection.from), Math.abs(pos.pos - this.view.state.selection.to)) <= 2)) {
         updateSelection(this.view, Selection.near(this.view.state.doc.resolve(pos.pos)), "pointer");
         event.preventDefault();
       } else {
@@ -18969,6 +19110,9 @@ var __publicField = (obj, key, value) => {
     if (view.composing) {
       view.input.composing = false;
       view.input.compositionEndedAt = event.timeStamp;
+      view.input.compositionPendingChanges = view.domObserver.pendingRecords().length ? view.input.compositionID : 0;
+      if (view.input.compositionPendingChanges)
+        Promise.resolve().then(() => view.domObserver.flush());
       view.input.compositionID++;
       scheduleComposeEnd(view, 20);
     }
@@ -19026,7 +19170,7 @@ var __publicField = (obj, key, value) => {
   const brokenClipboardAPI = ie$1 && ie_version < 15 || ios && webkit_version < 604;
   handlers$2.copy = editHandlers.cut = (view, _event) => {
     let event = _event;
-    let sel = view.state.selection, cut = event.type == "cut";
+    let sel = view.state.selection, cut2 = event.type == "cut";
     if (sel.empty)
       return;
     let data = brokenClipboardAPI ? null : event.clipboardData;
@@ -19039,7 +19183,7 @@ var __publicField = (obj, key, value) => {
     } else {
       captureCopy(view, dom);
     }
-    if (cut)
+    if (cut2)
       view.dispatch(view.state.tr.deleteSelection().scrollIntoView().setMeta("uiEvent", "cut"));
   };
   function sliceSingleNode(slice) {
@@ -19054,14 +19198,15 @@ var __publicField = (obj, key, value) => {
       target.contentEditable = "true";
     target.style.cssText = "position: fixed; left: -10000px; top: 10px";
     target.focus();
+    let plain = view.input.shiftKey && view.input.lastKeyCode != 45;
     setTimeout(() => {
       view.focus();
       if (target.parentNode)
         target.parentNode.removeChild(target);
       if (plainText)
-        doPaste(view, target.value, null, view.input.shiftKey, event);
+        doPaste(view, target.value, null, plain, event);
       else
-        doPaste(view, target.textContent, target.innerHTML, view.input.shiftKey, event);
+        doPaste(view, target.textContent, target.innerHTML, plain, event);
     }, 50);
   }
   function doPaste(view, text2, html2, preferPlain, event) {
@@ -19071,24 +19216,33 @@ var __publicField = (obj, key, value) => {
     if (!slice)
       return false;
     let singleNode = sliceSingleNode(slice);
-    let tr2 = singleNode ? view.state.tr.replaceSelectionWith(singleNode, view.input.shiftKey) : view.state.tr.replaceSelection(slice);
+    let tr2 = singleNode ? view.state.tr.replaceSelectionWith(singleNode, preferPlain) : view.state.tr.replaceSelection(slice);
     view.dispatch(tr2.scrollIntoView().setMeta("paste", true).setMeta("uiEvent", "paste"));
     return true;
+  }
+  function getText$1(clipboardData) {
+    let text2 = clipboardData.getData("text/plain") || clipboardData.getData("Text");
+    if (text2)
+      return text2;
+    let uris = clipboardData.getData("text/uri-list");
+    return uris ? uris.replace(/\r?\n/g, " ") : "";
   }
   editHandlers.paste = (view, _event) => {
     let event = _event;
     if (view.composing && !android)
       return;
     let data = brokenClipboardAPI ? null : event.clipboardData;
-    if (data && doPaste(view, data.getData("text/plain"), data.getData("text/html"), view.input.shiftKey, event))
+    let plain = view.input.shiftKey && view.input.lastKeyCode != 45;
+    if (data && doPaste(view, getText$1(data), data.getData("text/html"), plain, event))
       event.preventDefault();
     else
       capturePaste(view, event);
   };
   class Dragging {
-    constructor(slice, move) {
+    constructor(slice, move, node2) {
       this.slice = slice;
       this.move = move;
+      this.node = node2;
     }
   }
   const dragCopyModifier = mac$2 ? "altKey" : "ctrlKey";
@@ -19101,22 +19255,23 @@ var __publicField = (obj, key, value) => {
       return;
     let sel = view.state.selection;
     let pos = sel.empty ? null : view.posAtCoords(eventCoords(event));
+    let node2;
     if (pos && pos.pos >= sel.from && pos.pos <= (sel instanceof NodeSelection ? sel.to - 1 : sel.to))
       ;
     else if (mouseDown && mouseDown.mightDrag) {
-      view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, mouseDown.mightDrag.pos)));
+      node2 = NodeSelection.create(view.state.doc, mouseDown.mightDrag.pos);
     } else if (event.target && event.target.nodeType == 1) {
       let desc = view.docView.nearestDesc(event.target, true);
       if (desc && desc.node.type.spec.draggable && desc != view.docView)
-        view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, desc.posBefore)));
+        node2 = NodeSelection.create(view.state.doc, desc.posBefore);
     }
-    let slice = view.state.selection.content(), { dom, text: text2 } = serializeForClipboard(view, slice);
+    let slice = (node2 || view.state.selection).content(), { dom, text: text2 } = serializeForClipboard(view, slice);
     event.dataTransfer.clearData();
     event.dataTransfer.setData(brokenClipboardAPI ? "Text" : "text/html", dom.innerHTML);
     event.dataTransfer.effectAllowed = "copyMove";
     if (!brokenClipboardAPI)
       event.dataTransfer.setData("text/plain", text2);
-    view.dragging = new Dragging(slice, !event[dragCopyModifier]);
+    view.dragging = new Dragging(slice, !event[dragCopyModifier], node2);
   };
   handlers$2.dragend = (view) => {
     let dragging = view.dragging;
@@ -19142,7 +19297,7 @@ var __publicField = (obj, key, value) => {
         slice = f(slice, view);
       });
     } else {
-      slice = parseFromClipboard(view, event.dataTransfer.getData(brokenClipboardAPI ? "Text" : "text/plain"), brokenClipboardAPI ? null : event.dataTransfer.getData("text/html"), false, $mouse);
+      slice = parseFromClipboard(view, getText$1(event.dataTransfer), brokenClipboardAPI ? null : event.dataTransfer.getData("text/html"), false, $mouse);
     }
     let move = !!(dragging && !event[dragCopyModifier]);
     if (view.someProp("handleDrop", (f) => f(view, event, slice || Slice.empty, move))) {
@@ -19156,8 +19311,13 @@ var __publicField = (obj, key, value) => {
     if (insertPos == null)
       insertPos = $mouse.pos;
     let tr2 = view.state.tr;
-    if (move)
-      tr2.deleteSelection();
+    if (move) {
+      let { node: node2 } = dragging;
+      if (node2)
+        node2.replace(tr2);
+      else
+        tr2.deleteSelection();
+    }
     let pos = tr2.mapping.map(insertPos);
     let isNode2 = slice.openStart == 0 && slice.openEnd == 0 && slice.content.childCount == 1;
     let beforeInsert = tr2.doc;
@@ -19204,7 +19364,7 @@ var __publicField = (obj, key, value) => {
   };
   handlers$2.beforeinput = (view, _event) => {
     let event = _event;
-    if (chrome$1 && android && event.inputType == "deleteContentBackward") {
+    if (chrome && android && event.inputType == "deleteContentBackward") {
       view.domObserver.flushSoon();
       let { domChangeCount } = view.input;
       setTimeout(() => {
@@ -19366,6 +19526,12 @@ var __publicField = (obj, key, value) => {
     get inline() {
       return this.type instanceof InlineType;
     }
+    /**
+    @internal
+    */
+    get widget() {
+      return this.type instanceof WidgetType;
+    }
   }
   const none = [], noSpec = {};
   class DecorationSet {
@@ -19378,7 +19544,8 @@ var __publicField = (obj, key, value) => {
     }
     /**
     Create a set of decorations, using the structure of the given
-    document.
+    document. This will consume (modify) the `decorations` array, so
+    you must make a copy if you want need to preserve that.
     */
     static create(doc2, decorations) {
       return decorations.length ? buildTree(decorations, doc2, 0, noSpec) : empty;
@@ -19437,8 +19604,9 @@ var __publicField = (obj, key, value) => {
     }
     /**
     Add the given array of decorations to the ones in the set,
-    producing a new set. Needs access to the current document to
-    create the appropriate tree structure.
+    producing a new set. Consumes the `decorations` array. Needs
+    access to the current document to create the appropriate tree
+    structure.
     */
     add(doc2, decorations) {
       if (!decorations.length)
@@ -19664,7 +19832,7 @@ var __publicField = (obj, key, value) => {
           let start = children[i3] + baseOffset - moved;
           if (oldEnd >= start) {
             children[i3 + 1] = oldStart <= start ? -2 : -1;
-          } else if (newStart >= offset && dSize) {
+          } else if (oldStart >= baseOffset && dSize) {
             children[i3] += dSize;
             children[i3 + 1] += dSize;
           }
@@ -19971,15 +20139,19 @@ var __publicField = (obj, key, value) => {
         return true;
       }
     }
+    pendingRecords() {
+      if (this.observer)
+        for (let mut of this.observer.takeRecords())
+          this.queue.push(mut);
+      return this.queue;
+    }
     flush() {
       let { view } = this;
       if (!view.docView || this.flushingSoon > -1)
         return;
-      let mutations = this.observer ? this.observer.takeRecords() : [];
-      if (this.queue.length) {
-        mutations = this.queue.concat(mutations);
-        this.queue.length = 0;
-      }
+      let mutations = this.pendingRecords();
+      if (mutations.length)
+        this.queue = [];
       let sel = view.domSelectionRange();
       let newSel = !this.suppressingSelectionUpdates && !this.currentSelection.eq(sel) && hasFocusAndSelection(view) && !this.ignoreSelectionChange(sel);
       let from2 = -1, to = -1, typeOver = false, added = [];
@@ -20108,7 +20280,7 @@ var __publicField = (obj, key, value) => {
       if (!selectionCollapsed(domSel))
         find2.push({ node: domSel.focusNode, offset: domSel.focusOffset });
     }
-    if (chrome$1 && view.input.lastKeyCode === 8) {
+    if (chrome && view.input.lastKeyCode === 8) {
       for (let off = toOffset; off > fromOffset; off--) {
         let node2 = parent.childNodes[off - 1], desc = node2.pmViewDesc;
         if (node2.nodeName == "BR" && !desc) {
@@ -20160,19 +20332,21 @@ var __publicField = (obj, key, value) => {
   }
   const isInline = /^(a|abbr|acronym|b|bd[io]|big|br|button|cite|code|data(list)?|del|dfn|em|i|ins|kbd|label|map|mark|meter|output|q|ruby|s|samp|small|span|strong|su[bp]|time|u|tt|var)$/i;
   function readDOMChange(view, from2, to, typeOver, addedNodes) {
+    let compositionID = view.input.compositionPendingChanges || (view.composing ? view.input.compositionID : 0);
+    view.input.compositionPendingChanges = 0;
     if (from2 < 0) {
       let origin = view.input.lastSelectionTime > Date.now() - 50 ? view.input.lastSelectionOrigin : null;
       let newSel = selectionFromDOM(view, origin);
       if (newSel && !view.state.selection.eq(newSel)) {
-        if (chrome$1 && android && view.input.lastKeyCode === 13 && Date.now() - 100 < view.input.lastKeyCodeTime && view.someProp("handleKeyDown", (f) => f(view, keyEvent(13, "Enter"))))
+        if (chrome && android && view.input.lastKeyCode === 13 && Date.now() - 100 < view.input.lastKeyCodeTime && view.someProp("handleKeyDown", (f) => f(view, keyEvent(13, "Enter"))))
           return;
         let tr3 = view.state.tr.setSelection(newSel);
         if (origin == "pointer")
           tr3.setMeta("pointer", true);
         else if (origin == "key")
           tr3.scrollIntoView();
-        if (view.composing)
-          tr3.setMeta("composition", view.input.compositionID);
+        if (compositionID)
+          tr3.setMeta("composition", compositionID);
         view.dispatch(tr3);
       }
       return;
@@ -20206,15 +20380,15 @@ var __publicField = (obj, key, value) => {
           let sel2 = resolveSelection(view, view.state.doc, parse2.sel);
           if (sel2 && !sel2.eq(view.state.selection)) {
             let tr3 = view.state.tr.setSelection(sel2);
-            if (view.composing)
-              tr3.setMeta("composition", view.input.compositionID);
+            if (compositionID)
+              tr3.setMeta("composition", compositionID);
             view.dispatch(tr3);
           }
         }
         return;
       }
     }
-    if (chrome$1 && view.cursorWrapper && parse2.sel && parse2.sel.anchor == view.cursorWrapper.deco.from && parse2.sel.head == parse2.sel.anchor) {
+    if (chrome && view.cursorWrapper && parse2.sel && parse2.sel.anchor == view.cursorWrapper.deco.from && parse2.sel.head == parse2.sel.anchor) {
       let size = change.endB - change.start;
       parse2.sel = { anchor: parse2.sel.anchor + size, head: parse2.sel.anchor + size };
     }
@@ -20237,16 +20411,16 @@ var __publicField = (obj, key, value) => {
     let $fromA = doc2.resolve(change.start);
     let inlineChange = $from.sameParent($to) && $from.parent.inlineContent && $fromA.end() >= change.endA;
     let nextSel;
-    if ((ios && view.input.lastIOSEnter > Date.now() - 225 && (!inlineChange || addedNodes.some((n) => n.nodeName == "DIV" || n.nodeName == "P")) || !inlineChange && $from.pos < parse2.doc.content.size && (nextSel = Selection.findFrom(parse2.doc.resolve($from.pos + 1), 1, true)) && nextSel.head == $to.pos) && view.someProp("handleKeyDown", (f) => f(view, keyEvent(13, "Enter")))) {
+    if ((ios && view.input.lastIOSEnter > Date.now() - 225 && (!inlineChange || addedNodes.some((n) => n.nodeName == "DIV" || n.nodeName == "P")) || !inlineChange && $from.pos < parse2.doc.content.size && !$from.sameParent($to) && (nextSel = Selection.findFrom(parse2.doc.resolve($from.pos + 1), 1, true)) && nextSel.head == $to.pos) && view.someProp("handleKeyDown", (f) => f(view, keyEvent(13, "Enter")))) {
       view.input.lastIOSEnter = 0;
       return;
     }
     if (view.state.selection.anchor > change.start && looksLikeJoin(doc2, change.start, change.endA, $from, $to) && view.someProp("handleKeyDown", (f) => f(view, keyEvent(8, "Backspace")))) {
-      if (android && chrome$1)
+      if (android && chrome)
         view.domObserver.suppressSelectionUpdates();
       return;
     }
-    if (chrome$1 && android && change.endB == change.start)
+    if (chrome && android && change.endB == change.start)
       view.input.lastAndroidDelete = Date.now();
     if (android && !inlineChange && $from.start() != $to.start() && $to.parentOffset == 0 && $from.depth == $to.depth && parse2.sel && parse2.sel.anchor == parse2.sel.head && parse2.sel.head == change.endA) {
       change.endB -= 2;
@@ -20287,13 +20461,13 @@ var __publicField = (obj, key, value) => {
       tr2 = view.state.tr.replace(chFrom, chTo, parse2.doc.slice(change.start - parse2.from, change.endB - parse2.from));
     if (parse2.sel) {
       let sel2 = resolveSelection(view, tr2.doc, parse2.sel);
-      if (sel2 && !(chrome$1 && android && view.composing && sel2.empty && (change.start != change.endB || view.input.lastAndroidDelete < Date.now() - 100) && (sel2.head == chFrom || sel2.head == tr2.mapping.map(chTo) - 1) || ie$1 && sel2.empty && sel2.head == chFrom))
+      if (sel2 && !(chrome && android && view.composing && sel2.empty && (change.start != change.endB || view.input.lastAndroidDelete < Date.now() - 100) && (sel2.head == chFrom || sel2.head == tr2.mapping.map(chTo) - 1) || ie$1 && sel2.empty && sel2.head == chFrom))
         tr2.setSelection(sel2);
     }
     if (storedMarks)
       tr2.ensureMarks(storedMarks);
-    if (view.composing)
-      tr2.setMeta("composition", view.input.compositionID);
+    if (compositionID)
+      tr2.setMeta("composition", compositionID);
     view.dispatch(tr2.scrollIntoView());
   }
   function resolveSelection(view, doc2, parsedSel) {
@@ -20366,15 +20540,25 @@ var __publicField = (obj, key, value) => {
     if (endA < start && a2.size < b.size) {
       let move = preferredPos <= start && preferredPos >= endA ? start - preferredPos : 0;
       start -= move;
+      if (start && start < b.size && isSurrogatePair(b.textBetween(start - 1, start + 1)))
+        start += move ? 1 : -1;
       endB = start + (endB - endA);
       endA = start;
     } else if (endB < start) {
       let move = preferredPos <= start && preferredPos >= endB ? start - preferredPos : 0;
       start -= move;
+      if (start && start < a2.size && isSurrogatePair(a2.textBetween(start - 1, start + 1)))
+        start += move ? 1 : -1;
       endA = start + (endA - endB);
       endB = start;
     }
     return { start, endA, endB };
+  }
+  function isSurrogatePair(str) {
+    if (str.length != 2)
+      return false;
+    let a2 = str.charCodeAt(0), b = str.charCodeAt(1);
+    return a2 >= 56320 && a2 <= 57343 && b >= 55296 && b <= 56319;
   }
   class EditorView {
     /**
@@ -20478,6 +20662,7 @@ var __publicField = (obj, key, value) => {
       this.updateStateInner(state, this._props);
     }
     updateStateInner(state, prevProps) {
+      var _a;
       let prev = this.state, redraw = false, updateSel = false;
       if (state.storedMarks && this.composing) {
         clearComposition(this);
@@ -20505,9 +20690,9 @@ var __publicField = (obj, key, value) => {
       let oldScrollPos = scroll == "preserve" && updateSel && this.dom.style.overflowAnchor == null && storeScrollPos(this);
       if (updateSel) {
         this.domObserver.stop();
-        let forceSelUpdate = updateDoc && (ie$1 || chrome$1) && !this.composing && !prev.selection.empty && !state.selection.empty && selectionContextChanged(prev.selection, state.selection);
+        let forceSelUpdate = updateDoc && (ie$1 || chrome) && !this.composing && !prev.selection.empty && !state.selection.empty && selectionContextChanged(prev.selection, state.selection);
         if (updateDoc) {
-          let chromeKludge = chrome$1 ? this.trackWrites = this.domSelectionRange().focusNode : null;
+          let chromeKludge = chrome ? this.trackWrites = this.domSelectionRange().focusNode : null;
           if (redraw || !this.docView.update(state.doc, outerDeco, innerDeco, this)) {
             this.docView.updateOuterDeco([]);
             this.docView.destroy();
@@ -20525,6 +20710,8 @@ var __publicField = (obj, key, value) => {
         this.domObserver.start();
       }
       this.updatePluginViews(prev);
+      if (((_a = this.dragging) === null || _a === void 0 ? void 0 : _a.node) && !prev.doc.eq(state.doc))
+        this.updateDraggedNode(this.dragging, prev);
       if (scroll == "reset") {
         this.dom.scrollTop = 0;
       } else if (scroll == "to selection") {
@@ -20575,6 +20762,18 @@ var __publicField = (obj, key, value) => {
             pluginView.update(this, prevState);
         }
       }
+    }
+    updateDraggedNode(dragging, prev) {
+      let sel = dragging.node, found2 = -1;
+      if (this.state.doc.nodeAt(sel.from) == sel.node) {
+        found2 = sel.from;
+      } else {
+        let movedPos = sel.from + (this.state.doc.content.size - prev.doc.content.size);
+        let moved = movedPos > 0 && this.state.doc.nodeAt(movedPos);
+        if (moved == sel.node)
+          found2 = movedPos;
+      }
+      this.dragging = new Dragging(dragging.slice, dragging.move, found2 < 0 ? void 0 : NodeSelection.create(this.state.doc, found2));
     }
     someProp(propName, f) {
       let prop = this._props && this._props[propName], value;
@@ -20639,6 +20838,13 @@ var __publicField = (obj, key, value) => {
           }
         }
       return cached || document;
+    }
+    /**
+    When an existing editor view is moved to a new document or
+    shadow tree, call this to make it recompute its root.
+    */
+    updateRoot() {
+      this._root = null;
     }
     /**
     Given a pair of viewport coordinates, return the document
@@ -20937,10 +21143,8 @@ var __publicField = (obj, key, value) => {
     221: "}",
     222: '"'
   };
-  var chrome = typeof navigator != "undefined" && /Chrome\/(\d+)/.exec(navigator.userAgent);
   var mac$1 = typeof navigator != "undefined" && /Mac/.test(navigator.platform);
   var ie = typeof navigator != "undefined" && /MSIE \d|Trident\/(?:[7-9]|\d{2,})\..*rv:(\d+)/.exec(navigator.userAgent);
-  var brokenModifierNames = mac$1 || chrome && +chrome[1] < 57;
   for (var i$1 = 0; i$1 < 10; i$1++)
     base$1[48 + i$1] = base$1[96 + i$1] = String(i$1);
   for (var i$1 = 1; i$1 <= 24; i$1++)
@@ -20953,7 +21157,7 @@ var __publicField = (obj, key, value) => {
     if (!shift.hasOwnProperty(code$5))
       shift[code$5] = base$1[code$5];
   function keyName(event) {
-    var ignoreKey = brokenModifierNames && (event.ctrlKey || event.altKey || event.metaKey) || ie && event.shiftKey && event.key && event.key.length == 1 || event.key == "Unidentified";
+    var ignoreKey = mac$1 && event.metaKey && event.shiftKey && !event.ctrlKey && !event.altKey || ie && event.shiftKey && event.key && event.key.length == 1 || event.key == "Unidentified";
     var name = !ignoreKey && event.key || (event.shiftKey ? shift : base$1)[event.keyCode] || event.key || "Unidentified";
     if (name == "Esc")
       name = "Escape";
@@ -21652,9 +21856,6 @@ var __publicField = (obj, key, value) => {
     buildProps(tr2, shouldDispatch = true) {
       const { rawCommands, editor: editor2, state } = this;
       const { view } = editor2;
-      if (state.storedMarks) {
-        tr2.setStoredMarks(state.storedMarks);
-      }
       const props = {
         tr: tr2,
         editor: editor2,
@@ -21664,7 +21865,7 @@ var __publicField = (obj, key, value) => {
           transaction: tr2
         }),
         dispatch: shouldDispatch ? () => void 0 : void 0,
-        chain: () => this.createChain(tr2),
+        chain: () => this.createChain(tr2, shouldDispatch),
         can: () => this.createCan(tr2),
         get commands() {
           return Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
@@ -21819,7 +22020,10 @@ var __publicField = (obj, key, value) => {
           return;
         }
         if (key2 === "class") {
-          mergedAttributes[key2] = [mergedAttributes[key2], value].join(" ");
+          const valueClasses = value ? value.split(" ") : [];
+          const existingClasses = mergedAttributes[key2] ? mergedAttributes[key2].split(" ") : [];
+          const insertClasses = valueClasses.filter((valueClass) => !existingClasses.includes(valueClass));
+          mergedAttributes[key2] = [...existingClasses, ...insertClasses].join(" ");
         } else if (key2 === "style") {
           mergedAttributes[key2] = [mergedAttributes[key2], value].join("; ");
         } else {
@@ -22221,7 +22425,7 @@ var __publicField = (obj, key, value) => {
     });
   };
   function run$2(config) {
-    const { editor: editor2, state, from: from2, to, rule } = config;
+    const { editor: editor2, state, from: from2, to, rule, pasteEvent, dropEvent } = config;
     const { commands: commands2, chain, can } = new CommandManager({
       editor: editor2,
       state
@@ -22251,7 +22455,9 @@ var __publicField = (obj, key, value) => {
           match,
           commands: commands2,
           chain,
-          can
+          can,
+          pasteEvent,
+          dropEvent
         });
         handlers2.push(handler);
       });
@@ -22264,6 +22470,8 @@ var __publicField = (obj, key, value) => {
     let dragSourceElement = null;
     let isPastedFromProseMirror = false;
     let isDroppedFromProseMirror = false;
+    let pasteEvent = new ClipboardEvent("paste");
+    let dropEvent = new DragEvent("drop");
     const plugins = rules.map((rule) => {
       return new Plugin({
         // we register a global drag handler to track the current drag source element
@@ -22281,13 +22489,15 @@ var __publicField = (obj, key, value) => {
         },
         props: {
           handleDOMEvents: {
-            drop: (view) => {
+            drop: (view, event) => {
               isDroppedFromProseMirror = dragSourceElement === view.dom.parentElement;
+              dropEvent = event;
               return false;
             },
-            paste: (view, event) => {
+            paste: (_view, event) => {
               var _a;
               const html2 = (_a = event.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/html");
+              pasteEvent = event;
               isPastedFromProseMirror = !!(html2 === null || html2 === void 0 ? void 0 : html2.includes("data-pm-slice"));
               return false;
             }
@@ -22315,11 +22525,15 @@ var __publicField = (obj, key, value) => {
             state: chainableState,
             from: Math.max(from2 - 1, 0),
             to: to.b - 1,
-            rule
+            rule,
+            pasteEvent,
+            dropEvent
           });
           if (!handler || !tr2.steps.length) {
             return;
           }
+          dropEvent = new DragEvent("drop");
+          pasteEvent = new ClipboardEvent("paste");
           return tr2;
         }
       });
@@ -22723,6 +22937,15 @@ var __publicField = (obj, key, value) => {
   const createParagraphNear = () => ({ state, dispatch }) => {
     return createParagraphNear$1(state, dispatch);
   };
+  const cut = (originRange, targetPos) => ({ editor: editor2, tr: tr2 }) => {
+    const { state } = editor2;
+    const contentSlice = state.doc.slice(originRange.from, originRange.to);
+    tr2.deleteRange(originRange.from, originRange.to);
+    const newPos = tr2.mapping.map(targetPos);
+    tr2.insert(newPos, contentSlice.content);
+    tr2.setSelection(new TextSelection(tr2.doc.resolve(newPos - 1)));
+    return true;
+  };
   const deleteCurrentNode = () => ({ tr: tr2, dispatch }) => {
     const { selection } = tr2;
     const currentNode = selection.$anchor.node();
@@ -23005,7 +23228,7 @@ var __publicField = (obj, key, value) => {
       if (content2.toString() === "<>") {
         return true;
       }
-      let { from: from2, to } = typeof position2 === "number" ? { from: position2, to: position2 } : position2;
+      let { from: from2, to } = typeof position2 === "number" ? { from: position2, to: position2 } : { from: position2.from, to: position2.to };
       let isOnlyTextContent = true;
       let isOnlyBlockContent = true;
       const nodes = isFragment(content2) ? content2 : [content2];
@@ -23050,6 +23273,36 @@ var __publicField = (obj, key, value) => {
   };
   const joinForward = () => ({ state, dispatch }) => {
     return joinForward$1(state, dispatch);
+  };
+  const joinItemBackward = () => ({ tr: tr2, state, dispatch }) => {
+    try {
+      const point2 = joinPoint(state.doc, state.selection.$from.pos, -1);
+      if (point2 === null || point2 === void 0) {
+        return false;
+      }
+      tr2.join(point2, 2);
+      if (dispatch) {
+        dispatch(tr2);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const joinItemForward = () => ({ state, dispatch, tr: tr2 }) => {
+    try {
+      const point2 = joinPoint(state.doc, state.selection.$from.pos, 1);
+      if (point2 === null || point2 === void 0) {
+        return false;
+      }
+      tr2.join(point2, 2);
+      if (dispatch) {
+        dispatch(tr2);
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
   function isMacOS() {
     return typeof navigator !== "undefined" ? /Mac/.test(navigator.platform) : false;
@@ -23255,6 +23508,26 @@ var __publicField = (obj, key, value) => {
     }
     return true;
   };
+  function getMarkAttributes(state, typeOrName) {
+    const type = getMarkType(typeOrName, state.schema);
+    const { from: from2, to, empty: empty2 } = state.selection;
+    const marks = [];
+    if (empty2) {
+      if (state.storedMarks) {
+        marks.push(...state.storedMarks);
+      }
+      marks.push(...state.selection.$head.marks());
+    } else {
+      state.doc.nodesBetween(from2, to, (node2) => {
+        marks.push(...node2.marks);
+      });
+    }
+    const mark2 = marks.find((markItem) => markItem.type.name === type.name);
+    if (!mark2) {
+      return {};
+    }
+    return { ...mark2.attrs };
+  }
   function combineTransactionSteps(oldDoc, transactions) {
     const transform2 = new Transform(oldDoc);
     transactions.forEach((transaction) => {
@@ -23326,26 +23599,6 @@ var __publicField = (obj, key, value) => {
       to: node2.content.size
     };
     return getTextBetween(node2, range, options);
-  }
-  function getMarkAttributes(state, typeOrName) {
-    const type = getMarkType(typeOrName, state.schema);
-    const { from: from2, to, empty: empty2 } = state.selection;
-    const marks = [];
-    if (empty2) {
-      if (state.storedMarks) {
-        marks.push(...state.storedMarks);
-      }
-      marks.push(...state.selection.$head.marks());
-    } else {
-      state.doc.nodesBetween(from2, to, (node2) => {
-        marks.push(...node2.marks);
-      });
-    }
-    const mark2 = marks.find((markItem) => markItem.type.name === type.name);
-    if (!mark2) {
-      return {};
-    }
-    return { ...mark2.attrs };
   }
   function getNodeAttributes(state, typeOrName) {
     const type = getNodeType(typeOrName, state.schema);
@@ -24042,6 +24295,7 @@ var __publicField = (obj, key, value) => {
     clearNodes,
     command,
     createParagraphNear,
+    cut,
     deleteCurrentNode,
     deleteNode,
     deleteRange,
@@ -24058,6 +24312,8 @@ var __publicField = (obj, key, value) => {
     joinDown,
     joinBackward,
     joinForward,
+    joinItemBackward,
+    joinItemForward,
     keyboardShortcut,
     lift,
     liftEmptyBlock,
@@ -24149,7 +24405,10 @@ var __publicField = (obj, key, value) => {
           const { selection, doc: doc2 } = tr2;
           const { empty: empty2, $anchor } = selection;
           const { pos, parent } = $anchor;
-          const isAtStart = Selection.atStart(doc2).from === pos;
+          const $parentPos = $anchor.parent.isTextblock ? tr2.doc.resolve(pos - 1) : $anchor;
+          const parentIsIsolating = $parentPos.parent.type.spec.isolating;
+          const parentPos = $anchor.pos - $anchor.parentOffset;
+          const isAtStart = parentIsIsolating && $parentPos.parent.childCount === 1 ? parentPos === $anchor.pos : Selection.atStart(doc2).from === pos;
           if (!empty2 || !isAtStart || !parent.type.isTextblock || parent.textContent.length) {
             return false;
           }
@@ -24341,8 +24600,8 @@ img.ProseMirror-separator {
 .tippy-box[data-animation=fade][data-state=hidden] {
   opacity: 0
 }`;
-  function createStyleTag(style2, nonce) {
-    const tiptapStyleTag = document.querySelector("style[data-tiptap-style]");
+  function createStyleTag(style2, nonce, suffix) {
+    const tiptapStyleTag = document.querySelector(`style[data-tiptap-style${suffix ? `-${suffix}` : ""}]`);
     if (tiptapStyleTag !== null) {
       return tiptapStyleTag;
     }
@@ -24350,7 +24609,7 @@ img.ProseMirror-separator {
     if (nonce) {
       styleNode.setAttribute("nonce", nonce);
     }
-    styleNode.setAttribute("data-tiptap-style", "");
+    styleNode.setAttribute(`data-tiptap-style${suffix ? `-${suffix}` : ""}`, "");
     styleNode.innerHTML = style2;
     document.getElementsByTagName("head")[0].appendChild(styleNode);
     return styleNode;
@@ -24548,6 +24807,7 @@ img.ProseMirror-separator {
       });
       this.view.updateState(newState);
       this.createNodeViews();
+      this.prependClass();
       const dom = this.view.dom;
       dom.editor = this;
     }
@@ -24558,6 +24818,12 @@ img.ProseMirror-separator {
       this.view.setProps({
         nodeViews: this.extensionManager.nodeViews
       });
+    }
+    /**
+     * Prepend class name to element.
+     */
+    prependClass() {
+      this.view.dom.className = `tiptap ${this.view.dom.className}`;
     }
     captureTransaction(fn) {
       this.isCapturingTransaction = true;
@@ -24704,7 +24970,6 @@ img.ProseMirror-separator {
         const { tr: tr2 } = state;
         const captureGroup = match[match.length - 1];
         const fullMatch = match[0];
-        let markEnd = range.to;
         if (captureGroup) {
           const startSpaces = fullMatch.search(/\S/);
           const textStart = range.from + fullMatch.indexOf(captureGroup);
@@ -24722,7 +24987,7 @@ img.ProseMirror-separator {
           if (textStart > range.from) {
             tr2.delete(range.from + startSpaces, textStart);
           }
-          markEnd = range.from + startSpaces + captureGroup.length;
+          const markEnd = range.from + startSpaces + captureGroup.length;
           tr2.addMark(range.from + startSpaces, markEnd, config.type.create(attributes || {}));
           tr2.removeStoredMark(config.type);
         }
@@ -24870,8 +25135,8 @@ img.ProseMirror-separator {
   function markPasteRule(config) {
     return new PasteRule({
       find: config.find,
-      handler: ({ state, range, match }) => {
-        const attributes = callOrReturn(config.getAttributes, void 0, match);
+      handler: ({ state, range, match, pasteEvent }) => {
+        const attributes = callOrReturn(config.getAttributes, void 0, match, pasteEvent);
         if (attributes === false || attributes === null) {
           return null;
         }
@@ -25330,12 +25595,29 @@ img.ProseMirror-separator {
       for (const cell2 of row2.cells) {
         let pNode;
         if (!cell2) {
-          pNode = schema.nodes["tableParagraph"].create({});
+          const contentNode = schema.nodes["paragraph"].create({});
+          const containerNode = schema.nodes["blockContainer"].create(
+            {},
+            contentNode
+          );
+          pNode = schema.nodes["tableParagraph"].create({}, containerNode);
         } else if (typeof cell2 === "string") {
-          pNode = schema.nodes["tableParagraph"].create({}, schema.text(cell2));
+          const contentNode = schema.nodes["paragraph"].create(
+            {},
+            schema.text(cell2)
+          );
+          const containerNode = schema.nodes["blockContainer"].create(
+            {},
+            contentNode
+          );
+          pNode = schema.nodes["tableParagraph"].create({}, containerNode);
         } else {
-          const textNodes = inlineContentToNodes(cell2, schema, styleSchema);
-          pNode = schema.nodes["tableParagraph"].create({}, textNodes);
+          const nodes = [];
+          for (const content2 of cell2) {
+            const node2 = blockToNode(content2, schema, styleSchema);
+            nodes.push(node2);
+          }
+          pNode = schema.nodes["tableParagraph"].create({}, nodes);
         }
         const cellNode = schema.nodes["tableCell"].create({}, pNode);
         columnNodes.push(cellNode);
@@ -25397,7 +25679,7 @@ img.ProseMirror-separator {
       children.length > 0 ? [contentNode, groupNode] : contentNode
     );
   }
-  function contentNodeToTableContent(contentNode, inlineContentSchema, styleSchema) {
+  function contentNodeToTableContent(contentNode, blockSchema, inlineContentSchema, styleSchema, blockCache) {
     const ret = {
       type: "tableContent",
       rows: []
@@ -25407,13 +25689,22 @@ img.ProseMirror-separator {
         cells: []
       };
       rowNode.content.forEach((cellNode) => {
-        row2.cells.push(
-          contentNodeToInlineContent(
-            cellNode.firstChild,
-            inlineContentSchema,
-            styleSchema
-          )
-        );
+        if (cellNode == null ? void 0 : cellNode.content) {
+          const contentBlocks = [];
+          cellNode.content.forEach((node2) => {
+            node2.content.forEach((childNode) => {
+              const block2 = nodeToBlock(
+                childNode,
+                blockSchema,
+                inlineContentSchema,
+                styleSchema,
+                blockCache
+              );
+              contentBlocks.push(block2);
+            });
+          });
+          row2.cells.push(contentBlocks);
+        }
       });
       ret.rows.push(row2);
     });
@@ -25648,8 +25939,10 @@ img.ProseMirror-separator {
     } else if (blockConfig.content === "table") {
       content2 = contentNodeToTableContent(
         blockInfo.contentNode,
+        blockSchema,
         inlineContentSchema,
-        styleSchema
+        styleSchema,
+        blockCache
       );
     } else if (blockConfig.content === "none") {
       content2 = void 0;
@@ -25741,7 +26034,7 @@ img.ProseMirror-separator {
   function one$3(node2, options) {
     switch (node2.nodeType) {
       case 1: {
-        return element$2(node2, options);
+        return element$3(node2, options);
       }
       case 3: {
         return text$6(node2);
@@ -25775,7 +26068,7 @@ img.ProseMirror-separator {
   function comment$1(node2) {
     return { type: "comment", value: node2.nodeValue || "" };
   }
-  function element$2(node2, options) {
+  function element$3(node2, options) {
     const space2 = node2.namespaceURI;
     const fn = space2 === webNamespaces.svg ? s : h;
     const tagName = space2 === webNamespaces.html ? node2.tagName.toLowerCase() : node2.tagName;
@@ -25809,7 +26102,7 @@ img.ProseMirror-separator {
       ...options.unorderedListItemBlockTypes
     ]);
     const simplifyBlocksHelper = (tree) => {
-      var _a;
+      var _a, _b;
       if (tree.children.length === 1 && ((_a = tree.children[0].properties) == null ? void 0 : _a["dataNodeType"]) === "blockGroup") {
         const blockGroup = tree.children[0];
         tree.children.pop();
@@ -25821,6 +26114,23 @@ img.ProseMirror-separator {
         const blockOuter = tree.children[i2];
         const blockContainer = blockOuter.children[0];
         const blockContent = blockContainer.children[0];
+        const blockContentType = blockContent.properties["dataContentType"];
+        if (blockContentType === "table") {
+          const tboby = (_b = blockContent.children[0]) == null ? void 0 : _b.children[0];
+          if (tboby) {
+            for (const tr2 of tboby.children) {
+              const row2 = tr2;
+              for (const td of row2.children) {
+                const col = td;
+                for (const cell2 of col.children) {
+                  const c = cell2;
+                  simplifyBlocksHelper(c);
+                }
+              }
+            }
+          }
+          continue;
+        }
         const blockGroup = blockContainer.children.length === 2 ? blockContainer.children[1] : null;
         const isListItemBlock = listItemBlockTypes.has(
           blockContent.properties["dataContentType"]
@@ -25863,7 +26173,9 @@ img.ProseMirror-separator {
           i2 += numElementsAdded;
           numChildElements += numElementsAdded;
         } else {
-          tree.children[i2] = blockContent.children[0];
+          if (blockContent.children[0]) {
+            tree.children[i2] = blockContent.children[0];
+          }
         }
       }
       if (activeList) {
@@ -26164,9 +26476,13 @@ img.ProseMirror-separator {
       };
     },
     addKeyboardShortcuts() {
-      return {
-        "Mod-Shift-x": () => this.editor.commands.toggleStrike()
-      };
+      const shortcuts = {};
+      if (isMacOS()) {
+        shortcuts["Mod-Shift-s"] = () => this.editor.commands.toggleStrike();
+      } else {
+        shortcuts["Ctrl-Shift-s"] = () => this.editor.commands.toggleStrike();
+      }
+      return shortcuts;
     },
     addInputRules() {
       return [
@@ -27108,7 +27424,6 @@ img.ProseMirror-separator {
     );
     const addImageButton = document.createElement("div");
     addImageButton.className = "bn-add-image-button";
-    addImageButton.style.display = block2.props.url === "" ? "" : "none";
     const addImageButtonIcon = document.createElement("div");
     addImageButtonIcon.className = "bn-add-image-button-icon";
     const addImageButtonText = document.createElement("p");
@@ -27116,10 +27431,8 @@ img.ProseMirror-separator {
     addImageButtonText.innerText = "Add Image";
     const imageAndCaptionWrapper = document.createElement("div");
     imageAndCaptionWrapper.className = "bn-image-and-caption-wrapper";
-    imageAndCaptionWrapper.style.display = block2.props.url !== "" ? "" : "none";
     const imageWrapper = document.createElement("div");
     imageWrapper.className = "bn-image-wrapper";
-    imageWrapper.style.display = block2.props.url !== "" ? "" : "none";
     const image2 = document.createElement("img");
     image2.className = "bn-image";
     image2.src = block2.props.url;
@@ -27160,6 +27473,10 @@ img.ProseMirror-separator {
     let resizeParams;
     const windowMouseMoveHandler = (event) => {
       if (!resizeParams) {
+        if (!editor2.isEditable && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
+          imageWrapper.removeChild(leftResizeHandle);
+          imageWrapper.removeChild(rightResizeHandle);
+        }
         return;
       }
       let newWidth;
@@ -27185,12 +27502,12 @@ img.ProseMirror-separator {
       }
     };
     const windowMouseUpHandler = (event) => {
+      if ((!event.target || !imageWrapper.contains(event.target) || !editor2.isEditable) && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
+        imageWrapper.removeChild(leftResizeHandle);
+        imageWrapper.removeChild(rightResizeHandle);
+      }
       if (!resizeParams) {
         return;
-      }
-      if ((!event.target || !imageWrapper.contains(event.target)) && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
-        leftResizeHandle.style.display = "none";
-        rightResizeHandle.style.display = "none";
       }
       resizeParams = void 0;
       editor2.updateBlock(block2, {
@@ -27213,11 +27530,8 @@ img.ProseMirror-separator {
     };
     const imageMouseEnterHandler = () => {
       if (editor2.isEditable) {
-        leftResizeHandle.style.display = "block";
-        rightResizeHandle.style.display = "block";
-      } else {
-        leftResizeHandle.style.display = "none";
-        rightResizeHandle.style.display = "none";
+        imageWrapper.appendChild(leftResizeHandle);
+        imageWrapper.appendChild(rightResizeHandle);
       }
     };
     const imageMouseLeaveHandler = (event) => {
@@ -27227,13 +27541,15 @@ img.ProseMirror-separator {
       if (resizeParams) {
         return;
       }
-      leftResizeHandle.style.display = "none";
-      rightResizeHandle.style.display = "none";
+      if (editor2.isEditable && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
+        imageWrapper.removeChild(leftResizeHandle);
+        imageWrapper.removeChild(rightResizeHandle);
+      }
     };
     const leftResizeHandleMouseDownHandler = (event) => {
       event.preventDefault();
-      leftResizeHandle.style.display = "block";
-      rightResizeHandle.style.display = "block";
+      imageWrapper.appendChild(leftResizeHandle);
+      imageWrapper.appendChild(rightResizeHandle);
       resizeParams = {
         handleUsed: "left",
         initialWidth: block2.props.width,
@@ -27242,23 +27558,24 @@ img.ProseMirror-separator {
     };
     const rightResizeHandleMouseDownHandler = (event) => {
       event.preventDefault();
-      leftResizeHandle.style.display = "block";
-      rightResizeHandle.style.display = "block";
+      imageWrapper.appendChild(leftResizeHandle);
+      imageWrapper.appendChild(rightResizeHandle);
       resizeParams = {
         handleUsed: "right",
         initialWidth: block2.props.width,
         initialClientX: event.clientX
       };
     };
-    wrapper.appendChild(addImageButton);
     addImageButton.appendChild(addImageButtonIcon);
     addImageButton.appendChild(addImageButtonText);
-    wrapper.appendChild(imageAndCaptionWrapper);
     imageAndCaptionWrapper.appendChild(imageWrapper);
     imageWrapper.appendChild(image2);
-    imageWrapper.appendChild(leftResizeHandle);
-    imageWrapper.appendChild(rightResizeHandle);
     imageAndCaptionWrapper.appendChild(caption);
+    if (block2.props.url === "") {
+      wrapper.appendChild(addImageButton);
+    } else {
+      wrapper.appendChild(imageAndCaptionWrapper);
+    }
     window.addEventListener("mousemove", windowMouseMoveHandler);
     window.addEventListener("mouseup", windowMouseUpHandler);
     addImageButton.addEventListener("mousedown", addImageButtonMouseDownHandler);
@@ -27400,7 +27717,7 @@ img.ProseMirror-separator {
     addKeyboardShortcuts() {
       return {
         Enter: () => handleEnter(this.editor),
-        "Mod-Shift-7": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+        "Mod-Shift-8": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
           type: "bulletListItem",
           props: {}
         })
@@ -27554,7 +27871,7 @@ img.ProseMirror-separator {
     addKeyboardShortcuts() {
       return {
         Enter: () => handleEnter(this.editor),
-        "Mod-Shift-8": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+        "Mod-Shift-7": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
           type: "numberedListItem",
           props: {}
         })
@@ -28104,7 +28421,7 @@ img.ProseMirror-separator {
     }
     return result;
   }
-  var CellSelection = class extends Selection {
+  var CellSelection = class _CellSelection extends Selection {
     // A table selection is identified by its anchor and head cells. The
     // positions given to this constructor should point _before_ two
     // cells in the same table. They may be the same, to select a single
@@ -28141,11 +28458,11 @@ img.ProseMirror-separator {
       if (pointsAtCell($anchorCell) && pointsAtCell($headCell) && inSameTable($anchorCell, $headCell)) {
         const tableChanged = this.$anchorCell.node(-1) != $anchorCell.node(-1);
         if (tableChanged && this.isRowSelection())
-          return CellSelection.rowSelection($anchorCell, $headCell);
+          return _CellSelection.rowSelection($anchorCell, $headCell);
         else if (tableChanged && this.isColSelection())
-          return CellSelection.colSelection($anchorCell, $headCell);
+          return _CellSelection.colSelection($anchorCell, $headCell);
         else
-          return new CellSelection($anchorCell, $headCell);
+          return new _CellSelection($anchorCell, $headCell);
       }
       return TextSelection.between($anchorCell, $headCell);
     }
@@ -28285,7 +28602,7 @@ img.ProseMirror-separator {
             tableStart + map2.map[map2.width * (map2.height - 1) + anchorRect.right - 1]
           );
       }
-      return new CellSelection($anchorCell, $headCell);
+      return new _CellSelection($anchorCell, $headCell);
     }
     // True if this selection goes all the way from the left to the
     // right of the table.
@@ -28302,7 +28619,7 @@ img.ProseMirror-separator {
       return Math.max(anchorRight, headRight) == map2.width;
     }
     eq(other) {
-      return other instanceof CellSelection && other.$anchorCell.pos == this.$anchorCell.pos && other.$headCell.pos == this.$headCell.pos;
+      return other instanceof _CellSelection && other.$anchorCell.pos == this.$anchorCell.pos && other.$headCell.pos == this.$headCell.pos;
     }
     // Returns the smallest row selection that covers the given anchor
     // and head cell.
@@ -28330,7 +28647,7 @@ img.ProseMirror-separator {
             tableStart + map2.map[map2.width * (anchorRect.top + 1) - 1]
           );
       }
-      return new CellSelection($anchorCell, $headCell);
+      return new _CellSelection($anchorCell, $headCell);
     }
     toJSON() {
       return {
@@ -28340,10 +28657,10 @@ img.ProseMirror-separator {
       };
     }
     static fromJSON(doc2, json) {
-      return new CellSelection(doc2.resolve(json.anchor), doc2.resolve(json.head));
+      return new _CellSelection(doc2.resolve(json.anchor), doc2.resolve(json.head));
     }
     static create(doc2, anchorCell, headCell = anchorCell) {
-      return new CellSelection(doc2.resolve(anchorCell), doc2.resolve(headCell));
+      return new _CellSelection(doc2.resolve(anchorCell), doc2.resolve(headCell));
     }
     getBookmark() {
       return new CellBookmark(this.$anchorCell.pos, this.$headCell.pos);
@@ -28351,13 +28668,13 @@ img.ProseMirror-separator {
   };
   CellSelection.prototype.visible = false;
   Selection.jsonID("cell", CellSelection);
-  var CellBookmark = class {
+  var CellBookmark = class _CellBookmark {
     constructor(anchor, head2) {
       this.anchor = anchor;
       this.head = head2;
     }
     map(mapping) {
-      return new CellBookmark(mapping.map(this.anchor), mapping.map(this.head));
+      return new _CellBookmark(mapping.map(this.anchor), mapping.map(this.head));
     }
     resolve(doc2) {
       const $anchorCell = doc2.resolve(this.anchor), $headCell = doc2.resolve(this.head);
@@ -29149,7 +29466,7 @@ img.ProseMirror-separator {
     });
     return plugin;
   }
-  var ResizeState = class {
+  var ResizeState = class _ResizeState {
     constructor(activeHandle, dragging) {
       this.activeHandle = activeHandle;
       this.dragging = dragging;
@@ -29158,15 +29475,15 @@ img.ProseMirror-separator {
       const state = this;
       const action = tr2.getMeta(columnResizingPluginKey);
       if (action && action.setHandle != null)
-        return new ResizeState(action.setHandle, false);
+        return new _ResizeState(action.setHandle, false);
       if (action && action.setDragging !== void 0)
-        return new ResizeState(state.activeHandle, action.setDragging);
+        return new _ResizeState(state.activeHandle, action.setDragging);
       if (state.activeHandle > -1 && tr2.docChanged) {
         let handle2 = tr2.mapping.map(state.activeHandle, -1);
         if (!pointsAtCell(tr2.doc.resolve(handle2))) {
           handle2 = -1;
         }
-        return new ResizeState(handle2, state.dragging);
+        return new _ResizeState(handle2, state.dragging);
       }
       return state;
     }
@@ -29535,20 +29852,57 @@ img.ProseMirror-separator {
       return {
         // Makes enter create a new line within the cell.
         Enter: () => {
-          if (this.editor.state.selection.empty && this.editor.state.selection.$head.parent.type.name === "tableParagraph") {
-            this.editor.commands.setHardBreak();
-            return true;
-          }
           return false;
         },
         // Ensures that backspace won't delete the table if the text cursor is at
         // the start of a cell and the selection is empty.
         Backspace: () => {
-          const selection = this.editor.state.selection;
-          const selectionIsEmpty = selection.empty;
-          const selectionIsAtStartOfNode = selection.$head.parentOffset === 0;
-          const selectionIsInTableParagraphNode = selection.$head.node().type.name === "tableParagraph";
-          return selectionIsEmpty && selectionIsAtStartOfNode && selectionIsInTableParagraphNode;
+          return this.editor.commands.first(({ commands: commands2 }) => [
+            // Deletes the selection if it's not empty.
+            () => commands2.deleteSelection(),
+            // Undoes an input rule if one was triggered in the last editor state change.
+            () => commands2.undoInputRule(),
+            // Reverts block content type to a paragraph if the selection is at the start of the block.
+            () => commands2.command(({ state }) => {
+              const { contentType } = getBlockInfoFromPos(
+                state.doc,
+                state.selection.from
+              );
+              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+              const isParagraph = contentType.name === "paragraph";
+              if (selectionAtBlockStart && !isParagraph) {
+                return commands2.BNUpdateBlock(state.selection.from, {
+                  type: "paragraph",
+                  props: {}
+                });
+              }
+              return false;
+            }),
+            // Removes a level of nesting if the block is indented if the selection is at the start of the block.
+            () => commands2.command(({ state }) => {
+              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+              if (selectionAtBlockStart) {
+                return commands2.liftListItem("blockContainer");
+              }
+              return false;
+            }),
+            // Merges block with the previous one if it isn't indented, isn't the first block in the doc, and the selection
+            // is at the start of the block.
+            () => commands2.command(({ state }) => {
+              const { depth, startPos } = getBlockInfoFromPos(
+                state.doc,
+                state.selection.from
+              );
+              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+              const selectionEmpty = state.selection.anchor === state.selection.head;
+              const blockAtDocStart = startPos === 2;
+              const posBetweenBlocks = startPos - 1;
+              if (!blockAtDocStart && selectionAtBlockStart && selectionEmpty && depth > 1) {
+                return commands2.BNMergeBlocks(posBetweenBlocks);
+              }
+              return false;
+            })
+          ]);
         }
       };
     },
@@ -29593,13 +29947,13 @@ img.ProseMirror-separator {
   const TableParagraph = Node.create({
     name: "tableParagraph",
     group: "tableContent",
-    content: "inline*",
+    content: "blockContainer+",
     parseHTML() {
-      return [{ tag: "p" }];
+      return [{ tag: "div" }];
     },
     renderHTML({ HTMLAttributes }) {
       return [
-        "p",
+        "div",
         mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
         0
       ];
@@ -29677,53 +30031,90 @@ img.ProseMirror-separator {
         blockToNode(blockSpec, ttEditor.schema, editor2.styleSchema)
       );
     }
-    let insertionPos = -1;
     const { node: node2, posBeforeNode } = getNodeById(id, ttEditor.state.doc);
     if (placement === "before") {
-      insertionPos = posBeforeNode;
+      ttEditor.view.dispatch(
+        ttEditor.state.tr.insert(posBeforeNode, nodesToInsert)
+      );
     }
     if (placement === "after") {
-      insertionPos = posBeforeNode + node2.nodeSize;
+      ttEditor.view.dispatch(
+        ttEditor.state.tr.insert(posBeforeNode + node2.nodeSize, nodesToInsert)
+      );
     }
     if (placement === "nested") {
       if (node2.childCount < 2) {
-        insertionPos = posBeforeNode + node2.firstChild.nodeSize + 1;
         const blockGroupNode = ttEditor.state.schema.nodes["blockGroup"].create(
           {},
           nodesToInsert
         );
         ttEditor.view.dispatch(
-          ttEditor.state.tr.insert(insertionPos, blockGroupNode)
+          ttEditor.state.tr.insert(
+            posBeforeNode + node2.firstChild.nodeSize + 1,
+            blockGroupNode
+          )
         );
-        return;
       }
-      insertionPos = posBeforeNode + node2.firstChild.nodeSize + 2;
     }
-    ttEditor.view.dispatch(ttEditor.state.tr.insert(insertionPos, nodesToInsert));
+    const insertedBlocks = [];
+    for (const node22 of nodesToInsert) {
+      insertedBlocks.push(
+        nodeToBlock(
+          node22,
+          editor2.blockSchema,
+          editor2.inlineContentSchema,
+          editor2.styleSchema,
+          editor2.blockCache
+        )
+      );
+    }
+    return insertedBlocks;
   }
   function updateBlock(blockToUpdate, update, editor2) {
+    const ttEditor = editor2._tiptapEditor;
     const id = typeof blockToUpdate === "string" ? blockToUpdate : blockToUpdate.id;
-    const { posBeforeNode } = getNodeById(id, editor2.state.doc);
-    editor2.commands.BNUpdateBlock(posBeforeNode + 1, update);
+    const { posBeforeNode } = getNodeById(id, ttEditor.state.doc);
+    ttEditor.commands.BNUpdateBlock(posBeforeNode + 1, update);
+    const blockContainerNode = ttEditor.state.doc.resolve(posBeforeNode + 1).node();
+    return nodeToBlock(
+      blockContainerNode,
+      editor2.blockSchema,
+      editor2.inlineContentSchema,
+      editor2.styleSchema,
+      editor2.blockCache
+    );
   }
-  function removeBlocks(blocksToRemove, editor2) {
+  function removeBlocksWithCallback(blocksToRemove, editor2, callback) {
+    const ttEditor = editor2._tiptapEditor;
+    const tr2 = ttEditor.state.tr;
     const idsOfBlocksToRemove = new Set(
       blocksToRemove.map(
         (block2) => typeof block2 === "string" ? block2 : block2.id
       )
     );
+    const removedBlocks = [];
     let removedSize = 0;
-    editor2.state.doc.descendants((node2, pos) => {
+    ttEditor.state.doc.descendants((node2, pos) => {
       if (idsOfBlocksToRemove.size === 0) {
         return false;
       }
       if (node2.type.name !== "blockContainer" || !idsOfBlocksToRemove.has(node2.attrs.id)) {
         return true;
       }
+      removedBlocks.push(
+        nodeToBlock(
+          node2,
+          editor2.blockSchema,
+          editor2.inlineContentSchema,
+          editor2.styleSchema,
+          editor2.blockCache
+        )
+      );
       idsOfBlocksToRemove.delete(node2.attrs.id);
-      const oldDocSize = editor2.state.doc.nodeSize;
-      editor2.commands.BNDeleteBlock(pos - removedSize + 1);
-      const newDocSize = editor2.state.doc.nodeSize;
+      removedSize = (callback == null ? void 0 : callback(node2, pos, tr2, removedSize)) || removedSize;
+      const oldDocSize = tr2.doc.nodeSize;
+      tr2.delete(pos - removedSize - 1, pos - removedSize + node2.nodeSize + 1);
+      const newDocSize = tr2.doc.nodeSize;
       removedSize += oldDocSize - newDocSize;
       return false;
     });
@@ -29733,10 +30124,45 @@ img.ProseMirror-separator {
         "Blocks with the following IDs could not be found in the editor: " + notFoundIds
       );
     }
+    ttEditor.view.dispatch(tr2);
+    return removedBlocks;
+  }
+  function removeBlocks(blocksToRemove, editor2) {
+    return removeBlocksWithCallback(blocksToRemove, editor2);
   }
   function replaceBlocks(blocksToRemove, blocksToInsert, editor2) {
-    insertBlocks(blocksToInsert, blocksToRemove[0], "before", editor2);
-    removeBlocks(blocksToRemove, editor2._tiptapEditor);
+    const ttEditor = editor2._tiptapEditor;
+    const nodesToInsert = [];
+    for (const block2 of blocksToInsert) {
+      nodesToInsert.push(blockToNode(block2, ttEditor.schema, editor2.styleSchema));
+    }
+    const idOfFirstBlock = typeof blocksToRemove[0] === "string" ? blocksToRemove[0] : blocksToRemove[0].id;
+    const removedBlocks = removeBlocksWithCallback(
+      blocksToRemove,
+      editor2,
+      (node2, pos, tr2, removedSize) => {
+        if (node2.attrs.id === idOfFirstBlock) {
+          const oldDocSize = tr2.doc.nodeSize;
+          tr2.insert(pos, nodesToInsert);
+          const newDocSize = tr2.doc.nodeSize;
+          return removedSize + oldDocSize - newDocSize;
+        }
+        return removedSize;
+      }
+    );
+    const insertedBlocks = [];
+    for (const node2 of nodesToInsert) {
+      insertedBlocks.push(
+        nodeToBlock(
+          node2,
+          editor2.blockSchema,
+          editor2.inlineContentSchema,
+          editor2.styleSchema,
+          editor2.blockCache
+        )
+      );
+    }
+    return { insertedBlocks, removedBlocks };
   }
   const isElement = (
     /**
@@ -29755,8 +30181,8 @@ img.ProseMirror-separator {
      * @returns {boolean}
      */
     // eslint-disable-next-line max-params
-    function(node2, test2, index2, parent, context) {
-      const check = convertElement(test2);
+    function(node2, test, index2, parent, context) {
+      const check = convertElement$1(test);
       if (index2 !== void 0 && index2 !== null && (typeof index2 !== "number" || index2 < 0 || index2 === Number.POSITIVE_INFINITY)) {
         throw new Error("Expected positive finite index for child node");
       }
@@ -29772,7 +30198,7 @@ img.ProseMirror-separator {
       return check.call(context, node2, index2, parent);
     }
   );
-  const convertElement = (
+  const convertElement$1 = (
     /**
      * @type {(
      *   (<T extends Element>(test: T['tagName'] | TestFunctionPredicate<T>) => AssertPredicate<T>) &
@@ -29783,29 +30209,29 @@ img.ProseMirror-separator {
      * @param {Test | null | undefined} [test]
      * @returns {AssertAnything}
      */
-    function(test2) {
-      if (test2 === void 0 || test2 === null) {
-        return element$1;
+    function(test) {
+      if (test === void 0 || test === null) {
+        return element$2;
       }
-      if (typeof test2 === "string") {
-        return tagNameFactory(test2);
+      if (typeof test === "string") {
+        return tagNameFactory$1(test);
       }
-      if (typeof test2 === "object") {
-        return anyFactory$1(test2);
+      if (typeof test === "object") {
+        return anyFactory$6(test);
       }
-      if (typeof test2 === "function") {
-        return castFactory$1(test2);
+      if (typeof test === "function") {
+        return castFactory$6(test);
       }
       throw new Error("Expected function, string, or array as test");
     }
   );
-  function anyFactory$1(tests) {
+  function anyFactory$6(tests) {
     const checks2 = [];
     let index2 = -1;
     while (++index2 < tests.length) {
-      checks2[index2] = convertElement(tests[index2]);
+      checks2[index2] = convertElement$1(tests[index2]);
     }
-    return castFactory$1(any2);
+    return castFactory$6(any2);
     function any2(...parameters) {
       let index3 = -1;
       while (++index3 < checks2.length) {
@@ -29816,26 +30242,26 @@ img.ProseMirror-separator {
       return false;
     }
   }
-  function tagNameFactory(check) {
+  function tagNameFactory$1(check) {
     return tagName;
     function tagName(node2) {
-      return element$1(node2) && node2.tagName === check;
+      return element$2(node2) && node2.tagName === check;
     }
   }
-  function castFactory$1(check) {
+  function castFactory$6(check) {
     return assertion;
     function assertion(node2, ...parameters) {
-      return element$1(node2) && Boolean(check.call(this, node2, ...parameters));
+      return element$2(node2) && Boolean(check.call(this, node2, ...parameters));
     }
   }
-  function element$1(node2) {
+  function element$2(node2) {
     return Boolean(
       node2 && typeof node2 === "object" && // @ts-expect-error Looks like a node.
       node2.type === "element" && // @ts-expect-error Looks like an element.
       typeof node2.tagName === "string"
     );
   }
-  const embedded = convertElement([
+  const embedded = convertElement$1([
     "audio",
     "canvas",
     "embed",
@@ -29847,7 +30273,7 @@ img.ProseMirror-separator {
     "svg",
     "video"
   ]);
-  const convert = (
+  const convert$4 = (
     /**
      * @type {(
      *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
@@ -29858,29 +30284,29 @@ img.ProseMirror-separator {
      * @param {Test} [test]
      * @returns {AssertAnything}
      */
-    function(test2) {
-      if (test2 === void 0 || test2 === null) {
-        return ok;
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok$4;
       }
-      if (typeof test2 === "string") {
-        return typeFactory(test2);
+      if (typeof test === "string") {
+        return typeFactory$4(test);
       }
-      if (typeof test2 === "object") {
-        return Array.isArray(test2) ? anyFactory(test2) : propsFactory(test2);
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory$5(test) : propsFactory$4(test);
       }
-      if (typeof test2 === "function") {
-        return castFactory(test2);
+      if (typeof test === "function") {
+        return castFactory$5(test);
       }
       throw new Error("Expected function, string, or object as test");
     }
   );
-  function anyFactory(tests) {
+  function anyFactory$5(tests) {
     const checks2 = [];
     let index2 = -1;
     while (++index2 < tests.length) {
-      checks2[index2] = convert(tests[index2]);
+      checks2[index2] = convert$4(tests[index2]);
     }
-    return castFactory(any2);
+    return castFactory$5(any2);
     function any2(...parameters) {
       let index3 = -1;
       while (++index3 < checks2.length) {
@@ -29890,8 +30316,8 @@ img.ProseMirror-separator {
       return false;
     }
   }
-  function propsFactory(check) {
-    return castFactory(all2);
+  function propsFactory$4(check) {
+    return castFactory$5(all2);
     function all2(node2) {
       let key2;
       for (key2 in check) {
@@ -29901,13 +30327,13 @@ img.ProseMirror-separator {
       return true;
     }
   }
-  function typeFactory(check) {
-    return castFactory(type);
+  function typeFactory$4(check) {
+    return castFactory$5(type);
     function type(node2) {
       return node2 && node2.type === check;
     }
   }
-  function castFactory(check) {
+  function castFactory$5(check) {
     return assertion;
     function assertion(node2, ...parameters) {
       return Boolean(
@@ -29916,8 +30342,18 @@ img.ProseMirror-separator {
       );
     }
   }
-  function ok() {
+  function ok$4() {
     return true;
+  }
+  function whitespace$1(thing) {
+    const value = (
+      // @ts-expect-error looks like a node.
+      thing && typeof thing === "object" && thing.type === "text" ? (
+        // @ts-expect-error looks like a text.
+        thing.value || ""
+      ) : thing
+    );
+    return typeof value === "string" && value.replace(/[ \t\n\f\r]/g, "") === "";
   }
   const blocks = [
     "address",
@@ -30064,7 +30500,7 @@ img.ProseMirror-separator {
     "track",
     "title"
   ];
-  const ignorableNode = convert(["doctype", "comment"]);
+  const ignorableNode = convert$4(["doctype", "comment"]);
   function rehypeMinifyWhitespace(options = {}) {
     const collapse = collapseFactory(
       options.newlines ? replaceNewlines : replaceWhitespace
@@ -30220,13 +30656,85 @@ img.ProseMirror-separator {
     }
     return context.whitespace;
   }
-  function color(d) {
+  const convert$3 = (
+    /**
+     * @type {(
+     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok$3;
+      }
+      if (typeof test === "string") {
+        return typeFactory$3(test);
+      }
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory$4(test) : propsFactory$3(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$4(test);
+      }
+      throw new Error("Expected function, string, or object as test");
+    }
+  );
+  function anyFactory$4(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convert$3(tests[index2]);
+    }
+    return castFactory$4(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters))
+          return true;
+      }
+      return false;
+    }
+  }
+  function propsFactory$3(check) {
+    return castFactory$4(all2);
+    function all2(node2) {
+      let key2;
+      for (key2 in check) {
+        if (node2[key2] !== check[key2])
+          return false;
+      }
+      return true;
+    }
+  }
+  function typeFactory$3(check) {
+    return castFactory$4(type);
+    function type(node2) {
+      return node2 && node2.type === check;
+    }
+  }
+  function castFactory$4(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return Boolean(
+        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
+        Boolean(check.call(this, node2, ...parameters))
+      );
+    }
+  }
+  function ok$3() {
+    return true;
+  }
+  function color$1(d) {
     return d;
   }
-  const CONTINUE = true;
-  const EXIT = false;
-  const SKIP = "skip";
-  const visitParents = (
+  const CONTINUE$1 = true;
+  const EXIT$1 = false;
+  const SKIP$1 = "skip";
+  const visitParents$1 = (
     /**
      * @type {(
      *   (<Tree extends Node, Check extends Test>(tree: Tree, test: Check, visitor: BuildVisitor<Tree, Check>, reverse?: boolean | null | undefined) => void) &
@@ -30240,13 +30748,13 @@ img.ProseMirror-separator {
      * @param {boolean | null | undefined} [reverse]
      * @returns {void}
      */
-    function(tree, test2, visitor, reverse) {
-      if (typeof test2 === "function" && typeof visitor !== "function") {
+    function(tree, test, visitor, reverse) {
+      if (typeof test === "function" && typeof visitor !== "function") {
         reverse = visitor;
-        visitor = test2;
-        test2 = null;
+        visitor = test;
+        test = null;
       }
-      const is = convert(test2);
+      const is = convert$3(test);
       const step = reverse ? -1 : 1;
       factory(tree, void 0, [])();
       function factory(node2, index2, parents) {
@@ -30260,7 +30768,7 @@ img.ProseMirror-separator {
             )
           );
           Object.defineProperty(visit2, "name", {
-            value: "node (" + color(node2.type + (name ? "<" + name + ">" : "")) + ")"
+            value: "node (" + color$1(node2.type + (name ? "<" + name + ">" : "")) + ")"
           });
         }
         return visit2;
@@ -30269,18 +30777,18 @@ img.ProseMirror-separator {
           let subresult;
           let offset;
           let grandparents;
-          if (!test2 || is(node2, index2, parents[parents.length - 1] || null)) {
-            result = toResult(visitor(node2, parents));
-            if (result[0] === EXIT) {
+          if (!test || is(node2, index2, parents[parents.length - 1] || null)) {
+            result = toResult$1(visitor(node2, parents));
+            if (result[0] === EXIT$1) {
               return result;
             }
           }
-          if (node2.children && result[0] !== SKIP) {
+          if (node2.children && result[0] !== SKIP$1) {
             offset = (reverse ? node2.children.length : -1) + step;
             grandparents = parents.concat(node2);
             while (offset > -1 && offset < node2.children.length) {
               subresult = factory(node2.children[offset], offset, grandparents)();
-              if (subresult[0] === EXIT) {
+              if (subresult[0] === EXIT$1) {
                 return subresult;
               }
               offset = typeof subresult[1] === "number" ? subresult[1] : offset + step;
@@ -30291,12 +30799,12 @@ img.ProseMirror-separator {
       }
     }
   );
-  function toResult(value) {
+  function toResult$1(value) {
     if (Array.isArray(value)) {
       return value;
     }
     if (typeof value === "number") {
-      return [CONTINUE, value];
+      return [CONTINUE$1, value];
     }
     return [value];
   }
@@ -30314,13 +30822,13 @@ img.ProseMirror-separator {
      * @param {boolean | null | undefined} [reverse]
      * @returns {void}
      */
-    function(tree, test2, visitor, reverse) {
-      if (typeof test2 === "function" && typeof visitor !== "function") {
+    function(tree, test, visitor, reverse) {
+      if (typeof test === "function" && typeof visitor !== "function") {
         reverse = visitor;
-        visitor = test2;
-        test2 = null;
+        visitor = test;
+        test = null;
       }
-      visitParents(tree, test2, overload, reverse);
+      visitParents$1(tree, test, overload, reverse);
       function overload(node2, parents) {
         const parent = parents[parents.length - 1];
         return visitor(
@@ -30409,7 +30917,7 @@ img.ProseMirror-separator {
     }
     return true;
   }
-  const basic = convertElement([
+  const basic = convertElement$1([
     "a",
     "abbr",
     // `area` is in fact only phrasing if it is inside a `map` element.
@@ -30458,7 +30966,7 @@ img.ProseMirror-separator {
     "var",
     "wbr"
   ]);
-  const meta = convertElement("meta");
+  const meta = convertElement$1("meta");
   function phrasing$2(value) {
     return Boolean(
       node$1(value) && (value.type === "text" || basic(value) || embedded(value) || isBodyOkLink(value) || meta(value) && hasProperty$1(value, "itemProp"))
@@ -30467,9 +30975,81 @@ img.ProseMirror-separator {
   function node$1(value) {
     return value && typeof value === "object" && "type" in value;
   }
+  const convert$2 = (
+    /**
+     * @type {(
+     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok$2;
+      }
+      if (typeof test === "string") {
+        return typeFactory$2(test);
+      }
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory$3(test) : propsFactory$2(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$3(test);
+      }
+      throw new Error("Expected function, string, or object as test");
+    }
+  );
+  function anyFactory$3(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convert$2(tests[index2]);
+    }
+    return castFactory$3(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters))
+          return true;
+      }
+      return false;
+    }
+  }
+  function propsFactory$2(check) {
+    return castFactory$3(all2);
+    function all2(node2) {
+      let key2;
+      for (key2 in check) {
+        if (node2[key2] !== check[key2])
+          return false;
+      }
+      return true;
+    }
+  }
+  function typeFactory$2(check) {
+    return castFactory$3(type);
+    function type(node2) {
+      return node2 && node2.type === check;
+    }
+  }
+  function castFactory$3(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return Boolean(
+        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
+        Boolean(check.call(this, node2, ...parameters))
+      );
+    }
+  }
+  function ok$2() {
+    return true;
+  }
   const phrasing$1 = (
     /** @type {AssertPredicatePhrasing} */
-    convert([
+    convert$2([
       "break",
       "delete",
       "emphasis",
@@ -30610,6 +31190,141 @@ img.ProseMirror-separator {
   function br$1(h2, node2) {
     return h2.wrapText ? h2(node2, "break") : h2(node2, "text", " ");
   }
+  const convertElement = (
+    /**
+     * @type {(
+     *   (<T extends Element>(test: T['tagName'] | TestFunctionPredicate<T>) => AssertPredicate<T>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test | null | undefined} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return element$1;
+      }
+      if (typeof test === "string") {
+        return tagNameFactory(test);
+      }
+      if (typeof test === "object") {
+        return anyFactory$2(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$2(test);
+      }
+      throw new Error("Expected function, string, or array as test");
+    }
+  );
+  function anyFactory$2(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convertElement(tests[index2]);
+    }
+    return castFactory$2(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  function tagNameFactory(check) {
+    return tagName;
+    function tagName(node2) {
+      return element$1(node2) && node2.tagName === check;
+    }
+  }
+  function castFactory$2(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return element$1(node2) && Boolean(check.call(this, node2, ...parameters));
+    }
+  }
+  function element$1(node2) {
+    return Boolean(
+      node2 && typeof node2 === "object" && // @ts-expect-error Looks like a node.
+      node2.type === "element" && // @ts-expect-error Looks like an element.
+      typeof node2.tagName === "string"
+    );
+  }
+  const convert$1 = (
+    /**
+     * @type {(
+     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok$1;
+      }
+      if (typeof test === "string") {
+        return typeFactory$1(test);
+      }
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory$1(test) : propsFactory$1(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$1(test);
+      }
+      throw new Error("Expected function, string, or object as test");
+    }
+  );
+  function anyFactory$1(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convert$1(tests[index2]);
+    }
+    return castFactory$1(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters))
+          return true;
+      }
+      return false;
+    }
+  }
+  function propsFactory$1(check) {
+    return castFactory$1(all2);
+    function all2(node2) {
+      let key2;
+      for (key2 in check) {
+        if (node2[key2] !== check[key2])
+          return false;
+      }
+      return true;
+    }
+  }
+  function typeFactory$1(check) {
+    return castFactory$1(type);
+    function type(node2) {
+      return node2 && node2.type === check;
+    }
+  }
+  function castFactory$1(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return Boolean(
+        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
+        Boolean(check.call(this, node2, ...parameters))
+      );
+    }
+  }
+  function ok$1() {
+    return true;
+  }
   const findAfter = (
     /**
      * @type {(
@@ -30623,8 +31338,8 @@ img.ProseMirror-separator {
      * @param {Test} [test]
      * @returns {Node | null}
      */
-    function(parent, index2, test2) {
-      const is = convert(test2);
+    function(parent, index2, test) {
+      const is = convert$1(test);
       if (!parent || !parent.type || !parent.children) {
         throw new Error("Expected parent node");
       }
@@ -30954,8 +31669,8 @@ img.ProseMirror-separator {
     return input2.slice(0, end);
   }
   const prefix = "language-";
-  const pre = convertElement("pre");
-  const isCode = convertElement("code");
+  const pre = convertElement$1("pre");
+  const isCode = convertElement$1("code");
   function code$4(h2, node2) {
     const children = node2.children;
     let index2 = -1;
@@ -31020,9 +31735,9 @@ img.ProseMirror-separator {
     }
     return children;
   }
-  const div = convertElement("div");
-  const dt = convertElement("dt");
-  const dd = convertElement("dd");
+  const div = convertElement$1("div");
+  const dt = convertElement$1("dt");
+  const dd = convertElement$1("dd");
   function dl(h2, node2) {
     const children = node2.children;
     let index2 = -1;
@@ -31130,7 +31845,7 @@ img.ProseMirror-separator {
   function inlineCode$2(h2, node2) {
     return h2(node2, "inlineCode", wrapText(h2, toText(node2)));
   }
-  const option = convertElement("option");
+  const option = convertElement$1("option");
   function findSelectedOptions(h2, node2, properties) {
     const props = properties || node2.properties;
     let options = findOptions(node2);
@@ -31172,7 +31887,7 @@ img.ProseMirror-separator {
     }
     return results;
   }
-  const datalist = convertElement("datalist");
+  const datalist = convertElement$1("datalist");
   function input$1(h2, node2) {
     const props = node2.properties;
     let value = String(props.value || props.placeholder || "");
@@ -31242,8 +31957,8 @@ img.ProseMirror-separator {
     }
     return h2(node2, "text", wrapText(h2, texts.join(", ")));
   }
-  const p$1 = convertElement("p");
-  const input = convertElement("input");
+  const p$1 = convertElement$1("p");
+  const input = convertElement$1("input");
   function li(h2, node2) {
     const head2 = node2.children[0];
     let checked = null;
@@ -31265,7 +31980,7 @@ img.ProseMirror-separator {
     const content2 = wrapChildren(h2, clone || node2);
     return h2(node2, "listItem", { spread: content2.length > 1, checked }, content2);
   }
-  const ol = convertElement("ol");
+  const ol = convertElement$1("ol");
   function list$3(h2, node2) {
     const ordered = ol(node2);
     const children = wrapListItems(h2, node2);
@@ -31318,8 +32033,8 @@ img.ProseMirror-separator {
   function node(value) {
     return Boolean(value && typeof value === "object");
   }
-  const source = convertElement("source");
-  const video = convertElement("video");
+  const source = convertElement$1("source");
+  const video = convertElement$1("video");
   function media(h2, node2) {
     let nodes = all$2(h2, node2);
     const properties = node2.properties;
@@ -31358,7 +32073,7 @@ img.ProseMirror-separator {
     };
     function findLink() {
       linkInFallbackContent = true;
-      return EXIT;
+      return EXIT$1;
     }
   }
   function p(h2, node2) {
@@ -31419,9 +32134,9 @@ img.ProseMirror-separator {
   function tableRow$1(h2, node2) {
     return h2(node2, "tableRow", all$2(h2, node2));
   }
-  const thead = convertElement("thead");
-  const tr$1 = convertElement("tr");
-  const cell = convertElement(["th", "td"]);
+  const thead = convertElement$1("thead");
+  const tr$1 = convertElement$1("tr");
+  const cell = convertElement$1(["th", "td"]);
   function table$1(h2, node2) {
     if (h2.inTable) {
       return h2(node2, "text", wrapText(h2, toText(node2)));
@@ -31488,7 +32203,7 @@ img.ProseMirror-separator {
     const align = [null];
     visit(node2, "element", (child) => {
       if (child.tagName === "table" && node2 !== child) {
-        return SKIP;
+        return SKIP$1;
       }
       if (cell(child) && child.properties) {
         if (!align[cellIndex]) {
@@ -31730,7 +32445,7 @@ img.ProseMirror-separator {
   };
   function ignore$1() {
   }
-  const block = convert(["heading", "paragraph", "root"]);
+  const block = convert$4(["heading", "paragraph", "root"]);
   function toMdast(tree, options = {}) {
     const byId = {};
     let mdast;
@@ -32731,7 +33446,7 @@ img.ProseMirror-separator {
     const self2 = this;
     let size = 0;
     let max2;
-    let test2;
+    let test;
     return start;
     function start(code2) {
       effects.enter("characterReference");
@@ -32749,7 +33464,7 @@ img.ProseMirror-separator {
       }
       effects.enter("characterReferenceValue");
       max2 = 31;
-      test2 = asciiAlphanumeric;
+      test = asciiAlphanumeric;
       return value(code2);
     }
     function numeric2(code2) {
@@ -32759,18 +33474,18 @@ img.ProseMirror-separator {
         effects.exit("characterReferenceMarkerHexadecimal");
         effects.enter("characterReferenceValue");
         max2 = 6;
-        test2 = asciiHexDigit;
+        test = asciiHexDigit;
         return value;
       }
       effects.enter("characterReferenceValue");
       max2 = 7;
-      test2 = asciiDigit;
+      test = asciiDigit;
       return value(code2);
     }
     function value(code2) {
       if (code2 === 59 && size) {
         const token = effects.exit("characterReferenceValue");
-        if (test2 === asciiAlphanumeric && !decodeNamedCharacterReference(self2.sliceSerialize(token))) {
+        if (test === asciiAlphanumeric && !decodeNamedCharacterReference(self2.sliceSerialize(token))) {
           return nok(code2);
         }
         effects.enter("characterReferenceMarker");
@@ -32779,7 +33494,7 @@ img.ProseMirror-separator {
         effects.exit("characterReference");
         return ok2;
       }
-      if (test2(code2) && size++ < max2) {
+      if (test(code2) && size++ < max2) {
         effects.consume(code2);
         return value;
       }
@@ -36151,6 +36866,158 @@ img.ProseMirror-separator {
     }
     return string2.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&").replace(/-/g, "\\x2d");
   }
+  const convert = (
+    /**
+     * @type {(
+     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok;
+      }
+      if (typeof test === "string") {
+        return typeFactory(test);
+      }
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory(test) : propsFactory(test);
+      }
+      if (typeof test === "function") {
+        return castFactory(test);
+      }
+      throw new Error("Expected function, string, or object as test");
+    }
+  );
+  function anyFactory(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convert(tests[index2]);
+    }
+    return castFactory(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters))
+          return true;
+      }
+      return false;
+    }
+  }
+  function propsFactory(check) {
+    return castFactory(all2);
+    function all2(node2) {
+      let key2;
+      for (key2 in check) {
+        if (node2[key2] !== check[key2])
+          return false;
+      }
+      return true;
+    }
+  }
+  function typeFactory(check) {
+    return castFactory(type);
+    function type(node2) {
+      return node2 && node2.type === check;
+    }
+  }
+  function castFactory(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return Boolean(
+        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
+        Boolean(check.call(this, node2, ...parameters))
+      );
+    }
+  }
+  function ok() {
+    return true;
+  }
+  function color(d) {
+    return d;
+  }
+  const CONTINUE = true;
+  const EXIT = false;
+  const SKIP = "skip";
+  const visitParents = (
+    /**
+     * @type {(
+     *   (<Tree extends Node, Check extends Test>(tree: Tree, test: Check, visitor: BuildVisitor<Tree, Check>, reverse?: boolean | null | undefined) => void) &
+     *   (<Tree extends Node>(tree: Tree, visitor: BuildVisitor<Tree>, reverse?: boolean | null | undefined) => void)
+     * )}
+     */
+    /**
+     * @param {Node} tree
+     * @param {Test} test
+     * @param {Visitor<Node>} visitor
+     * @param {boolean | null | undefined} [reverse]
+     * @returns {void}
+     */
+    function(tree, test, visitor, reverse) {
+      if (typeof test === "function" && typeof visitor !== "function") {
+        reverse = visitor;
+        visitor = test;
+        test = null;
+      }
+      const is = convert(test);
+      const step = reverse ? -1 : 1;
+      factory(tree, void 0, [])();
+      function factory(node2, index2, parents) {
+        const value = node2 && typeof node2 === "object" ? node2 : {};
+        if (typeof value.type === "string") {
+          const name = (
+            // `hast`
+            typeof value.tagName === "string" ? value.tagName : (
+              // `xast`
+              typeof value.name === "string" ? value.name : void 0
+            )
+          );
+          Object.defineProperty(visit2, "name", {
+            value: "node (" + color(node2.type + (name ? "<" + name + ">" : "")) + ")"
+          });
+        }
+        return visit2;
+        function visit2() {
+          let result = [];
+          let subresult;
+          let offset;
+          let grandparents;
+          if (!test || is(node2, index2, parents[parents.length - 1] || null)) {
+            result = toResult(visitor(node2, parents));
+            if (result[0] === EXIT) {
+              return result;
+            }
+          }
+          if (node2.children && result[0] !== SKIP) {
+            offset = (reverse ? node2.children.length : -1) + step;
+            grandparents = parents.concat(node2);
+            while (offset > -1 && offset < node2.children.length) {
+              subresult = factory(node2.children[offset], offset, grandparents)();
+              if (subresult[0] === EXIT) {
+                return subresult;
+              }
+              offset = typeof subresult[1] === "number" ? subresult[1] : offset + step;
+            }
+          }
+          return result;
+        }
+      }
+    }
+  );
+  function toResult(value) {
+    if (Array.isArray(value)) {
+      return value;
+    }
+    if (typeof value === "number") {
+      return [CONTINUE, value];
+    }
+    return [value];
+  }
   const own$3 = {}.hasOwnProperty;
   const findAndReplace = (
     /**
@@ -37587,7 +38454,7 @@ img.ProseMirror-separator {
     visit(node2, (node3) => {
       if ("value" in node3 && /\r?\n|\r/.test(node3.value) || node3.type === "break") {
         literalWithBreak = true;
-        return EXIT;
+        return EXIT$1;
       }
     });
     return Boolean(
@@ -40965,7 +41832,7 @@ img.ProseMirror-separator {
         setTimeout(() => this.update(this.pmView));
       });
       // For dragging the whole editor.
-      __publicField(this, "dragstartHandler", () => {
+      __publicField(this, "dragHandler", () => {
         var _a;
         if ((_a = this.formattingToolbarState) == null ? void 0 : _a.show) {
           this.formattingToolbarState.show = false;
@@ -41013,7 +41880,8 @@ img.ProseMirror-separator {
       };
       pmView.dom.addEventListener("mousedown", this.viewMousedownHandler);
       pmView.dom.addEventListener("mouseup", this.viewMouseupHandler);
-      pmView.dom.addEventListener("dragstart", this.dragstartHandler);
+      pmView.dom.addEventListener("dragstart", this.dragHandler);
+      pmView.dom.addEventListener("dragover", this.dragHandler);
       pmView.dom.addEventListener("focus", this.focusHandler);
       pmView.dom.addEventListener("blur", this.blurHandler);
       document.addEventListener("scroll", this.scrollHandler);
@@ -41053,7 +41921,8 @@ img.ProseMirror-separator {
     destroy() {
       this.pmView.dom.removeEventListener("mousedown", this.viewMousedownHandler);
       this.pmView.dom.removeEventListener("mouseup", this.viewMouseupHandler);
-      this.pmView.dom.removeEventListener("dragstart", this.dragstartHandler);
+      this.pmView.dom.removeEventListener("dragstart", this.dragHandler);
+      this.pmView.dom.removeEventListener("dragover", this.dragHandler);
       this.pmView.dom.removeEventListener("focus", this.focusHandler);
       this.pmView.dom.removeEventListener("blur", this.blurHandler);
       document.removeEventListener("scroll", this.scrollHandler);
@@ -42024,13 +42893,13 @@ img.ProseMirror-separator {
       if (blockInfo === void 0) {
         return;
       }
-      const { contentNode, endPos } = blockInfo;
-      if (contentNode.textContent.length !== 0) {
+      const { contentNode, startPos, endPos } = blockInfo;
+      if (contentNode.type.spec.content !== "inline*" || contentNode.textContent.length !== 0) {
         const newBlockInsertionPos = endPos + 1;
         const newBlockContentPos = newBlockInsertionPos + 2;
         this.editor._tiptapEditor.chain().BNCreateBlock(newBlockInsertionPos).BNUpdateBlock(newBlockContentPos, { type: "paragraph", props: {} }).setTextSelection(newBlockContentPos).run();
       } else {
-        this.editor._tiptapEditor.commands.setTextSelection(endPos);
+        this.editor._tiptapEditor.commands.setTextSelection(startPos + 1);
       }
       this.pmView.focus();
       this.pmView.dispatch(
@@ -42195,10 +43064,48 @@ img.ProseMirror-separator {
               type: "tableContent",
               rows: [
                 {
-                  cells: ["", "", ""]
+                  cells: [
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ],
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ],
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ]
+                  ]
                 },
                 {
-                  cells: ["", "", ""]
+                  cells: [
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ],
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ],
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ]
+                  ]
                 }
               ]
             }
@@ -42241,7 +43148,9 @@ img.ProseMirror-separator {
     }
     dragImageElement = document.createElement("div");
     dragImageElement.innerHTML = "_";
-    dragImageElement.style.visibility = "hidden";
+    dragImageElement.style.opacity = "0";
+    dragImageElement.style.height = "1px";
+    dragImageElement.style.width = "1px";
     document.body.appendChild(dragImageElement);
   }
   function unsetHiddenDragImage() {
@@ -50303,6 +51212,7 @@ img.ProseMirror-separator {
           cursor.insertBefore(label, null);
           return cursor;
         },
+        selectionRender: defaultSelectionBuilder,
         onUpdate: defaultOnUpdate
       };
     },
@@ -50342,7 +51252,8 @@ img.ProseMirror-separator {
           })(),
           // @ts-ignore
           {
-            cursorBuilder: this.options.render
+            cursorBuilder: this.options.render,
+            selectionBuilder: this.options.selectionRender
           }
         )
       ];
@@ -51334,16 +52245,19 @@ img.ProseMirror-separator {
     addKeyboardShortcuts() {
       return {
         "Mod-z": () => this.editor.commands.undo(),
+        "Mod-Z": () => this.editor.commands.undo(),
         "Mod-y": () => this.editor.commands.redo(),
+        "Mod-Y": () => this.editor.commands.redo(),
         "Shift-Mod-z": () => this.editor.commands.redo(),
+        "Shift-Mod-Z": () => this.editor.commands.redo(),
         // Russian keyboard layouts
         "Mod-я": () => this.editor.commands.undo(),
         "Shift-Mod-я": () => this.editor.commands.redo()
       };
     }
   });
-  const encodedTlds = "aaa1rp3barth4b0ott3vie4c1le2ogado5udhabi7c0ademy5centure6ountant0s9o1tor4d0s1ult4e0g1ro2tna4f0l1rica5g0akhan5ency5i0g1rbus3force5tel5kdn3l0faromeo7ibaba4pay4lfinanz6state5y2sace3tom5m0azon4ericanexpress7family11x2fam3ica3sterdam8nalytics7droid5quan4z2o0l2partments8p0le4q0uarelle8r0ab1mco4chi3my2pa2t0e3s0da2ia2sociates9t0hleta5torney7u0ction5di0ble3o3spost5thor3o0s4vianca6w0s2x0a2z0ure5ba0by2idu3namex3narepublic11d1k2r0celona5laycard4s5efoot5gains6seball5ketball8uhaus5yern5b0c1t1va3cg1n2d1e0ats2uty4er2ntley5rlin4st0buy5t2f1g1h0arti5i0ble3d1ke2ng0o3o1z2j1lack0friday9ockbuster8g1omberg7ue3m0s1w2n0pparibas9o0ats3ehringer8fa2m1nd2o0k0ing5sch2tik2on4t1utique6x2r0adesco6idgestone9oadway5ker3ther5ussels7s1t1uild0ers6siness6y1zz3v1w1y1z0h3ca0b1fe2l0l1vinklein9m0era3p2non3petown5ital0one8r0avan4ds2e0er0s4s2sa1e1h1ino4t0ering5holic7ba1n1re2s2c1d1enter4o1rn3f0a1d2g1h0anel2nel4rity4se2t2eap3intai5ristmas6ome4urch5i0priani6rcle4sco3tadel4i0c2y0eats7k1l0aims4eaning6ick2nic1que6othing5ud3ub0med6m1n1o0ach3des3ffee4llege4ogne5m0cast4mbank4unity6pany2re3uter5sec4ndos3struction8ulting7tact3ractors9oking0channel11l1p2rsica5untry4pon0s4rses6pa2r0edit0card4union9icket5own3s1uise0s6u0isinella9v1w1x1y0mru3ou3z2dabur3d1nce3ta1e1ing3sun4y2clk3ds2e0al0er2s3gree4livery5l1oitte5ta3mocrat6ntal2ist5si0gn4v2hl2iamonds6et2gital5rect0ory7scount3ver5h2y2j1k1m1np2o0cs1tor4g1mains5t1wnload7rive4tv2ubai3nlop4pont4rban5vag2r2z2earth3t2c0o2deka3u0cation8e1g1mail3erck5nergy4gineer0ing9terprises10pson4quipment8r0icsson6ni3s0q1tate5t0isalat7u0rovision8s2vents5xchange6pert3osed4ress5traspace10fage2il1rwinds6th3mily4n0s2rm0ers5shion4t3edex3edback6rrari3ero6i0at2delity5o2lm2nal1nce1ial7re0stone6mdale6sh0ing5t0ness6j1k1lickr3ghts4r2orist4wers5y2m1o0o0d0network8tball6rd1ex2sale4um3undation8x2r0ee1senius7l1ogans4ntdoor4ier7tr2ujitsu5n0d2rniture7tbol5yi3ga0l0lery3o1up4me0s3p1rden4y2b0iz3d0n2e0a1nt0ing5orge5f1g0ee3h1i0ft0s3ves2ing5l0ass3e1obal2o4m0ail3bh2o1x2n1odaddy5ld0point6f2o0dyear5g0le4p1t1v2p1q1r0ainger5phics5tis4een3ipe3ocery4up4s1t1u0ardian6cci3ge2ide2tars5ru3w1y2hair2mburg5ngout5us3bo2dfc0bank7ealth0care8lp1sinki6re1mes5gtv3iphop4samitsu7tachi5v2k0t2m1n1ockey4ldings5iday5medepot5goods5s0ense7nda3rse3spital5t0ing5t0eles2s3mail5use3w2r1sbc3t1u0ghes5yatt3undai7ibm2cbc2e1u2d1e0ee3fm2kano4l1m0amat4db2mo0bilien9n0c1dustries8finiti5o2g1k1stitute6urance4e4t0ernational10uit4vestments10o1piranga7q1r0ish4s0maili5t0anbul7t0au2v3jaguar4va3cb2e0ep2tzt3welry6io2ll2m0p2nj2o0bs1urg4t1y2p0morgan6rs3uegos4niper7kaufen5ddi3e0rryhotels6logistics9properties14fh2g1h1i0a1ds2m1nder2le4tchen5wi3m1n1oeln3matsu5sher5p0mg2n2r0d1ed3uokgroup8w1y0oto4z2la0caixa5mborghini8er3ncaster5ia3d0rover6xess5salle5t0ino3robe5w0yer5b1c1ds2ease3clerc5frak4gal2o2xus4gbt3i0dl2fe0insurance9style7ghting6ke2lly3mited4o2ncoln4de2k2psy3ve1ing5k1lc1p2oan0s3cker3us3l1ndon4tte1o3ve3pl0financial11r1s1t0d0a3u0ndbeck6xe1ury5v1y2ma0cys3drid4if1son4keup4n0agement7go3p1rket0ing3s4riott5shalls7serati6ttel5ba2c0kinsey7d1e0d0ia3et2lbourne7me1orial6n0u2rckmsd7g1h1iami3crosoft7l1ni1t2t0subishi9k1l0b1s2m0a2n1o0bi0le4da2e1i1m1nash3ey2ster5rmon3tgage6scow4to0rcycles9v0ie4p1q1r1s0d2t0n1r2u0seum3ic3tual5v1w1x1y1z2na0b1goya4me2tura4vy3ba2c1e0c1t0bank4flix4work5ustar5w0s2xt0direct7us4f0l2g0o2hk2i0co2ke1on3nja3ssan1y5l1o0kia3rthwesternmutual14on4w0ruz3tv4p1r0a1w2tt2u1yc2z2obi1server7ffice5kinawa6layan0group9dnavy5lo3m0ega4ne1g1l0ine5oo2pen3racle3nge4g0anic5igins6saka4tsuka4t2vh3pa0ge2nasonic7ris2s1tners4s1y3ssagens7y2ccw3e0t2f0izer5g1h0armacy6d1ilips5one2to0graphy6s4ysio5ics1tet2ures6d1n0g1k2oneer5zza4k1l0ace2y0station9umbing5s3m1n0c2ohl2ker3litie5rn2st3r0america6xi3ess3ime3o0d0uctions8f1gressive8mo2perties3y5tection8u0dential9s1t1ub2w0c2y2qa1pon3uebec3st5racing4dio4e0ad1lestate6tor2y4cipes5d0stone5umbrella9hab3ise0n3t2liance6n0t0als5pair3ort3ublican8st0aurant8view0s5xroth6ich0ardli6oh3l1o1p2o0cher3ks3deo3gers4om3s0vp3u0gby3hr2n2w0e2yukyu6sa0arland6fe0ty4kura4le1on3msclub4ung5ndvik0coromant12ofi4p1rl2s1ve2xo3b0i1s2c0a1b1haeffler7midt4olarships8ol3ule3warz5ience5ot3d1e0arch3t2cure1ity6ek2lect4ner3rvices6ven3w1x0y3fr2g1h0angrila6rp2w2ell3ia1ksha5oes2p0ping5uji3w0time7i0lk2na1gles5te3j1k0i0n2y0pe4l0ing4m0art3ile4n0cf3o0ccer3ial4ftbank4ware6hu2lar2utions7ng1y2y2pa0ce3ort2t3r0l2s1t0ada2ples4r1tebank4farm7c0group6ockholm6rage3e3ream4udio2y3yle4u0cks3pplies3y2ort5rf1gery5zuki5v1watch4iss4x1y0dney4stems6z2tab1ipei4lk2obao4rget4tamotors6r2too4x0i3c0i2d0k2eam2ch0nology8l1masek5nnis4va3f1g1h0d1eater2re6iaa2ckets5enda4ffany5ps2res2ol4j0maxx4x2k0maxx5l1m0all4n1o0day3kyo3ols3p1ray3shiba5tal3urs3wn2yota3s3r0ade1ing4ining5vel0channel7ers0insurance16ust3v2t1ube2i1nes3shu4v0s2w1z2ua1bank3s2g1k1nicom3versity8o2ol2ps2s1y1z2va0cations7na1guard7c1e0gas3ntures6risign5mögensberater2ung14sicherung10t2g1i0ajes4deo3g1king4llas4n1p1rgin4sa1ion4va1o3laanderen9n1odka3lkswagen7vo3te1ing3o2yage5u0elos6wales2mart4ter4ng0gou5tch0es6eather0channel12bcam3er2site5d0ding5ibo2r3f1hoswho6ien2ki2lliamhill9n0dows4e1ners6me2olterskluwer11odside6rk0s2ld3w2s1tc1f3xbox3erox4finity6ihuan4n2xx2yz3yachts4hoo3maxun5ndex5e1odobashi7ga2kohama6u0tube6t1un3za0ppos4ra3ero3ip2m1one3uerich6w2";
-  const encodedUtlds = "ελ1υ2бг1ел3дети4ею2католик6ом3мкд2он1сква6онлайн5рг3рус2ф2сайт3рб3укр3қаз3հայ3ישראל5קום3ابوظبي5تصالات6رامكو5لاردن4بحرين5جزائر5سعودية6عليان5مغرب5مارات5یران5بارت2زار4يتك3ھارت5تونس4سودان3رية5شبكة4عراق2ب2مان4فلسطين6قطر3كاثوليك6وم3مصر2ليسيا5وريتانيا7قع4همراه5پاکستان7ڀارت4कॉम3नेट3भारत0म्3ोत5संगठन5বাংলা5ভারত2ৰত4ਭਾਰਤ4ભારત4ଭାରତ4இந்தியா6லங்கை6சிங்கப்பூர்11భారత్5ಭಾರತ4ഭാരതം5ලංකා4คอม3ไทย3ລາວ3გე2みんな3アマゾン4クラウド4グーグル4コム2ストア3セール3ファッション6ポイント4世界2中信1国1國1文网3亚马逊3企业2佛山2信息2健康2八卦2公司1益2台湾1灣2商城1店1标2嘉里0大酒店5在线2大拿2天主教3娱乐2家電2广东2微博2慈善2我爱你3手机2招聘2政务1府2新加坡2闻2时尚2書籍2机构2淡马锡3游戏2澳門2点看2移动2组织机构4网址1店1站1络2联通2谷歌2购物2通販2集团2電訊盈科4飞利浦3食品2餐厅2香格里拉3港2닷넷1컴2삼성2한국2";
+  const encodedTlds = "aaa1rp3bb0ott3vie4c1le2ogado5udhabi7c0ademy5centure6ountant0s9o1tor4d0s1ult4e0g1ro2tna4f0l1rica5g0akhan5ency5i0g1rbus3force5tel5kdn3l0ibaba4pay4lfinanz6state5y2sace3tom5m0azon4ericanexpress7family11x2fam3ica3sterdam8nalytics7droid5quan4z2o0l2partments8p0le4q0uarelle8r0ab1mco4chi3my2pa2t0e3s0da2ia2sociates9t0hleta5torney7u0ction5di0ble3o3spost5thor3o0s4vianca6w0s2x0a2z0ure5ba0by2idu3namex3narepublic11d1k2r0celona5laycard4s5efoot5gains6seball5ketball8uhaus5yern5b0c1t1va3cg1n2d1e0ats2uty4er2ntley5rlin4st0buy5t2f1g1h0arti5i0ble3d1ke2ng0o3o1z2j1lack0friday9ockbuster8g1omberg7ue3m0s1w2n0pparibas9o0ats3ehringer8fa2m1nd2o0k0ing5sch2tik2on4t1utique6x2r0adesco6idgestone9oadway5ker3ther5ussels7s1t1uild0ers6siness6y1zz3v1w1y1z0h3ca0b1fe2l0l1vinklein9m0era3p2non3petown5ital0one8r0avan4ds2e0er0s4s2sa1e1h1ino4t0ering5holic7ba1n1re3c1d1enter4o1rn3f0a1d2g1h0anel2nel4rity4se2t2eap3intai5ristmas6ome4urch5i0priani6rcle4sco3tadel4i0c2y3k1l0aims4eaning6ick2nic1que6othing5ud3ub0med6m1n1o0ach3des3ffee4llege4ogne5m0cast4mbank4unity6pany2re3uter5sec4ndos3struction8ulting7tact3ractors9oking4l1p2rsica5untry4pon0s4rses6pa2r0edit0card4union9icket5own3s1uise0s6u0isinella9v1w1x1y0mru3ou3z2dabur3d1nce3ta1e1ing3sun4y2clk3ds2e0al0er2s3gree4livery5l1oitte5ta3mocrat6ntal2ist5si0gn4v2hl2iamonds6et2gital5rect0ory7scount3ver5h2y2j1k1m1np2o0cs1tor4g1mains5t1wnload7rive4tv2ubai3nlop4pont4rban5vag2r2z2earth3t2c0o2deka3u0cation8e1g1mail3erck5nergy4gineer0ing9terprises10pson4quipment8r0icsson6ni3s0q1tate5t1u0rovision8s2vents5xchange6pert3osed4ress5traspace10fage2il1rwinds6th3mily4n0s2rm0ers5shion4t3edex3edback6rrari3ero6i0delity5o2lm2nal1nce1ial7re0stone6mdale6sh0ing5t0ness6j1k1lickr3ghts4r2orist4wers5y2m1o0o0d1tball6rd1ex2sale4um3undation8x2r0ee1senius7l1ogans4ntier7tr2ujitsu5n0d2rniture7tbol5yi3ga0l0lery3o1up4me0s3p1rden4y2b0iz3d0n2e0a1nt0ing5orge5f1g0ee3h1i0ft0s3ves2ing5l0ass3e1obal2o4m0ail3bh2o1x2n1odaddy5ld0point6f2o0dyear5g0le4p1t1v2p1q1r0ainger5phics5tis4een3ipe3ocery4up4s1t1u0ardian6cci3ge2ide2tars5ru3w1y2hair2mburg5ngout5us3bo2dfc0bank7ealth0care8lp1sinki6re1mes5iphop4samitsu7tachi5v2k0t2m1n1ockey4ldings5iday5medepot5goods5s0ense7nda3rse3spital5t0ing5t0els3mail5use3w2r1sbc3t1u0ghes5yatt3undai7ibm2cbc2e1u2d1e0ee3fm2kano4l1m0amat4db2mo0bilien9n0c1dustries8finiti5o2g1k1stitute6urance4e4t0ernational10uit4vestments10o1piranga7q1r0ish4s0maili5t0anbul7t0au2v3jaguar4va3cb2e0ep2tzt3welry6io2ll2m0p2nj2o0bs1urg4t1y2p0morgan6rs3uegos4niper7kaufen5ddi3e0rryhotels6logistics9properties14fh2g1h1i0a1ds2m1ndle4tchen5wi3m1n1oeln3matsu5sher5p0mg2n2r0d1ed3uokgroup8w1y0oto4z2la0caixa5mborghini8er3ncaster6d0rover6xess5salle5t0ino3robe5w0yer5b1c1ds2ease3clerc5frak4gal2o2xus4gbt3i0dl2fe0insurance9style7ghting6ke2lly3mited4o2ncoln4k2psy3ve1ing5k1lc1p2oan0s3cker3us3l1ndon4tte1o3ve3pl0financial11r1s1t0d0a3u0ndbeck6xe1ury5v1y2ma0drid4if1son4keup4n0agement7go3p1rket0ing3s4riott5shalls7ttel5ba2c0kinsey7d1e0d0ia3et2lbourne7me1orial6n0u2rckmsd7g1h1iami3crosoft7l1ni1t2t0subishi9k1l0b1s2m0a2n1o0bi0le4da2e1i1m1nash3ey2ster5rmon3tgage6scow4to0rcycles9v0ie4p1q1r1s0d2t0n1r2u0seum3ic4v1w1x1y1z2na0b1goya4me2tura4vy3ba2c1e0c1t0bank4flix4work5ustar5w0s2xt0direct7us4f0l2g0o2hk2i0co2ke1on3nja3ssan1y5l1o0kia3rton4w0ruz3tv4p1r0a1w2tt2u1yc2z2obi1server7ffice5kinawa6layan0group9dnavy5lo3m0ega4ne1g1l0ine5oo2pen3racle3nge4g0anic5igins6saka4tsuka4t2vh3pa0ge2nasonic7ris2s1tners4s1y3y2ccw3e0t2f0izer5g1h0armacy6d1ilips5one2to0graphy6s4ysio5ics1tet2ures6d1n0g1k2oneer5zza4k1l0ace2y0station9umbing5s3m1n0c2ohl2ker3litie5rn2st3r0america6xi3ess3ime3o0d0uctions8f1gressive8mo2perties3y5tection8u0dential9s1t1ub2w0c2y2qa1pon3uebec3st5racing4dio4e0ad1lestate6tor2y4cipes5d0stone5umbrella9hab3ise0n3t2liance6n0t0als5pair3ort3ublican8st0aurant8view0s5xroth6ich0ardli6oh3l1o1p2o0cks3deo3gers4om3s0vp3u0gby3hr2n2w0e2yukyu6sa0arland6fe0ty4kura4le1on3msclub4ung5ndvik0coromant12ofi4p1rl2s1ve2xo3b0i1s2c0a1b1haeffler7midt4olarships8ol3ule3warz5ience5ot3d1e0arch3t2cure1ity6ek2lect4ner3rvices6ven3w1x0y3fr2g1h0angrila6rp2w2ell3ia1ksha5oes2p0ping5uji3w3i0lk2na1gles5te3j1k0i0n2y0pe4l0ing4m0art3ile4n0cf3o0ccer3ial4ftbank4ware6hu2lar2utions7ng1y2y2pa0ce3ort2t3r0l2s1t0ada2ples4r1tebank4farm7c0group6ockholm6rage3e3ream4udio2y3yle4u0cks3pplies3y2ort5rf1gery5zuki5v1watch4iss4x1y0dney4stems6z2tab1ipei4lk2obao4rget4tamotors6r2too4x0i3c0i2d0k2eam2ch0nology8l1masek5nnis4va3f1g1h0d1eater2re6iaa2ckets5enda4ps2res2ol4j0maxx4x2k0maxx5l1m0all4n1o0day3kyo3ols3p1ray3shiba5tal3urs3wn2yota3s3r0ade1ing4ining5vel0ers0insurance16ust3v2t1ube2i1nes3shu4v0s2w1z2ua1bank3s2g1k1nicom3versity8o2ol2ps2s1y1z2va0cations7na1guard7c1e0gas3ntures6risign5mögensberater2ung14sicherung10t2g1i0ajes4deo3g1king4llas4n1p1rgin4sa1ion4va1o3laanderen9n1odka3lvo3te1ing3o2yage5u2wales2mart4ter4ng0gou5tch0es6eather0channel12bcam3er2site5d0ding5ibo2r3f1hoswho6ien2ki2lliamhill9n0dows4e1ners6me2olterskluwer11odside6rk0s2ld3w2s1tc1f3xbox3erox4finity6ihuan4n2xx2yz3yachts4hoo3maxun5ndex5e1odobashi7ga2kohama6u0tube6t1un3za0ppos4ra3ero3ip2m1one3uerich6w2";
+  const encodedUtlds = "ελ1υ2бг1ел3дети4ею2католик6ом3мкд2он1сква6онлайн5рг3рус2ф2сайт3рб3укр3қаз3հայ3ישראל5קום3ابوظبي5رامكو5لاردن4بحرين5جزائر5سعودية6عليان5مغرب5مارات5یران5بارت2زار4يتك3ھارت5تونس4سودان3رية5شبكة4عراق2ب2مان4فلسطين6قطر3كاثوليك6وم3مصر2ليسيا5وريتانيا7قع4همراه5پاکستان7ڀارت4कॉम3नेट3भारत0म्3ोत5संगठन5বাংলা5ভারত2ৰত4ਭਾਰਤ4ભારત4ଭାରତ4இந்தியா6லங்கை6சிங்கப்பூர்11భారత్5ಭಾರತ4ഭാരതം5ලංකා4คอม3ไทย3ລາວ3გე2みんな3アマゾン4クラウド4グーグル4コム2ストア3セール3ファッション6ポイント4世界2中信1国1國1文网3亚马逊3企业2佛山2信息2健康2八卦2公司1益2台湾1灣2商城1店1标2嘉里0大酒店5在线2大拿2天主教3娱乐2家電2广东2微博2慈善2我爱你3手机2招聘2政务1府2新加坡2闻2时尚2書籍2机构2淡马锡3游戏2澳門2点看2移动2组织机构4网址1店1站1络2联通2谷歌2购物2通販2集团2電訊盈科4飞利浦3食品2餐厅2香格里拉3港2닷넷1컴2삼성2한국2";
   const assign = (target, properties) => {
     for (const key2 in properties) {
       target[key2] = properties[key2];
@@ -51582,13 +52496,21 @@ img.ProseMirror-separator {
   const WS = "WS";
   const NL$1 = "NL";
   const OPENBRACE = "OPENBRACE";
-  const OPENBRACKET = "OPENBRACKET";
-  const OPENANGLEBRACKET = "OPENANGLEBRACKET";
-  const OPENPAREN = "OPENPAREN";
   const CLOSEBRACE = "CLOSEBRACE";
+  const OPENBRACKET = "OPENBRACKET";
   const CLOSEBRACKET = "CLOSEBRACKET";
-  const CLOSEANGLEBRACKET = "CLOSEANGLEBRACKET";
+  const OPENPAREN = "OPENPAREN";
   const CLOSEPAREN = "CLOSEPAREN";
+  const OPENANGLEBRACKET = "OPENANGLEBRACKET";
+  const CLOSEANGLEBRACKET = "CLOSEANGLEBRACKET";
+  const FULLWIDTHLEFTPAREN = "FULLWIDTHLEFTPAREN";
+  const FULLWIDTHRIGHTPAREN = "FULLWIDTHRIGHTPAREN";
+  const LEFTCORNERBRACKET = "LEFTCORNERBRACKET";
+  const RIGHTCORNERBRACKET = "RIGHTCORNERBRACKET";
+  const LEFTWHITECORNERBRACKET = "LEFTWHITECORNERBRACKET";
+  const RIGHTWHITECORNERBRACKET = "RIGHTWHITECORNERBRACKET";
+  const FULLWIDTHLESSTHAN = "FULLWIDTHLESSTHAN";
+  const FULLWIDTHGREATERTHAN = "FULLWIDTHGREATERTHAN";
   const AMPERSAND = "AMPERSAND";
   const APOSTROPHE = "APOSTROPHE";
   const ASTERISK = "ASTERISK";
@@ -51628,13 +52550,21 @@ img.ProseMirror-separator {
     WS,
     NL: NL$1,
     OPENBRACE,
-    OPENBRACKET,
-    OPENANGLEBRACKET,
-    OPENPAREN,
     CLOSEBRACE,
+    OPENBRACKET,
     CLOSEBRACKET,
-    CLOSEANGLEBRACKET,
+    OPENPAREN,
     CLOSEPAREN,
+    OPENANGLEBRACKET,
+    CLOSEANGLEBRACKET,
+    FULLWIDTHLEFTPAREN,
+    FULLWIDTHRIGHTPAREN,
+    LEFTCORNERBRACKET,
+    RIGHTCORNERBRACKET,
+    LEFTWHITECORNERBRACKET,
+    RIGHTWHITECORNERBRACKET,
+    FULLWIDTHLESSTHAN,
+    FULLWIDTHGREATERTHAN,
     AMPERSAND,
     APOSTROPHE,
     ASTERISK,
@@ -51686,13 +52616,21 @@ img.ProseMirror-separator {
     }
     tt(Start, "'", APOSTROPHE);
     tt(Start, "{", OPENBRACE);
-    tt(Start, "[", OPENBRACKET);
-    tt(Start, "<", OPENANGLEBRACKET);
-    tt(Start, "(", OPENPAREN);
     tt(Start, "}", CLOSEBRACE);
+    tt(Start, "[", OPENBRACKET);
     tt(Start, "]", CLOSEBRACKET);
-    tt(Start, ">", CLOSEANGLEBRACKET);
+    tt(Start, "(", OPENPAREN);
     tt(Start, ")", CLOSEPAREN);
+    tt(Start, "<", OPENANGLEBRACKET);
+    tt(Start, ">", CLOSEANGLEBRACKET);
+    tt(Start, "（", FULLWIDTHLEFTPAREN);
+    tt(Start, "）", FULLWIDTHRIGHTPAREN);
+    tt(Start, "「", LEFTCORNERBRACKET);
+    tt(Start, "」", RIGHTCORNERBRACKET);
+    tt(Start, "『", LEFTWHITECORNERBRACKET);
+    tt(Start, "』", RIGHTWHITECORNERBRACKET);
+    tt(Start, "＜", FULLWIDTHLESSTHAN);
+    tt(Start, "＞", FULLWIDTHGREATERTHAN);
     tt(Start, "&", AMPERSAND);
     tt(Start, "*", ASTERISK);
     tt(Start, "@", AT);
@@ -52206,8 +53144,8 @@ img.ProseMirror-separator {
       groups
     } = _ref;
     const qsAccepting = groups.domain.concat([AMPERSAND, ASTERISK, AT, BACKSLASH, BACKTICK, CARET, DOLLAR, EQUALS, HYPHEN, NUM, PERCENT, PIPE, PLUS, POUND, SLASH, SYM, TILDE, UNDERSCORE]);
-    const qsNonAccepting = [APOSTROPHE, CLOSEANGLEBRACKET, CLOSEBRACE, CLOSEBRACKET, CLOSEPAREN, COLON, COMMA, DOT, EXCLAMATION, OPENANGLEBRACKET, OPENBRACE, OPENBRACKET, OPENPAREN, QUERY, QUOTE, SEMI];
-    const localpartAccepting = [AMPERSAND, APOSTROPHE, ASTERISK, BACKSLASH, BACKTICK, CARET, CLOSEBRACE, DOLLAR, EQUALS, HYPHEN, OPENBRACE, PERCENT, PIPE, PLUS, POUND, QUERY, SLASH, SYM, TILDE, UNDERSCORE];
+    const qsNonAccepting = [APOSTROPHE, COLON, COMMA, DOT, EXCLAMATION, QUERY, QUOTE, SEMI, OPENANGLEBRACKET, CLOSEANGLEBRACKET, OPENBRACE, CLOSEBRACE, CLOSEBRACKET, OPENBRACKET, OPENPAREN, CLOSEPAREN, FULLWIDTHLEFTPAREN, FULLWIDTHRIGHTPAREN, LEFTCORNERBRACKET, RIGHTCORNERBRACKET, LEFTWHITECORNERBRACKET, RIGHTWHITECORNERBRACKET, FULLWIDTHLESSTHAN, FULLWIDTHGREATERTHAN];
+    const localpartAccepting = [AMPERSAND, APOSTROPHE, ASTERISK, BACKSLASH, BACKTICK, CARET, DOLLAR, EQUALS, HYPHEN, OPENBRACE, CLOSEBRACE, PERCENT, PIPE, PLUS, POUND, QUERY, SLASH, SYM, TILDE, UNDERSCORE];
     const Start = makeState();
     const Localpart = tt(Start, TILDE);
     ta(Localpart, localpartAccepting, Localpart);
@@ -52280,59 +53218,40 @@ img.ProseMirror-separator {
     ta(UriPrefix, groups.domain, Url$1);
     ta(UriPrefix, qsAccepting, Url$1);
     tt(UriPrefix, SLASH, Url$1);
-    const UrlOpenbrace = tt(Url$1, OPENBRACE);
-    const UrlOpenbracket = tt(Url$1, OPENBRACKET);
-    const UrlOpenanglebracket = tt(Url$1, OPENANGLEBRACKET);
-    const UrlOpenparen = tt(Url$1, OPENPAREN);
-    tt(UrlNonaccept, OPENBRACE, UrlOpenbrace);
-    tt(UrlNonaccept, OPENBRACKET, UrlOpenbracket);
-    tt(UrlNonaccept, OPENANGLEBRACKET, UrlOpenanglebracket);
-    tt(UrlNonaccept, OPENPAREN, UrlOpenparen);
-    tt(UrlOpenbrace, CLOSEBRACE, Url$1);
-    tt(UrlOpenbracket, CLOSEBRACKET, Url$1);
-    tt(UrlOpenanglebracket, CLOSEANGLEBRACKET, Url$1);
-    tt(UrlOpenparen, CLOSEPAREN, Url$1);
-    tt(UrlOpenbrace, CLOSEBRACE, Url$1);
-    const UrlOpenbraceQ = makeState(Url);
-    const UrlOpenbracketQ = makeState(Url);
-    const UrlOpenanglebracketQ = makeState(Url);
-    const UrlOpenparenQ = makeState(Url);
-    ta(UrlOpenbrace, qsAccepting, UrlOpenbraceQ);
-    ta(UrlOpenbracket, qsAccepting, UrlOpenbracketQ);
-    ta(UrlOpenanglebracket, qsAccepting, UrlOpenanglebracketQ);
-    ta(UrlOpenparen, qsAccepting, UrlOpenparenQ);
-    const UrlOpenbraceSyms = makeState();
-    const UrlOpenbracketSyms = makeState();
-    const UrlOpenanglebracketSyms = makeState();
-    const UrlOpenparenSyms = makeState();
-    ta(UrlOpenbrace, qsNonAccepting);
-    ta(UrlOpenbracket, qsNonAccepting);
-    ta(UrlOpenanglebracket, qsNonAccepting);
-    ta(UrlOpenparen, qsNonAccepting);
-    ta(UrlOpenbraceQ, qsAccepting, UrlOpenbraceQ);
-    ta(UrlOpenbracketQ, qsAccepting, UrlOpenbracketQ);
-    ta(UrlOpenanglebracketQ, qsAccepting, UrlOpenanglebracketQ);
-    ta(UrlOpenparenQ, qsAccepting, UrlOpenparenQ);
-    ta(UrlOpenbraceQ, qsNonAccepting, UrlOpenbraceQ);
-    ta(UrlOpenbracketQ, qsNonAccepting, UrlOpenbracketQ);
-    ta(UrlOpenanglebracketQ, qsNonAccepting, UrlOpenanglebracketQ);
-    ta(UrlOpenparenQ, qsNonAccepting, UrlOpenparenQ);
-    ta(UrlOpenbraceSyms, qsAccepting, UrlOpenbraceSyms);
-    ta(UrlOpenbracketSyms, qsAccepting, UrlOpenbracketQ);
-    ta(UrlOpenanglebracketSyms, qsAccepting, UrlOpenanglebracketQ);
-    ta(UrlOpenparenSyms, qsAccepting, UrlOpenparenQ);
-    ta(UrlOpenbraceSyms, qsNonAccepting, UrlOpenbraceSyms);
-    ta(UrlOpenbracketSyms, qsNonAccepting, UrlOpenbracketSyms);
-    ta(UrlOpenanglebracketSyms, qsNonAccepting, UrlOpenanglebracketSyms);
-    ta(UrlOpenparenSyms, qsNonAccepting, UrlOpenparenSyms);
-    tt(UrlOpenbracketQ, CLOSEBRACKET, Url$1);
-    tt(UrlOpenanglebracketQ, CLOSEANGLEBRACKET, Url$1);
-    tt(UrlOpenparenQ, CLOSEPAREN, Url$1);
-    tt(UrlOpenbraceQ, CLOSEBRACE, Url$1);
-    tt(UrlOpenbracketSyms, CLOSEBRACKET, Url$1);
-    tt(UrlOpenanglebracketSyms, CLOSEANGLEBRACKET, Url$1);
-    tt(UrlOpenparenSyms, CLOSEPAREN, Url$1);
-    tt(UrlOpenbraceSyms, CLOSEPAREN, Url$1);
+    const bracketPairs = [
+      [OPENBRACE, CLOSEBRACE],
+      // {}
+      [OPENBRACKET, CLOSEBRACKET],
+      // []
+      [OPENPAREN, CLOSEPAREN],
+      // ()
+      [OPENANGLEBRACKET, CLOSEANGLEBRACKET],
+      // <>
+      [FULLWIDTHLEFTPAREN, FULLWIDTHRIGHTPAREN],
+      // （）
+      [LEFTCORNERBRACKET, RIGHTCORNERBRACKET],
+      // 「」
+      [LEFTWHITECORNERBRACKET, RIGHTWHITECORNERBRACKET],
+      // 『』
+      [FULLWIDTHLESSTHAN, FULLWIDTHGREATERTHAN]
+      // ＜＞
+    ];
+    for (let i2 = 0; i2 < bracketPairs.length; i2++) {
+      const [OPEN, CLOSE] = bracketPairs[i2];
+      const UrlOpen = tt(Url$1, OPEN);
+      tt(UrlNonaccept, OPEN, UrlOpen);
+      tt(UrlOpen, CLOSE, Url$1);
+      const UrlOpenQ = makeState(Url);
+      ta(UrlOpen, qsAccepting, UrlOpenQ);
+      const UrlOpenSyms = makeState();
+      ta(UrlOpen, qsNonAccepting);
+      ta(UrlOpenQ, qsAccepting, UrlOpenQ);
+      ta(UrlOpenQ, qsNonAccepting, UrlOpenSyms);
+      ta(UrlOpenSyms, qsAccepting, UrlOpenQ);
+      ta(UrlOpenSyms, qsNonAccepting, UrlOpenSyms);
+      tt(UrlOpenQ, CLOSE, Url$1);
+      tt(UrlOpenSyms, CLOSE, Url$1);
+    }
     tt(Start, LOCALHOST, DomainDotTld);
     tt(Start, NL$1, Nl);
     return {
@@ -52424,7 +53343,10 @@ img.ProseMirror-separator {
       warn(`linkifyjs: already initialized - will not register custom scheme "${scheme2}" ${warnAdvice}`);
     }
     if (!/^[0-9a-z]+(-[0-9a-z]+)*$/.test(scheme2)) {
-      throw new Error('linkifyjs: incorrect scheme format.\n 1. Must only contain digits, lowercase ASCII letters or "-"\n 2. Cannot start or end with "-"\n 3. "-" cannot repeat');
+      throw new Error(`linkifyjs: incorrect scheme format.
+1. Must only contain digits, lowercase ASCII letters or "-"
+2. Cannot start or end with "-"
+3. "-" cannot repeat`);
     }
     INIT.customSchemes.push([scheme2, optionalSlashSlash]);
   }
@@ -52469,18 +53391,11 @@ img.ProseMirror-separator {
     const filtered = [];
     for (let i2 = 0; i2 < tokens.length; i2++) {
       const token = tokens[i2];
-      if (token.isLink && (!type || token.t === type)) {
+      if (token.isLink && (!type || token.t === type) && options.check(token)) {
         filtered.push(token.toFormattedObject(options));
       }
     }
     return filtered;
-  }
-  function test(str, type) {
-    if (type === void 0) {
-      type = null;
-    }
-    const tokens = tokenize(str);
-    return tokens.length === 1 && tokens[0].isLink && (!type || tokens[0].t === type);
   }
   function autolink(options) {
     return new Plugin({
@@ -52493,25 +53408,8 @@ img.ProseMirror-separator {
         }
         const { tr: tr2 } = newState;
         const transform2 = combineTransactionSteps(oldState.doc, [...transactions]);
-        const { mapping } = transform2;
         const changes = getChangedRanges(transform2);
-        changes.forEach(({ oldRange, newRange }) => {
-          getMarksBetween(oldRange.from, oldRange.to, oldState.doc).filter((item) => item.mark.type === options.type).forEach((oldMark) => {
-            const newFrom = mapping.map(oldMark.from);
-            const newTo = mapping.map(oldMark.to);
-            const newMarks = getMarksBetween(newFrom, newTo, newState.doc).filter((item) => item.mark.type === options.type);
-            if (!newMarks.length) {
-              return;
-            }
-            const newMark = newMarks[0];
-            const oldLinkText = oldState.doc.textBetween(oldMark.from, oldMark.to, void 0, " ");
-            const newLinkText = newState.doc.textBetween(newMark.from, newMark.to, void 0, " ");
-            const wasLink = test(oldLinkText);
-            const isLink = test(newLinkText);
-            if (wasLink && !isLink) {
-              tr2.removeMark(newMark.from, newMark.to, options.type);
-            }
-          });
+        changes.forEach(({ newRange }) => {
           const nodesInChangedRanges = findChildrenInRange(newState.doc, newRange, (node2) => node2.isTextblock);
           let textBlock;
           let textBeforeWhitespace;
@@ -52532,16 +53430,24 @@ img.ProseMirror-separator {
             if (!lastWordBeforeSpace) {
               return false;
             }
-            find(lastWordBeforeSpace).filter((link2) => link2.isLink).filter((link2) => {
+            find(lastWordBeforeSpace).filter((link2) => link2.isLink).map((link2) => ({
+              ...link2,
+              from: lastWordAndBlockOffset + link2.start + 1,
+              to: lastWordAndBlockOffset + link2.end + 1
+            })).filter((link2) => {
+              if (!newState.schema.marks.code) {
+                return true;
+              }
+              return !newState.doc.rangeHasMark(link2.from, link2.to, newState.schema.marks.code);
+            }).filter((link2) => {
               if (options.validate) {
                 return options.validate(link2.value);
               }
               return true;
-            }).map((link2) => ({
-              ...link2,
-              from: lastWordAndBlockOffset + link2.start + 1,
-              to: lastWordAndBlockOffset + link2.end + 1
-            })).forEach((link2) => {
+            }).forEach((link2) => {
+              if (getMarksBetween(link2.from, link2.to, newState.doc).some((item) => item.mark.type === options.type)) {
+                return;
+              }
               tr2.addMark(link2.from, link2.to, options.type.create({
                 href: link2.href
               }));
@@ -52560,16 +53466,22 @@ img.ProseMirror-separator {
       key: new PluginKey("handleClickLink"),
       props: {
         handleClick: (view, pos, event) => {
-          var _a, _b, _c;
+          var _a, _b;
           if (event.button !== 0) {
             return false;
           }
+          const eventTarget = event.target;
+          if (eventTarget.nodeName !== "A") {
+            return false;
+          }
           const attrs = getAttributes(view.state, options.type.name);
-          const link2 = (_a = event.target) === null || _a === void 0 ? void 0 : _a.closest("a");
-          const href = (_b = link2 === null || link2 === void 0 ? void 0 : link2.href) !== null && _b !== void 0 ? _b : attrs.href;
-          const target = (_c = link2 === null || link2 === void 0 ? void 0 : link2.target) !== null && _c !== void 0 ? _c : attrs.target;
+          const link2 = event.target;
+          const href = (_a = link2 === null || link2 === void 0 ? void 0 : link2.href) !== null && _a !== void 0 ? _a : attrs.href;
+          const target = (_b = link2 === null || link2 === void 0 ? void 0 : link2.target) !== null && _b !== void 0 ? _b : attrs.target;
           if (link2 && href) {
-            window.open(href, target);
+            if (view.editable) {
+              window.open(href, target);
+            }
             return true;
           }
           return false;
@@ -52582,6 +53494,7 @@ img.ProseMirror-separator {
       key: new PluginKey("handlePasteLink"),
       props: {
         handlePaste: (view, event, slice) => {
+          var _a;
           const { state } = view;
           const { selection } = state;
           const { empty: empty2 } = selection;
@@ -52596,8 +53509,12 @@ img.ProseMirror-separator {
           if (!textContent || !link2) {
             return false;
           }
+          const html2 = (_a = event.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/html");
+          const hrefRegex = /href="([^"]*)"/;
+          const existingLink = html2 === null || html2 === void 0 ? void 0 : html2.match(hrefRegex);
+          const url = existingLink ? existingLink[1] : link2.href;
           options.editor.commands.setMark(options.type, {
-            href: link2.href
+            href: url
           });
           return true;
         }
@@ -52645,6 +53562,9 @@ img.ProseMirror-separator {
         target: {
           default: this.options.HTMLAttributes.target
         },
+        rel: {
+          default: this.options.HTMLAttributes.rel
+        },
         class: {
           default: this.options.HTMLAttributes.class
         }
@@ -52654,6 +53574,10 @@ img.ProseMirror-separator {
       return [{ tag: 'a[href]:not([href *= "javascript:" i])' }];
     },
     renderHTML({ HTMLAttributes }) {
+      var _a;
+      if ((_a = HTMLAttributes.href) === null || _a === void 0 ? void 0 : _a.startsWith("javascript:")) {
+        return ["a", mergeAttributes(this.options.HTMLAttributes, { ...HTMLAttributes, href: "" }), 0];
+      }
       return ["a", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
     },
     addCommands() {
@@ -52683,10 +53607,18 @@ img.ProseMirror-separator {
             data: link2
           })),
           type: this.type,
-          getAttributes: (match) => {
-            var _a;
+          getAttributes: (match, pasteEvent) => {
+            var _a, _b;
+            const html2 = (_a = pasteEvent === null || pasteEvent === void 0 ? void 0 : pasteEvent.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/html");
+            const hrefRegex = /href="([^"]*)"/;
+            const existingLink = html2 === null || html2 === void 0 ? void 0 : html2.match(hrefRegex);
+            if (existingLink) {
+              return {
+                href: existingLink[1]
+              };
+            }
             return {
-              href: (_a = match.data) === null || _a === void 0 ? void 0 : _a.href
+              href: (_b = match.data) === null || _b === void 0 ? void 0 : _b.href
             };
           }
         })
@@ -52718,37 +53650,69 @@ img.ProseMirror-separator {
     name: "text",
     group: "inline"
   });
+  function selectedFragmentToHTML(view, editor2) {
+    const selectedFragment = view.state.selection.content().content;
+    const internalHTMLSerializer = createInternalHTMLSerializer(
+      view.state.schema,
+      editor2
+    );
+    const internalHTML = internalHTMLSerializer.serializeProseMirrorFragment(selectedFragment);
+    const externalHTMLExporter = createExternalHTMLExporter(
+      view.state.schema,
+      editor2
+    );
+    const externalHTML = externalHTMLExporter.exportProseMirrorFragment(selectedFragment);
+    const plainText = cleanHTMLToMarkdown(externalHTML);
+    return { internalHTML, externalHTML, plainText };
+  }
   const createCopyToClipboardExtension = (editor2) => Extension.create({
     name: "copyToClipboard",
     addProseMirrorPlugins() {
-      const tiptap = this.editor;
-      const schema = this.editor.schema;
       return [
         new Plugin({
           props: {
             handleDOMEvents: {
-              copy(_view, event) {
+              copy(view, event) {
                 event.preventDefault();
                 event.clipboardData.clearData();
-                const selectedFragment = tiptap.state.selection.content().content;
-                const internalHTMLSerializer = createInternalHTMLSerializer(
-                  schema,
-                  editor2
-                );
-                const internalHTML = internalHTMLSerializer.serializeProseMirrorFragment(
-                  selectedFragment
-                );
-                const externalHTMLExporter = createExternalHTMLExporter(
-                  schema,
-                  editor2
-                );
-                const externalHTML = externalHTMLExporter.exportProseMirrorFragment(
-                  selectedFragment
-                );
-                const plainText = cleanHTMLToMarkdown(externalHTML);
+                if ("node" in view.state.selection && view.state.selection.node.type.spec.group === "blockContent") {
+                  view.dispatch(
+                    view.state.tr.setSelection(
+                      new NodeSelection(
+                        view.state.doc.resolve(view.state.selection.from - 1)
+                      )
+                    )
+                  );
+                }
+                const { internalHTML, externalHTML, plainText } = selectedFragmentToHTML(view, editor2);
                 event.clipboardData.setData("blocknote/html", internalHTML);
                 event.clipboardData.setData("text/html", externalHTML);
                 event.clipboardData.setData("text/plain", plainText);
+                return true;
+              },
+              // This is for the use-case in which only a block without content
+              // is selected, e.g. an image block, and dragged (not using the
+              // drag handle).
+              dragstart(view, event) {
+                if (!("node" in view.state.selection)) {
+                  return;
+                }
+                if (view.state.selection.node.type.spec.group !== "blockContent") {
+                  return;
+                }
+                view.dispatch(
+                  view.state.tr.setSelection(
+                    new NodeSelection(
+                      view.state.doc.resolve(view.state.selection.from - 1)
+                    )
+                  )
+                );
+                event.preventDefault();
+                event.dataTransfer.clearData();
+                const { internalHTML, externalHTML, plainText } = selectedFragmentToHTML(view, editor2);
+                event.dataTransfer.setData("blocknote/html", internalHTML);
+                event.dataTransfer.setData("text/html", externalHTML);
+                event.dataTransfer.setData("text/plain", plainText);
                 return true;
               }
             }
@@ -52785,7 +53749,6 @@ img.ProseMirror-separator {
                       data.trim()
                     );
                     data = htmlNode.innerHTML;
-                    console.log(data);
                   }
                   editor2._tiptapEditor.view.pasteHTML(data);
                 }
@@ -52969,7 +53932,9 @@ img.ProseMirror-separator {
       props: {
         handleKeyDown: (view, event) => {
           if ("node" in view.state.selection) {
-            event.preventDefault();
+            if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
+              event.preventDefault();
+            }
           }
         }
       }
@@ -53109,7 +54074,7 @@ img.ProseMirror-separator {
     name: "blockContainer",
     group: "blockContainer",
     // A block always contains content, and optionally a blockGroup which contains nested blocks
-    content: "blockContent blockGroup?",
+    content: "(blockContent blockGroup?) | tableContent",
     // Ensures content-specific keyboard handlers trigger first.
     priority: 50,
     defining: true,
@@ -53459,10 +54424,11 @@ img.ProseMirror-separator {
             state.doc,
             state.selection.from
           );
+          const blockAtDocEnd = endPos === state.doc.nodeSize - 4;
           const selectionAtBlockEnd = state.selection.from === endPos - 1;
           const selectionEmpty = state.selection.empty;
           const hasChildBlocks = node2.childCount === 2;
-          if (selectionAtBlockEnd && selectionEmpty && !hasChildBlocks) {
+          if (!blockAtDocEnd && selectionAtBlockEnd && selectionEmpty && !hasChildBlocks) {
             let oldDepth = depth;
             let newPos = endPos + 2;
             let newDepth = state.doc.resolve(newPos).depth;
@@ -53833,7 +54799,7 @@ img.ProseMirror-separator {
             const jsonNode = JSON.parse(JSON.stringify(ret.toJSON()));
             jsonNode.content[0].content[0].attrs.id = "initialBlockId";
             cache = Node$1.fromJSON(schema, jsonNode);
-            return ret;
+            return cache;
           };
           const root2 = schema.node(
             "doc",
@@ -54126,7 +55092,7 @@ img.ProseMirror-separator {
      * `referenceBlock`. Inserts the blocks at the start of the existing block's children if "nested" is used.
      */
     insertBlocks(blocksToInsert, referenceBlock, placement = "before") {
-      insertBlocks(blocksToInsert, referenceBlock, placement, this);
+      return insertBlocks(blocksToInsert, referenceBlock, placement, this);
     }
     /**
      * Updates an existing block in the editor. Since updatedBlock is a PartialBlock object, some fields might not be
@@ -54136,14 +55102,14 @@ img.ProseMirror-separator {
      * @param update A partial block which defines how the existing block should be changed.
      */
     updateBlock(blockToUpdate, update) {
-      updateBlock(blockToUpdate, update, this._tiptapEditor);
+      return updateBlock(blockToUpdate, update, this);
     }
     /**
      * Removes existing blocks from the editor. Throws an error if any of the blocks could not be found.
      * @param blocksToRemove An array of identifiers for existing blocks that should be removed.
      */
     removeBlocks(blocksToRemove) {
-      removeBlocks(blocksToRemove, this._tiptapEditor);
+      return removeBlocks(blocksToRemove, this);
     }
     /**
      * Replaces existing blocks in the editor with new blocks. If the blocks that should be removed are not adjacent or
@@ -54153,7 +55119,7 @@ img.ProseMirror-separator {
      * @param blocksToInsert An array of partial blocks to replace the old ones with.
      */
     replaceBlocks(blocksToRemove, blocksToInsert) {
-      replaceBlocks(blocksToRemove, blocksToInsert, this);
+      return replaceBlocks(blocksToRemove, blocksToInsert, this);
     }
     /**
      * Gets the active text styles at the text cursor position or at the end of the current selection if it's active.
@@ -54513,4 +55479,4 @@ img.ProseMirror-separator {
   exports2.wrapInBlockStructure = wrapInBlockStructure;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });
-//# sourceMappingURL=blocknote.bundled.umd.js.map
+//# sourceMappingURL=blocknote.bundled.umd.cjs.map

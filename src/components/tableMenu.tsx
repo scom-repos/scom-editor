@@ -123,6 +123,12 @@ export class ScomEditorTableMenu extends Module {
 
   private handleMenu(target: Menu, item: any) {
     if (this.onClose) this.onClose();
+    const emptyParagraph = {
+      children: [],
+      content: [],
+      type: 'paragraph',
+      props: {textColor: 'default', backgroundColor: 'default', textAlignment: 'left'}
+    }
     if (this.orientation === 'row') {
       if (item.id === 'delete') {
         const content = {
@@ -138,7 +144,7 @@ export class ScomEditorTableMenu extends Module {
         });
       } else {
         const emptyCol = this.block.content.rows[this.index].cells.map(
-          () => []
+          () => [{...emptyParagraph}]
         );
         const rows = [...this.block.content.rows];
         rows.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, {
@@ -171,7 +177,7 @@ export class ScomEditorTableMenu extends Module {
           type: "tableContent",
           rows: this.block.content.rows.map((row) => {
             const cells = [...row.cells];
-            cells.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, []);
+            cells.splice(this.index + (item.id === 'addRight' ? 1 : 0), 0, [{...emptyParagraph}]);
             return { cells };
           }),
         };
