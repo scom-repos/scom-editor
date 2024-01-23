@@ -16,8 +16,8 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         overflow: 'hidden',
         maxHeight: '2rem'
       })
-      setToolbar('table', modal);
     }
+    setToolbar('table', modal);
 
     if (!getModalContainer().contains(modal)) {
       getModalContainer().appendChild(modal);

@@ -1018,6 +1018,7 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
         }
         onShowMenu(parent) {
             (0, utils_5.getModalContainer)().appendChild(this.mdMenu);
+            this.mdMenu.showBackdrop = false;
             this.mdMenu.linkTo = parent;
             this.mdMenu.popupPlacement = 'left';
             // this.mdMenu.position = 'fixed';
@@ -2387,8 +2388,8 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
                     zIndex: 9999,
                     class: index_4.customModalStyle
                 });
-                (0, index_4.setToolbar)('sideMenu', sideMenu);
             }
+            (0, index_4.setToolbar)('sideMenu', sideMenu);
             if (!(0, index_4.getModalContainer)().contains(sideMenu)) {
                 (0, index_4.getModalContainer)().appendChild(sideMenu);
             }
@@ -2396,16 +2397,6 @@ define("@scom/scom-editor/blocks/addSideMenu.ts", ["require", "exports", "@scom/
                 sideMenu.block = sideMenuState.block;
                 sideMenu.opacity = editor.isFocused() ? 1 : 0;
                 const blockEl = sideMenuState?.block?.id && editor.domElement.querySelector(`[data-id="${sideMenuState.block.id}"]`);
-                // if (blockEl) {
-                //   const { top, left } = blockEl.getBoundingClientRect();
-                //   const menuHeight = sideMenu.offsetHeight || 20;
-                //   const menuWidth = sideMenu.offsetWidth || 50;
-                //   const extra = window.outerHeight - window.innerHeight
-                //   sideMenu.style.top = `${top + blockEl.offsetHeight / 2 - menuHeight / 2}px`;
-                //   sideMenu.style.left = `${left - menuWidth}px`;
-                // } else {
-                //   sideMenu.opacity = 0;
-                // }
                 if (blockEl) {
                     const menuHeight = sideMenu.offsetHeight || 20;
                     const menuWidth = sideMenu.offsetWidth || 50;
@@ -2474,8 +2465,8 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                     zIndex: 9999,
                     onClose: closeSideMenu
                 });
-                (0, index_5.setToolbar)('slashMenu', modal);
             }
+            (0, index_5.setToolbar)('slashMenu', modal);
             if (!(0, index_5.getModalContainer)().contains(modal)) {
                 (0, index_5.getModalContainer)().appendChild(modal);
             }
@@ -2488,15 +2479,15 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                     openSideMenu();
                     editor.sideMenu.freezeMenu();
                     modal.linkTo = sideMenu;
+                    modal.showBackdrop = false;
                     modal.popupPlacement = isTable ? 'topLeft' : 'rightTop';
                     // modal.position = 'fixed';
                     let innerMdX = 0;
                     let innerMdY = 0;
                     if (isTable) {
-                        const { x: blockX, y: blockY, height: blockHeight } = blockEl.getBoundingClientRect();
-                        const { x: sideMenuX, y: sideMenuY } = sideMenu.getBoundingClientRect();
-                        innerMdX = blockX - sideMenuX;
-                        innerMdY = blockY - sideMenuY - blockHeight;
+                        const { x: blockX, y: blockY } = blockEl.getBoundingClientRect();
+                        innerMdX = blockX;
+                        innerMdY = blockY;
                     }
                     const innerModal = modal.querySelector('.modal');
                     if (innerModal) {
@@ -2875,8 +2866,8 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
                     overflow: 'hidden',
                     maxHeight: '2rem'
                 });
-                (0, index_10.setToolbar)('table', modal);
             }
+            (0, index_10.setToolbar)('table', modal);
             if (!(0, index_10.getModalContainer)().contains(modal)) {
                 (0, index_10.getModalContainer)().appendChild(modal);
             }
