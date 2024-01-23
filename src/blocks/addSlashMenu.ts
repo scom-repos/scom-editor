@@ -52,8 +52,8 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         zIndex: 9999,
         onClose: closeSideMenu
       })
-      setToolbar('slashMenu', modal);
     }
+    setToolbar('slashMenu', modal);
 
     if (!getModalContainer().contains(modal)) {
       getModalContainer().appendChild(modal);
@@ -74,15 +74,15 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         openSideMenu();
         editor.sideMenu.freezeMenu();
         modal.linkTo = sideMenu;
+        modal.showBackdrop = false
         modal.popupPlacement = isTable ? 'topLeft' : 'rightTop';
         // modal.position = 'fixed';
         let innerMdX = 0;
         let innerMdY = 0;
         if (isTable) {
-          const { x: blockX, y: blockY, height: blockHeight } = blockEl.getBoundingClientRect();
-          const { x: sideMenuX, y: sideMenuY } = sideMenu.getBoundingClientRect();
-          innerMdX = blockX - sideMenuX;
-          innerMdY = blockY - sideMenuY - blockHeight;
+          const { x: blockX, y: blockY } = blockEl.getBoundingClientRect();
+          innerMdX = blockX;
+          innerMdY = blockY;
         }
         const innerModal = modal.querySelector('.modal') as HTMLElement;
         if (innerModal) {

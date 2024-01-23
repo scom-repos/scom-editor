@@ -120,6 +120,7 @@ export class ScomEditorDragHandle extends Module {
 
   onShowMenu(parent: Control) {
     getModalContainer().appendChild(this.mdMenu);
+    this.mdMenu.showBackdrop = false;
     this.mdMenu.linkTo = parent;
     this.mdMenu.popupPlacement = 'left';
     // this.mdMenu.position = 'fixed';
