@@ -9,8 +9,9 @@ import {
   Control
 } from '@ijstech/components';
 import { ColorType, ScomEditorColorPicker } from './colorPicker';
-import { Block } from '../global/index';
+import { Block, BlockNoteEditor } from '../global/index';
 import { getModalContainer } from './utils';
+import { customModalStyle } from './index.css';
 const Theme = Styles.Theme.ThemeVars;
 
 type deletedCallback = () => void;
@@ -18,6 +19,7 @@ type setColorCallback = (type: ColorType, color: string) => void;
 
 interface ScomEditorDragHandleElement extends ControlElement {
   block?: Block;
+  editor?: BlockNoteEditor;
   onDeleted?: deletedCallback;
   onSetColor?: setColorCallback;
   unfreezeMenu?: any;
@@ -26,6 +28,7 @@ interface ScomEditorDragHandleElement extends ControlElement {
 
 interface ISideMenu {
   block: Block;
+  editor?: BlockNoteEditor;
 }
 
 declare global {
@@ -81,6 +84,13 @@ export class ScomEditorDragHandle extends Module {
     this._data.block = value;
   }
 
+  get editor() {
+    return this._data.editor;
+  }
+  set editor(value: BlockNoteEditor) {
+    this._data.editor = value;
+  }
+
   setData(value: ISideMenu) {
     this._data = value;
     this.renderUI();
@@ -102,6 +112,7 @@ export class ScomEditorDragHandle extends Module {
     if (item.id === 'delete') {
       if (this.onDeleted) this.onDeleted()
     } else {
+      if (this.editor) this.editor.focus();
       this.mdPicker.showModal(this.mdMenu, 'rightTop');
       if (this.freezeMenu) this.freezeMenu();
     }
@@ -109,8 +120,10 @@ export class ScomEditorDragHandle extends Module {
 
   onShowMenu(parent: Control) {
     getModalContainer().appendChild(this.mdMenu);
+    this.mdMenu.showBackdrop = false;
     this.mdMenu.linkTo = parent;
-    this.mdMenu.position = 'fixed';
+    this.mdMenu.popupPlacement = 'left';
+    // this.mdMenu.position = 'fixed';
     this.mdMenu.visible = true;
   }
 
@@ -138,7 +151,8 @@ export class ScomEditorDragHandle extends Module {
     this.freezeMenu = this.getAttribute('freezeMenu', true) || this.freezeMenu;
     this.unfreezeMenu = this.getAttribute('unfreezeMenu', true) || this.unfreezeMenu;
     const block = this.getAttribute('block', true);
-    if (block) this.setData({block});
+    const editor = this.getAttribute('editor', true);
+    if (block) this.setData({block, editor});
   }
 
   render() {
@@ -147,11 +161,14 @@ export class ScomEditorDragHandle extends Module {
         id="mdMenu"
         popupPlacement="left"
         showBackdrop={false}
-        minWidth={'6.25rem'}
-        maxWidth={'100%'}
+        minWidth={0}
+        maxWidth={'6.25rem'}
         visible={false}
-        isChildFixed={true}
-        closeOnScrollChildFixed={true}
+        position="absolute"
+        zIndex={9999}
+        // isChildFixed={true}
+        // closeOnScrollChildFixed={true}
+        class={customModalStyle}
         onOpen={this.onModalOpen}
         onClose={this.onModalClose}
       >

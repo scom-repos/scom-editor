@@ -1,6 +1,6 @@
 import { Button, Control, HStack, Styles, IconName, Modal } from "@ijstech/components";
 import { PartialBlock, formatKeyboardShortcut } from "../global/index";
-import { buttonHoverStyle } from "./index.css";
+import { buttonHoverStyle, customModalStyle } from "./index.css";
 import assets from "../assets";
 const Theme = Styles.Theme.ThemeVars;
 
@@ -212,10 +212,33 @@ export const createModal = async (props = {}) => {
     minWidth: 0,
     isChildFixed: false,
     closeOnScrollChildFixed: false,
-    ...props
+    ...props,
+    class: customModalStyle
   });
+  elm.onClose = () => {
+    if (getModalContainer().contains(elm)) {
+      getModalContainer().removeChild(elm)
+    }
+  }
   return elm;
 }
+
+let toolbarsMap: Map<string, Control> = new Map();
+export const getToolbar = (id: string) => {
+  return toolbarsMap.get(id);
+}
+
+export const removeToolbar = (id: string) => {
+  if (toolbarsMap.has(id)) {
+    toolbarsMap.delete(id);
+  }
+}
+
+export const setToolbar = (id: string, toolbar: Control) => {
+  toolbarsMap.set(id, toolbar);
+}
+
+export const getToolbars = () => toolbarsMap;
 
 export const getModalContainer = () => {
   let span = document.getElementById("toolbar-container");
@@ -225,6 +248,13 @@ export const getModalContainer = () => {
     document.body.appendChild(span);
   }
   return span;
+}
+
+export const removeContainer = () => {
+  const span = document.getElementById("toolbar-container");
+  if (span) {
+    span.remove();
+  }
 }
 
 const textAlignmentToPlacement = (textAlignment: string) => {

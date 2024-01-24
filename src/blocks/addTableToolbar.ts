@@ -1,5 +1,5 @@
 import { BlockNoteEditor } from '../global/index';
-import { ScomEditorTableToolbar, createModal, getModalContainer } from '../components/index';
+import { ScomEditorTableToolbar, createModal, getModalContainer, setToolbar } from '../components/index';
 
 export const addTableToolbar = async (editor: BlockNoteEditor) => {
   let columnTableHandle: ScomEditorTableToolbar;

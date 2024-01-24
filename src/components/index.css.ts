@@ -32,3 +32,15 @@ export const settingStyle = Styles.style({
     }
   }
 })
+
+
+export const customModalStyle = Styles.style({
+  '-webkit-transform': 'translate3d(0, 0, 0)',
+  transform: 'translate3d(0, 0, 0)',
+  $nest: {
+    '.modal, .modal-wrapper': {
+      '-webkit-transform': 'translate3d(0, 0, 0)',
+      transform: 'translate3d(0, 0, 0)',
+    }
+  }
+})

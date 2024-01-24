@@ -6,7 +6,7 @@ import {
   Panel,
   application
 } from '@ijstech/components';
-import { getModalContainer } from './utils';
+import { getModalContainer, getToolbar } from './utils';
 import { ScomEditorSideMenu } from './sideMenu';
 import { Block } from '../global/index';
 
@@ -75,7 +75,7 @@ export class ScomEditorCustomBlock extends Module {
       this.blockWrapper.clearInnerHTML();
       this.blockWrapper.appendChild(this.blockEl);
     }
-    const sideMenu = getModalContainer().querySelector('i-scom-editor-side-menu') as ScomEditorSideMenu;
+    const sideMenu = getToolbar('sideMenu') as ScomEditorSideMenu;
     switch(module) {
       case "scom-image":
       case "scom-video":

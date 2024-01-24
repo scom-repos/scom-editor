@@ -43227,6 +43227,7 @@ img.ProseMirror-separator {
             this.editor.blockCache
           );
           this.tablePos = pos + 1;
+          console.log(block2, node2);
           return false;
         });
         this.state = {
@@ -43348,6 +43349,7 @@ img.ProseMirror-separator {
         updateState(this.state);
       };
       pmView.dom.addEventListener("mousemove", this.mouseMoveHandler);
+      console.log(pmView.dom);
       document.addEventListener("dragover", this.dragOverHandler);
       document.addEventListener("drop", this.dropHandler);
       document.addEventListener("scroll", this.scrollHandler);
@@ -55479,4 +55481,4 @@ img.ProseMirror-separator {
   exports2.wrapInBlockStructure = wrapInBlockStructure;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });
-//# sourceMappingURL=blocknote.bundled.umd.cjs.map
+//# sourceMappingURL=blocknote.bundled.umd.js.map

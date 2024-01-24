@@ -61,8 +61,10 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
         zIndex: 2000
       })
       modal.id = 'mdHyperlink';
-      getModalContainer().appendChild(modal);
     }
+
+    if (!getModalContainer().contains(modal))
+      getModalContainer().appendChild(modal);
 
     if (!element) {
       element = await Panel.create({ minWidth: 'max-content' });

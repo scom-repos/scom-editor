@@ -42,7 +42,16 @@ export class ScomEditorSideMenu extends Module {
   private actionForm: ScomEditorSettingsForm;
   private currentModule: any;
 
-  private _data: ISideMenu;
+  private _data: ISideMenu = {
+    block: {
+      id: '',
+      type: '',
+      props: undefined,
+      content: [],
+      children: []
+    },
+    editor: undefined
+  };
   private initedMap: Map<string, boolean> = new Map();
 
   static async create(options?: ScomEditorSideMenuElement, parent?: Container) {
@@ -65,7 +74,7 @@ export class ScomEditorSideMenu extends Module {
     return this._data.block;
   }
   set block(value: Block) {
-    if (value.id === this._data.block.id) return;
+    if (value.id && value.id === this._data?.block?.id) return;
     this._data.block = value;
     this.dragHandle.block = value;
     this.id = `side-${this.block.id}`;
@@ -87,7 +96,7 @@ export class ScomEditorSideMenu extends Module {
     this._data = value;
     this.dragHandle.freezeMenu = this.editor.sideMenu.freezeMenu;
     this.dragHandle.unfreezeMenu = this.editor.sideMenu.unfreezeMenu;
-    this.dragHandle.setData({ block: this.block });
+    this.dragHandle.setData({ block: this.block, editor: this.editor });
     this.btnDrag.addEventListener("dragstart", this.editor.sideMenu.blockDragStart);
     this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
     this.btnDrag.draggable = true;
