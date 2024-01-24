@@ -3,10 +3,10 @@ import {
   ControlElement,
   Styles,
   Module,
-  Container
+  Container,
+  Button
 } from '@ijstech/components';
 import { BlockNoteEditor } from '../global/index';
-import { buttonHoverStyle } from './index.css';
 import { ScomEditorTableMenu } from './tableMenu';
 
 const Theme = Styles.Theme.ThemeVars;
@@ -16,7 +16,10 @@ interface ScomEditorTableToolbarElement extends ControlElement {
   block: any;
   orientation: "row" | "column";
   index: number;
-  dragStart?: (e: any) => void;
+  dragStart: (e: any) => void;
+  dragEnd: (e: any) => void;
+  freezeHandles?: () => void;
+  unfreezeHandles?: () => void;
   showOtherSide?: () => void;
   hideOtherSide?: () => void;
 }
@@ -39,12 +42,16 @@ declare global {
 @customElements('i-scom-editor-table-toolbar')
 export class ScomEditorTableToolbar extends Module {
   private tableMenu: ScomEditorTableMenu;
+  private btnTableToolbar: Button;
 
   private _data: ITableToolbar;
 
   showOtherSide: () => void;
   hideOtherSide: () => void;
   dragStart: (e: any) => void;
+  dragEnd: (e: any) => void;
+  freezeHandles: () => void;
+  unfreezeHandles: () => void;
 
   static async create(options?: ScomEditorTableToolbarElement, parent?: Container) {
     let self = new this(parent, options);
@@ -87,22 +94,40 @@ export class ScomEditorTableToolbar extends Module {
 
   setData(value: ITableToolbar) {
     this._data = value;
+    this.addEventListener("dragstart", this.dragStart);
+    this.addEventListener("dragend", this.dragEnd);
   }
 
+  protected _handleClick(event: MouseEvent, stopPropagation?: boolean): boolean {
+    this.onButtonClicked();
+    return true;
+  }
   private onButtonClicked() {
     if (this.tableMenu) {
       this.tableMenu.setData({...this._data});
     } else {
       this.tableMenu = new ScomEditorTableMenu(undefined, {...this._data});
-      this.tableMenu.onClose = () => this.tableMenu.closeModal();
+      this.tableMenu.onClose = () => {
+        this.tableMenu.closeModal();
+        if (this.unfreezeHandles) this.unfreezeHandles();
+      }
     }
     this.tableMenu.openModal({
       showBackdrop: false,
       popupPlacement: "rightTop",
-      position: 'fixed',
+      position: 'absolute',
       minWidth: '9.375rem',
       maxWidth: '10rem',
-      linkTo: this
+      linkTo: this,
+      zIndex: 9999,
+      onOpen: () => {
+        if (this.freezeHandles) this.freezeHandles();
+        if (this.hideOtherSide) this.hideOtherSide();
+      },
+      onClose: () => {
+        if (this.unfreezeHandles) this.unfreezeHandles();
+        if (this.showOtherSide) this.showOtherSide();
+      }
     })
   }
 
@@ -111,11 +136,15 @@ export class ScomEditorTableToolbar extends Module {
     this.showOtherSide = this.getAttribute('showOtherSide', true) || this.showOtherSide;
     this.hideOtherSide = this.getAttribute('hideOtherSide', true) || this.hideOtherSide;
     this.dragStart = this.getAttribute('dragStart', true) || this.dragStart;
+    this.dragEnd = this.getAttribute('dragEnd', true) || this.dragEnd;
+    this.freezeHandles = this.getAttribute('freezeHandles', true) || this.freezeHandles;
+    this.unfreezeHandles = this.getAttribute('unfreezeHandles', true) || this.unfreezeHandles;
     const block = this.getAttribute('block', true);
     const editor = this.getAttribute('editor', true);
     const index = this.getAttribute('index', true);
     const orientation = this.getAttribute('orientation', true);
     this.setData({ block, editor, index, orientation});
+    this.draggable = true;
   }
 
   render() {
@@ -128,8 +157,7 @@ export class ScomEditorTableToolbar extends Module {
         font={{size: '0.875rem'}}
         background={{color: Theme.background.modal}}
         boxShadow='none'
-        class={buttonHoverStyle}
-        onClick={this.onButtonClicked}
+        // class={buttonHoverStyle}
       ></i-button>
     )
   }

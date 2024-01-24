@@ -2061,7 +2061,7 @@ define("@scom/scom-editor/components/tableMenu.tsx", ["require", "exports", "@ij
     ], ScomEditorTableMenu);
     exports.ScomEditorTableMenu = ScomEditorTableMenu;
 });
-define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.css.ts", "@scom/scom-editor/components/tableMenu.tsx"], function (require, exports, components_17, index_css_6, tableMenu_1) {
+define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/tableMenu.tsx"], function (require, exports, components_17, tableMenu_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditorTableToolbar = void 0;
@@ -2102,6 +2102,12 @@ define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "
         }
         setData(value) {
             this._data = value;
+            this.addEventListener("dragstart", this.dragStart);
+            this.addEventListener("dragend", this.dragEnd);
+        }
+        _handleClick(event, stopPropagation) {
+            this.onButtonClicked();
+            return true;
         }
         onButtonClicked() {
             if (this.tableMenu) {
@@ -2109,15 +2115,32 @@ define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "
             }
             else {
                 this.tableMenu = new tableMenu_1.ScomEditorTableMenu(undefined, { ...this._data });
-                this.tableMenu.onClose = () => this.tableMenu.closeModal();
+                this.tableMenu.onClose = () => {
+                    this.tableMenu.closeModal();
+                    if (this.unfreezeHandles)
+                        this.unfreezeHandles();
+                };
             }
             this.tableMenu.openModal({
                 showBackdrop: false,
                 popupPlacement: "rightTop",
-                position: 'fixed',
+                position: 'absolute',
                 minWidth: '9.375rem',
                 maxWidth: '10rem',
-                linkTo: this
+                linkTo: this,
+                zIndex: 9999,
+                onOpen: () => {
+                    if (this.freezeHandles)
+                        this.freezeHandles();
+                    if (this.hideOtherSide)
+                        this.hideOtherSide();
+                },
+                onClose: () => {
+                    if (this.unfreezeHandles)
+                        this.unfreezeHandles();
+                    if (this.showOtherSide)
+                        this.showOtherSide();
+                }
             });
         }
         init() {
@@ -2125,14 +2148,18 @@ define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "
             this.showOtherSide = this.getAttribute('showOtherSide', true) || this.showOtherSide;
             this.hideOtherSide = this.getAttribute('hideOtherSide', true) || this.hideOtherSide;
             this.dragStart = this.getAttribute('dragStart', true) || this.dragStart;
+            this.dragEnd = this.getAttribute('dragEnd', true) || this.dragEnd;
+            this.freezeHandles = this.getAttribute('freezeHandles', true) || this.freezeHandles;
+            this.unfreezeHandles = this.getAttribute('unfreezeHandles', true) || this.unfreezeHandles;
             const block = this.getAttribute('block', true);
             const editor = this.getAttribute('editor', true);
             const index = this.getAttribute('index', true);
             const orientation = this.getAttribute('orientation', true);
             this.setData({ block, editor, index, orientation });
+            this.draggable = true;
         }
         render() {
-            return (this.$render("i-button", { id: "btnTableToolbar", icon: { name: "ellipsis-h", width: 14, height: 14 }, border: { radius: '0.25rem', width: '1px', style: 'solid', color: Theme.divider }, padding: { top: '0.15rem', bottom: '0.15rem', left: '0.25rem', right: '0.25rem' }, font: { size: '0.875rem' }, background: { color: Theme.background.modal }, boxShadow: 'none', class: index_css_6.buttonHoverStyle, onClick: this.onButtonClicked }));
+            return (this.$render("i-button", { id: "btnTableToolbar", icon: { name: "ellipsis-h", width: 14, height: 14 }, border: { radius: '0.25rem', width: '1px', style: 'solid', color: Theme.divider }, padding: { top: '0.15rem', bottom: '0.15rem', left: '0.25rem', right: '0.25rem' }, font: { size: '0.875rem' }, background: { color: Theme.background.modal }, boxShadow: 'none' }));
         }
     };
     ScomEditorTableToolbar = __decorate([
@@ -2323,7 +2350,7 @@ define("@scom/scom-editor/components/customBlock.tsx", ["require", "exports", "@
     ], ScomEditorCustomBlock);
     exports.ScomEditorCustomBlock = ScomEditorCustomBlock;
 });
-define("@scom/scom-editor/components/index.ts", ["require", "exports", "@scom/scom-editor/components/colorButton.tsx", "@scom/scom-editor/components/toolbarDropdown.tsx", "@scom/scom-editor/components/blockTypeButton.tsx", "@scom/scom-editor/components/linkButton.tsx", "@scom/scom-editor/components/sideMenu.tsx", "@scom/scom-editor/components/slashMenu.tsx", "@scom/scom-editor/components/colorPicker.tsx", "@scom/scom-editor/components/formattingToolbar.tsx", "@scom/scom-editor/components/imageToolbar.tsx", "@scom/scom-editor/components/tableToolbar.tsx", "@scom/scom-editor/components/chart.tsx", "@scom/scom-editor/components/customBlock.tsx", "@scom/scom-editor/components/utils.ts", "@scom/scom-editor/components/index.css.ts"], function (require, exports, colorButton_2, toolbarDropdown_1, blockTypeButton_2, linkButton_2, sideMenu_1, slashMenu_1, colorPicker_1, formattingToolbar_1, imageToolbar_1, tableToolbar_1, chart_1, customBlock_1, utils_11, index_css_7) {
+define("@scom/scom-editor/components/index.ts", ["require", "exports", "@scom/scom-editor/components/colorButton.tsx", "@scom/scom-editor/components/toolbarDropdown.tsx", "@scom/scom-editor/components/blockTypeButton.tsx", "@scom/scom-editor/components/linkButton.tsx", "@scom/scom-editor/components/sideMenu.tsx", "@scom/scom-editor/components/slashMenu.tsx", "@scom/scom-editor/components/colorPicker.tsx", "@scom/scom-editor/components/formattingToolbar.tsx", "@scom/scom-editor/components/imageToolbar.tsx", "@scom/scom-editor/components/tableToolbar.tsx", "@scom/scom-editor/components/chart.tsx", "@scom/scom-editor/components/customBlock.tsx", "@scom/scom-editor/components/utils.ts", "@scom/scom-editor/components/index.css.ts"], function (require, exports, colorButton_2, toolbarDropdown_1, blockTypeButton_2, linkButton_2, sideMenu_1, slashMenu_1, colorPicker_1, formattingToolbar_1, imageToolbar_1, tableToolbar_1, chart_1, customBlock_1, utils_11, index_css_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.customModalStyle = exports.buttonHoverStyle = exports.ScomEditorCustomBlock = exports.ScomEditorChart = exports.ScomEditorTableToolbar = exports.ScomEditorImageToolbar = exports.ScomEditorFormattingToolbar = exports.ScomEditorColorPicker = exports.ScomEditorSlashMenu = exports.ScomEditorSideMenu = exports.ScomEditorLink = exports.ScomEditorBlockType = exports.ScomEditorToolbarDropdown = exports.ScomEditorColor = void 0;
@@ -2340,8 +2367,8 @@ define("@scom/scom-editor/components/index.ts", ["require", "exports", "@scom/sc
     Object.defineProperty(exports, "ScomEditorChart", { enumerable: true, get: function () { return chart_1.ScomEditorChart; } });
     Object.defineProperty(exports, "ScomEditorCustomBlock", { enumerable: true, get: function () { return customBlock_1.ScomEditorCustomBlock; } });
     __exportStar(utils_11, exports);
-    Object.defineProperty(exports, "buttonHoverStyle", { enumerable: true, get: function () { return index_css_7.buttonHoverStyle; } });
-    Object.defineProperty(exports, "customModalStyle", { enumerable: true, get: function () { return index_css_7.customModalStyle; } });
+    Object.defineProperty(exports, "buttonHoverStyle", { enumerable: true, get: function () { return index_css_6.buttonHoverStyle; } });
+    Object.defineProperty(exports, "customModalStyle", { enumerable: true, get: function () { return index_css_6.customModalStyle; } });
 });
 define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports", "@scom/scom-editor/components/index.ts"], function (require, exports, index_3) {
     "use strict";
@@ -2725,38 +2752,13 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
                             if (typeof element === "string")
                                 return false;
                             const child = element.firstChild;
-                            if (!child)
+                            if (!child || child.tagName !== 'a')
                                 return false;
                             return getData(child);
                         },
                         priority: 405,
                         node: 'video'
-                    },
-                    {
-                        tag: "p",
-                        getAttrs: (element2) => {
-                            if (typeof element2 === "string") {
-                                return false;
-                            }
-                            const child = element2.firstChild;
-                            if (!child) {
-                                return false;
-                            }
-                            if (child.getAttribute('href')) {
-                                const href = child.getAttribute('href');
-                                const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
-                                const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
-                                if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
-                                    return {
-                                        url: href
-                                    };
-                                }
-                            }
-                            return false;
-                        },
-                        priority: 410,
-                        node: 'video'
-                    },
+                    }
                 ];
             },
             toExternalHTML: (block, editor) => {
@@ -2963,8 +2965,8 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
             if (columnTableHandle) {
                 const offsetHeight = columnTableHandle.offsetHeight || 20;
                 const offsetWidth = columnTableHandle.offsetWidth || 24;
-                columnTableHandle.style.left = `${columnX + cellWidth / 2 - offsetWidth / 2}px`; //
-                columnTableHandle.style.top = `${columnY - offsetHeight / 2}px`;
+                columnTableHandle.style.top = `${window.scrollY + columnY - offsetHeight / 2}px`;
+                columnTableHandle.style.left = `${window.scrollX + columnX + cellWidth / 2 - offsetWidth / 2}px`;
                 columnTableHandle.setData({ editor, block, index: colIndex, orientation: 'column' });
                 columnTableHandle.visible = show && draggedCellOrientation !== "row" && !hideCol;
             }
@@ -2974,24 +2976,25 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
                     editor,
                     index: colIndex,
                     block,
-                    position: 'fixed',
+                    position: 'absolute',
                     zIndex: 1000,
                     dragStart: editor.tableHandles.colDragStart,
-                    // dragEnd={props.editor.tableHandles!.dragEnd}
-                    // freezeHandles={props.editor.tableHandles!.freezeHandles}
-                    // unfreezeHandles={props.editor.tableHandles!.unfreezeHandles}
+                    dragEnd: editor.tableHandles.dragEnd,
+                    freezeHandles: editor.tableHandles.freezeHandles,
+                    unfreezeHandles: editor.tableHandles.unfreezeHandles,
                     showOtherSide: () => hideRow = false,
                     hideOtherSide: () => hideRow = true,
                     visible: false
                 });
+                columnTableHandle.id = "column";
                 (0, index_10.getModalContainer)().appendChild(columnTableHandle);
             }
             const { x: rowX, y: rowY } = getReferenceClientRectRow()?.();
             if (rowTableHandle) {
                 const offsetHeight = rowTableHandle.offsetHeight || 20;
                 const offsetWidth = rowTableHandle.offsetWidth || 24;
-                rowTableHandle.style.left = `${rowX - offsetWidth / 2}px`;
-                rowTableHandle.style.top = `${rowY + cellHeight / 2 - offsetHeight / 2}px`;
+                rowTableHandle.style.top = `${window.scrollY + rowY + cellHeight / 2 - offsetHeight / 2}px`;
+                rowTableHandle.style.left = `${window.scrollX + rowX - offsetWidth / 2}px`;
                 rowTableHandle.setData({ editor, block, index: rowIndex, orientation: 'row' });
                 rowTableHandle.visible = show && draggedCellOrientation !== "col" && !hideRow;
             }
@@ -3001,16 +3004,17 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
                     editor,
                     index: rowIndex,
                     block,
-                    position: 'fixed',
+                    position: 'absolute',
                     zIndex: 1000,
                     dragStart: editor.tableHandles.rowDragStart,
-                    // dragEnd={props.editor.tableHandles!.dragEnd}
-                    // freezeHandles={props.editor.tableHandles!.freezeHandles}
-                    // unfreezeHandles={props.editor.tableHandles!.unfreezeHandles}
+                    dragEnd: editor.tableHandles.dragEnd,
+                    freezeHandles: editor.tableHandles.freezeHandles,
+                    unfreezeHandles: editor.tableHandles.unfreezeHandles,
                     showOtherSide: () => hideCol = false,
                     hideOtherSide: () => hideCol = true,
                     visible: false
                 });
+                rowTableHandle.id = "row";
                 (0, index_10.getModalContainer)().appendChild(rowTableHandle);
             }
         });
@@ -3025,7 +3029,7 @@ define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijs
         const widgetData = (0, utils_14.parseUrl)(href);
         if (widgetData) {
             const { module, properties } = widgetData;
-            if (module.path !== 'scom-swap')
+            if (module.localPath !== 'scom-swap')
                 return { ...properties };
         }
         return false;
@@ -3235,7 +3239,7 @@ define("@scom/scom-editor/blocks/addTweetBlock.ts", ["require", "exports", "@ijs
                                 return false;
                             }
                             const child = element.firstChild;
-                            if (!child)
+                            if (!child || child.tagName !== 'a')
                                 return false;
                             const url = child.getAttribute('href');
                             if (url && twitterRegex.test(url)) {
@@ -3311,7 +3315,7 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
         const widgetData = (0, utils_16.parseUrl)(href);
         if (widgetData) {
             const { module, properties } = widgetData;
-            if (module.path === 'scom-swap')
+            if (module.localPath === 'scom-swap')
                 return { ...properties };
         }
         return false;
@@ -3382,8 +3386,8 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                             const child = element.firstChild;
                             if (!child)
                                 return false;
-                            const href = child.getAttribute('href');
-                            if (child.nodeName === 'A' && href) {
+                            if (child.nodeName === 'A' && child.getAttribute('href')) {
+                                const href = child.getAttribute('href');
                                 return getData(href);
                             }
                             return false;
@@ -3415,7 +3419,7 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                         if (!widgetData)
                             return null;
                         const { module, properties } = widgetData;
-                        const type = module.path === 'scom-swap' ? 'swap' : 'chart';
+                        const type = module.localPath === 'scom-swap' ? 'swap' : 'chart';
                         chain().BNUpdateBlock(state.selection.from, {
                             type,
                             props: {
@@ -3562,7 +3566,7 @@ define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/compon
         }
     });
 });
-define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts"], function (require, exports, components_27, index_14, index_15, addSwapBlock_1, index_css_8) {
+define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts"], function (require, exports, components_27, index_14, index_15, addSwapBlock_1, index_css_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditor = void 0;
@@ -3644,7 +3648,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 },
                 domAttributes: {
                     editor: {
-                        class: index_css_8.customEditorStyle,
+                        class: index_css_7.customEditorStyle,
                     },
                 },
             };

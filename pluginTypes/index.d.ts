@@ -563,8 +563,8 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         editor?: BlockNoteEditor;
         onDeleted?: deletedCallback;
         onSetColor?: setColorCallback;
-        unfreezeMenu?: any;
-        freezeMenu?: any;
+        unfreezeMenu?: () => void;
+        freezeMenu?: () => void;
     }
     interface ISideMenu {
         block: Block;
@@ -585,8 +585,8 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         private _menuData;
         onDeleted: deletedCallback;
         onSetColor: setColorCallback;
-        unfreezeMenu: any;
-        freezeMenu: any;
+        unfreezeMenu: () => void;
+        freezeMenu: () => void;
         static create(options?: ScomEditorDragHandleElement, parent?: Container): Promise<ScomEditorDragHandle>;
         constructor(parent?: Container, options?: any);
         get block(): Block;
@@ -889,7 +889,10 @@ declare module "@scom/scom-editor/components/tableToolbar.tsx" {
         block: any;
         orientation: "row" | "column";
         index: number;
-        dragStart?: (e: any) => void;
+        dragStart: (e: any) => void;
+        dragEnd: (e: any) => void;
+        freezeHandles?: () => void;
+        unfreezeHandles?: () => void;
         showOtherSide?: () => void;
         hideOtherSide?: () => void;
     }
@@ -908,10 +911,14 @@ declare module "@scom/scom-editor/components/tableToolbar.tsx" {
     }
     export class ScomEditorTableToolbar extends Module {
         private tableMenu;
+        private btnTableToolbar;
         private _data;
         showOtherSide: () => void;
         hideOtherSide: () => void;
         dragStart: (e: any) => void;
+        dragEnd: (e: any) => void;
+        freezeHandles: () => void;
+        unfreezeHandles: () => void;
         static create(options?: ScomEditorTableToolbarElement, parent?: Container): Promise<ScomEditorTableToolbar>;
         constructor(parent?: Container, options?: any);
         get block(): any;
@@ -923,6 +930,7 @@ declare module "@scom/scom-editor/components/tableToolbar.tsx" {
         get orientation(): 'row' | 'column';
         set orientation(value: 'row' | 'column');
         setData(value: ITableToolbar): void;
+        protected _handleClick(event: MouseEvent, stopPropagation?: boolean): boolean;
         private onButtonClicked;
         init(): void;
         render(): any;

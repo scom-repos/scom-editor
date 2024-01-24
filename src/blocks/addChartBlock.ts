@@ -7,7 +7,7 @@ function getData(href: string) {
   const widgetData = parseUrl(href);
   if (widgetData) {
     const { module, properties } = widgetData;
-    if (module.path !== 'scom-swap') return {...properties};
+    if (module.localPath !== 'scom-swap') return {...properties};
   }
   return false;
 }

@@ -1,5 +1,5 @@
 import { BlockNoteEditor } from '../global/index';
-import { ScomEditorTableToolbar, createModal, getModalContainer, setToolbar } from '../components/index';
+import { ScomEditorTableToolbar, getModalContainer } from '../components/index';
 
 export const addTableToolbar = async (editor: BlockNoteEditor) => {
   let columnTableHandle: ScomEditorTableToolbar;
@@ -72,8 +72,8 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
     if (columnTableHandle) {
       const offsetHeight = columnTableHandle.offsetHeight || 20;
       const offsetWidth = columnTableHandle.offsetWidth || 24;
-      columnTableHandle.style.left = `${columnX + cellWidth / 2 - offsetWidth / 2}px`; //
-      columnTableHandle.style.top = `${columnY - offsetHeight / 2}px`;
+      columnTableHandle.style.top = `${window.scrollY + columnY - offsetHeight / 2}px`;
+      columnTableHandle.style.left = `${window.scrollX + columnX + cellWidth / 2 - offsetWidth / 2}px`;
       columnTableHandle.setData({ editor, block, index: colIndex, orientation: 'column' });
       columnTableHandle.visible = show && draggedCellOrientation !== "row" && !hideCol;
     } else {
@@ -82,16 +82,17 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         editor,
         index: colIndex,
         block,
-        position: 'fixed',
+        position: 'absolute',
         zIndex: 1000,
         dragStart: editor.tableHandles!.colDragStart,
-        // dragEnd={props.editor.tableHandles!.dragEnd}
-        // freezeHandles={props.editor.tableHandles!.freezeHandles}
-        // unfreezeHandles={props.editor.tableHandles!.unfreezeHandles}
+        dragEnd: editor.tableHandles!.dragEnd,
+        freezeHandles: editor.tableHandles!.freezeHandles,
+        unfreezeHandles: editor.tableHandles!.unfreezeHandles,
         showOtherSide: () => hideRow = false,
         hideOtherSide: () => hideRow = true,
         visible: false
       })
+      columnTableHandle.id = "column";
       getModalContainer().appendChild(columnTableHandle);
     }
 
@@ -99,8 +100,8 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
     if (rowTableHandle) {
       const offsetHeight = rowTableHandle.offsetHeight || 20;
       const offsetWidth = rowTableHandle.offsetWidth || 24;
-      rowTableHandle.style.left = `${rowX - offsetWidth / 2}px`;
-      rowTableHandle.style.top = `${rowY + cellHeight / 2 - offsetHeight / 2}px`;
+      rowTableHandle.style.top = `${window.scrollY + rowY + cellHeight / 2 - offsetHeight / 2}px`;
+      rowTableHandle.style.left = `${window.scrollX + rowX - offsetWidth / 2}px`;
       rowTableHandle.setData({ editor, block, index: rowIndex, orientation: 'row' });
       rowTableHandle.visible = show && draggedCellOrientation !== "col" && !hideRow;
     } else {
@@ -109,16 +110,17 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         editor,
         index: rowIndex!,
         block,
-        position: 'fixed',
+        position: 'absolute',
         zIndex: 1000,
         dragStart: editor.tableHandles!.rowDragStart,
-        // dragEnd={props.editor.tableHandles!.dragEnd}
-        // freezeHandles={props.editor.tableHandles!.freezeHandles}
-        // unfreezeHandles={props.editor.tableHandles!.unfreezeHandles}
+        dragEnd: editor.tableHandles!.dragEnd,
+        freezeHandles: editor.tableHandles!.freezeHandles,
+        unfreezeHandles: editor.tableHandles!.unfreezeHandles,
         showOtherSide: () => hideCol = false,
         hideOtherSide: () => hideCol = true,
         visible: false
       });
+      rowTableHandle.id = "row";
       getModalContainer().appendChild(rowTableHandle);
     }
   });

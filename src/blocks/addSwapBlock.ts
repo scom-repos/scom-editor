@@ -8,7 +8,7 @@ function getData(href: string) {
   const widgetData = parseUrl(href);
   if (widgetData) {
     const { module, properties } = widgetData;
-    if (module.path === 'scom-swap') return {...properties};
+    if (module.localPath === 'scom-swap') return {...properties};
   }
   return false;
 }
@@ -78,8 +78,8 @@ export const addSwapBlock = (blocknote: any) => {
             }
             const child = element.firstChild as HTMLElement;
             if (!child) return false;
-            const href = child.getAttribute('href');
-            if (child.nodeName === 'A' && href) {
+            if (child.nodeName === 'A' && child.getAttribute('href')) {
+              const href = child.getAttribute('href');
               return getData(href);
             }
             return false;
@@ -112,7 +112,7 @@ export const addSwapBlock = (blocknote: any) => {
           const widgetData = parseUrl(textContent);
           if (!widgetData) return null;
           const { module, properties } = widgetData;
-          const type = module.path === 'scom-swap' ? 'swap' : 'chart';
+          const type = module.localPath === 'scom-swap' ? 'swap' : 'chart';
           chain().BNUpdateBlock(state.selection.from, {
             type,
             props: {

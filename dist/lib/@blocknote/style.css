@@ -318,9 +318,21 @@ NESTED BLOCKS
 }
 
 /* TODO: would be nicer if defined from code */
+.bn-block-content.bn-is-empty.bn-has-anchor .bn-inline-content {
+  white-space: nowrap;
+  display: block;
+  width: 100%;
+  height: auto;
+}
 
 .bn-block-content.bn-is-empty.bn-has-anchor .bn-inline-content:before {
   content: "Enter text or type '/' for commands";
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 30px;
+  height: auto;
+  position: absolute;
+  text-overflow: ellipsis;
 }
 
 .bn-block-content.bn-is-filter.bn-has-anchor .bn-inline-content:before {

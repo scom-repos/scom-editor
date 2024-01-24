@@ -25590,7 +25590,8 @@ img.ProseMirror-separator {
   }
   function tableContentToNodes(tableContent, schema, styleSchema) {
     const rowNodes = [];
-    for (const row2 of tableContent.rows) {
+    for (let i2 = 0; i2 < tableContent.rows.length; i2++) {
+      const row2 = tableContent.rows[i2];
       const columnNodes = [];
       for (const cell2 of row2.cells) {
         let pNode;
@@ -25619,7 +25620,12 @@ img.ProseMirror-separator {
           }
           pNode = schema.nodes["tableParagraph"].create({}, nodes);
         }
-        const cellNode = schema.nodes["tableCell"].create({}, pNode);
+        let cellNode;
+        if (i2 === 0) {
+          cellNode = schema.nodes["tableHeader"].create({}, pNode);
+        } else {
+          cellNode = schema.nodes["tableCell"].create({}, pNode);
+        }
         columnNodes.push(cellNode);
       }
       const rowNode = schema.nodes["tableRow"].create({}, columnNodes);
@@ -27114,5470 +27120,6 @@ img.ProseMirror-separator {
     }
   });
   const TextColor = createStyleSpecFromTipTapMark(TextColorMark, "string");
-  const headingPropSchema = {
-    ...defaultProps,
-    level: { default: 1, values: [1, 2, 3] }
-  };
-  const HeadingBlockContent = createStronglyTypedTiptapNode({
-    name: "heading",
-    content: "inline*",
-    group: "blockContent",
-    addAttributes() {
-      return {
-        level: {
-          default: 1,
-          // instead of "level" attributes, use "data-level"
-          parseHTML: (element2) => {
-            const attr = element2.getAttribute("data-level");
-            const parsed = parseInt(attr);
-            if (isFinite(parsed)) {
-              return parsed;
-            }
-            return void 0;
-          },
-          renderHTML: (attributes) => {
-            return {
-              "data-level": attributes.level.toString()
-            };
-          }
-        }
-      };
-    },
-    addInputRules() {
-      return [
-        ...[1, 2, 3].map((level) => {
-          return new InputRule({
-            find: new RegExp(`^(#{${level}})\\s$`),
-            handler: ({ state, chain, range }) => {
-              chain().BNUpdateBlock(state.selection.from, {
-                type: "heading",
-                props: {
-                  level
-                }
-              }).deleteRange({ from: range.from, to: range.to });
-            }
-          });
-        })
-      ];
-    },
-    addKeyboardShortcuts() {
-      return {
-        "Mod-Alt-1": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
-          type: "heading",
-          props: {
-            level: 1
-          }
-        }),
-        "Mod-Alt-2": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
-          type: "heading",
-          props: {
-            level: 2
-          }
-        }),
-        "Mod-Alt-3": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
-          type: "heading",
-          props: {
-            level: 3
-          }
-        })
-      };
-    },
-    parseHTML() {
-      return [
-        {
-          tag: "div[data-content-type=" + this.name + "]",
-          getAttrs: (element2) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            return {
-              level: element2.getAttribute("data-level")
-            };
-          }
-        },
-        {
-          tag: "h1",
-          attrs: { level: 1 },
-          node: "heading"
-        },
-        {
-          tag: "h2",
-          attrs: { level: 2 },
-          node: "heading"
-        },
-        {
-          tag: "h3",
-          attrs: { level: 3 },
-          node: "heading"
-        }
-      ];
-    },
-    renderHTML({ node: node2, HTMLAttributes }) {
-      var _a, _b;
-      return createDefaultBlockDOMOutputSpec(
-        this.name,
-        `h${node2.attrs.level}`,
-        {
-          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
-          ...HTMLAttributes
-        },
-        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
-      );
-    }
-  });
-  const Heading = createBlockSpecFromStronglyTypedTiptapNode(
-    HeadingBlockContent,
-    headingPropSchema
-  );
-  class EventEmitter {
-    constructor() {
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      __publicField(this, "callbacks", {});
-    }
-    on(event, fn) {
-      if (!this.callbacks[event]) {
-        this.callbacks[event] = [];
-      }
-      this.callbacks[event].push(fn);
-      return () => this.off(event, fn);
-    }
-    emit(event, ...args) {
-      const callbacks = this.callbacks[event];
-      if (callbacks) {
-        callbacks.forEach((callback) => callback.apply(this, args));
-      }
-    }
-    off(event, fn) {
-      const callbacks = this.callbacks[event];
-      if (callbacks) {
-        if (fn) {
-          this.callbacks[event] = callbacks.filter((callback) => callback !== fn);
-        } else {
-          delete this.callbacks[event];
-        }
-      }
-    }
-    removeAllListeners() {
-      this.callbacks = {};
-    }
-  }
-  class ImageToolbarView {
-    constructor(pluginKey, pmView, updateImageToolbar) {
-      __publicField(this, "imageToolbarState");
-      __publicField(this, "updateImageToolbar");
-      __publicField(this, "prevWasEditable", null);
-      __publicField(this, "mouseDownHandler", () => {
-        var _a;
-        if ((_a = this.imageToolbarState) == null ? void 0 : _a.show) {
-          this.imageToolbarState.show = false;
-          this.updateImageToolbar();
-        }
-      });
-      // For dragging the whole editor.
-      __publicField(this, "dragstartHandler", () => {
-        var _a;
-        if ((_a = this.imageToolbarState) == null ? void 0 : _a.show) {
-          this.imageToolbarState.show = false;
-          this.updateImageToolbar();
-        }
-      });
-      __publicField(this, "blurHandler", (event) => {
-        var _a;
-        const editorWrapper = this.pmView.dom.parentElement;
-        if (
-          // An element is clicked.
-          event && event.relatedTarget && // Element is inside the editor.
-          (editorWrapper === event.relatedTarget || editorWrapper.contains(event.relatedTarget))
-        ) {
-          return;
-        }
-        if ((_a = this.imageToolbarState) == null ? void 0 : _a.show) {
-          this.imageToolbarState.show = false;
-          this.updateImageToolbar();
-        }
-      });
-      __publicField(this, "scrollHandler", () => {
-        var _a;
-        if ((_a = this.imageToolbarState) == null ? void 0 : _a.show) {
-          const blockElement = document.querySelector(
-            `[data-node-type="blockContainer"][data-id="${this.imageToolbarState.block.id}"]`
-          );
-          this.imageToolbarState.referencePos = blockElement.getBoundingClientRect();
-          this.updateImageToolbar();
-        }
-      });
-      this.pluginKey = pluginKey;
-      this.pmView = pmView;
-      this.updateImageToolbar = () => {
-        if (!this.imageToolbarState) {
-          throw new Error("Attempting to update uninitialized image toolbar");
-        }
-        updateImageToolbar(this.imageToolbarState);
-      };
-      pmView.dom.addEventListener("mousedown", this.mouseDownHandler);
-      pmView.dom.addEventListener("dragstart", this.dragstartHandler);
-      pmView.dom.addEventListener("blur", this.blurHandler);
-      document.addEventListener("scroll", this.scrollHandler);
-    }
-    update(view, prevState) {
-      var _a, _b;
-      const pluginState = this.pluginKey.getState(view.state);
-      if (!((_a = this.imageToolbarState) == null ? void 0 : _a.show) && pluginState.block) {
-        const blockElement = document.querySelector(
-          `[data-node-type="blockContainer"][data-id="${pluginState.block.id}"]`
-        );
-        this.imageToolbarState = {
-          show: true,
-          referencePos: blockElement.getBoundingClientRect(),
-          block: pluginState.block
-        };
-        this.updateImageToolbar();
-        return;
-      }
-      if (!view.state.selection.eq(prevState.selection) || !view.state.doc.eq(prevState.doc)) {
-        if ((_b = this.imageToolbarState) == null ? void 0 : _b.show) {
-          this.imageToolbarState.show = false;
-          this.updateImageToolbar();
-        }
-      }
-    }
-    destroy() {
-      this.pmView.dom.removeEventListener("mousedown", this.mouseDownHandler);
-      this.pmView.dom.removeEventListener("dragstart", this.dragstartHandler);
-      this.pmView.dom.removeEventListener("blur", this.blurHandler);
-      document.removeEventListener("scroll", this.scrollHandler);
-    }
-  }
-  const imageToolbarPluginKey = new PluginKey("ImageToolbarPlugin");
-  class ImageToolbarProsemirrorPlugin extends EventEmitter {
-    constructor(_editor) {
-      super();
-      __publicField(this, "view");
-      __publicField(this, "plugin");
-      this.plugin = new Plugin({
-        key: imageToolbarPluginKey,
-        view: (editorView) => {
-          this.view = new ImageToolbarView(
-            // editor,
-            imageToolbarPluginKey,
-            editorView,
-            (state) => {
-              this.emit("update", state);
-            }
-          );
-          return this.view;
-        },
-        state: {
-          init: () => {
-            return {
-              block: void 0
-            };
-          },
-          apply: (transaction) => {
-            var _a;
-            const block2 = (_a = transaction.getMeta(imageToolbarPluginKey)) == null ? void 0 : _a.block;
-            return {
-              block: block2
-            };
-          }
-        }
-      });
-    }
-    onUpdate(callback) {
-      return this.on("update", callback);
-    }
-  }
-  const imagePropSchema = {
-    textAlignment: defaultProps.textAlignment,
-    backgroundColor: defaultProps.backgroundColor,
-    // Image url.
-    url: {
-      default: ""
-    },
-    // Image caption.
-    caption: {
-      default: ""
-    },
-    // Image width in px.
-    width: {
-      default: 512
-    }
-  };
-  const textAlignmentToAlignItems = (textAlignment) => {
-    switch (textAlignment) {
-      case "left":
-        return "flex-start";
-      case "center":
-        return "center";
-      case "right":
-        return "flex-end";
-      default:
-        return "flex-start";
-    }
-  };
-  const minWidth = 64;
-  const renderImage = (block2, editor2) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "bn-image-block-content-wrapper";
-    wrapper.style.alignItems = textAlignmentToAlignItems(
-      block2.props.textAlignment
-    );
-    const addImageButton = document.createElement("div");
-    addImageButton.className = "bn-add-image-button";
-    const addImageButtonIcon = document.createElement("div");
-    addImageButtonIcon.className = "bn-add-image-button-icon";
-    const addImageButtonText = document.createElement("p");
-    addImageButtonText.className = "bn-add-image-button-text";
-    addImageButtonText.innerText = "Add Image";
-    const imageAndCaptionWrapper = document.createElement("div");
-    imageAndCaptionWrapper.className = "bn-image-and-caption-wrapper";
-    const imageWrapper = document.createElement("div");
-    imageWrapper.className = "bn-image-wrapper";
-    const image2 = document.createElement("img");
-    image2.className = "bn-image";
-    image2.src = block2.props.url;
-    image2.alt = "placeholder";
-    image2.contentEditable = "false";
-    image2.draggable = false;
-    image2.style.width = `${Math.min(
-      block2.props.width,
-      editor2.domElement.firstElementChild.clientWidth
-    )}px`;
-    const leftResizeHandle = document.createElement("div");
-    leftResizeHandle.className = "bn-image-resize-handle";
-    leftResizeHandle.style.left = "4px";
-    const rightResizeHandle = document.createElement("div");
-    rightResizeHandle.className = "bn-image-resize-handle";
-    rightResizeHandle.style.right = "4px";
-    const caption = document.createElement("p");
-    caption.className = "bn-image-caption";
-    caption.innerText = block2.props.caption;
-    caption.style.padding = block2.props.caption ? "4px" : "";
-    const handleEditorUpdate = () => {
-      var _a;
-      const selection = ((_a = editor2.getSelection()) == null ? void 0 : _a.blocks) || [];
-      const currentBlock = editor2.getTextCursorPosition().block;
-      const isSelected = [currentBlock, ...selection].find(
-        (selectedBlock) => selectedBlock.id === block2.id
-      ) !== void 0;
-      if (isSelected) {
-        addImageButton.style.outline = "4px solid rgb(100, 160, 255)";
-        imageAndCaptionWrapper.style.outline = "4px solid rgb(100, 160, 255)";
-      } else {
-        addImageButton.style.outline = "";
-        imageAndCaptionWrapper.style.outline = "";
-      }
-    };
-    editor2.onEditorContentChange(handleEditorUpdate);
-    editor2.onEditorSelectionChange(handleEditorUpdate);
-    let resizeParams;
-    const windowMouseMoveHandler = (event) => {
-      if (!resizeParams) {
-        if (!editor2.isEditable && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
-          imageWrapper.removeChild(leftResizeHandle);
-          imageWrapper.removeChild(rightResizeHandle);
-        }
-        return;
-      }
-      let newWidth;
-      if (textAlignmentToAlignItems(block2.props.textAlignment) === "center") {
-        if (resizeParams.handleUsed === "left") {
-          newWidth = resizeParams.initialWidth + (resizeParams.initialClientX - event.clientX) * 2;
-        } else {
-          newWidth = resizeParams.initialWidth + (event.clientX - resizeParams.initialClientX) * 2;
-        }
-      } else {
-        if (resizeParams.handleUsed === "left") {
-          newWidth = resizeParams.initialWidth + resizeParams.initialClientX - event.clientX;
-        } else {
-          newWidth = resizeParams.initialWidth + event.clientX - resizeParams.initialClientX;
-        }
-      }
-      if (newWidth < minWidth) {
-        image2.style.width = `${minWidth}px`;
-      } else if (newWidth > editor2.domElement.firstElementChild.clientWidth) {
-        image2.style.width = `${editor2.domElement.firstElementChild.clientWidth}px`;
-      } else {
-        image2.style.width = `${newWidth}px`;
-      }
-    };
-    const windowMouseUpHandler = (event) => {
-      if ((!event.target || !imageWrapper.contains(event.target) || !editor2.isEditable) && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
-        imageWrapper.removeChild(leftResizeHandle);
-        imageWrapper.removeChild(rightResizeHandle);
-      }
-      if (!resizeParams) {
-        return;
-      }
-      resizeParams = void 0;
-      editor2.updateBlock(block2, {
-        type: "image",
-        props: {
-          // Removes "px" from the end of the width string and converts to float.
-          width: parseFloat(image2.style.width.slice(0, -2))
-        }
-      });
-    };
-    const addImageButtonMouseDownHandler = (event) => {
-      event.preventDefault();
-    };
-    const addImageButtonClickHandler = () => {
-      editor2._tiptapEditor.view.dispatch(
-        editor2._tiptapEditor.state.tr.setMeta(imageToolbarPluginKey, {
-          block: block2
-        })
-      );
-    };
-    const imageMouseEnterHandler = () => {
-      if (editor2.isEditable) {
-        imageWrapper.appendChild(leftResizeHandle);
-        imageWrapper.appendChild(rightResizeHandle);
-      }
-    };
-    const imageMouseLeaveHandler = (event) => {
-      if (event.relatedTarget === leftResizeHandle || event.relatedTarget === rightResizeHandle) {
-        return;
-      }
-      if (resizeParams) {
-        return;
-      }
-      if (editor2.isEditable && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
-        imageWrapper.removeChild(leftResizeHandle);
-        imageWrapper.removeChild(rightResizeHandle);
-      }
-    };
-    const leftResizeHandleMouseDownHandler = (event) => {
-      event.preventDefault();
-      imageWrapper.appendChild(leftResizeHandle);
-      imageWrapper.appendChild(rightResizeHandle);
-      resizeParams = {
-        handleUsed: "left",
-        initialWidth: block2.props.width,
-        initialClientX: event.clientX
-      };
-    };
-    const rightResizeHandleMouseDownHandler = (event) => {
-      event.preventDefault();
-      imageWrapper.appendChild(leftResizeHandle);
-      imageWrapper.appendChild(rightResizeHandle);
-      resizeParams = {
-        handleUsed: "right",
-        initialWidth: block2.props.width,
-        initialClientX: event.clientX
-      };
-    };
-    addImageButton.appendChild(addImageButtonIcon);
-    addImageButton.appendChild(addImageButtonText);
-    imageAndCaptionWrapper.appendChild(imageWrapper);
-    imageWrapper.appendChild(image2);
-    imageAndCaptionWrapper.appendChild(caption);
-    if (block2.props.url === "") {
-      wrapper.appendChild(addImageButton);
-    } else {
-      wrapper.appendChild(imageAndCaptionWrapper);
-    }
-    window.addEventListener("mousemove", windowMouseMoveHandler);
-    window.addEventListener("mouseup", windowMouseUpHandler);
-    addImageButton.addEventListener("mousedown", addImageButtonMouseDownHandler);
-    addImageButton.addEventListener("click", addImageButtonClickHandler);
-    image2.addEventListener("mouseenter", imageMouseEnterHandler);
-    image2.addEventListener("mouseleave", imageMouseLeaveHandler);
-    leftResizeHandle.addEventListener(
-      "mousedown",
-      leftResizeHandleMouseDownHandler
-    );
-    rightResizeHandle.addEventListener(
-      "mousedown",
-      rightResizeHandleMouseDownHandler
-    );
-    return {
-      dom: wrapper,
-      destroy: () => {
-        window.removeEventListener("mousemove", windowMouseMoveHandler);
-        window.removeEventListener("mouseup", windowMouseUpHandler);
-        addImageButton.removeEventListener(
-          "mousedown",
-          addImageButtonMouseDownHandler
-        );
-        addImageButton.removeEventListener("click", addImageButtonClickHandler);
-        leftResizeHandle.removeEventListener(
-          "mousedown",
-          leftResizeHandleMouseDownHandler
-        );
-        rightResizeHandle.removeEventListener(
-          "mousedown",
-          rightResizeHandleMouseDownHandler
-        );
-      }
-    };
-  };
-  const Image = createBlockSpec(
-    {
-      type: "image",
-      propSchema: imagePropSchema,
-      content: "none"
-    },
-    {
-      render: renderImage,
-      toExternalHTML: (block2) => {
-        if (block2.props.url === "") {
-          const div2 = document.createElement("p");
-          div2.innerHTML = "Add Image";
-          return {
-            dom: div2
-          };
-        }
-        const figure = document.createElement("figure");
-        const img2 = document.createElement("img");
-        img2.src = block2.props.url;
-        figure.appendChild(img2);
-        if (block2.props.caption !== "") {
-          const figcaption = document.createElement("figcaption");
-          figcaption.innerHTML = block2.props.caption;
-          figure.appendChild(figcaption);
-        }
-        return {
-          dom: figure
-        };
-      },
-      parse: (element2) => {
-        if (element2.tagName === "FIGURE") {
-          const img2 = element2.querySelector("img");
-          const caption = element2.querySelector("figcaption");
-          return {
-            url: (img2 == null ? void 0 : img2.getAttribute("src")) || "",
-            caption: (caption == null ? void 0 : caption.textContent) || (img2 == null ? void 0 : img2.getAttribute("alt")) || void 0
-          };
-        } else if (element2.tagName === "IMG") {
-          return {
-            url: element2.getAttribute("src") || "",
-            caption: element2.getAttribute("alt") || void 0
-          };
-        }
-        return void 0;
-      }
-    }
-  );
-  const handleEnter = (editor2) => {
-    const { node: node2, contentType } = getBlockInfoFromPos(
-      editor2.state.doc,
-      editor2.state.selection.from
-    );
-    const selectionEmpty = editor2.state.selection.anchor === editor2.state.selection.head;
-    if (!contentType.name.endsWith("ListItem") || !selectionEmpty) {
-      return false;
-    }
-    return editor2.commands.first(({ state, chain, commands: commands2 }) => [
-      () => (
-        // Changes list item block to a text block if the content is empty.
-        commands2.command(() => {
-          if (node2.textContent.length === 0) {
-            return commands2.BNUpdateBlock(state.selection.from, {
-              type: "paragraph",
-              props: {}
-            });
-          }
-          return false;
-        })
-      ),
-      () => (
-        // Splits the current block, moving content inside that's after the cursor to a new block of the same type
-        // below.
-        commands2.command(() => {
-          if (node2.textContent.length > 0) {
-            chain().deleteSelection().BNSplitBlock(state.selection.from, true).run();
-            return true;
-          }
-          return false;
-        })
-      )
-    ]);
-  };
-  const bulletListItemPropSchema = {
-    ...defaultProps
-  };
-  const BulletListItemBlockContent = createStronglyTypedTiptapNode({
-    name: "bulletListItem",
-    content: "inline*",
-    group: "blockContent",
-    addInputRules() {
-      return [
-        // Creates an unordered list when starting with "-", "+", or "*".
-        new InputRule({
-          find: new RegExp(`^[-+*]\\s$`),
-          handler: ({ state, chain, range }) => {
-            chain().BNUpdateBlock(state.selection.from, {
-              type: "bulletListItem",
-              props: {}
-            }).deleteRange({ from: range.from, to: range.to });
-          }
-        })
-      ];
-    },
-    addKeyboardShortcuts() {
-      return {
-        Enter: () => handleEnter(this.editor),
-        "Mod-Shift-8": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
-          type: "bulletListItem",
-          props: {}
-        })
-      };
-    },
-    parseHTML() {
-      return [
-        // Case for regular HTML list structure.
-        {
-          tag: "div[data-content-type=" + this.name + "]"
-          // TODO: remove if we can't come up with test case that needs this
-        },
-        {
-          tag: "li",
-          getAttrs: (element2) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            const parent = element2.parentElement;
-            if (parent === null) {
-              return false;
-            }
-            if (parent.tagName === "UL" || parent.tagName === "DIV" && parent.parentElement.tagName === "UL") {
-              return {};
-            }
-            return false;
-          },
-          node: "bulletListItem"
-        },
-        // Case for BlockNote list structure.
-        {
-          tag: "p",
-          getAttrs: (element2) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            const parent = element2.parentElement;
-            if (parent === null) {
-              return false;
-            }
-            if (parent.getAttribute("data-content-type") === "bulletListItem") {
-              return {};
-            }
-            return false;
-          },
-          priority: 300,
-          node: "bulletListItem"
-        }
-      ];
-    },
-    renderHTML({ HTMLAttributes }) {
-      var _a, _b;
-      return createDefaultBlockDOMOutputSpec(
-        this.name,
-        // We use a <p> tag, because for <li> tags we'd need a <ul> element to put
-        // them in to be semantically correct, which we can't have due to the
-        // schema.
-        "p",
-        {
-          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
-          ...HTMLAttributes
-        },
-        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
-      );
-    }
-  });
-  const BulletListItem = createBlockSpecFromStronglyTypedTiptapNode(
-    BulletListItemBlockContent,
-    bulletListItemPropSchema
-  );
-  const PLUGIN_KEY$3 = new PluginKey(`numbered-list-indexing`);
-  const NumberedListIndexingPlugin = () => {
-    return new Plugin({
-      key: PLUGIN_KEY$3,
-      appendTransaction: (_transactions, _oldState, newState) => {
-        const tr2 = newState.tr;
-        tr2.setMeta("numberedListIndexing", true);
-        let modified = false;
-        newState.doc.descendants((node2, pos) => {
-          if (node2.type.name === "blockContainer" && node2.firstChild.type.name === "numberedListItem") {
-            let newIndex = "1";
-            const isFirstBlockInDoc = pos === 1;
-            const blockInfo = getBlockInfoFromPos(tr2.doc, pos + 1);
-            if (blockInfo === void 0) {
-              return;
-            }
-            if (!isFirstBlockInDoc) {
-              const prevBlockInfo = getBlockInfoFromPos(tr2.doc, pos - 2);
-              if (prevBlockInfo === void 0) {
-                return;
-              }
-              const isFirstBlockInNestingLevel = blockInfo.depth !== prevBlockInfo.depth;
-              if (!isFirstBlockInNestingLevel) {
-                const prevBlockContentNode = prevBlockInfo.contentNode;
-                const prevBlockContentType = prevBlockInfo.contentType;
-                const isPrevBlockOrderedListItem = prevBlockContentType.name === "numberedListItem";
-                if (isPrevBlockOrderedListItem) {
-                  const prevBlockIndex = prevBlockContentNode.attrs["index"];
-                  newIndex = (parseInt(prevBlockIndex) + 1).toString();
-                }
-              }
-            }
-            const contentNode = blockInfo.contentNode;
-            const index2 = contentNode.attrs["index"];
-            if (index2 !== newIndex) {
-              modified = true;
-              tr2.setNodeMarkup(pos + 1, void 0, {
-                index: newIndex
-              });
-            }
-          }
-        });
-        return modified ? tr2 : null;
-      }
-    });
-  };
-  const numberedListItemPropSchema = {
-    ...defaultProps
-  };
-  const NumberedListItemBlockContent = createStronglyTypedTiptapNode({
-    name: "numberedListItem",
-    content: "inline*",
-    group: "blockContent",
-    addAttributes() {
-      return {
-        index: {
-          default: null,
-          parseHTML: (element2) => element2.getAttribute("data-index"),
-          renderHTML: (attributes) => {
-            return {
-              "data-index": attributes.index
-            };
-          }
-        }
-      };
-    },
-    addInputRules() {
-      return [
-        // Creates an ordered list when starting with "1.".
-        new InputRule({
-          find: new RegExp(`^1\\.\\s$`),
-          handler: ({ state, chain, range }) => {
-            chain().BNUpdateBlock(state.selection.from, {
-              type: "numberedListItem",
-              props: {}
-            }).deleteRange({ from: range.from, to: range.to });
-          }
-        })
-      ];
-    },
-    addKeyboardShortcuts() {
-      return {
-        Enter: () => handleEnter(this.editor),
-        "Mod-Shift-7": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
-          type: "numberedListItem",
-          props: {}
-        })
-      };
-    },
-    addProseMirrorPlugins() {
-      return [NumberedListIndexingPlugin()];
-    },
-    parseHTML() {
-      return [
-        {
-          tag: "div[data-content-type=" + this.name + "]"
-          // TODO: remove if we can't come up with test case that needs this
-        },
-        // Case for regular HTML list structure.
-        // (e.g.: when pasting from other apps)
-        {
-          tag: "li",
-          getAttrs: (element2) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            const parent = element2.parentElement;
-            if (parent === null) {
-              return false;
-            }
-            if (parent.tagName === "OL" || parent.tagName === "DIV" && parent.parentElement.tagName === "OL") {
-              return {};
-            }
-            return false;
-          },
-          node: "numberedListItem"
-        },
-        // Case for BlockNote list structure.
-        // (e.g.: when pasting from blocknote)
-        {
-          tag: "p",
-          getAttrs: (element2) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            const parent = element2.parentElement;
-            if (parent === null) {
-              return false;
-            }
-            if (parent.getAttribute("data-content-type") === "numberedListItem") {
-              return {};
-            }
-            return false;
-          },
-          priority: 300,
-          node: "numberedListItem"
-        }
-      ];
-    },
-    renderHTML({ HTMLAttributes }) {
-      var _a, _b;
-      return createDefaultBlockDOMOutputSpec(
-        this.name,
-        // We use a <p> tag, because for <li> tags we'd need an <ol> element to
-        // put them in to be semantically correct, which we can't have due to the
-        // schema.
-        "p",
-        {
-          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
-          ...HTMLAttributes
-        },
-        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
-      );
-    }
-  });
-  const NumberedListItem = createBlockSpecFromStronglyTypedTiptapNode(
-    NumberedListItemBlockContent,
-    numberedListItemPropSchema
-  );
-  const paragraphPropSchema = {
-    ...defaultProps
-  };
-  const ParagraphBlockContent = createStronglyTypedTiptapNode({
-    name: "paragraph",
-    content: "inline*",
-    group: "blockContent",
-    parseHTML() {
-      return [
-        { tag: "div[data-content-type=" + this.name + "]" },
-        {
-          tag: "p",
-          priority: 200,
-          node: "paragraph"
-        }
-      ];
-    },
-    renderHTML({ HTMLAttributes }) {
-      var _a, _b;
-      return createDefaultBlockDOMOutputSpec(
-        this.name,
-        "p",
-        {
-          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
-          ...HTMLAttributes
-        },
-        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
-      );
-    }
-  });
-  const Paragraph = createBlockSpecFromStronglyTypedTiptapNode(
-    ParagraphBlockContent,
-    paragraphPropSchema
-  );
-  const TableCell = Node.create({
-    name: "tableCell",
-    addOptions() {
-      return {
-        HTMLAttributes: {}
-      };
-    },
-    content: "block+",
-    addAttributes() {
-      return {
-        colspan: {
-          default: 1
-        },
-        rowspan: {
-          default: 1
-        },
-        colwidth: {
-          default: null,
-          parseHTML: (element2) => {
-            const colwidth = element2.getAttribute("colwidth");
-            const value = colwidth ? [parseInt(colwidth, 10)] : null;
-            return value;
-          }
-        }
-      };
-    },
-    tableRole: "cell",
-    isolating: true,
-    parseHTML() {
-      return [
-        { tag: "td" }
-      ];
-    },
-    renderHTML({ HTMLAttributes }) {
-      return ["td", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
-    }
-  });
-  const TableHeader = Node.create({
-    name: "tableHeader",
-    addOptions() {
-      return {
-        HTMLAttributes: {}
-      };
-    },
-    content: "block+",
-    addAttributes() {
-      return {
-        colspan: {
-          default: 1
-        },
-        rowspan: {
-          default: 1
-        },
-        colwidth: {
-          default: null,
-          parseHTML: (element2) => {
-            const colwidth = element2.getAttribute("colwidth");
-            const value = colwidth ? [parseInt(colwidth, 10)] : null;
-            return value;
-          }
-        }
-      };
-    },
-    tableRole: "header_cell",
-    isolating: true,
-    parseHTML() {
-      return [
-        { tag: "th" }
-      ];
-    },
-    renderHTML({ HTMLAttributes }) {
-      return ["th", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
-    }
-  });
-  const TableRow = Node.create({
-    name: "tableRow",
-    addOptions() {
-      return {
-        HTMLAttributes: {}
-      };
-    },
-    content: "(tableCell | tableHeader)*",
-    tableRole: "row",
-    parseHTML() {
-      return [
-        { tag: "tr" }
-      ];
-    },
-    renderHTML({ HTMLAttributes }) {
-      return ["tr", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
-    }
-  });
-  var readFromCache;
-  var addToCache;
-  if (typeof WeakMap != "undefined") {
-    let cache = /* @__PURE__ */ new WeakMap();
-    readFromCache = (key2) => cache.get(key2);
-    addToCache = (key2, value) => {
-      cache.set(key2, value);
-      return value;
-    };
-  } else {
-    const cache = [];
-    const cacheSize = 10;
-    let cachePos = 0;
-    readFromCache = (key2) => {
-      for (let i2 = 0; i2 < cache.length; i2 += 2)
-        if (cache[i2] == key2)
-          return cache[i2 + 1];
-    };
-    addToCache = (key2, value) => {
-      if (cachePos == cacheSize)
-        cachePos = 0;
-      cache[cachePos++] = key2;
-      return cache[cachePos++] = value;
-    };
-  }
-  var TableMap = class {
-    constructor(width, height, map2, problems) {
-      this.width = width;
-      this.height = height;
-      this.map = map2;
-      this.problems = problems;
-    }
-    // Find the dimensions of the cell at the given position.
-    findCell(pos) {
-      for (let i2 = 0; i2 < this.map.length; i2++) {
-        const curPos = this.map[i2];
-        if (curPos != pos)
-          continue;
-        const left = i2 % this.width;
-        const top = i2 / this.width | 0;
-        let right = left + 1;
-        let bottom = top + 1;
-        for (let j = 1; right < this.width && this.map[i2 + j] == curPos; j++) {
-          right++;
-        }
-        for (let j = 1; bottom < this.height && this.map[i2 + this.width * j] == curPos; j++) {
-          bottom++;
-        }
-        return { left, top, right, bottom };
-      }
-      throw new RangeError(`No cell with offset ${pos} found`);
-    }
-    // Find the left side of the cell at the given position.
-    colCount(pos) {
-      for (let i2 = 0; i2 < this.map.length; i2++) {
-        if (this.map[i2] == pos) {
-          return i2 % this.width;
-        }
-      }
-      throw new RangeError(`No cell with offset ${pos} found`);
-    }
-    // Find the next cell in the given direction, starting from the cell
-    // at `pos`, if any.
-    nextCell(pos, axis, dir) {
-      const { left, right, top, bottom } = this.findCell(pos);
-      if (axis == "horiz") {
-        if (dir < 0 ? left == 0 : right == this.width)
-          return null;
-        return this.map[top * this.width + (dir < 0 ? left - 1 : right)];
-      } else {
-        if (dir < 0 ? top == 0 : bottom == this.height)
-          return null;
-        return this.map[left + this.width * (dir < 0 ? top - 1 : bottom)];
-      }
-    }
-    // Get the rectangle spanning the two given cells.
-    rectBetween(a2, b) {
-      const {
-        left: leftA,
-        right: rightA,
-        top: topA,
-        bottom: bottomA
-      } = this.findCell(a2);
-      const {
-        left: leftB,
-        right: rightB,
-        top: topB,
-        bottom: bottomB
-      } = this.findCell(b);
-      return {
-        left: Math.min(leftA, leftB),
-        top: Math.min(topA, topB),
-        right: Math.max(rightA, rightB),
-        bottom: Math.max(bottomA, bottomB)
-      };
-    }
-    // Return the position of all cells that have the top left corner in
-    // the given rectangle.
-    cellsInRect(rect) {
-      const result = [];
-      const seen = {};
-      for (let row2 = rect.top; row2 < rect.bottom; row2++) {
-        for (let col = rect.left; col < rect.right; col++) {
-          const index2 = row2 * this.width + col;
-          const pos = this.map[index2];
-          if (seen[pos])
-            continue;
-          seen[pos] = true;
-          if (col == rect.left && col && this.map[index2 - 1] == pos || row2 == rect.top && row2 && this.map[index2 - this.width] == pos) {
-            continue;
-          }
-          result.push(pos);
-        }
-      }
-      return result;
-    }
-    // Return the position at which the cell at the given row and column
-    // starts, or would start, if a cell started there.
-    positionAt(row2, col, table2) {
-      for (let i2 = 0, rowStart = 0; ; i2++) {
-        const rowEnd = rowStart + table2.child(i2).nodeSize;
-        if (i2 == row2) {
-          let index2 = col + row2 * this.width;
-          const rowEndIndex = (row2 + 1) * this.width;
-          while (index2 < rowEndIndex && this.map[index2] < rowStart)
-            index2++;
-          return index2 == rowEndIndex ? rowEnd - 1 : this.map[index2];
-        }
-        rowStart = rowEnd;
-      }
-    }
-    // Find the table map for the given table node.
-    static get(table2) {
-      return readFromCache(table2) || addToCache(table2, computeMap(table2));
-    }
-  };
-  function computeMap(table2) {
-    if (table2.type.spec.tableRole != "table")
-      throw new RangeError("Not a table node: " + table2.type.name);
-    const width = findWidth(table2), height = table2.childCount;
-    const map2 = [];
-    let mapPos = 0;
-    let problems = null;
-    const colWidths = [];
-    for (let i2 = 0, e = width * height; i2 < e; i2++)
-      map2[i2] = 0;
-    for (let row2 = 0, pos = 0; row2 < height; row2++) {
-      const rowNode = table2.child(row2);
-      pos++;
-      for (let i2 = 0; ; i2++) {
-        while (mapPos < map2.length && map2[mapPos] != 0)
-          mapPos++;
-        if (i2 == rowNode.childCount)
-          break;
-        const cellNode = rowNode.child(i2);
-        const { colspan, rowspan, colwidth } = cellNode.attrs;
-        for (let h2 = 0; h2 < rowspan; h2++) {
-          if (h2 + row2 >= height) {
-            (problems || (problems = [])).push({
-              type: "overlong_rowspan",
-              pos,
-              n: rowspan - h2
-            });
-            break;
-          }
-          const start = mapPos + h2 * width;
-          for (let w = 0; w < colspan; w++) {
-            if (map2[start + w] == 0)
-              map2[start + w] = pos;
-            else
-              (problems || (problems = [])).push({
-                type: "collision",
-                row: row2,
-                pos,
-                n: colspan - w
-              });
-            const colW = colwidth && colwidth[w];
-            if (colW) {
-              const widthIndex = (start + w) % width * 2, prev = colWidths[widthIndex];
-              if (prev == null || prev != colW && colWidths[widthIndex + 1] == 1) {
-                colWidths[widthIndex] = colW;
-                colWidths[widthIndex + 1] = 1;
-              } else if (prev == colW) {
-                colWidths[widthIndex + 1]++;
-              }
-            }
-          }
-        }
-        mapPos += colspan;
-        pos += cellNode.nodeSize;
-      }
-      const expectedPos = (row2 + 1) * width;
-      let missing = 0;
-      while (mapPos < expectedPos)
-        if (map2[mapPos++] == 0)
-          missing++;
-      if (missing)
-        (problems || (problems = [])).push({ type: "missing", row: row2, n: missing });
-      pos++;
-    }
-    const tableMap = new TableMap(width, height, map2, problems);
-    let badWidths = false;
-    for (let i2 = 0; !badWidths && i2 < colWidths.length; i2 += 2)
-      if (colWidths[i2] != null && colWidths[i2 + 1] < height)
-        badWidths = true;
-    if (badWidths)
-      findBadColWidths(tableMap, colWidths, table2);
-    return tableMap;
-  }
-  function findWidth(table2) {
-    let width = -1;
-    let hasRowSpan = false;
-    for (let row2 = 0; row2 < table2.childCount; row2++) {
-      const rowNode = table2.child(row2);
-      let rowWidth = 0;
-      if (hasRowSpan)
-        for (let j = 0; j < row2; j++) {
-          const prevRow = table2.child(j);
-          for (let i2 = 0; i2 < prevRow.childCount; i2++) {
-            const cell2 = prevRow.child(i2);
-            if (j + cell2.attrs.rowspan > row2)
-              rowWidth += cell2.attrs.colspan;
-          }
-        }
-      for (let i2 = 0; i2 < rowNode.childCount; i2++) {
-        const cell2 = rowNode.child(i2);
-        rowWidth += cell2.attrs.colspan;
-        if (cell2.attrs.rowspan > 1)
-          hasRowSpan = true;
-      }
-      if (width == -1)
-        width = rowWidth;
-      else if (width != rowWidth)
-        width = Math.max(width, rowWidth);
-    }
-    return width;
-  }
-  function findBadColWidths(map2, colWidths, table2) {
-    if (!map2.problems)
-      map2.problems = [];
-    const seen = {};
-    for (let i2 = 0; i2 < map2.map.length; i2++) {
-      const pos = map2.map[i2];
-      if (seen[pos])
-        continue;
-      seen[pos] = true;
-      const node2 = table2.nodeAt(pos);
-      if (!node2) {
-        throw new RangeError(`No cell with offset ${pos} found`);
-      }
-      let updated = null;
-      const attrs = node2.attrs;
-      for (let j = 0; j < attrs.colspan; j++) {
-        const col = (i2 + j) % map2.width;
-        const colWidth = colWidths[col * 2];
-        if (colWidth != null && (!attrs.colwidth || attrs.colwidth[j] != colWidth))
-          (updated || (updated = freshColWidth(attrs)))[j] = colWidth;
-      }
-      if (updated)
-        map2.problems.unshift({
-          type: "colwidth mismatch",
-          pos,
-          colwidth: updated
-        });
-    }
-  }
-  function freshColWidth(attrs) {
-    if (attrs.colwidth)
-      return attrs.colwidth.slice();
-    const result = [];
-    for (let i2 = 0; i2 < attrs.colspan; i2++)
-      result.push(0);
-    return result;
-  }
-  function tableNodeTypes(schema) {
-    let result = schema.cached.tableNodeTypes;
-    if (!result) {
-      result = schema.cached.tableNodeTypes = {};
-      for (const name in schema.nodes) {
-        const type = schema.nodes[name], role = type.spec.tableRole;
-        if (role)
-          result[role] = type;
-      }
-    }
-    return result;
-  }
-  var tableEditingKey = new PluginKey("selectingCells");
-  function cellAround($pos) {
-    for (let d = $pos.depth - 1; d > 0; d--)
-      if ($pos.node(d).type.spec.tableRole == "row")
-        return $pos.node(0).resolve($pos.before(d + 1));
-    return null;
-  }
-  function isInTable(state) {
-    const $head = state.selection.$head;
-    for (let d = $head.depth; d > 0; d--)
-      if ($head.node(d).type.spec.tableRole == "row")
-        return true;
-    return false;
-  }
-  function selectionCell(state) {
-    const sel = state.selection;
-    if ("$anchorCell" in sel && sel.$anchorCell) {
-      return sel.$anchorCell.pos > sel.$headCell.pos ? sel.$anchorCell : sel.$headCell;
-    } else if ("node" in sel && sel.node && sel.node.type.spec.tableRole == "cell") {
-      return sel.$anchor;
-    }
-    const $cell = cellAround(sel.$head) || cellNear(sel.$head);
-    if ($cell) {
-      return $cell;
-    }
-    throw new RangeError(`No cell found around position ${sel.head}`);
-  }
-  function cellNear($pos) {
-    for (let after = $pos.nodeAfter, pos = $pos.pos; after; after = after.firstChild, pos++) {
-      const role = after.type.spec.tableRole;
-      if (role == "cell" || role == "header_cell")
-        return $pos.doc.resolve(pos);
-    }
-    for (let before = $pos.nodeBefore, pos = $pos.pos; before; before = before.lastChild, pos--) {
-      const role = before.type.spec.tableRole;
-      if (role == "cell" || role == "header_cell")
-        return $pos.doc.resolve(pos - before.nodeSize);
-    }
-  }
-  function pointsAtCell($pos) {
-    return $pos.parent.type.spec.tableRole == "row" && !!$pos.nodeAfter;
-  }
-  function inSameTable($cellA, $cellB) {
-    return $cellA.depth == $cellB.depth && $cellA.pos >= $cellB.start(-1) && $cellA.pos <= $cellB.end(-1);
-  }
-  function nextCell($pos, axis, dir) {
-    const table2 = $pos.node(-1);
-    const map2 = TableMap.get(table2);
-    const tableStart = $pos.start(-1);
-    const moved = map2.nextCell($pos.pos - tableStart, axis, dir);
-    return moved == null ? null : $pos.node(0).resolve(tableStart + moved);
-  }
-  function removeColSpan(attrs, pos, n = 1) {
-    const result = { ...attrs, colspan: attrs.colspan - n };
-    if (result.colwidth) {
-      result.colwidth = result.colwidth.slice();
-      result.colwidth.splice(pos, n);
-      if (!result.colwidth.some((w) => w > 0))
-        result.colwidth = null;
-    }
-    return result;
-  }
-  var CellSelection = class _CellSelection extends Selection {
-    // A table selection is identified by its anchor and head cells. The
-    // positions given to this constructor should point _before_ two
-    // cells in the same table. They may be the same, to select a single
-    // cell.
-    constructor($anchorCell, $headCell = $anchorCell) {
-      const table2 = $anchorCell.node(-1);
-      const map2 = TableMap.get(table2);
-      const tableStart = $anchorCell.start(-1);
-      const rect = map2.rectBetween(
-        $anchorCell.pos - tableStart,
-        $headCell.pos - tableStart
-      );
-      const doc2 = $anchorCell.node(0);
-      const cells2 = map2.cellsInRect(rect).filter((p2) => p2 != $headCell.pos - tableStart);
-      cells2.unshift($headCell.pos - tableStart);
-      const ranges = cells2.map((pos) => {
-        const cell2 = table2.nodeAt(pos);
-        if (!cell2) {
-          throw RangeError(`No cell with offset ${pos} found`);
-        }
-        const from2 = tableStart + pos + 1;
-        return new SelectionRange(
-          doc2.resolve(from2),
-          doc2.resolve(from2 + cell2.content.size)
-        );
-      });
-      super(ranges[0].$from, ranges[0].$to, ranges);
-      this.$anchorCell = $anchorCell;
-      this.$headCell = $headCell;
-    }
-    map(doc2, mapping) {
-      const $anchorCell = doc2.resolve(mapping.map(this.$anchorCell.pos));
-      const $headCell = doc2.resolve(mapping.map(this.$headCell.pos));
-      if (pointsAtCell($anchorCell) && pointsAtCell($headCell) && inSameTable($anchorCell, $headCell)) {
-        const tableChanged = this.$anchorCell.node(-1) != $anchorCell.node(-1);
-        if (tableChanged && this.isRowSelection())
-          return _CellSelection.rowSelection($anchorCell, $headCell);
-        else if (tableChanged && this.isColSelection())
-          return _CellSelection.colSelection($anchorCell, $headCell);
-        else
-          return new _CellSelection($anchorCell, $headCell);
-      }
-      return TextSelection.between($anchorCell, $headCell);
-    }
-    // Returns a rectangular slice of table rows containing the selected
-    // cells.
-    content() {
-      const table2 = this.$anchorCell.node(-1);
-      const map2 = TableMap.get(table2);
-      const tableStart = this.$anchorCell.start(-1);
-      const rect = map2.rectBetween(
-        this.$anchorCell.pos - tableStart,
-        this.$headCell.pos - tableStart
-      );
-      const seen = {};
-      const rows = [];
-      for (let row2 = rect.top; row2 < rect.bottom; row2++) {
-        const rowContent = [];
-        for (let index2 = row2 * map2.width + rect.left, col = rect.left; col < rect.right; col++, index2++) {
-          const pos = map2.map[index2];
-          if (seen[pos])
-            continue;
-          seen[pos] = true;
-          const cellRect = map2.findCell(pos);
-          let cell2 = table2.nodeAt(pos);
-          if (!cell2) {
-            throw RangeError(`No cell with offset ${pos} found`);
-          }
-          const extraLeft = rect.left - cellRect.left;
-          const extraRight = cellRect.right - rect.right;
-          if (extraLeft > 0 || extraRight > 0) {
-            let attrs = cell2.attrs;
-            if (extraLeft > 0) {
-              attrs = removeColSpan(attrs, 0, extraLeft);
-            }
-            if (extraRight > 0) {
-              attrs = removeColSpan(
-                attrs,
-                attrs.colspan - extraRight,
-                extraRight
-              );
-            }
-            if (cellRect.left < rect.left) {
-              cell2 = cell2.type.createAndFill(attrs);
-              if (!cell2) {
-                throw RangeError(
-                  `Could not create cell with attrs ${JSON.stringify(attrs)}`
-                );
-              }
-            } else {
-              cell2 = cell2.type.create(attrs, cell2.content);
-            }
-          }
-          if (cellRect.top < rect.top || cellRect.bottom > rect.bottom) {
-            const attrs = {
-              ...cell2.attrs,
-              rowspan: Math.min(cellRect.bottom, rect.bottom) - Math.max(cellRect.top, rect.top)
-            };
-            if (cellRect.top < rect.top) {
-              cell2 = cell2.type.createAndFill(attrs);
-            } else {
-              cell2 = cell2.type.create(attrs, cell2.content);
-            }
-          }
-          rowContent.push(cell2);
-        }
-        rows.push(table2.child(row2).copy(Fragment.from(rowContent)));
-      }
-      const fragment = this.isColSelection() && this.isRowSelection() ? table2 : rows;
-      return new Slice(Fragment.from(fragment), 1, 1);
-    }
-    replace(tr2, content2 = Slice.empty) {
-      const mapFrom = tr2.steps.length, ranges = this.ranges;
-      for (let i2 = 0; i2 < ranges.length; i2++) {
-        const { $from, $to } = ranges[i2], mapping = tr2.mapping.slice(mapFrom);
-        tr2.replace(
-          mapping.map($from.pos),
-          mapping.map($to.pos),
-          i2 ? Slice.empty : content2
-        );
-      }
-      const sel = Selection.findFrom(
-        tr2.doc.resolve(tr2.mapping.slice(mapFrom).map(this.to)),
-        -1
-      );
-      if (sel)
-        tr2.setSelection(sel);
-    }
-    replaceWith(tr2, node2) {
-      this.replace(tr2, new Slice(Fragment.from(node2), 0, 0));
-    }
-    forEachCell(f) {
-      const table2 = this.$anchorCell.node(-1);
-      const map2 = TableMap.get(table2);
-      const tableStart = this.$anchorCell.start(-1);
-      const cells2 = map2.cellsInRect(
-        map2.rectBetween(
-          this.$anchorCell.pos - tableStart,
-          this.$headCell.pos - tableStart
-        )
-      );
-      for (let i2 = 0; i2 < cells2.length; i2++) {
-        f(table2.nodeAt(cells2[i2]), tableStart + cells2[i2]);
-      }
-    }
-    // True if this selection goes all the way from the top to the
-    // bottom of the table.
-    isColSelection() {
-      const anchorTop = this.$anchorCell.index(-1);
-      const headTop = this.$headCell.index(-1);
-      if (Math.min(anchorTop, headTop) > 0)
-        return false;
-      const anchorBottom = anchorTop + this.$anchorCell.nodeAfter.attrs.rowspan;
-      const headBottom = headTop + this.$headCell.nodeAfter.attrs.rowspan;
-      return Math.max(anchorBottom, headBottom) == this.$headCell.node(-1).childCount;
-    }
-    // Returns the smallest column selection that covers the given anchor
-    // and head cell.
-    static colSelection($anchorCell, $headCell = $anchorCell) {
-      const table2 = $anchorCell.node(-1);
-      const map2 = TableMap.get(table2);
-      const tableStart = $anchorCell.start(-1);
-      const anchorRect = map2.findCell($anchorCell.pos - tableStart);
-      const headRect = map2.findCell($headCell.pos - tableStart);
-      const doc2 = $anchorCell.node(0);
-      if (anchorRect.top <= headRect.top) {
-        if (anchorRect.top > 0)
-          $anchorCell = doc2.resolve(tableStart + map2.map[anchorRect.left]);
-        if (headRect.bottom < map2.height)
-          $headCell = doc2.resolve(
-            tableStart + map2.map[map2.width * (map2.height - 1) + headRect.right - 1]
-          );
-      } else {
-        if (headRect.top > 0)
-          $headCell = doc2.resolve(tableStart + map2.map[headRect.left]);
-        if (anchorRect.bottom < map2.height)
-          $anchorCell = doc2.resolve(
-            tableStart + map2.map[map2.width * (map2.height - 1) + anchorRect.right - 1]
-          );
-      }
-      return new _CellSelection($anchorCell, $headCell);
-    }
-    // True if this selection goes all the way from the left to the
-    // right of the table.
-    isRowSelection() {
-      const table2 = this.$anchorCell.node(-1);
-      const map2 = TableMap.get(table2);
-      const tableStart = this.$anchorCell.start(-1);
-      const anchorLeft = map2.colCount(this.$anchorCell.pos - tableStart);
-      const headLeft = map2.colCount(this.$headCell.pos - tableStart);
-      if (Math.min(anchorLeft, headLeft) > 0)
-        return false;
-      const anchorRight = anchorLeft + this.$anchorCell.nodeAfter.attrs.colspan;
-      const headRight = headLeft + this.$headCell.nodeAfter.attrs.colspan;
-      return Math.max(anchorRight, headRight) == map2.width;
-    }
-    eq(other) {
-      return other instanceof _CellSelection && other.$anchorCell.pos == this.$anchorCell.pos && other.$headCell.pos == this.$headCell.pos;
-    }
-    // Returns the smallest row selection that covers the given anchor
-    // and head cell.
-    static rowSelection($anchorCell, $headCell = $anchorCell) {
-      const table2 = $anchorCell.node(-1);
-      const map2 = TableMap.get(table2);
-      const tableStart = $anchorCell.start(-1);
-      const anchorRect = map2.findCell($anchorCell.pos - tableStart);
-      const headRect = map2.findCell($headCell.pos - tableStart);
-      const doc2 = $anchorCell.node(0);
-      if (anchorRect.left <= headRect.left) {
-        if (anchorRect.left > 0)
-          $anchorCell = doc2.resolve(
-            tableStart + map2.map[anchorRect.top * map2.width]
-          );
-        if (headRect.right < map2.width)
-          $headCell = doc2.resolve(
-            tableStart + map2.map[map2.width * (headRect.top + 1) - 1]
-          );
-      } else {
-        if (headRect.left > 0)
-          $headCell = doc2.resolve(tableStart + map2.map[headRect.top * map2.width]);
-        if (anchorRect.right < map2.width)
-          $anchorCell = doc2.resolve(
-            tableStart + map2.map[map2.width * (anchorRect.top + 1) - 1]
-          );
-      }
-      return new _CellSelection($anchorCell, $headCell);
-    }
-    toJSON() {
-      return {
-        type: "cell",
-        anchor: this.$anchorCell.pos,
-        head: this.$headCell.pos
-      };
-    }
-    static fromJSON(doc2, json) {
-      return new _CellSelection(doc2.resolve(json.anchor), doc2.resolve(json.head));
-    }
-    static create(doc2, anchorCell, headCell = anchorCell) {
-      return new _CellSelection(doc2.resolve(anchorCell), doc2.resolve(headCell));
-    }
-    getBookmark() {
-      return new CellBookmark(this.$anchorCell.pos, this.$headCell.pos);
-    }
-  };
-  CellSelection.prototype.visible = false;
-  Selection.jsonID("cell", CellSelection);
-  var CellBookmark = class _CellBookmark {
-    constructor(anchor, head2) {
-      this.anchor = anchor;
-      this.head = head2;
-    }
-    map(mapping) {
-      return new _CellBookmark(mapping.map(this.anchor), mapping.map(this.head));
-    }
-    resolve(doc2) {
-      const $anchorCell = doc2.resolve(this.anchor), $headCell = doc2.resolve(this.head);
-      if ($anchorCell.parent.type.spec.tableRole == "row" && $headCell.parent.type.spec.tableRole == "row" && $anchorCell.index() < $anchorCell.parent.childCount && $headCell.index() < $headCell.parent.childCount && inSameTable($anchorCell, $headCell))
-        return new CellSelection($anchorCell, $headCell);
-      else
-        return Selection.near($headCell, 1);
-    }
-  };
-  function drawCellSelection(state) {
-    if (!(state.selection instanceof CellSelection))
-      return null;
-    const cells2 = [];
-    state.selection.forEachCell((node2, pos) => {
-      cells2.push(
-        Decoration.node(pos, pos + node2.nodeSize, { class: "selectedCell" })
-      );
-    });
-    return DecorationSet.create(state.doc, cells2);
-  }
-  function isCellBoundarySelection({ $from, $to }) {
-    if ($from.pos == $to.pos || $from.pos < $from.pos - 6)
-      return false;
-    let afterFrom = $from.pos;
-    let beforeTo = $to.pos;
-    let depth = $from.depth;
-    for (; depth >= 0; depth--, afterFrom++)
-      if ($from.after(depth + 1) < $from.end(depth))
-        break;
-    for (let d = $to.depth; d >= 0; d--, beforeTo--)
-      if ($to.before(d + 1) > $to.start(d))
-        break;
-    return afterFrom == beforeTo && /row|table/.test($from.node(depth).type.spec.tableRole);
-  }
-  function isTextSelectionAcrossCells({ $from, $to }) {
-    let fromCellBoundaryNode;
-    let toCellBoundaryNode;
-    for (let i2 = $from.depth; i2 > 0; i2--) {
-      const node2 = $from.node(i2);
-      if (node2.type.spec.tableRole === "cell" || node2.type.spec.tableRole === "header_cell") {
-        fromCellBoundaryNode = node2;
-        break;
-      }
-    }
-    for (let i2 = $to.depth; i2 > 0; i2--) {
-      const node2 = $to.node(i2);
-      if (node2.type.spec.tableRole === "cell" || node2.type.spec.tableRole === "header_cell") {
-        toCellBoundaryNode = node2;
-        break;
-      }
-    }
-    return fromCellBoundaryNode !== toCellBoundaryNode && $to.parentOffset === 0;
-  }
-  function normalizeSelection(state, tr2, allowTableNodeSelection) {
-    const sel = (tr2 || state).selection;
-    const doc2 = (tr2 || state).doc;
-    let normalize2;
-    let role;
-    if (sel instanceof NodeSelection && (role = sel.node.type.spec.tableRole)) {
-      if (role == "cell" || role == "header_cell") {
-        normalize2 = CellSelection.create(doc2, sel.from);
-      } else if (role == "row") {
-        const $cell = doc2.resolve(sel.from + 1);
-        normalize2 = CellSelection.rowSelection($cell, $cell);
-      } else if (!allowTableNodeSelection) {
-        const map2 = TableMap.get(sel.node);
-        const start = sel.from + 1;
-        const lastCell = start + map2.map[map2.width * map2.height - 1];
-        normalize2 = CellSelection.create(doc2, start + 1, lastCell);
-      }
-    } else if (sel instanceof TextSelection && isCellBoundarySelection(sel)) {
-      normalize2 = TextSelection.create(doc2, sel.from);
-    } else if (sel instanceof TextSelection && isTextSelectionAcrossCells(sel)) {
-      normalize2 = TextSelection.create(doc2, sel.$from.start(), sel.$from.end());
-    }
-    if (normalize2)
-      (tr2 || (tr2 = state.tr)).setSelection(normalize2);
-    return tr2;
-  }
-  var fixTablesKey = new PluginKey("fix-tables");
-  function changedDescendants(old, cur, offset, f) {
-    const oldSize = old.childCount, curSize = cur.childCount;
-    outer:
-      for (let i2 = 0, j = 0; i2 < curSize; i2++) {
-        const child = cur.child(i2);
-        for (let scan = j, e = Math.min(oldSize, i2 + 3); scan < e; scan++) {
-          if (old.child(scan) == child) {
-            j = scan + 1;
-            offset += child.nodeSize;
-            continue outer;
-          }
-        }
-        f(child, offset);
-        if (j < oldSize && old.child(j).sameMarkup(child))
-          changedDescendants(old.child(j), child, offset + 1, f);
-        else
-          child.nodesBetween(0, child.content.size, f, offset + 1);
-        offset += child.nodeSize;
-      }
-  }
-  function fixTables(state, oldState) {
-    let tr2;
-    const check = (node2, pos) => {
-      if (node2.type.spec.tableRole == "table")
-        tr2 = fixTable(state, node2, pos, tr2);
-    };
-    if (!oldState)
-      state.doc.descendants(check);
-    else if (oldState.doc != state.doc)
-      changedDescendants(oldState.doc, state.doc, 0, check);
-    return tr2;
-  }
-  function fixTable(state, table2, tablePos, tr2) {
-    const map2 = TableMap.get(table2);
-    if (!map2.problems)
-      return tr2;
-    if (!tr2)
-      tr2 = state.tr;
-    const mustAdd = [];
-    for (let i2 = 0; i2 < map2.height; i2++)
-      mustAdd.push(0);
-    for (let i2 = 0; i2 < map2.problems.length; i2++) {
-      const prob = map2.problems[i2];
-      if (prob.type == "collision") {
-        const cell2 = table2.nodeAt(prob.pos);
-        if (!cell2)
-          continue;
-        const attrs = cell2.attrs;
-        for (let j = 0; j < attrs.rowspan; j++)
-          mustAdd[prob.row + j] += prob.n;
-        tr2.setNodeMarkup(
-          tr2.mapping.map(tablePos + 1 + prob.pos),
-          null,
-          removeColSpan(attrs, attrs.colspan - prob.n, prob.n)
-        );
-      } else if (prob.type == "missing") {
-        mustAdd[prob.row] += prob.n;
-      } else if (prob.type == "overlong_rowspan") {
-        const cell2 = table2.nodeAt(prob.pos);
-        if (!cell2)
-          continue;
-        tr2.setNodeMarkup(tr2.mapping.map(tablePos + 1 + prob.pos), null, {
-          ...cell2.attrs,
-          rowspan: cell2.attrs.rowspan - prob.n
-        });
-      } else if (prob.type == "colwidth mismatch") {
-        const cell2 = table2.nodeAt(prob.pos);
-        if (!cell2)
-          continue;
-        tr2.setNodeMarkup(tr2.mapping.map(tablePos + 1 + prob.pos), null, {
-          ...cell2.attrs,
-          colwidth: prob.colwidth
-        });
-      }
-    }
-    let first2, last2;
-    for (let i2 = 0; i2 < mustAdd.length; i2++)
-      if (mustAdd[i2]) {
-        if (first2 == null)
-          first2 = i2;
-        last2 = i2;
-      }
-    for (let i2 = 0, pos = tablePos + 1; i2 < map2.height; i2++) {
-      const row2 = table2.child(i2);
-      const end = pos + row2.nodeSize;
-      const add = mustAdd[i2];
-      if (add > 0) {
-        let role = "cell";
-        if (row2.firstChild) {
-          role = row2.firstChild.type.spec.tableRole;
-        }
-        const nodes = [];
-        for (let j = 0; j < add; j++) {
-          const node2 = tableNodeTypes(state.schema)[role].createAndFill();
-          if (node2)
-            nodes.push(node2);
-        }
-        const side = (i2 == 0 || first2 == i2 - 1) && last2 == i2 ? pos + 1 : end - 1;
-        tr2.insert(tr2.mapping.map(side), nodes);
-      }
-      pos = end;
-    }
-    return tr2.setMeta(fixTablesKey, { fixTables: true });
-  }
-  function pastedCells(slice) {
-    if (!slice.size)
-      return null;
-    let { content: content2, openStart, openEnd } = slice;
-    while (content2.childCount == 1 && (openStart > 0 && openEnd > 0 || content2.child(0).type.spec.tableRole == "table")) {
-      openStart--;
-      openEnd--;
-      content2 = content2.child(0).content;
-    }
-    const first2 = content2.child(0);
-    const role = first2.type.spec.tableRole;
-    const schema = first2.type.schema, rows = [];
-    if (role == "row") {
-      for (let i2 = 0; i2 < content2.childCount; i2++) {
-        let cells2 = content2.child(i2).content;
-        const left = i2 ? 0 : Math.max(0, openStart - 1);
-        const right = i2 < content2.childCount - 1 ? 0 : Math.max(0, openEnd - 1);
-        if (left || right)
-          cells2 = fitSlice(
-            tableNodeTypes(schema).row,
-            new Slice(cells2, left, right)
-          ).content;
-        rows.push(cells2);
-      }
-    } else if (role == "cell" || role == "header_cell") {
-      rows.push(
-        openStart || openEnd ? fitSlice(
-          tableNodeTypes(schema).row,
-          new Slice(content2, openStart, openEnd)
-        ).content : content2
-      );
-    } else {
-      return null;
-    }
-    return ensureRectangular(schema, rows);
-  }
-  function ensureRectangular(schema, rows) {
-    const widths = [];
-    for (let i2 = 0; i2 < rows.length; i2++) {
-      const row2 = rows[i2];
-      for (let j = row2.childCount - 1; j >= 0; j--) {
-        const { rowspan, colspan } = row2.child(j).attrs;
-        for (let r = i2; r < i2 + rowspan; r++)
-          widths[r] = (widths[r] || 0) + colspan;
-      }
-    }
-    let width = 0;
-    for (let r = 0; r < widths.length; r++)
-      width = Math.max(width, widths[r]);
-    for (let r = 0; r < widths.length; r++) {
-      if (r >= rows.length)
-        rows.push(Fragment.empty);
-      if (widths[r] < width) {
-        const empty2 = tableNodeTypes(schema).cell.createAndFill();
-        const cells2 = [];
-        for (let i2 = widths[r]; i2 < width; i2++) {
-          cells2.push(empty2);
-        }
-        rows[r] = rows[r].append(Fragment.from(cells2));
-      }
-    }
-    return { height: rows.length, width, rows };
-  }
-  function fitSlice(nodeType, slice) {
-    const node2 = nodeType.createAndFill();
-    const tr2 = new Transform(node2).replace(0, node2.content.size, slice);
-    return tr2.doc;
-  }
-  function clipCells({ width, height, rows }, newWidth, newHeight) {
-    if (width != newWidth) {
-      const added = [];
-      const newRows = [];
-      for (let row2 = 0; row2 < rows.length; row2++) {
-        const frag = rows[row2], cells2 = [];
-        for (let col = added[row2] || 0, i2 = 0; col < newWidth; i2++) {
-          let cell2 = frag.child(i2 % frag.childCount);
-          if (col + cell2.attrs.colspan > newWidth)
-            cell2 = cell2.type.createChecked(
-              removeColSpan(
-                cell2.attrs,
-                cell2.attrs.colspan,
-                col + cell2.attrs.colspan - newWidth
-              ),
-              cell2.content
-            );
-          cells2.push(cell2);
-          col += cell2.attrs.colspan;
-          for (let j = 1; j < cell2.attrs.rowspan; j++)
-            added[row2 + j] = (added[row2 + j] || 0) + cell2.attrs.colspan;
-        }
-        newRows.push(Fragment.from(cells2));
-      }
-      rows = newRows;
-      width = newWidth;
-    }
-    if (height != newHeight) {
-      const newRows = [];
-      for (let row2 = 0, i2 = 0; row2 < newHeight; row2++, i2++) {
-        const cells2 = [], source2 = rows[i2 % height];
-        for (let j = 0; j < source2.childCount; j++) {
-          let cell2 = source2.child(j);
-          if (row2 + cell2.attrs.rowspan > newHeight)
-            cell2 = cell2.type.create(
-              {
-                ...cell2.attrs,
-                rowspan: Math.max(1, newHeight - cell2.attrs.rowspan)
-              },
-              cell2.content
-            );
-          cells2.push(cell2);
-        }
-        newRows.push(Fragment.from(cells2));
-      }
-      rows = newRows;
-      height = newHeight;
-    }
-    return { width, height, rows };
-  }
-  function growTable(tr2, map2, table2, start, width, height, mapFrom) {
-    const schema = tr2.doc.type.schema;
-    const types2 = tableNodeTypes(schema);
-    let empty2;
-    let emptyHead;
-    if (width > map2.width) {
-      for (let row2 = 0, rowEnd = 0; row2 < map2.height; row2++) {
-        const rowNode = table2.child(row2);
-        rowEnd += rowNode.nodeSize;
-        const cells2 = [];
-        let add;
-        if (rowNode.lastChild == null || rowNode.lastChild.type == types2.cell)
-          add = empty2 || (empty2 = types2.cell.createAndFill());
-        else
-          add = emptyHead || (emptyHead = types2.header_cell.createAndFill());
-        for (let i2 = map2.width; i2 < width; i2++)
-          cells2.push(add);
-        tr2.insert(tr2.mapping.slice(mapFrom).map(rowEnd - 1 + start), cells2);
-      }
-    }
-    if (height > map2.height) {
-      const cells2 = [];
-      for (let i2 = 0, start2 = (map2.height - 1) * map2.width; i2 < Math.max(map2.width, width); i2++) {
-        const header = i2 >= map2.width ? false : table2.nodeAt(map2.map[start2 + i2]).type == types2.header_cell;
-        cells2.push(
-          header ? emptyHead || (emptyHead = types2.header_cell.createAndFill()) : empty2 || (empty2 = types2.cell.createAndFill())
-        );
-      }
-      const emptyRow = types2.row.create(null, Fragment.from(cells2)), rows = [];
-      for (let i2 = map2.height; i2 < height; i2++)
-        rows.push(emptyRow);
-      tr2.insert(tr2.mapping.slice(mapFrom).map(start + table2.nodeSize - 2), rows);
-    }
-    return !!(empty2 || emptyHead);
-  }
-  function isolateHorizontal(tr2, map2, table2, start, left, right, top, mapFrom) {
-    if (top == 0 || top == map2.height)
-      return false;
-    let found2 = false;
-    for (let col = left; col < right; col++) {
-      const index2 = top * map2.width + col, pos = map2.map[index2];
-      if (map2.map[index2 - map2.width] == pos) {
-        found2 = true;
-        const cell2 = table2.nodeAt(pos);
-        const { top: cellTop, left: cellLeft } = map2.findCell(pos);
-        tr2.setNodeMarkup(tr2.mapping.slice(mapFrom).map(pos + start), null, {
-          ...cell2.attrs,
-          rowspan: top - cellTop
-        });
-        tr2.insert(
-          tr2.mapping.slice(mapFrom).map(map2.positionAt(top, cellLeft, table2)),
-          cell2.type.createAndFill({
-            ...cell2.attrs,
-            rowspan: cellTop + cell2.attrs.rowspan - top
-          })
-        );
-        col += cell2.attrs.colspan - 1;
-      }
-    }
-    return found2;
-  }
-  function isolateVertical(tr2, map2, table2, start, top, bottom, left, mapFrom) {
-    if (left == 0 || left == map2.width)
-      return false;
-    let found2 = false;
-    for (let row2 = top; row2 < bottom; row2++) {
-      const index2 = row2 * map2.width + left, pos = map2.map[index2];
-      if (map2.map[index2 - 1] == pos) {
-        found2 = true;
-        const cell2 = table2.nodeAt(pos);
-        const cellLeft = map2.colCount(pos);
-        const updatePos = tr2.mapping.slice(mapFrom).map(pos + start);
-        tr2.setNodeMarkup(
-          updatePos,
-          null,
-          removeColSpan(
-            cell2.attrs,
-            left - cellLeft,
-            cell2.attrs.colspan - (left - cellLeft)
-          )
-        );
-        tr2.insert(
-          updatePos + cell2.nodeSize,
-          cell2.type.createAndFill(
-            removeColSpan(cell2.attrs, 0, left - cellLeft)
-          )
-        );
-        row2 += cell2.attrs.rowspan - 1;
-      }
-    }
-    return found2;
-  }
-  function insertCells(state, dispatch, tableStart, rect, cells2) {
-    let table2 = tableStart ? state.doc.nodeAt(tableStart - 1) : state.doc;
-    if (!table2) {
-      throw new Error("No table found");
-    }
-    let map2 = TableMap.get(table2);
-    const { top, left } = rect;
-    const right = left + cells2.width, bottom = top + cells2.height;
-    const tr2 = state.tr;
-    let mapFrom = 0;
-    function recomp() {
-      table2 = tableStart ? tr2.doc.nodeAt(tableStart - 1) : tr2.doc;
-      if (!table2) {
-        throw new Error("No table found");
-      }
-      map2 = TableMap.get(table2);
-      mapFrom = tr2.mapping.maps.length;
-    }
-    if (growTable(tr2, map2, table2, tableStart, right, bottom, mapFrom))
-      recomp();
-    if (isolateHorizontal(tr2, map2, table2, tableStart, left, right, top, mapFrom))
-      recomp();
-    if (isolateHorizontal(tr2, map2, table2, tableStart, left, right, bottom, mapFrom))
-      recomp();
-    if (isolateVertical(tr2, map2, table2, tableStart, top, bottom, left, mapFrom))
-      recomp();
-    if (isolateVertical(tr2, map2, table2, tableStart, top, bottom, right, mapFrom))
-      recomp();
-    for (let row2 = top; row2 < bottom; row2++) {
-      const from2 = map2.positionAt(row2, left, table2), to = map2.positionAt(row2, right, table2);
-      tr2.replace(
-        tr2.mapping.slice(mapFrom).map(from2 + tableStart),
-        tr2.mapping.slice(mapFrom).map(to + tableStart),
-        new Slice(cells2.rows[row2 - top], 0, 0)
-      );
-    }
-    recomp();
-    tr2.setSelection(
-      new CellSelection(
-        tr2.doc.resolve(tableStart + map2.positionAt(top, left, table2)),
-        tr2.doc.resolve(tableStart + map2.positionAt(bottom - 1, right - 1, table2))
-      )
-    );
-    dispatch(tr2);
-  }
-  var handleKeyDown$1 = keydownHandler({
-    ArrowLeft: arrow$1("horiz", -1),
-    ArrowRight: arrow$1("horiz", 1),
-    ArrowUp: arrow$1("vert", -1),
-    ArrowDown: arrow$1("vert", 1),
-    "Shift-ArrowLeft": shiftArrow("horiz", -1),
-    "Shift-ArrowRight": shiftArrow("horiz", 1),
-    "Shift-ArrowUp": shiftArrow("vert", -1),
-    "Shift-ArrowDown": shiftArrow("vert", 1),
-    Backspace: deleteCellSelection,
-    "Mod-Backspace": deleteCellSelection,
-    Delete: deleteCellSelection,
-    "Mod-Delete": deleteCellSelection
-  });
-  function maybeSetSelection(state, dispatch, selection) {
-    if (selection.eq(state.selection))
-      return false;
-    if (dispatch)
-      dispatch(state.tr.setSelection(selection).scrollIntoView());
-    return true;
-  }
-  function arrow$1(axis, dir) {
-    return (state, dispatch, view) => {
-      if (!view)
-        return false;
-      const sel = state.selection;
-      if (sel instanceof CellSelection) {
-        return maybeSetSelection(
-          state,
-          dispatch,
-          Selection.near(sel.$headCell, dir)
-        );
-      }
-      if (axis != "horiz" && !sel.empty)
-        return false;
-      const end = atEndOfCell(view, axis, dir);
-      if (end == null)
-        return false;
-      if (axis == "horiz") {
-        return maybeSetSelection(
-          state,
-          dispatch,
-          Selection.near(state.doc.resolve(sel.head + dir), dir)
-        );
-      } else {
-        const $cell = state.doc.resolve(end);
-        const $next = nextCell($cell, axis, dir);
-        let newSel;
-        if ($next)
-          newSel = Selection.near($next, 1);
-        else if (dir < 0)
-          newSel = Selection.near(state.doc.resolve($cell.before(-1)), -1);
-        else
-          newSel = Selection.near(state.doc.resolve($cell.after(-1)), 1);
-        return maybeSetSelection(state, dispatch, newSel);
-      }
-    };
-  }
-  function shiftArrow(axis, dir) {
-    return (state, dispatch, view) => {
-      if (!view)
-        return false;
-      const sel = state.selection;
-      let cellSel;
-      if (sel instanceof CellSelection) {
-        cellSel = sel;
-      } else {
-        const end = atEndOfCell(view, axis, dir);
-        if (end == null)
-          return false;
-        cellSel = new CellSelection(state.doc.resolve(end));
-      }
-      const $head = nextCell(cellSel.$headCell, axis, dir);
-      if (!$head)
-        return false;
-      return maybeSetSelection(
-        state,
-        dispatch,
-        new CellSelection(cellSel.$anchorCell, $head)
-      );
-    };
-  }
-  function deleteCellSelection(state, dispatch) {
-    const sel = state.selection;
-    if (!(sel instanceof CellSelection))
-      return false;
-    if (dispatch) {
-      const tr2 = state.tr;
-      const baseContent = tableNodeTypes(state.schema).cell.createAndFill().content;
-      sel.forEachCell((cell2, pos) => {
-        if (!cell2.content.eq(baseContent))
-          tr2.replace(
-            tr2.mapping.map(pos + 1),
-            tr2.mapping.map(pos + cell2.nodeSize - 1),
-            new Slice(baseContent, 0, 0)
-          );
-      });
-      if (tr2.docChanged)
-        dispatch(tr2);
-    }
-    return true;
-  }
-  function handleTripleClick(view, pos) {
-    const doc2 = view.state.doc, $cell = cellAround(doc2.resolve(pos));
-    if (!$cell)
-      return false;
-    view.dispatch(view.state.tr.setSelection(new CellSelection($cell)));
-    return true;
-  }
-  function handlePaste(view, _, slice) {
-    if (!isInTable(view.state))
-      return false;
-    let cells2 = pastedCells(slice);
-    const sel = view.state.selection;
-    if (sel instanceof CellSelection) {
-      if (!cells2)
-        cells2 = {
-          width: 1,
-          height: 1,
-          rows: [
-            Fragment.from(
-              fitSlice(tableNodeTypes(view.state.schema).cell, slice)
-            )
-          ]
-        };
-      const table2 = sel.$anchorCell.node(-1);
-      const start = sel.$anchorCell.start(-1);
-      const rect = TableMap.get(table2).rectBetween(
-        sel.$anchorCell.pos - start,
-        sel.$headCell.pos - start
-      );
-      cells2 = clipCells(cells2, rect.right - rect.left, rect.bottom - rect.top);
-      insertCells(view.state, view.dispatch, start, rect, cells2);
-      return true;
-    } else if (cells2) {
-      const $cell = selectionCell(view.state);
-      const start = $cell.start(-1);
-      insertCells(
-        view.state,
-        view.dispatch,
-        start,
-        TableMap.get($cell.node(-1)).findCell($cell.pos - start),
-        cells2
-      );
-      return true;
-    } else {
-      return false;
-    }
-  }
-  function handleMouseDown(view, startEvent) {
-    var _a;
-    if (startEvent.ctrlKey || startEvent.metaKey)
-      return;
-    const startDOMCell = domInCell(view, startEvent.target);
-    let $anchor;
-    if (startEvent.shiftKey && view.state.selection instanceof CellSelection) {
-      setCellSelection(view.state.selection.$anchorCell, startEvent);
-      startEvent.preventDefault();
-    } else if (startEvent.shiftKey && startDOMCell && ($anchor = cellAround(view.state.selection.$anchor)) != null && ((_a = cellUnderMouse(view, startEvent)) == null ? void 0 : _a.pos) != $anchor.pos) {
-      setCellSelection($anchor, startEvent);
-      startEvent.preventDefault();
-    } else if (!startDOMCell) {
-      return;
-    }
-    function setCellSelection($anchor2, event) {
-      let $head = cellUnderMouse(view, event);
-      const starting = tableEditingKey.getState(view.state) == null;
-      if (!$head || !inSameTable($anchor2, $head)) {
-        if (starting)
-          $head = $anchor2;
-        else
-          return;
-      }
-      const selection = new CellSelection($anchor2, $head);
-      if (starting || !view.state.selection.eq(selection)) {
-        const tr2 = view.state.tr.setSelection(selection);
-        if (starting)
-          tr2.setMeta(tableEditingKey, $anchor2.pos);
-        view.dispatch(tr2);
-      }
-    }
-    function stop() {
-      view.root.removeEventListener("mouseup", stop);
-      view.root.removeEventListener("dragstart", stop);
-      view.root.removeEventListener("mousemove", move);
-      if (tableEditingKey.getState(view.state) != null)
-        view.dispatch(view.state.tr.setMeta(tableEditingKey, -1));
-    }
-    function move(_event) {
-      const event = _event;
-      const anchor = tableEditingKey.getState(view.state);
-      let $anchor2;
-      if (anchor != null) {
-        $anchor2 = view.state.doc.resolve(anchor);
-      } else if (domInCell(view, event.target) != startDOMCell) {
-        $anchor2 = cellUnderMouse(view, startEvent);
-        if (!$anchor2)
-          return stop();
-      }
-      if ($anchor2)
-        setCellSelection($anchor2, event);
-    }
-    view.root.addEventListener("mouseup", stop);
-    view.root.addEventListener("dragstart", stop);
-    view.root.addEventListener("mousemove", move);
-  }
-  function atEndOfCell(view, axis, dir) {
-    if (!(view.state.selection instanceof TextSelection))
-      return null;
-    const { $head } = view.state.selection;
-    for (let d = $head.depth - 1; d >= 0; d--) {
-      const parent = $head.node(d), index2 = dir < 0 ? $head.index(d) : $head.indexAfter(d);
-      if (index2 != (dir < 0 ? 0 : parent.childCount))
-        return null;
-      if (parent.type.spec.tableRole == "cell" || parent.type.spec.tableRole == "header_cell") {
-        const cellPos = $head.before(d);
-        const dirStr = axis == "vert" ? dir > 0 ? "down" : "up" : dir > 0 ? "right" : "left";
-        return view.endOfTextblock(dirStr) ? cellPos : null;
-      }
-    }
-    return null;
-  }
-  function domInCell(view, dom) {
-    for (; dom && dom != view.dom; dom = dom.parentNode) {
-      if (dom.nodeName == "TD" || dom.nodeName == "TH") {
-        return dom;
-      }
-    }
-    return null;
-  }
-  function cellUnderMouse(view, event) {
-    const mousePos = view.posAtCoords({
-      left: event.clientX,
-      top: event.clientY
-    });
-    if (!mousePos)
-      return null;
-    return mousePos ? cellAround(view.state.doc.resolve(mousePos.pos)) : null;
-  }
-  var TableView = class {
-    constructor(node2, cellMinWidth) {
-      this.node = node2;
-      this.cellMinWidth = cellMinWidth;
-      this.dom = document.createElement("div");
-      this.dom.className = "tableWrapper";
-      this.table = this.dom.appendChild(document.createElement("table"));
-      this.colgroup = this.table.appendChild(document.createElement("colgroup"));
-      updateColumnsOnResize(node2, this.colgroup, this.table, cellMinWidth);
-      this.contentDOM = this.table.appendChild(document.createElement("tbody"));
-    }
-    update(node2) {
-      if (node2.type != this.node.type)
-        return false;
-      this.node = node2;
-      updateColumnsOnResize(node2, this.colgroup, this.table, this.cellMinWidth);
-      return true;
-    }
-    ignoreMutation(record) {
-      return record.type == "attributes" && (record.target == this.table || this.colgroup.contains(record.target));
-    }
-  };
-  function updateColumnsOnResize(node2, colgroup2, table2, cellMinWidth, overrideCol, overrideValue) {
-    var _a;
-    let totalWidth = 0;
-    let fixedWidth = true;
-    let nextDOM = colgroup2.firstChild;
-    const row2 = node2.firstChild;
-    if (!row2)
-      return;
-    for (let i2 = 0, col = 0; i2 < row2.childCount; i2++) {
-      const { colspan, colwidth } = row2.child(i2).attrs;
-      for (let j = 0; j < colspan; j++, col++) {
-        const hasWidth = overrideCol == col ? overrideValue : colwidth && colwidth[j];
-        const cssWidth = hasWidth ? hasWidth + "px" : "";
-        totalWidth += hasWidth || cellMinWidth;
-        if (!hasWidth)
-          fixedWidth = false;
-        if (!nextDOM) {
-          colgroup2.appendChild(document.createElement("col")).style.width = cssWidth;
-        } else {
-          if (nextDOM.style.width != cssWidth)
-            nextDOM.style.width = cssWidth;
-          nextDOM = nextDOM.nextSibling;
-        }
-      }
-    }
-    while (nextDOM) {
-      const after = nextDOM.nextSibling;
-      (_a = nextDOM.parentNode) == null ? void 0 : _a.removeChild(nextDOM);
-      nextDOM = after;
-    }
-    if (fixedWidth) {
-      table2.style.width = totalWidth + "px";
-      table2.style.minWidth = "";
-    } else {
-      table2.style.width = "";
-      table2.style.minWidth = totalWidth + "px";
-    }
-  }
-  var columnResizingPluginKey = new PluginKey(
-    "tableColumnResizing"
-  );
-  function columnResizing({
-    handleWidth = 5,
-    cellMinWidth = 25,
-    View = TableView,
-    lastColumnResizable = true
-  } = {}) {
-    const plugin = new Plugin({
-      key: columnResizingPluginKey,
-      state: {
-        init(_, state) {
-          plugin.spec.props.nodeViews[tableNodeTypes(state.schema).table.name] = (node2, view) => new View(node2, cellMinWidth, view);
-          return new ResizeState(-1, false);
-        },
-        apply(tr2, prev) {
-          return prev.apply(tr2);
-        }
-      },
-      props: {
-        attributes: (state) => {
-          const pluginState = columnResizingPluginKey.getState(state);
-          return pluginState && pluginState.activeHandle > -1 ? { class: "resize-cursor" } : {};
-        },
-        handleDOMEvents: {
-          mousemove: (view, event) => {
-            handleMouseMove(
-              view,
-              event,
-              handleWidth,
-              cellMinWidth,
-              lastColumnResizable
-            );
-          },
-          mouseleave: (view) => {
-            handleMouseLeave(view);
-          },
-          mousedown: (view, event) => {
-            handleMouseDown2(view, event, cellMinWidth);
-          }
-        },
-        decorations: (state) => {
-          const pluginState = columnResizingPluginKey.getState(state);
-          if (pluginState && pluginState.activeHandle > -1) {
-            return handleDecorations(state, pluginState.activeHandle);
-          }
-        },
-        nodeViews: {}
-      }
-    });
-    return plugin;
-  }
-  var ResizeState = class _ResizeState {
-    constructor(activeHandle, dragging) {
-      this.activeHandle = activeHandle;
-      this.dragging = dragging;
-    }
-    apply(tr2) {
-      const state = this;
-      const action = tr2.getMeta(columnResizingPluginKey);
-      if (action && action.setHandle != null)
-        return new _ResizeState(action.setHandle, false);
-      if (action && action.setDragging !== void 0)
-        return new _ResizeState(state.activeHandle, action.setDragging);
-      if (state.activeHandle > -1 && tr2.docChanged) {
-        let handle2 = tr2.mapping.map(state.activeHandle, -1);
-        if (!pointsAtCell(tr2.doc.resolve(handle2))) {
-          handle2 = -1;
-        }
-        return new _ResizeState(handle2, state.dragging);
-      }
-      return state;
-    }
-  };
-  function handleMouseMove(view, event, handleWidth, cellMinWidth, lastColumnResizable) {
-    const pluginState = columnResizingPluginKey.getState(view.state);
-    if (!pluginState)
-      return;
-    if (!pluginState.dragging) {
-      const target = domCellAround$1(event.target);
-      let cell2 = -1;
-      if (target) {
-        const { left, right } = target.getBoundingClientRect();
-        if (event.clientX - left <= handleWidth)
-          cell2 = edgeCell(view, event, "left", handleWidth);
-        else if (right - event.clientX <= handleWidth)
-          cell2 = edgeCell(view, event, "right", handleWidth);
-      }
-      if (cell2 != pluginState.activeHandle) {
-        if (!lastColumnResizable && cell2 !== -1) {
-          const $cell = view.state.doc.resolve(cell2);
-          const table2 = $cell.node(-1);
-          const map2 = TableMap.get(table2);
-          const tableStart = $cell.start(-1);
-          const col = map2.colCount($cell.pos - tableStart) + $cell.nodeAfter.attrs.colspan - 1;
-          if (col == map2.width - 1) {
-            return;
-          }
-        }
-        updateHandle(view, cell2);
-      }
-    }
-  }
-  function handleMouseLeave(view) {
-    const pluginState = columnResizingPluginKey.getState(view.state);
-    if (pluginState && pluginState.activeHandle > -1 && !pluginState.dragging)
-      updateHandle(view, -1);
-  }
-  function handleMouseDown2(view, event, cellMinWidth) {
-    const pluginState = columnResizingPluginKey.getState(view.state);
-    if (!pluginState || pluginState.activeHandle == -1 || pluginState.dragging)
-      return false;
-    const cell2 = view.state.doc.nodeAt(pluginState.activeHandle);
-    const width = currentColWidth(view, pluginState.activeHandle, cell2.attrs);
-    view.dispatch(
-      view.state.tr.setMeta(columnResizingPluginKey, {
-        setDragging: { startX: event.clientX, startWidth: width }
-      })
-    );
-    function finish(event2) {
-      window.removeEventListener("mouseup", finish);
-      window.removeEventListener("mousemove", move);
-      const pluginState2 = columnResizingPluginKey.getState(view.state);
-      if (pluginState2 == null ? void 0 : pluginState2.dragging) {
-        updateColumnWidth(
-          view,
-          pluginState2.activeHandle,
-          draggedWidth(pluginState2.dragging, event2, cellMinWidth)
-        );
-        view.dispatch(
-          view.state.tr.setMeta(columnResizingPluginKey, { setDragging: null })
-        );
-      }
-    }
-    function move(event2) {
-      if (!event2.which)
-        return finish(event2);
-      const pluginState2 = columnResizingPluginKey.getState(view.state);
-      if (!pluginState2)
-        return;
-      if (pluginState2.dragging) {
-        const dragged = draggedWidth(pluginState2.dragging, event2, cellMinWidth);
-        displayColumnWidth(view, pluginState2.activeHandle, dragged, cellMinWidth);
-      }
-    }
-    window.addEventListener("mouseup", finish);
-    window.addEventListener("mousemove", move);
-    event.preventDefault();
-    return true;
-  }
-  function currentColWidth(view, cellPos, { colspan, colwidth }) {
-    const width = colwidth && colwidth[colwidth.length - 1];
-    if (width)
-      return width;
-    const dom = view.domAtPos(cellPos);
-    const node2 = dom.node.childNodes[dom.offset];
-    let domWidth = node2.offsetWidth, parts = colspan;
-    if (colwidth) {
-      for (let i2 = 0; i2 < colspan; i2++)
-        if (colwidth[i2]) {
-          domWidth -= colwidth[i2];
-          parts--;
-        }
-    }
-    return domWidth / parts;
-  }
-  function domCellAround$1(target) {
-    while (target && target.nodeName != "TD" && target.nodeName != "TH")
-      target = target.classList && target.classList.contains("ProseMirror") ? null : target.parentNode;
-    return target;
-  }
-  function edgeCell(view, event, side, handleWidth) {
-    const offset = side == "right" ? -handleWidth : handleWidth;
-    const found2 = view.posAtCoords({
-      left: event.clientX + offset,
-      top: event.clientY
-    });
-    if (!found2)
-      return -1;
-    const { pos } = found2;
-    const $cell = cellAround(view.state.doc.resolve(pos));
-    if (!$cell)
-      return -1;
-    if (side == "right")
-      return $cell.pos;
-    const map2 = TableMap.get($cell.node(-1)), start = $cell.start(-1);
-    const index2 = map2.map.indexOf($cell.pos - start);
-    return index2 % map2.width == 0 ? -1 : start + map2.map[index2 - 1];
-  }
-  function draggedWidth(dragging, event, cellMinWidth) {
-    const offset = event.clientX - dragging.startX;
-    return Math.max(cellMinWidth, dragging.startWidth + offset);
-  }
-  function updateHandle(view, value) {
-    view.dispatch(
-      view.state.tr.setMeta(columnResizingPluginKey, { setHandle: value })
-    );
-  }
-  function updateColumnWidth(view, cell2, width) {
-    const $cell = view.state.doc.resolve(cell2);
-    const table2 = $cell.node(-1), map2 = TableMap.get(table2), start = $cell.start(-1);
-    const col = map2.colCount($cell.pos - start) + $cell.nodeAfter.attrs.colspan - 1;
-    const tr2 = view.state.tr;
-    for (let row2 = 0; row2 < map2.height; row2++) {
-      const mapIndex = row2 * map2.width + col;
-      if (row2 && map2.map[mapIndex] == map2.map[mapIndex - map2.width])
-        continue;
-      const pos = map2.map[mapIndex];
-      const attrs = table2.nodeAt(pos).attrs;
-      const index2 = attrs.colspan == 1 ? 0 : col - map2.colCount(pos);
-      if (attrs.colwidth && attrs.colwidth[index2] == width)
-        continue;
-      const colwidth = attrs.colwidth ? attrs.colwidth.slice() : zeroes(attrs.colspan);
-      colwidth[index2] = width;
-      tr2.setNodeMarkup(start + pos, null, { ...attrs, colwidth });
-    }
-    if (tr2.docChanged)
-      view.dispatch(tr2);
-  }
-  function displayColumnWidth(view, cell2, width, cellMinWidth) {
-    const $cell = view.state.doc.resolve(cell2);
-    const table2 = $cell.node(-1), start = $cell.start(-1);
-    const col = TableMap.get(table2).colCount($cell.pos - start) + $cell.nodeAfter.attrs.colspan - 1;
-    let dom = view.domAtPos($cell.start(-1)).node;
-    while (dom && dom.nodeName != "TABLE") {
-      dom = dom.parentNode;
-    }
-    if (!dom)
-      return;
-    updateColumnsOnResize(
-      table2,
-      dom.firstChild,
-      dom,
-      cellMinWidth,
-      col,
-      width
-    );
-  }
-  function zeroes(n) {
-    return Array(n).fill(0);
-  }
-  function handleDecorations(state, cell2) {
-    const decorations = [];
-    const $cell = state.doc.resolve(cell2);
-    const table2 = $cell.node(-1);
-    if (!table2) {
-      return DecorationSet.empty;
-    }
-    const map2 = TableMap.get(table2);
-    const start = $cell.start(-1);
-    const col = map2.colCount($cell.pos - start) + $cell.nodeAfter.attrs.colspan;
-    for (let row2 = 0; row2 < map2.height; row2++) {
-      const index2 = col + row2 * map2.width - 1;
-      if ((col == map2.width || map2.map[index2] != map2.map[index2 + 1]) && (row2 == 0 || map2.map[index2] != map2.map[index2 - map2.width])) {
-        const cellPos = map2.map[index2];
-        const pos = start + cellPos + table2.nodeAt(cellPos).nodeSize - 1;
-        const dom = document.createElement("div");
-        dom.className = "column-resize-handle";
-        decorations.push(Decoration.widget(pos, dom));
-      }
-    }
-    return DecorationSet.create(state.doc, decorations);
-  }
-  function selectedRect(state) {
-    const sel = state.selection;
-    const $pos = selectionCell(state);
-    const table2 = $pos.node(-1);
-    const tableStart = $pos.start(-1);
-    const map2 = TableMap.get(table2);
-    const rect = sel instanceof CellSelection ? map2.rectBetween(
-      sel.$anchorCell.pos - tableStart,
-      sel.$headCell.pos - tableStart
-    ) : map2.findCell($pos.pos - tableStart);
-    return { ...rect, tableStart, map: map2, table: table2 };
-  }
-  function deprecated_toggleHeader(type) {
-    return function(state, dispatch) {
-      if (!isInTable(state))
-        return false;
-      if (dispatch) {
-        const types2 = tableNodeTypes(state.schema);
-        const rect = selectedRect(state), tr2 = state.tr;
-        const cells2 = rect.map.cellsInRect(
-          type == "column" ? {
-            left: rect.left,
-            top: 0,
-            right: rect.right,
-            bottom: rect.map.height
-          } : type == "row" ? {
-            left: 0,
-            top: rect.top,
-            right: rect.map.width,
-            bottom: rect.bottom
-          } : rect
-        );
-        const nodes = cells2.map((pos) => rect.table.nodeAt(pos));
-        for (let i2 = 0; i2 < cells2.length; i2++)
-          if (nodes[i2].type == types2.header_cell)
-            tr2.setNodeMarkup(
-              rect.tableStart + cells2[i2],
-              types2.cell,
-              nodes[i2].attrs
-            );
-        if (tr2.steps.length == 0)
-          for (let i2 = 0; i2 < cells2.length; i2++)
-            tr2.setNodeMarkup(
-              rect.tableStart + cells2[i2],
-              types2.header_cell,
-              nodes[i2].attrs
-            );
-        dispatch(tr2);
-      }
-      return true;
-    };
-  }
-  function isHeaderEnabledByType(type, rect, types2) {
-    const cellPositions = rect.map.cellsInRect({
-      left: 0,
-      top: 0,
-      right: type == "row" ? rect.map.width : 1,
-      bottom: type == "column" ? rect.map.height : 1
-    });
-    for (let i2 = 0; i2 < cellPositions.length; i2++) {
-      const cell2 = rect.table.nodeAt(cellPositions[i2]);
-      if (cell2 && cell2.type !== types2.header_cell) {
-        return false;
-      }
-    }
-    return true;
-  }
-  function toggleHeader(type, options) {
-    options = options || { useDeprecatedLogic: false };
-    if (options.useDeprecatedLogic)
-      return deprecated_toggleHeader(type);
-    return function(state, dispatch) {
-      if (!isInTable(state))
-        return false;
-      if (dispatch) {
-        const types2 = tableNodeTypes(state.schema);
-        const rect = selectedRect(state), tr2 = state.tr;
-        const isHeaderRowEnabled = isHeaderEnabledByType("row", rect, types2);
-        const isHeaderColumnEnabled = isHeaderEnabledByType(
-          "column",
-          rect,
-          types2
-        );
-        const isHeaderEnabled = type === "column" ? isHeaderRowEnabled : type === "row" ? isHeaderColumnEnabled : false;
-        const selectionStartsAt = isHeaderEnabled ? 1 : 0;
-        const cellsRect = type == "column" ? {
-          left: 0,
-          top: selectionStartsAt,
-          right: 1,
-          bottom: rect.map.height
-        } : type == "row" ? {
-          left: selectionStartsAt,
-          top: 0,
-          right: rect.map.width,
-          bottom: 1
-        } : rect;
-        const newType = type == "column" ? isHeaderColumnEnabled ? types2.cell : types2.header_cell : type == "row" ? isHeaderRowEnabled ? types2.cell : types2.header_cell : types2.cell;
-        rect.map.cellsInRect(cellsRect).forEach((relativeCellPos) => {
-          const cellPos = relativeCellPos + rect.tableStart;
-          const cell2 = tr2.doc.nodeAt(cellPos);
-          if (cell2) {
-            tr2.setNodeMarkup(cellPos, newType, cell2.attrs);
-          }
-        });
-        dispatch(tr2);
-      }
-      return true;
-    };
-  }
-  toggleHeader("row", {
-    useDeprecatedLogic: true
-  });
-  toggleHeader("column", {
-    useDeprecatedLogic: true
-  });
-  toggleHeader("cell", {
-    useDeprecatedLogic: true
-  });
-  function tableEditing({
-    allowTableNodeSelection = false
-  } = {}) {
-    return new Plugin({
-      key: tableEditingKey,
-      // This piece of state is used to remember when a mouse-drag
-      // cell-selection is happening, so that it can continue even as
-      // transactions (which might move its anchor cell) come in.
-      state: {
-        init() {
-          return null;
-        },
-        apply(tr2, cur) {
-          const set = tr2.getMeta(tableEditingKey);
-          if (set != null)
-            return set == -1 ? null : set;
-          if (cur == null || !tr2.docChanged)
-            return cur;
-          const { deleted, pos } = tr2.mapping.mapResult(cur);
-          return deleted ? null : pos;
-        }
-      },
-      props: {
-        decorations: drawCellSelection,
-        handleDOMEvents: {
-          mousedown: handleMouseDown
-        },
-        createSelectionBetween(view) {
-          return tableEditingKey.getState(view.state) != null ? view.state.selection : null;
-        },
-        handleTripleClick,
-        handleKeyDown: handleKeyDown$1,
-        handlePaste
-      },
-      appendTransaction(_, oldState, state) {
-        return normalizeSelection(
-          state,
-          fixTables(state, oldState),
-          allowTableNodeSelection
-        );
-      }
-    });
-  }
-  const TableExtension = Extension.create({
-    name: "BlockNoteTableExtension",
-    addProseMirrorPlugins: () => {
-      return [
-        columnResizing({
-          cellMinWidth: 100
-        }),
-        tableEditing()
-      ];
-    },
-    addKeyboardShortcuts() {
-      return {
-        // Makes enter create a new line within the cell.
-        Enter: () => {
-          return false;
-        },
-        // Ensures that backspace won't delete the table if the text cursor is at
-        // the start of a cell and the selection is empty.
-        Backspace: () => {
-          return this.editor.commands.first(({ commands: commands2 }) => [
-            // Deletes the selection if it's not empty.
-            () => commands2.deleteSelection(),
-            // Undoes an input rule if one was triggered in the last editor state change.
-            () => commands2.undoInputRule(),
-            // Reverts block content type to a paragraph if the selection is at the start of the block.
-            () => commands2.command(({ state }) => {
-              const { contentType } = getBlockInfoFromPos(
-                state.doc,
-                state.selection.from
-              );
-              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
-              const isParagraph = contentType.name === "paragraph";
-              if (selectionAtBlockStart && !isParagraph) {
-                return commands2.BNUpdateBlock(state.selection.from, {
-                  type: "paragraph",
-                  props: {}
-                });
-              }
-              return false;
-            }),
-            // Removes a level of nesting if the block is indented if the selection is at the start of the block.
-            () => commands2.command(({ state }) => {
-              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
-              if (selectionAtBlockStart) {
-                return commands2.liftListItem("blockContainer");
-              }
-              return false;
-            }),
-            // Merges block with the previous one if it isn't indented, isn't the first block in the doc, and the selection
-            // is at the start of the block.
-            () => commands2.command(({ state }) => {
-              const { depth, startPos } = getBlockInfoFromPos(
-                state.doc,
-                state.selection.from
-              );
-              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
-              const selectionEmpty = state.selection.anchor === state.selection.head;
-              const blockAtDocStart = startPos === 2;
-              const posBetweenBlocks = startPos - 1;
-              if (!blockAtDocStart && selectionAtBlockStart && selectionEmpty && depth > 1) {
-                return commands2.BNMergeBlocks(posBetweenBlocks);
-              }
-              return false;
-            })
-          ]);
-        }
-      };
-    },
-    extendNodeSchema(extension2) {
-      const context = {
-        name: extension2.name,
-        options: extension2.options,
-        storage: extension2.storage
-      };
-      return {
-        tableRole: callOrReturn(
-          getExtensionField(extension2, "tableRole", context)
-        )
-      };
-    }
-  });
-  const tablePropSchema = {
-    ...defaultProps
-  };
-  const TableBlockContent = createStronglyTypedTiptapNode({
-    name: "table",
-    content: "tableRow+",
-    group: "blockContent",
-    tableRole: "table",
-    isolating: true,
-    parseHTML() {
-      return [{ tag: "table" }];
-    },
-    renderHTML({ HTMLAttributes }) {
-      var _a, _b;
-      return createDefaultBlockDOMOutputSpec(
-        this.name,
-        "table",
-        {
-          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
-          ...HTMLAttributes
-        },
-        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
-      );
-    }
-  });
-  const TableParagraph = Node.create({
-    name: "tableParagraph",
-    group: "tableContent",
-    content: "blockContainer+",
-    parseHTML() {
-      return [{ tag: "div" }];
-    },
-    renderHTML({ HTMLAttributes }) {
-      return [
-        "div",
-        mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
-        0
-      ];
-    }
-  });
-  const Table = createBlockSpecFromStronglyTypedTiptapNode(
-    TableBlockContent,
-    tablePropSchema,
-    [
-      TableExtension,
-      TableParagraph,
-      TableHeader.extend({
-        content: "tableContent"
-      }),
-      TableCell.extend({
-        content: "tableContent"
-      }),
-      TableRow
-    ]
-  );
-  const defaultBlockSpecs = {
-    paragraph: Paragraph,
-    heading: Heading,
-    bulletListItem: BulletListItem,
-    numberedListItem: NumberedListItem,
-    image: Image,
-    table: Table
-  };
-  const defaultBlockSchema = getBlockSchemaFromSpecs(defaultBlockSpecs);
-  const defaultStyleSpecs = {
-    bold: createStyleSpecFromTipTapMark(Bold, "boolean"),
-    italic: createStyleSpecFromTipTapMark(Italic, "boolean"),
-    underline: createStyleSpecFromTipTapMark(Underline, "boolean"),
-    strike: createStyleSpecFromTipTapMark(Strike, "boolean"),
-    code: createStyleSpecFromTipTapMark(Code, "boolean"),
-    textColor: TextColor,
-    backgroundColor: BackgroundColor
-  };
-  const defaultStyleSchema = getStyleSchemaFromSpecs(defaultStyleSpecs);
-  const defaultInlineContentSpecs = {
-    text: { config: "text", implementation: {} },
-    link: { config: "link", implementation: {} }
-  };
-  const defaultInlineContentSchema = getInlineContentSchemaFromSpecs(
-    defaultInlineContentSpecs
-  );
-  function getNodeById(id, doc2) {
-    let targetNode = void 0;
-    let posBeforeNode = void 0;
-    doc2.firstChild.descendants((node2, pos) => {
-      if (targetNode) {
-        return false;
-      }
-      if (node2.type.name !== "blockContainer" || node2.attrs.id !== id) {
-        return true;
-      }
-      targetNode = node2;
-      posBeforeNode = pos + 1;
-      return false;
-    });
-    if (targetNode === void 0 || posBeforeNode === void 0) {
-      throw Error("Could not find block in the editor with matching ID.");
-    }
-    return {
-      node: targetNode,
-      posBeforeNode
-    };
-  }
-  function insertBlocks(blocksToInsert, referenceBlock, placement = "before", editor2) {
-    const ttEditor = editor2._tiptapEditor;
-    const id = typeof referenceBlock === "string" ? referenceBlock : referenceBlock.id;
-    const nodesToInsert = [];
-    for (const blockSpec of blocksToInsert) {
-      nodesToInsert.push(
-        blockToNode(blockSpec, ttEditor.schema, editor2.styleSchema)
-      );
-    }
-    const { node: node2, posBeforeNode } = getNodeById(id, ttEditor.state.doc);
-    if (placement === "before") {
-      ttEditor.view.dispatch(
-        ttEditor.state.tr.insert(posBeforeNode, nodesToInsert)
-      );
-    }
-    if (placement === "after") {
-      ttEditor.view.dispatch(
-        ttEditor.state.tr.insert(posBeforeNode + node2.nodeSize, nodesToInsert)
-      );
-    }
-    if (placement === "nested") {
-      if (node2.childCount < 2) {
-        const blockGroupNode = ttEditor.state.schema.nodes["blockGroup"].create(
-          {},
-          nodesToInsert
-        );
-        ttEditor.view.dispatch(
-          ttEditor.state.tr.insert(
-            posBeforeNode + node2.firstChild.nodeSize + 1,
-            blockGroupNode
-          )
-        );
-      }
-    }
-    const insertedBlocks = [];
-    for (const node22 of nodesToInsert) {
-      insertedBlocks.push(
-        nodeToBlock(
-          node22,
-          editor2.blockSchema,
-          editor2.inlineContentSchema,
-          editor2.styleSchema,
-          editor2.blockCache
-        )
-      );
-    }
-    return insertedBlocks;
-  }
-  function updateBlock(blockToUpdate, update, editor2) {
-    const ttEditor = editor2._tiptapEditor;
-    const id = typeof blockToUpdate === "string" ? blockToUpdate : blockToUpdate.id;
-    const { posBeforeNode } = getNodeById(id, ttEditor.state.doc);
-    ttEditor.commands.BNUpdateBlock(posBeforeNode + 1, update);
-    const blockContainerNode = ttEditor.state.doc.resolve(posBeforeNode + 1).node();
-    return nodeToBlock(
-      blockContainerNode,
-      editor2.blockSchema,
-      editor2.inlineContentSchema,
-      editor2.styleSchema,
-      editor2.blockCache
-    );
-  }
-  function removeBlocksWithCallback(blocksToRemove, editor2, callback) {
-    const ttEditor = editor2._tiptapEditor;
-    const tr2 = ttEditor.state.tr;
-    const idsOfBlocksToRemove = new Set(
-      blocksToRemove.map(
-        (block2) => typeof block2 === "string" ? block2 : block2.id
-      )
-    );
-    const removedBlocks = [];
-    let removedSize = 0;
-    ttEditor.state.doc.descendants((node2, pos) => {
-      if (idsOfBlocksToRemove.size === 0) {
-        return false;
-      }
-      if (node2.type.name !== "blockContainer" || !idsOfBlocksToRemove.has(node2.attrs.id)) {
-        return true;
-      }
-      removedBlocks.push(
-        nodeToBlock(
-          node2,
-          editor2.blockSchema,
-          editor2.inlineContentSchema,
-          editor2.styleSchema,
-          editor2.blockCache
-        )
-      );
-      idsOfBlocksToRemove.delete(node2.attrs.id);
-      removedSize = (callback == null ? void 0 : callback(node2, pos, tr2, removedSize)) || removedSize;
-      const oldDocSize = tr2.doc.nodeSize;
-      tr2.delete(pos - removedSize - 1, pos - removedSize + node2.nodeSize + 1);
-      const newDocSize = tr2.doc.nodeSize;
-      removedSize += oldDocSize - newDocSize;
-      return false;
-    });
-    if (idsOfBlocksToRemove.size > 0) {
-      const notFoundIds = [...idsOfBlocksToRemove].join("\n");
-      throw Error(
-        "Blocks with the following IDs could not be found in the editor: " + notFoundIds
-      );
-    }
-    ttEditor.view.dispatch(tr2);
-    return removedBlocks;
-  }
-  function removeBlocks(blocksToRemove, editor2) {
-    return removeBlocksWithCallback(blocksToRemove, editor2);
-  }
-  function replaceBlocks(blocksToRemove, blocksToInsert, editor2) {
-    const ttEditor = editor2._tiptapEditor;
-    const nodesToInsert = [];
-    for (const block2 of blocksToInsert) {
-      nodesToInsert.push(blockToNode(block2, ttEditor.schema, editor2.styleSchema));
-    }
-    const idOfFirstBlock = typeof blocksToRemove[0] === "string" ? blocksToRemove[0] : blocksToRemove[0].id;
-    const removedBlocks = removeBlocksWithCallback(
-      blocksToRemove,
-      editor2,
-      (node2, pos, tr2, removedSize) => {
-        if (node2.attrs.id === idOfFirstBlock) {
-          const oldDocSize = tr2.doc.nodeSize;
-          tr2.insert(pos, nodesToInsert);
-          const newDocSize = tr2.doc.nodeSize;
-          return removedSize + oldDocSize - newDocSize;
-        }
-        return removedSize;
-      }
-    );
-    const insertedBlocks = [];
-    for (const node2 of nodesToInsert) {
-      insertedBlocks.push(
-        nodeToBlock(
-          node2,
-          editor2.blockSchema,
-          editor2.inlineContentSchema,
-          editor2.styleSchema,
-          editor2.blockCache
-        )
-      );
-    }
-    return { insertedBlocks, removedBlocks };
-  }
-  const isElement = (
-    /**
-     * @type {(
-     *   (() => false) &
-     *   (<T extends Element = Element>(node: unknown, test?: PredicateTest<T>, index?: number, parent?: Parent, context?: unknown) => node is T) &
-     *   ((node: unknown, test: Test, index?: number, parent?: Parent, context?: unknown) => boolean)
-     * )}
-     */
-    /**
-     * @param {unknown} [node]
-     * @param {Test | undefined} [test]
-     * @param {number | null | undefined} [index]
-     * @param {Parent | null | undefined} [parent]
-     * @param {unknown} [context]
-     * @returns {boolean}
-     */
-    // eslint-disable-next-line max-params
-    function(node2, test, index2, parent, context) {
-      const check = convertElement$1(test);
-      if (index2 !== void 0 && index2 !== null && (typeof index2 !== "number" || index2 < 0 || index2 === Number.POSITIVE_INFINITY)) {
-        throw new Error("Expected positive finite index for child node");
-      }
-      if (parent !== void 0 && parent !== null && (!parent.type || !parent.children)) {
-        throw new Error("Expected parent node");
-      }
-      if (!node2 || !node2.type || typeof node2.type !== "string") {
-        return false;
-      }
-      if ((parent === void 0 || parent === null) !== (index2 === void 0 || index2 === null)) {
-        throw new Error("Expected both parent and index");
-      }
-      return check.call(context, node2, index2, parent);
-    }
-  );
-  const convertElement$1 = (
-    /**
-     * @type {(
-     *   (<T extends Element>(test: T['tagName'] | TestFunctionPredicate<T>) => AssertPredicate<T>) &
-     *   ((test?: Test) => AssertAnything)
-     * )}
-     */
-    /**
-     * @param {Test | null | undefined} [test]
-     * @returns {AssertAnything}
-     */
-    function(test) {
-      if (test === void 0 || test === null) {
-        return element$2;
-      }
-      if (typeof test === "string") {
-        return tagNameFactory$1(test);
-      }
-      if (typeof test === "object") {
-        return anyFactory$6(test);
-      }
-      if (typeof test === "function") {
-        return castFactory$6(test);
-      }
-      throw new Error("Expected function, string, or array as test");
-    }
-  );
-  function anyFactory$6(tests) {
-    const checks2 = [];
-    let index2 = -1;
-    while (++index2 < tests.length) {
-      checks2[index2] = convertElement$1(tests[index2]);
-    }
-    return castFactory$6(any2);
-    function any2(...parameters) {
-      let index3 = -1;
-      while (++index3 < checks2.length) {
-        if (checks2[index3].call(this, ...parameters)) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
-  function tagNameFactory$1(check) {
-    return tagName;
-    function tagName(node2) {
-      return element$2(node2) && node2.tagName === check;
-    }
-  }
-  function castFactory$6(check) {
-    return assertion;
-    function assertion(node2, ...parameters) {
-      return element$2(node2) && Boolean(check.call(this, node2, ...parameters));
-    }
-  }
-  function element$2(node2) {
-    return Boolean(
-      node2 && typeof node2 === "object" && // @ts-expect-error Looks like a node.
-      node2.type === "element" && // @ts-expect-error Looks like an element.
-      typeof node2.tagName === "string"
-    );
-  }
-  const embedded = convertElement$1([
-    "audio",
-    "canvas",
-    "embed",
-    "iframe",
-    "img",
-    "math",
-    "object",
-    "picture",
-    "svg",
-    "video"
-  ]);
-  const convert$4 = (
-    /**
-     * @type {(
-     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
-     *   ((test?: Test) => AssertAnything)
-     * )}
-     */
-    /**
-     * @param {Test} [test]
-     * @returns {AssertAnything}
-     */
-    function(test) {
-      if (test === void 0 || test === null) {
-        return ok$4;
-      }
-      if (typeof test === "string") {
-        return typeFactory$4(test);
-      }
-      if (typeof test === "object") {
-        return Array.isArray(test) ? anyFactory$5(test) : propsFactory$4(test);
-      }
-      if (typeof test === "function") {
-        return castFactory$5(test);
-      }
-      throw new Error("Expected function, string, or object as test");
-    }
-  );
-  function anyFactory$5(tests) {
-    const checks2 = [];
-    let index2 = -1;
-    while (++index2 < tests.length) {
-      checks2[index2] = convert$4(tests[index2]);
-    }
-    return castFactory$5(any2);
-    function any2(...parameters) {
-      let index3 = -1;
-      while (++index3 < checks2.length) {
-        if (checks2[index3].call(this, ...parameters))
-          return true;
-      }
-      return false;
-    }
-  }
-  function propsFactory$4(check) {
-    return castFactory$5(all2);
-    function all2(node2) {
-      let key2;
-      for (key2 in check) {
-        if (node2[key2] !== check[key2])
-          return false;
-      }
-      return true;
-    }
-  }
-  function typeFactory$4(check) {
-    return castFactory$5(type);
-    function type(node2) {
-      return node2 && node2.type === check;
-    }
-  }
-  function castFactory$5(check) {
-    return assertion;
-    function assertion(node2, ...parameters) {
-      return Boolean(
-        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
-        Boolean(check.call(this, node2, ...parameters))
-      );
-    }
-  }
-  function ok$4() {
-    return true;
-  }
-  function whitespace$1(thing) {
-    const value = (
-      // @ts-expect-error looks like a node.
-      thing && typeof thing === "object" && thing.type === "text" ? (
-        // @ts-expect-error looks like a text.
-        thing.value || ""
-      ) : thing
-    );
-    return typeof value === "string" && value.replace(/[ \t\n\f\r]/g, "") === "";
-  }
-  const blocks = [
-    "address",
-    // Flow content.
-    "article",
-    // Sections and headings.
-    "aside",
-    // Sections and headings.
-    "blockquote",
-    // Flow content.
-    "body",
-    // Page.
-    "br",
-    // Contribute whitespace intrinsically.
-    "caption",
-    // Similar to block.
-    "center",
-    // Flow content, legacy.
-    "col",
-    // Similar to block.
-    "colgroup",
-    // Similar to block.
-    "dd",
-    // Lists.
-    "dialog",
-    // Flow content.
-    "dir",
-    // Lists, legacy.
-    "div",
-    // Flow content.
-    "dl",
-    // Lists.
-    "dt",
-    // Lists.
-    "figcaption",
-    // Flow content.
-    "figure",
-    // Flow content.
-    "footer",
-    // Flow content.
-    "form",
-    // Flow content.
-    "h1",
-    // Sections and headings.
-    "h2",
-    // Sections and headings.
-    "h3",
-    // Sections and headings.
-    "h4",
-    // Sections and headings.
-    "h5",
-    // Sections and headings.
-    "h6",
-    // Sections and headings.
-    "head",
-    // Page.
-    "header",
-    // Flow content.
-    "hgroup",
-    // Sections and headings.
-    "hr",
-    // Flow content.
-    "html",
-    // Page.
-    "legend",
-    // Flow content.
-    "li",
-    // Block-like.
-    "li",
-    // Similar to block.
-    "listing",
-    // Flow content, legacy
-    "main",
-    // Flow content.
-    "menu",
-    // Lists.
-    "nav",
-    // Sections and headings.
-    "ol",
-    // Lists.
-    "optgroup",
-    // Similar to block.
-    "option",
-    // Similar to block.
-    "p",
-    // Flow content.
-    "plaintext",
-    // Flow content, legacy
-    "pre",
-    // Flow content.
-    "section",
-    // Sections and headings.
-    "summary",
-    // Similar to block.
-    "table",
-    // Similar to block.
-    "tbody",
-    // Similar to block.
-    "td",
-    // Block-like.
-    "td",
-    // Similar to block.
-    "tfoot",
-    // Similar to block.
-    "th",
-    // Block-like.
-    "th",
-    // Similar to block.
-    "thead",
-    // Similar to block.
-    "tr",
-    // Similar to block.
-    "ul",
-    // Lists.
-    "wbr",
-    // Contribute whitespace intrinsically.
-    "xmp"
-    // Flow content, legacy
-  ];
-  const content$3 = [
-    // Form.
-    "button",
-    "input",
-    "select",
-    "textarea"
-  ];
-  const skippable$1 = [
-    "area",
-    "base",
-    "basefont",
-    "dialog",
-    "datalist",
-    "head",
-    "link",
-    "meta",
-    "noembed",
-    "noframes",
-    "param",
-    "rp",
-    "script",
-    "source",
-    "style",
-    "template",
-    "track",
-    "title"
-  ];
-  const ignorableNode = convert$4(["doctype", "comment"]);
-  function rehypeMinifyWhitespace(options = {}) {
-    const collapse = collapseFactory(
-      options.newlines ? replaceNewlines : replaceWhitespace
-    );
-    return (tree) => {
-      minify(tree, { collapse, whitespace: "normal" });
-    };
-  }
-  function minify(node2, context) {
-    if ("children" in node2) {
-      const settings = Object.assign({}, context);
-      if (node2.type === "root" || blocklike(node2)) {
-        settings.before = true;
-        settings.after = true;
-      }
-      settings.whitespace = inferWhiteSpace(node2, context);
-      return all$3(node2, settings);
-    }
-    if (node2.type === "text") {
-      if (context.whitespace === "normal") {
-        return minifyText(node2, context);
-      }
-      if (context.whitespace === "nowrap") {
-        node2.value = context.collapse(node2.value);
-      }
-    }
-    return { remove: false, ignore: ignorableNode(node2), stripAtStart: false };
-  }
-  function minifyText(node2, context) {
-    const value = context.collapse(node2.value);
-    const result = { remove: false, ignore: false, stripAtStart: false };
-    let start = 0;
-    let end = value.length;
-    if (context.before && removable(value.charAt(0))) {
-      start++;
-    }
-    if (start !== end && removable(value.charAt(end - 1))) {
-      if (context.after) {
-        end--;
-      } else {
-        result.stripAtStart = true;
-      }
-    }
-    if (start === end) {
-      result.remove = true;
-    } else {
-      node2.value = value.slice(start, end);
-    }
-    return result;
-  }
-  function all$3(parent, context) {
-    let before = context.before;
-    const after = context.after;
-    const children = parent.children;
-    let length2 = children.length;
-    let index2 = -1;
-    while (++index2 < length2) {
-      const result = minify(
-        children[index2],
-        Object.assign({}, context, {
-          before,
-          after: collapsableAfter(children, index2, after)
-        })
-      );
-      if (result.remove) {
-        children.splice(index2, 1);
-        index2--;
-        length2--;
-      } else if (!result.ignore) {
-        before = result.stripAtStart;
-      }
-      if (content$2(children[index2])) {
-        before = false;
-      }
-    }
-    return { remove: false, ignore: false, stripAtStart: Boolean(before || after) };
-  }
-  function collapsableAfter(nodes, index2, after) {
-    while (++index2 < nodes.length) {
-      const node2 = nodes[index2];
-      let result = inferBoundary(node2);
-      if (result === void 0 && "children" in node2 && !skippable(node2)) {
-        result = collapsableAfter(node2.children, -1);
-      }
-      if (typeof result === "boolean") {
-        return result;
-      }
-    }
-    return after;
-  }
-  function inferBoundary(node2) {
-    if (node2.type === "element") {
-      if (content$2(node2)) {
-        return false;
-      }
-      if (blocklike(node2)) {
-        return true;
-      }
-    } else if (node2.type === "text") {
-      if (!whitespace$1(node2)) {
-        return false;
-      }
-    } else if (!ignorableNode(node2)) {
-      return false;
-    }
-  }
-  function content$2(node2) {
-    return embedded(node2) || isElement(node2, content$3);
-  }
-  function blocklike(node2) {
-    return isElement(node2, blocks);
-  }
-  function skippable(node2) {
-    return Boolean(
-      "properties" in node2 && node2.properties && node2.properties.hidden
-    ) || ignorableNode(node2) || isElement(node2, skippable$1);
-  }
-  function removable(character) {
-    return character === " " || character === "\n";
-  }
-  function replaceNewlines(value) {
-    const match = /\r?\n|\r/.exec(value);
-    return match ? match[0] : " ";
-  }
-  function replaceWhitespace() {
-    return " ";
-  }
-  function collapseFactory(replace2) {
-    return collapse;
-    function collapse(value) {
-      return String(value).replace(/[\t\n\v\f\r ]+/g, replace2);
-    }
-  }
-  function inferWhiteSpace(node2, context) {
-    if ("tagName" in node2 && node2.properties) {
-      switch (node2.tagName) {
-        case "listing":
-        case "plaintext":
-        case "script":
-        case "style":
-        case "xmp":
-          return "pre";
-        case "nobr":
-          return "nowrap";
-        case "pre":
-          return node2.properties.wrap ? "pre-wrap" : "pre";
-        case "td":
-        case "th":
-          return node2.properties.noWrap ? "nowrap" : context.whitespace;
-        case "textarea":
-          return "pre-wrap";
-      }
-    }
-    return context.whitespace;
-  }
-  const convert$3 = (
-    /**
-     * @type {(
-     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
-     *   ((test?: Test) => AssertAnything)
-     * )}
-     */
-    /**
-     * @param {Test} [test]
-     * @returns {AssertAnything}
-     */
-    function(test) {
-      if (test === void 0 || test === null) {
-        return ok$3;
-      }
-      if (typeof test === "string") {
-        return typeFactory$3(test);
-      }
-      if (typeof test === "object") {
-        return Array.isArray(test) ? anyFactory$4(test) : propsFactory$3(test);
-      }
-      if (typeof test === "function") {
-        return castFactory$4(test);
-      }
-      throw new Error("Expected function, string, or object as test");
-    }
-  );
-  function anyFactory$4(tests) {
-    const checks2 = [];
-    let index2 = -1;
-    while (++index2 < tests.length) {
-      checks2[index2] = convert$3(tests[index2]);
-    }
-    return castFactory$4(any2);
-    function any2(...parameters) {
-      let index3 = -1;
-      while (++index3 < checks2.length) {
-        if (checks2[index3].call(this, ...parameters))
-          return true;
-      }
-      return false;
-    }
-  }
-  function propsFactory$3(check) {
-    return castFactory$4(all2);
-    function all2(node2) {
-      let key2;
-      for (key2 in check) {
-        if (node2[key2] !== check[key2])
-          return false;
-      }
-      return true;
-    }
-  }
-  function typeFactory$3(check) {
-    return castFactory$4(type);
-    function type(node2) {
-      return node2 && node2.type === check;
-    }
-  }
-  function castFactory$4(check) {
-    return assertion;
-    function assertion(node2, ...parameters) {
-      return Boolean(
-        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
-        Boolean(check.call(this, node2, ...parameters))
-      );
-    }
-  }
-  function ok$3() {
-    return true;
-  }
-  function color$1(d) {
-    return d;
-  }
-  const CONTINUE$1 = true;
-  const EXIT$1 = false;
-  const SKIP$1 = "skip";
-  const visitParents$1 = (
-    /**
-     * @type {(
-     *   (<Tree extends Node, Check extends Test>(tree: Tree, test: Check, visitor: BuildVisitor<Tree, Check>, reverse?: boolean | null | undefined) => void) &
-     *   (<Tree extends Node>(tree: Tree, visitor: BuildVisitor<Tree>, reverse?: boolean | null | undefined) => void)
-     * )}
-     */
-    /**
-     * @param {Node} tree
-     * @param {Test} test
-     * @param {Visitor<Node>} visitor
-     * @param {boolean | null | undefined} [reverse]
-     * @returns {void}
-     */
-    function(tree, test, visitor, reverse) {
-      if (typeof test === "function" && typeof visitor !== "function") {
-        reverse = visitor;
-        visitor = test;
-        test = null;
-      }
-      const is = convert$3(test);
-      const step = reverse ? -1 : 1;
-      factory(tree, void 0, [])();
-      function factory(node2, index2, parents) {
-        const value = node2 && typeof node2 === "object" ? node2 : {};
-        if (typeof value.type === "string") {
-          const name = (
-            // `hast`
-            typeof value.tagName === "string" ? value.tagName : (
-              // `xast`
-              typeof value.name === "string" ? value.name : void 0
-            )
-          );
-          Object.defineProperty(visit2, "name", {
-            value: "node (" + color$1(node2.type + (name ? "<" + name + ">" : "")) + ")"
-          });
-        }
-        return visit2;
-        function visit2() {
-          let result = [];
-          let subresult;
-          let offset;
-          let grandparents;
-          if (!test || is(node2, index2, parents[parents.length - 1] || null)) {
-            result = toResult$1(visitor(node2, parents));
-            if (result[0] === EXIT$1) {
-              return result;
-            }
-          }
-          if (node2.children && result[0] !== SKIP$1) {
-            offset = (reverse ? node2.children.length : -1) + step;
-            grandparents = parents.concat(node2);
-            while (offset > -1 && offset < node2.children.length) {
-              subresult = factory(node2.children[offset], offset, grandparents)();
-              if (subresult[0] === EXIT$1) {
-                return subresult;
-              }
-              offset = typeof subresult[1] === "number" ? subresult[1] : offset + step;
-            }
-          }
-          return result;
-        }
-      }
-    }
-  );
-  function toResult$1(value) {
-    if (Array.isArray(value)) {
-      return value;
-    }
-    if (typeof value === "number") {
-      return [CONTINUE$1, value];
-    }
-    return [value];
-  }
-  const visit = (
-    /**
-     * @type {(
-     *   (<Tree extends Node, Check extends Test>(tree: Tree, test: Check, visitor: BuildVisitor<Tree, Check>, reverse?: boolean | null | undefined) => void) &
-     *   (<Tree extends Node>(tree: Tree, visitor: BuildVisitor<Tree>, reverse?: boolean | null | undefined) => void)
-     * )}
-     */
-    /**
-     * @param {Node} tree
-     * @param {Test} test
-     * @param {Visitor} visitor
-     * @param {boolean | null | undefined} [reverse]
-     * @returns {void}
-     */
-    function(tree, test, visitor, reverse) {
-      if (typeof test === "function" && typeof visitor !== "function") {
-        reverse = visitor;
-        visitor = test;
-        test = null;
-      }
-      visitParents$1(tree, test, overload, reverse);
-      function overload(node2, parents) {
-        const parent = parents[parents.length - 1];
-        return visitor(
-          node2,
-          parent ? parent.children.indexOf(node2) : null,
-          parent
-        );
-      }
-    }
-  );
-  function all$2(h2, parent) {
-    const nodes = parent.children || [];
-    const values = [];
-    let index2 = -1;
-    while (++index2 < nodes.length) {
-      const result = one$2(h2, nodes[index2], parent);
-      if (Array.isArray(result)) {
-        values.push(...result);
-      } else if (result) {
-        values.push(result);
-      }
-    }
-    let start = 0;
-    let end = values.length;
-    while (start < end && values[start].type === "break") {
-      start++;
-    }
-    while (end > start && values[end - 1].type === "break") {
-      end--;
-    }
-    return start === 0 && end === values.length ? values : values.slice(start, end);
-  }
-  const own$5 = {}.hasOwnProperty;
-  function wrapText(h2, value) {
-    return h2.wrapText ? value : value.replace(/\r?\n|\r/g, " ");
-  }
-  function one$2(h2, node2, parent) {
-    let fn;
-    if (node2.type === "element") {
-      if (node2.properties && node2.properties.dataMdast === "ignore") {
-        return;
-      }
-      if (own$5.call(h2.handlers, node2.tagName)) {
-        fn = h2.handlers[node2.tagName];
-      }
-    } else if (own$5.call(h2.handlers, node2.type)) {
-      fn = h2.handlers[node2.type];
-    }
-    if (typeof fn === "function") {
-      return fn(h2, node2, parent);
-    }
-    return unknown$1(h2, node2);
-  }
-  function unknown$1(h2, node2) {
-    if (typeof node2.value === "string") {
-      return h2(node2, "text", wrapText(h2, node2.value));
-    }
-    return all$2(h2, node2);
-  }
-  const own$4 = {}.hasOwnProperty;
-  function hasProperty$1(node2, field) {
-    const value = typeof field === "string" && isNode$1(node2) && node2.type === "element" && node2.properties && own$4.call(node2.properties, field) && node2.properties[field];
-    return value !== null && value !== void 0 && value !== false;
-  }
-  function isNode$1(value) {
-    return Boolean(value && typeof value === "object" && "type" in value);
-  }
-  const list$4 = /* @__PURE__ */ new Set(["pingback", "prefetch", "stylesheet"]);
-  function isBodyOkLink(node2) {
-    if (!isElement(node2, "link")) {
-      return false;
-    }
-    if (hasProperty$1(node2, "itemProp")) {
-      return true;
-    }
-    const props = node2.properties || {};
-    const rel = props.rel || [];
-    let index2 = -1;
-    if (!Array.isArray(rel) || rel.length === 0) {
-      return false;
-    }
-    while (++index2 < rel.length) {
-      if (!list$4.has(String(rel[index2]))) {
-        return false;
-      }
-    }
-    return true;
-  }
-  const basic = convertElement$1([
-    "a",
-    "abbr",
-    // `area` is in fact only phrasing if it is inside a `map` element.
-    // However, since `area`s are required to be inside a `map` element, and it’s
-    // a rather involved check, it’s ignored here for now.
-    "area",
-    "b",
-    "bdi",
-    "bdo",
-    "br",
-    "button",
-    "cite",
-    "code",
-    "data",
-    "datalist",
-    "del",
-    "dfn",
-    "em",
-    "i",
-    "input",
-    "ins",
-    "kbd",
-    "keygen",
-    "label",
-    "map",
-    "mark",
-    "meter",
-    "noscript",
-    "output",
-    "progress",
-    "q",
-    "ruby",
-    "s",
-    "samp",
-    "script",
-    "select",
-    "small",
-    "span",
-    "strong",
-    "sub",
-    "sup",
-    "template",
-    "textarea",
-    "time",
-    "u",
-    "var",
-    "wbr"
-  ]);
-  const meta = convertElement$1("meta");
-  function phrasing$2(value) {
-    return Boolean(
-      node$1(value) && (value.type === "text" || basic(value) || embedded(value) || isBodyOkLink(value) || meta(value) && hasProperty$1(value, "itemProp"))
-    );
-  }
-  function node$1(value) {
-    return value && typeof value === "object" && "type" in value;
-  }
-  const convert$2 = (
-    /**
-     * @type {(
-     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
-     *   ((test?: Test) => AssertAnything)
-     * )}
-     */
-    /**
-     * @param {Test} [test]
-     * @returns {AssertAnything}
-     */
-    function(test) {
-      if (test === void 0 || test === null) {
-        return ok$2;
-      }
-      if (typeof test === "string") {
-        return typeFactory$2(test);
-      }
-      if (typeof test === "object") {
-        return Array.isArray(test) ? anyFactory$3(test) : propsFactory$2(test);
-      }
-      if (typeof test === "function") {
-        return castFactory$3(test);
-      }
-      throw new Error("Expected function, string, or object as test");
-    }
-  );
-  function anyFactory$3(tests) {
-    const checks2 = [];
-    let index2 = -1;
-    while (++index2 < tests.length) {
-      checks2[index2] = convert$2(tests[index2]);
-    }
-    return castFactory$3(any2);
-    function any2(...parameters) {
-      let index3 = -1;
-      while (++index3 < checks2.length) {
-        if (checks2[index3].call(this, ...parameters))
-          return true;
-      }
-      return false;
-    }
-  }
-  function propsFactory$2(check) {
-    return castFactory$3(all2);
-    function all2(node2) {
-      let key2;
-      for (key2 in check) {
-        if (node2[key2] !== check[key2])
-          return false;
-      }
-      return true;
-    }
-  }
-  function typeFactory$2(check) {
-    return castFactory$3(type);
-    function type(node2) {
-      return node2 && node2.type === check;
-    }
-  }
-  function castFactory$3(check) {
-    return assertion;
-    function assertion(node2, ...parameters) {
-      return Boolean(
-        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
-        Boolean(check.call(this, node2, ...parameters))
-      );
-    }
-  }
-  function ok$2() {
-    return true;
-  }
-  const phrasing$1 = (
-    /** @type {AssertPredicatePhrasing} */
-    convert$2([
-      "break",
-      "delete",
-      "emphasis",
-      "footnote",
-      "footnoteReference",
-      "image",
-      "imageReference",
-      "inlineCode",
-      "link",
-      "linkReference",
-      "strong",
-      "text"
-    ])
-  );
-  function wrap$1(nodes) {
-    return runs(nodes, onphrasing);
-    function onphrasing(nodes2) {
-      const head2 = nodes2[0];
-      if (nodes2.length === 1 && head2.type === "text" && (head2.value === " " || head2.value === "\n")) {
-        return [];
-      }
-      return { type: "paragraph", children: nodes2 };
-    }
-  }
-  function wrapNeeded(nodes) {
-    let index2 = -1;
-    let node2;
-    while (++index2 < nodes.length) {
-      node2 = nodes[index2];
-      if (!phrasing(node2) || "children" in node2 && wrapNeeded(node2.children)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  function runs(nodes, onphrasing, onnonphrasing) {
-    const nonphrasing = onnonphrasing || identity;
-    const flattened = flatten(nodes);
-    let result = [];
-    let index2 = -1;
-    let queue;
-    let node2;
-    while (++index2 < flattened.length) {
-      node2 = flattened[index2];
-      if (phrasing(node2)) {
-        if (!queue)
-          queue = [];
-        queue.push(node2);
-      } else {
-        if (queue) {
-          result = result.concat(onphrasing(queue));
-          queue = void 0;
-        }
-        result = result.concat(nonphrasing(node2));
-      }
-    }
-    if (queue) {
-      result = result.concat(onphrasing(queue));
-    }
-    return result;
-  }
-  function flatten(nodes) {
-    let flattened = [];
-    let index2 = -1;
-    let node2;
-    while (++index2 < nodes.length) {
-      node2 = nodes[index2];
-      if ((node2.type === "delete" || node2.type === "link") && wrapNeeded(node2.children)) {
-        flattened = flattened.concat(split(node2));
-      } else {
-        flattened.push(node2);
-      }
-    }
-    return flattened;
-  }
-  function split(node2) {
-    return runs(node2.children, onphrasing, onnonphrasing);
-    function onnonphrasing(child) {
-      if ("children" in child && "children" in node2) {
-        const { children, ...rest } = node2;
-        return {
-          ...child,
-          // @ts-expect-error: assume matching parent & child.
-          children: [{ ...extend$1(true, {}, rest), children: child.children }]
-        };
-      }
-      return { ...child };
-    }
-    function onphrasing(nodes) {
-      const { children, ...rest } = node2;
-      return { ...extend$1(true, {}, rest), children: nodes };
-    }
-  }
-  function phrasing(node2) {
-    return node2.data && node2.data.hName ? phrasing$2({
-      type: "element",
-      tagName: node2.data.hName,
-      properties: {},
-      children: []
-    }) : phrasing$1(node2);
-  }
-  function identity(n) {
-    return n;
-  }
-  function wrapChildren(h2, node2) {
-    return wrap$1(all$2(h2, node2));
-  }
-  function resolve(h2, url) {
-    if (url === null || url === void 0) {
-      return "";
-    }
-    if (h2.frozenBaseUrl) {
-      return String(new URL(url, h2.frozenBaseUrl));
-    }
-    return url;
-  }
-  function a(h2, node2) {
-    const props = node2.properties;
-    return h2(
-      node2,
-      "link",
-      {
-        title: props.title || null,
-        url: resolve(h2, String(props.href || "") || null)
-      },
-      all$2(h2, node2)
-    );
-  }
-  function base(h2, node2) {
-    if (!h2.baseFound) {
-      h2.frozenBaseUrl = String(node2.properties && node2.properties.href || "") || null;
-      h2.baseFound = true;
-    }
-  }
-  function blockquote$2(h2, node2) {
-    return h2(node2, "blockquote", wrapChildren(h2, node2));
-  }
-  function br$1(h2, node2) {
-    return h2.wrapText ? h2(node2, "break") : h2(node2, "text", " ");
-  }
-  const convertElement = (
-    /**
-     * @type {(
-     *   (<T extends Element>(test: T['tagName'] | TestFunctionPredicate<T>) => AssertPredicate<T>) &
-     *   ((test?: Test) => AssertAnything)
-     * )}
-     */
-    /**
-     * @param {Test | null | undefined} [test]
-     * @returns {AssertAnything}
-     */
-    function(test) {
-      if (test === void 0 || test === null) {
-        return element$1;
-      }
-      if (typeof test === "string") {
-        return tagNameFactory(test);
-      }
-      if (typeof test === "object") {
-        return anyFactory$2(test);
-      }
-      if (typeof test === "function") {
-        return castFactory$2(test);
-      }
-      throw new Error("Expected function, string, or array as test");
-    }
-  );
-  function anyFactory$2(tests) {
-    const checks2 = [];
-    let index2 = -1;
-    while (++index2 < tests.length) {
-      checks2[index2] = convertElement(tests[index2]);
-    }
-    return castFactory$2(any2);
-    function any2(...parameters) {
-      let index3 = -1;
-      while (++index3 < checks2.length) {
-        if (checks2[index3].call(this, ...parameters)) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
-  function tagNameFactory(check) {
-    return tagName;
-    function tagName(node2) {
-      return element$1(node2) && node2.tagName === check;
-    }
-  }
-  function castFactory$2(check) {
-    return assertion;
-    function assertion(node2, ...parameters) {
-      return element$1(node2) && Boolean(check.call(this, node2, ...parameters));
-    }
-  }
-  function element$1(node2) {
-    return Boolean(
-      node2 && typeof node2 === "object" && // @ts-expect-error Looks like a node.
-      node2.type === "element" && // @ts-expect-error Looks like an element.
-      typeof node2.tagName === "string"
-    );
-  }
-  const convert$1 = (
-    /**
-     * @type {(
-     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
-     *   ((test?: Test) => AssertAnything)
-     * )}
-     */
-    /**
-     * @param {Test} [test]
-     * @returns {AssertAnything}
-     */
-    function(test) {
-      if (test === void 0 || test === null) {
-        return ok$1;
-      }
-      if (typeof test === "string") {
-        return typeFactory$1(test);
-      }
-      if (typeof test === "object") {
-        return Array.isArray(test) ? anyFactory$1(test) : propsFactory$1(test);
-      }
-      if (typeof test === "function") {
-        return castFactory$1(test);
-      }
-      throw new Error("Expected function, string, or object as test");
-    }
-  );
-  function anyFactory$1(tests) {
-    const checks2 = [];
-    let index2 = -1;
-    while (++index2 < tests.length) {
-      checks2[index2] = convert$1(tests[index2]);
-    }
-    return castFactory$1(any2);
-    function any2(...parameters) {
-      let index3 = -1;
-      while (++index3 < checks2.length) {
-        if (checks2[index3].call(this, ...parameters))
-          return true;
-      }
-      return false;
-    }
-  }
-  function propsFactory$1(check) {
-    return castFactory$1(all2);
-    function all2(node2) {
-      let key2;
-      for (key2 in check) {
-        if (node2[key2] !== check[key2])
-          return false;
-      }
-      return true;
-    }
-  }
-  function typeFactory$1(check) {
-    return castFactory$1(type);
-    function type(node2) {
-      return node2 && node2.type === check;
-    }
-  }
-  function castFactory$1(check) {
-    return assertion;
-    function assertion(node2, ...parameters) {
-      return Boolean(
-        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
-        Boolean(check.call(this, node2, ...parameters))
-      );
-    }
-  }
-  function ok$1() {
-    return true;
-  }
-  const findAfter = (
-    /**
-     * @type {(
-     *  (<T extends Node>(node: Parent, index: Node | number, test: import('unist-util-is').PredicateTest<T>) => T | null) &
-     *  ((node: Parent, index: Node | number, test?: Test) => Node | null)
-     * )}
-     */
-    /**
-     * @param {Parent} parent
-     * @param {Node | number} index
-     * @param {Test} [test]
-     * @returns {Node | null}
-     */
-    function(parent, index2, test) {
-      const is = convert$1(test);
-      if (!parent || !parent.type || !parent.children) {
-        throw new Error("Expected parent node");
-      }
-      if (typeof index2 === "number") {
-        if (index2 < 0 || index2 === Number.POSITIVE_INFINITY) {
-          throw new Error("Expected positive finite number as index");
-        }
-      } else {
-        index2 = parent.children.indexOf(index2);
-        if (index2 < 0) {
-          throw new Error("Expected child node or index");
-        }
-      }
-      while (++index2 < parent.children.length) {
-        if (is(parent.children[index2], index2, parent)) {
-          return parent.children[index2];
-        }
-      }
-      return null;
-    }
-  );
-  const searchLineFeeds = /\n/g;
-  const searchTabOrSpaces = /[\t ]+/g;
-  const br = convertElement("br");
-  const p$2 = convertElement("p");
-  const cell$1 = convertElement(["th", "td"]);
-  const row = convertElement("tr");
-  const notRendered = convertElement([
-    // List from: <https://html.spec.whatwg.org/#hidden-elements>
-    "datalist",
-    "head",
-    "noembed",
-    "noframes",
-    "noscript",
-    // Act as if we support scripting.
-    "rp",
-    "script",
-    "style",
-    "template",
-    "title",
-    // Hidden attribute.
-    hidden,
-    // From: <https://html.spec.whatwg.org/#flow-content-3>
-    closedDialog
-  ]);
-  const blockOrCaption = convertElement([
-    "address",
-    // Flow content
-    "article",
-    // Sections and headings
-    "aside",
-    // Sections and headings
-    "blockquote",
-    // Flow content
-    "body",
-    // Page
-    "caption",
-    // `table-caption`
-    "center",
-    // Flow content (legacy)
-    "dd",
-    // Lists
-    "dialog",
-    // Flow content
-    "dir",
-    // Lists (legacy)
-    "dl",
-    // Lists
-    "dt",
-    // Lists
-    "div",
-    // Flow content
-    "figure",
-    // Flow content
-    "figcaption",
-    // Flow content
-    "footer",
-    // Flow content
-    "form,",
-    // Flow content
-    "h1",
-    // Sections and headings
-    "h2",
-    // Sections and headings
-    "h3",
-    // Sections and headings
-    "h4",
-    // Sections and headings
-    "h5",
-    // Sections and headings
-    "h6",
-    // Sections and headings
-    "header",
-    // Flow content
-    "hgroup",
-    // Sections and headings
-    "hr",
-    // Flow content
-    "html",
-    // Page
-    "legend",
-    // Flow content
-    "listing",
-    // Flow content (legacy)
-    "main",
-    // Flow content
-    "menu",
-    // Lists
-    "nav",
-    // Sections and headings
-    "ol",
-    // Lists
-    "p",
-    // Flow content
-    "plaintext",
-    // Flow content (legacy)
-    "pre",
-    // Flow content
-    "section",
-    // Sections and headings
-    "ul",
-    // Lists
-    "xmp"
-    // Flow content (legacy)
-  ]);
-  function toText(tree, options = {}) {
-    const children = "children" in tree ? tree.children : [];
-    const block2 = blockOrCaption(tree);
-    const whitespace2 = inferWhitespace(tree, {
-      whitespace: options.whitespace || "normal",
-      breakBefore: false,
-      breakAfter: false
-    });
-    const results = [];
-    if (tree.type === "text" || tree.type === "comment") {
-      results.push(
-        ...collectText(tree, {
-          whitespace: whitespace2,
-          breakBefore: true,
-          breakAfter: true
-        })
-      );
-    }
-    let index2 = -1;
-    while (++index2 < children.length) {
-      results.push(
-        ...innerTextCollection(children[index2], tree, {
-          whitespace: whitespace2,
-          breakBefore: index2 ? void 0 : block2,
-          breakAfter: index2 < children.length - 1 ? br(children[index2 + 1]) : block2
-        })
-      );
-    }
-    const result = [];
-    let count;
-    index2 = -1;
-    while (++index2 < results.length) {
-      const value = results[index2];
-      if (typeof value === "number") {
-        if (count !== void 0 && value > count)
-          count = value;
-      } else if (value) {
-        if (count !== void 0 && count > -1) {
-          result.push("\n".repeat(count) || " ");
-        }
-        count = -1;
-        result.push(value);
-      }
-    }
-    return result.join("");
-  }
-  function innerTextCollection(node2, parent, info) {
-    if (node2.type === "element") {
-      return collectElement(node2, parent, info);
-    }
-    if (node2.type === "text") {
-      return info.whitespace === "normal" ? collectText(node2, info) : collectPreText(node2);
-    }
-    return [];
-  }
-  function collectElement(node2, parent, info) {
-    const whitespace2 = inferWhitespace(node2, info);
-    const children = node2.children || [];
-    let index2 = -1;
-    let items = [];
-    if (notRendered(node2)) {
-      return items;
-    }
-    let prefix2;
-    let suffix;
-    if (br(node2)) {
-      suffix = "\n";
-    } else if (row(node2) && findAfter(parent, node2, row)) {
-      suffix = "\n";
-    } else if (p$2(node2)) {
-      prefix2 = 2;
-      suffix = 2;
-    } else if (blockOrCaption(node2)) {
-      prefix2 = 1;
-      suffix = 1;
-    }
-    while (++index2 < children.length) {
-      items = items.concat(
-        innerTextCollection(children[index2], node2, {
-          whitespace: whitespace2,
-          breakBefore: index2 ? void 0 : prefix2,
-          breakAfter: index2 < children.length - 1 ? br(children[index2 + 1]) : suffix
-        })
-      );
-    }
-    if (cell$1(node2) && findAfter(parent, node2, cell$1)) {
-      items.push("	");
-    }
-    if (prefix2)
-      items.unshift(prefix2);
-    if (suffix)
-      items.push(suffix);
-    return items;
-  }
-  function collectText(node2, info) {
-    const value = String(node2.value);
-    const lines = [];
-    const result = [];
-    let start = 0;
-    while (start <= value.length) {
-      searchLineFeeds.lastIndex = start;
-      const match = searchLineFeeds.exec(value);
-      const end = match && "index" in match ? match.index : value.length;
-      lines.push(
-        // Any sequence of collapsible spaces and tabs immediately preceding or
-        // following a segment break is removed.
-        trimAndCollapseSpacesAndTabs(
-          // […] ignoring bidi formatting characters (characters with the
-          // Bidi_Control property [UAX9]: ALM, LTR, RTL, LRE-RLO, LRI-PDI) as if
-          // they were not there.
-          value.slice(start, end).replace(/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ""),
-          start === 0 ? info.breakBefore : true,
-          end === value.length ? info.breakAfter : true
-        )
-      );
-      start = end + 1;
-    }
-    let index2 = -1;
-    let join2;
-    while (++index2 < lines.length) {
-      if (lines[index2].charCodeAt(lines[index2].length - 1) === 8203 || index2 < lines.length - 1 && lines[index2 + 1].charCodeAt(0) === 8203) {
-        result.push(lines[index2]);
-        join2 = void 0;
-      } else if (lines[index2]) {
-        if (typeof join2 === "number")
-          result.push(join2);
-        result.push(lines[index2]);
-        join2 = 0;
-      } else if (index2 === 0 || index2 === lines.length - 1) {
-        result.push(0);
-      }
-    }
-    return result;
-  }
-  function collectPreText(node2) {
-    return [String(node2.value)];
-  }
-  function trimAndCollapseSpacesAndTabs(value, breakBefore, breakAfter) {
-    const result = [];
-    let start = 0;
-    let end;
-    while (start < value.length) {
-      searchTabOrSpaces.lastIndex = start;
-      const match = searchTabOrSpaces.exec(value);
-      end = match ? match.index : value.length;
-      if (!start && !end && match && !breakBefore) {
-        result.push("");
-      }
-      if (start !== end) {
-        result.push(value.slice(start, end));
-      }
-      start = match ? end + match[0].length : end;
-    }
-    if (start !== end && !breakAfter) {
-      result.push("");
-    }
-    return result.join(" ");
-  }
-  function inferWhitespace(node2, info) {
-    if (node2.type === "element") {
-      const props = node2.properties || {};
-      switch (node2.tagName) {
-        case "listing":
-        case "plaintext":
-        case "xmp": {
-          return "pre";
-        }
-        case "nobr": {
-          return "nowrap";
-        }
-        case "pre": {
-          return props.wrap ? "pre-wrap" : "pre";
-        }
-        case "td":
-        case "th": {
-          return props.noWrap ? "nowrap" : info.whitespace;
-        }
-        case "textarea": {
-          return "pre-wrap";
-        }
-      }
-    }
-    return info.whitespace;
-  }
-  function hidden(node2) {
-    return Boolean((node2.properties || {}).hidden);
-  }
-  function closedDialog(node2) {
-    return node2.tagName === "dialog" && !(node2.properties || {}).open;
-  }
-  function trimTrailingLines(value) {
-    const input2 = String(value);
-    let end = input2.length;
-    while (end > 0) {
-      const code2 = input2.codePointAt(end - 1);
-      if (code2 !== void 0 && (code2 === 10 || code2 === 13)) {
-        end--;
-      } else {
-        break;
-      }
-    }
-    return input2.slice(0, end);
-  }
-  const prefix = "language-";
-  const pre = convertElement$1("pre");
-  const isCode = convertElement$1("code");
-  function code$4(h2, node2) {
-    const children = node2.children;
-    let index2 = -1;
-    let classList;
-    let lang;
-    if (pre(node2)) {
-      while (++index2 < children.length) {
-        const child = children[index2];
-        if (isCode(child) && child.properties && child.properties.className && Array.isArray(child.properties.className)) {
-          classList = child.properties.className;
-          break;
-        }
-      }
-    }
-    if (classList) {
-      index2 = -1;
-      while (++index2 < classList.length) {
-        if (String(classList[index2]).slice(0, prefix.length) === prefix) {
-          lang = String(classList[index2]).slice(prefix.length);
-          break;
-        }
-      }
-    }
-    return h2(
-      node2,
-      "code",
-      { lang: lang || null, meta: null },
-      trimTrailingLines(wrapText(h2, toText(node2)))
-    );
-  }
-  function comment(h2, node2) {
-    return h2(node2, "html", "<!--" + wrapText(h2, node2.value) + "-->");
-  }
-  function del(h2, node2) {
-    return h2(node2, "delete", all$2(h2, node2));
-  }
-  function listItemsSpread(children) {
-    let index2 = -1;
-    if (children.length > 1) {
-      while (++index2 < children.length) {
-        if (children[index2].spread) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-  function wrapListItems(h2, node2) {
-    const children = all$2(h2, node2);
-    let index2 = -1;
-    while (++index2 < children.length) {
-      const child = children[index2];
-      if (child.type !== "listItem") {
-        children[index2] = {
-          type: "listItem",
-          spread: false,
-          checked: null,
-          // @ts-expect-error Assume `children[index]` is block content.
-          children: [child]
-        };
-      }
-    }
-    return children;
-  }
-  const div = convertElement$1("div");
-  const dt = convertElement$1("dt");
-  const dd = convertElement$1("dd");
-  function dl(h2, node2) {
-    const children = node2.children;
-    let index2 = -1;
-    let clean2 = [];
-    const groups = [];
-    let group = { titles: [], definitions: [] };
-    let child;
-    let result;
-    while (++index2 < children.length) {
-      child = children[index2];
-      clean2 = clean2.concat(div(child) ? child.children : child);
-    }
-    index2 = -1;
-    while (++index2 < clean2.length) {
-      child = clean2[index2];
-      if (dt(child)) {
-        if (dd(clean2[index2 - 1])) {
-          groups.push(group);
-          group = { titles: [], definitions: [] };
-        }
-        group.titles.push(child);
-      } else {
-        group.definitions.push(child);
-      }
-    }
-    groups.push(group);
-    index2 = -1;
-    const content2 = [];
-    while (++index2 < groups.length) {
-      result = [
-        ...handle$1(h2, groups[index2].titles),
-        ...handle$1(h2, groups[index2].definitions)
-      ];
-      if (result.length > 0) {
-        content2.push({
-          type: "listItem",
-          spread: result.length > 1,
-          checked: null,
-          children: result
-        });
-      }
-    }
-    if (content2.length > 0) {
-      return h2(
-        node2,
-        "list",
-        { ordered: false, start: null, spread: listItemsSpread(content2) },
-        content2
-      );
-    }
-  }
-  function handle$1(h2, children) {
-    const nodes = wrapListItems(h2, { type: "element", tagName: "x", children });
-    if (nodes.length === 0) {
-      return [];
-    }
-    if (nodes.length === 1) {
-      return nodes[0].children;
-    }
-    return [
-      {
-        type: "list",
-        ordered: false,
-        start: null,
-        spread: listItemsSpread(nodes),
-        children: nodes
-      }
-    ];
-  }
-  function em(h2, node2) {
-    return h2(node2, "emphasis", all$2(h2, node2));
-  }
-  function heading$2(h2, node2) {
-    const depth = Number(node2.tagName.charAt(1)) || 1;
-    const wrap2 = h2.wrapText;
-    h2.wrapText = false;
-    const result = h2(node2, "heading", { depth }, all$2(h2, node2));
-    h2.wrapText = wrap2;
-    return result;
-  }
-  function hr(h2, node2) {
-    return h2(node2, "thematicBreak");
-  }
-  function iframe(h2, node2) {
-    const props = node2.properties;
-    const src = String(props.src || "");
-    const title = String(props.title || "");
-    if (src && title) {
-      return {
-        type: "link",
-        title: null,
-        url: resolve(h2, src),
-        children: [{ type: "text", value: wrapText(h2, title) }]
-      };
-    }
-  }
-  function img(h2, node2) {
-    const props = node2.properties;
-    return h2(node2, "image", {
-      url: resolve(h2, String(props.src || "") || null),
-      title: props.title || null,
-      alt: props.alt || ""
-    });
-  }
-  function inlineCode$2(h2, node2) {
-    return h2(node2, "inlineCode", wrapText(h2, toText(node2)));
-  }
-  const option = convertElement$1("option");
-  function findSelectedOptions(h2, node2, properties) {
-    const props = properties || node2.properties;
-    let options = findOptions(node2);
-    const size = Math.min(Number.parseInt(String(props.size), 10), 0) || (props.multiple ? 4 : 1);
-    let index2 = -1;
-    const selectedOptions = [];
-    const values = [];
-    while (++index2 < options.length) {
-      if (hasProperty$1(options[index2], "selected")) {
-        selectedOptions.push(options[index2]);
-      }
-    }
-    const list2 = selectedOptions.length > 0 ? selectedOptions : options;
-    options = list2.slice(0, size);
-    index2 = -1;
-    while (++index2 < options.length) {
-      const option2 = options[index2];
-      const content2 = wrapText(h2, toText(option2));
-      const props2 = option2.properties;
-      const label = content2 || String(props2.label || "");
-      const value = String(props2.value || "") || content2;
-      values.push([value, label === value ? null : label]);
-    }
-    return values;
-  }
-  function findOptions(node2) {
-    const children = node2.children;
-    let index2 = -1;
-    let results = [];
-    let child;
-    while (++index2 < children.length) {
-      child = children[index2];
-      if (Array.isArray(child.children)) {
-        results = results.concat(findOptions(child));
-      }
-      if (option(child) && !hasProperty$1(child, "disabled")) {
-        results.push(child);
-      }
-    }
-    return results;
-  }
-  const datalist = convertElement$1("datalist");
-  function input$1(h2, node2) {
-    const props = node2.properties;
-    let value = String(props.value || props.placeholder || "");
-    const results = [];
-    const texts = [];
-    let values = [];
-    let index2 = -1;
-    let list2;
-    if (props.disabled || props.type === "hidden" || props.type === "file") {
-      return;
-    }
-    if (props.type === "checkbox" || props.type === "radio") {
-      return h2(
-        node2,
-        "text",
-        wrapText(h2, h2[props.checked ? "checked" : "unchecked"])
-      );
-    }
-    if (props.type === "image") {
-      return props.alt || value ? h2(node2, "image", {
-        url: resolve(h2, String(props.src || "") || null),
-        title: wrapText(h2, String(props.title || "")) || null,
-        alt: wrapText(h2, String(props.alt || value))
-      }) : [];
-    }
-    if (value) {
-      values = [[value, null]];
-    } else if (
-      // `list` is not supported on these types:
-      props.type !== "password" && props.type !== "file" && props.type !== "submit" && props.type !== "reset" && props.type !== "button" && props.list
-    ) {
-      list2 = String(props.list).toUpperCase();
-      if (own$5.call(h2.nodeById, list2) && datalist(h2.nodeById[list2])) {
-        values = findSelectedOptions(h2, h2.nodeById[list2], props);
-      }
-    }
-    if (values.length === 0) {
-      return;
-    }
-    if (props.type === "password") {
-      values[0] = ["•".repeat(values[0][0].length), null];
-    }
-    if (props.type === "url" || props.type === "email") {
-      while (++index2 < values.length) {
-        value = resolve(h2, values[index2][0]);
-        results.push(
-          h2(
-            node2,
-            "link",
-            {
-              title: null,
-              url: wrapText(h2, props.type === "email" ? "mailto:" + value : value)
-            },
-            [{ type: "text", value: wrapText(h2, values[index2][1] || value) }]
-          )
-        );
-        if (index2 !== values.length - 1) {
-          results.push({ type: "text", value: ", " });
-        }
-      }
-      return results;
-    }
-    while (++index2 < values.length) {
-      texts.push(
-        values[index2][1] ? values[index2][1] + " (" + values[index2][0] + ")" : values[index2][0]
-      );
-    }
-    return h2(node2, "text", wrapText(h2, texts.join(", ")));
-  }
-  const p$1 = convertElement$1("p");
-  const input = convertElement$1("input");
-  function li(h2, node2) {
-    const head2 = node2.children[0];
-    let checked = null;
-    let checkbox;
-    let clone;
-    if (p$1(head2)) {
-      checkbox = head2.children[0];
-      if (input(checkbox) && checkbox.properties && (checkbox.properties.type === "checkbox" || checkbox.properties.type === "radio")) {
-        checked = Boolean(checkbox.properties.checked);
-        clone = {
-          ...node2,
-          children: [
-            { ...head2, children: head2.children.slice(1) },
-            ...node2.children.slice(1)
-          ]
-        };
-      }
-    }
-    const content2 = wrapChildren(h2, clone || node2);
-    return h2(node2, "listItem", { spread: content2.length > 1, checked }, content2);
-  }
-  const ol = convertElement$1("ol");
-  function list$3(h2, node2) {
-    const ordered = ol(node2);
-    const children = wrapListItems(h2, node2);
-    let start = null;
-    if (ordered) {
-      start = hasProperty$1(node2, "start") ? (
-        // @ts-expect-error: `props` exist.
-        Number.parseInt(String(node2.properties.start), 10)
-      ) : 1;
-    }
-    return h2(
-      node2,
-      "list",
-      { ordered, start, spread: listItemsSpread(children) },
-      children
-    );
-  }
-  const emptyOptions = {};
-  function toString(value, options) {
-    const settings = options || emptyOptions;
-    const includeImageAlt = typeof settings.includeImageAlt === "boolean" ? settings.includeImageAlt : true;
-    const includeHtml = typeof settings.includeHtml === "boolean" ? settings.includeHtml : true;
-    return one$1(value, includeImageAlt, includeHtml);
-  }
-  function one$1(value, includeImageAlt, includeHtml) {
-    if (node(value)) {
-      if ("value" in value) {
-        return value.type === "html" && !includeHtml ? "" : value.value;
-      }
-      if (includeImageAlt && "alt" in value && value.alt) {
-        return value.alt;
-      }
-      if ("children" in value) {
-        return all$1(value.children, includeImageAlt, includeHtml);
-      }
-    }
-    if (Array.isArray(value)) {
-      return all$1(value, includeImageAlt, includeHtml);
-    }
-    return "";
-  }
-  function all$1(values, includeImageAlt, includeHtml) {
-    const result = [];
-    let index2 = -1;
-    while (++index2 < values.length) {
-      result[index2] = one$1(values[index2], includeImageAlt, includeHtml);
-    }
-    return result.join("");
-  }
-  function node(value) {
-    return Boolean(value && typeof value === "object");
-  }
-  const source = convertElement$1("source");
-  const video = convertElement$1("video");
-  function media(h2, node2) {
-    let nodes = all$2(h2, node2);
-    const properties = node2.properties;
-    const poster = video(node2) && String(properties.poster || "");
-    let src = String(properties.src || "");
-    let index2 = -1;
-    let linkInFallbackContent = false;
-    let child;
-    visit({ type: "root", children: nodes }, "link", findLink);
-    if (linkInFallbackContent || wrapNeeded(nodes)) {
-      return nodes;
-    }
-    while (!src && ++index2 < node2.children.length) {
-      child = node2.children[index2];
-      if (source(child)) {
-        src = String(child.properties.src || "");
-      }
-    }
-    if (poster) {
-      nodes = [
-        {
-          type: "image",
-          title: null,
-          url: resolve(h2, poster),
-          alt: toString({ children: nodes })
-        }
-      ];
-    }
-    return {
-      type: "link",
-      // @ts-expect-error Types are broken.
-      title: node2.properties.title || null,
-      url: resolve(h2, src),
-      // @ts-expect-error Assume phrasing content.
-      children: nodes
-    };
-    function findLink() {
-      linkInFallbackContent = true;
-      return EXIT$1;
-    }
-  }
-  function p(h2, node2) {
-    const nodes = all$2(h2, node2);
-    if (nodes.length > 0) {
-      return h2(node2, "paragraph", nodes);
-    }
-  }
-  function q(h2, node2) {
-    const expected = h2.quotes[h2.qNesting % h2.quotes.length];
-    h2.qNesting++;
-    const contents = all$2(h2, node2);
-    h2.qNesting--;
-    contents.unshift({ type: "text", value: expected.charAt(0) });
-    contents.push({
-      type: "text",
-      value: expected.length > 1 ? expected.charAt(1) : expected
-    });
-    return contents;
-  }
-  function root$2(h2, node2) {
-    let children = all$2(h2, node2);
-    if (h2.document || wrapNeeded(children)) {
-      children = wrap$1(children);
-    }
-    return h2(node2, "root", children);
-  }
-  function select(h2, node2) {
-    const values = findSelectedOptions(h2, node2);
-    let index2 = -1;
-    const results = [];
-    let value;
-    while (++index2 < values.length) {
-      value = values[index2];
-      results.push(value[1] ? value[1] + " (" + value[0] + ")" : value[0]);
-    }
-    if (results.length > 0) {
-      return h2(node2, "text", wrapText(h2, results.join(", ")));
-    }
-  }
-  function strong$2(h2, node2) {
-    return h2(node2, "strong", all$2(h2, node2));
-  }
-  function tableCell$1(h2, node2) {
-    const wrap2 = h2.wrapText;
-    h2.wrapText = false;
-    const result = h2(node2, "tableCell", all$2(h2, node2));
-    if (node2.properties && (node2.properties.rowSpan || node2.properties.colSpan)) {
-      const data = result.data || (result.data = {});
-      if (node2.properties.rowSpan)
-        data.rowSpan = node2.properties.rowSpan;
-      if (node2.properties.colSpan)
-        data.colSpan = node2.properties.colSpan;
-    }
-    h2.wrapText = wrap2;
-    return result;
-  }
-  function tableRow$1(h2, node2) {
-    return h2(node2, "tableRow", all$2(h2, node2));
-  }
-  const thead = convertElement$1("thead");
-  const tr$1 = convertElement$1("tr");
-  const cell = convertElement$1(["th", "td"]);
-  function table$1(h2, node2) {
-    if (h2.inTable) {
-      return h2(node2, "text", wrapText(h2, toText(node2)));
-    }
-    h2.inTable = true;
-    const { headless, align } = inspect(node2);
-    const rows = toRows(all$2(h2, node2), headless);
-    let columns = 1;
-    let rowIndex = -1;
-    while (++rowIndex < rows.length) {
-      const cells2 = rows[rowIndex].children;
-      let cellIndex = -1;
-      while (++cellIndex < cells2.length) {
-        const cell2 = cells2[cellIndex];
-        if (cell2.data) {
-          const colSpan = Number.parseInt(String(cell2.data.colSpan), 10) || 1;
-          const rowSpan = Number.parseInt(String(cell2.data.rowSpan), 10) || 1;
-          if (colSpan > 1 || rowSpan > 1) {
-            let otherRowIndex = rowIndex - 1;
-            while (++otherRowIndex < rowIndex + rowSpan) {
-              let colIndex = cellIndex - 1;
-              while (++colIndex < cellIndex + colSpan) {
-                if (!rows[otherRowIndex]) {
-                  break;
-                }
-                const newCells = [];
-                if (otherRowIndex !== rowIndex || colIndex !== cellIndex) {
-                  newCells.push({ type: "tableCell", children: [] });
-                }
-                rows[otherRowIndex].children.splice(colIndex, 0, ...newCells);
-              }
-            }
-          }
-          if ("colSpan" in cell2.data)
-            delete cell2.data.colSpan;
-          if ("rowSpan" in cell2.data)
-            delete cell2.data.rowSpan;
-          if (Object.keys(cell2.data).length === 0)
-            delete cell2.data;
-        }
-      }
-      if (cells2.length > columns)
-        columns = cells2.length;
-    }
-    rowIndex = -1;
-    while (++rowIndex < rows.length) {
-      const cells2 = rows[rowIndex].children;
-      let cellIndex = cells2.length - 1;
-      while (++cellIndex < columns) {
-        cells2.push({ type: "tableCell", children: [] });
-      }
-    }
-    let alignIndex = align.length - 1;
-    while (++alignIndex < columns) {
-      align.push(null);
-    }
-    h2.inTable = false;
-    return h2(node2, "table", { align }, rows);
-  }
-  function inspect(node2) {
-    let headless = true;
-    let rowIndex = 0;
-    let cellIndex = 0;
-    const align = [null];
-    visit(node2, "element", (child) => {
-      if (child.tagName === "table" && node2 !== child) {
-        return SKIP$1;
-      }
-      if (cell(child) && child.properties) {
-        if (!align[cellIndex]) {
-          align[cellIndex] = String(child.properties.align || "") || null;
-        }
-        if (headless && rowIndex < 2 && child.tagName === "th") {
-          headless = false;
-        }
-        cellIndex++;
-      } else if (thead(child)) {
-        headless = false;
-      } else if (tr$1(child)) {
-        rowIndex++;
-        cellIndex = 0;
-      }
-    });
-    return { align, headless };
-  }
-  function toRows(children, headless) {
-    let index2 = -1;
-    const nodes = [];
-    let queue;
-    if (headless) {
-      nodes.push({ type: "tableRow", children: [] });
-    }
-    while (++index2 < children.length) {
-      const node2 = children[index2];
-      if (node2.type === "tableRow") {
-        if (queue) {
-          node2.children.unshift(...queue);
-          queue = void 0;
-        }
-        nodes.push(node2);
-      } else {
-        if (!queue)
-          queue = [];
-        queue.push(node2);
-      }
-    }
-    if (queue) {
-      nodes[nodes.length - 1].children.push(...queue);
-    }
-    index2 = -1;
-    while (++index2 < nodes.length) {
-      nodes[index2].children = toCells(nodes[index2].children);
-    }
-    return nodes;
-  }
-  function toCells(children) {
-    const nodes = [];
-    let index2 = -1;
-    let node2;
-    let queue;
-    while (++index2 < children.length) {
-      node2 = children[index2];
-      if (node2.type === "tableCell") {
-        if (queue) {
-          node2.children.unshift(...queue);
-          queue = void 0;
-        }
-        nodes.push(node2);
-      } else {
-        if (!queue)
-          queue = [];
-        queue.push(node2);
-      }
-    }
-    if (queue) {
-      node2 = nodes[nodes.length - 1];
-      if (!node2) {
-        node2 = { type: "tableCell", children: [] };
-        nodes.push(node2);
-      }
-      node2.children.push(...queue);
-    }
-    return nodes;
-  }
-  function text$5(h2, node2) {
-    return h2(node2, "text", wrapText(h2, node2.value));
-  }
-  function textarea(h2, node2) {
-    return h2(node2, "text", wrapText(h2, toText(node2)));
-  }
-  function wbr(h2, node2) {
-    return h2(node2, "text", "​");
-  }
-  const handlers$1 = {
-    root: root$2,
-    text: text$5,
-    comment,
-    doctype: ignore$1,
-    applet: ignore$1,
-    area: ignore$1,
-    basefont: ignore$1,
-    bgsound: ignore$1,
-    caption: ignore$1,
-    col: ignore$1,
-    colgroup: ignore$1,
-    command: ignore$1,
-    content: ignore$1,
-    datalist: ignore$1,
-    dialog: ignore$1,
-    element: ignore$1,
-    embed: ignore$1,
-    frame: ignore$1,
-    frameset: ignore$1,
-    isindex: ignore$1,
-    keygen: ignore$1,
-    link: ignore$1,
-    math: ignore$1,
-    menu: ignore$1,
-    menuitem: ignore$1,
-    meta: ignore$1,
-    nextid: ignore$1,
-    noembed: ignore$1,
-    noframes: ignore$1,
-    optgroup: ignore$1,
-    option: ignore$1,
-    param: ignore$1,
-    script: ignore$1,
-    shadow: ignore$1,
-    source: ignore$1,
-    spacer: ignore$1,
-    style: ignore$1,
-    svg: ignore$1,
-    template: ignore$1,
-    title: ignore$1,
-    track: ignore$1,
-    abbr: all$2,
-    acronym: all$2,
-    bdi: all$2,
-    bdo: all$2,
-    big: all$2,
-    blink: all$2,
-    button: all$2,
-    canvas: all$2,
-    cite: all$2,
-    data: all$2,
-    details: all$2,
-    dfn: all$2,
-    font: all$2,
-    ins: all$2,
-    label: all$2,
-    map: all$2,
-    marquee: all$2,
-    meter: all$2,
-    nobr: all$2,
-    noscript: all$2,
-    object: all$2,
-    output: all$2,
-    progress: all$2,
-    rb: all$2,
-    rbc: all$2,
-    rp: all$2,
-    rt: all$2,
-    rtc: all$2,
-    ruby: all$2,
-    slot: all$2,
-    small: all$2,
-    span: all$2,
-    sup: all$2,
-    sub: all$2,
-    tbody: all$2,
-    tfoot: all$2,
-    thead: all$2,
-    time: all$2,
-    address: wrapChildren,
-    article: wrapChildren,
-    aside: wrapChildren,
-    body: wrapChildren,
-    center: wrapChildren,
-    div: wrapChildren,
-    fieldset: wrapChildren,
-    figcaption: wrapChildren,
-    figure: wrapChildren,
-    form: wrapChildren,
-    footer: wrapChildren,
-    header: wrapChildren,
-    hgroup: wrapChildren,
-    html: wrapChildren,
-    legend: wrapChildren,
-    main: wrapChildren,
-    multicol: wrapChildren,
-    nav: wrapChildren,
-    picture: wrapChildren,
-    section: wrapChildren,
-    a,
-    audio: media,
-    b: strong$2,
-    base,
-    blockquote: blockquote$2,
-    br: br$1,
-    code: inlineCode$2,
-    dir: list$3,
-    dl,
-    dt: li,
-    dd: li,
-    del,
-    em,
-    h1: heading$2,
-    h2: heading$2,
-    h3: heading$2,
-    h4: heading$2,
-    h5: heading$2,
-    h6: heading$2,
-    hr,
-    i: em,
-    iframe,
-    img,
-    image: img,
-    input: input$1,
-    kbd: inlineCode$2,
-    li,
-    listing: code$4,
-    mark: em,
-    ol: list$3,
-    p,
-    plaintext: code$4,
-    pre: code$4,
-    q,
-    s: del,
-    samp: inlineCode$2,
-    select,
-    strike: del,
-    strong: strong$2,
-    summary: p,
-    table: table$1,
-    td: tableCell$1,
-    textarea,
-    th: tableCell$1,
-    tr: tableRow$1,
-    tt: inlineCode$2,
-    u: em,
-    ul: list$3,
-    var: inlineCode$2,
-    video: media,
-    wbr,
-    xmp: code$4
-  };
-  function ignore$1() {
-  }
-  const block = convert$4(["heading", "paragraph", "root"]);
-  function toMdast(tree, options = {}) {
-    const byId = {};
-    let mdast;
-    const h2 = Object.assign(
-      /**
-       * @type {HWithProps & HWithoutProps}
-       */
-      /**
-       * @param {Node} node
-       * @param {string} type
-       * @param {Properties|string|Array<Node>} [props]
-       * @param {string|Array<Node>} [children]
-       */
-      (node2, type, props, children) => {
-        let properties;
-        if (typeof props === "string" || Array.isArray(props)) {
-          children = props;
-          properties = {};
-        } else {
-          properties = props;
-        }
-        const result2 = { type, ...properties };
-        if (typeof children === "string") {
-          result2.value = children;
-        } else if (children) {
-          result2.children = children;
-        }
-        if (node2.position) {
-          result2.position = node2.position;
-        }
-        return result2;
-      },
-      {
-        nodeById: byId,
-        baseFound: false,
-        inTable: false,
-        wrapText: true,
-        /** @type {string|null} */
-        frozenBaseUrl: null,
-        qNesting: 0,
-        handlers: options.handlers ? { ...handlers$1, ...options.handlers } : handlers$1,
-        document: options.document,
-        checked: options.checked || "[x]",
-        unchecked: options.unchecked || "[ ]",
-        quotes: options.quotes || ['"']
-      }
-    );
-    visit(tree, "element", (node2) => {
-      const id = node2.properties && "id" in node2.properties && String(node2.properties.id).toUpperCase();
-      if (id && !own$5.call(byId, id)) {
-        byId[id] = node2;
-      }
-    });
-    rehypeMinifyWhitespace({ newlines: options.newlines === true })(tree);
-    const result = one$2(h2, tree, void 0);
-    if (!result) {
-      mdast = { type: "root", children: [] };
-    } else if (Array.isArray(result)) {
-      mdast = { type: "root", children: result };
-    } else {
-      mdast = result;
-    }
-    visit(mdast, "text", ontext);
-    return mdast;
-    function ontext(node2, index2, parent) {
-      if (index2 === null || !parent) {
-        return;
-      }
-      const previous2 = parent.children[index2 - 1];
-      if (previous2 && previous2.type === node2.type) {
-        previous2.value += node2.value;
-        parent.children.splice(index2, 1);
-        if (previous2.position && node2.position) {
-          previous2.position.end = node2.position.end;
-        }
-        return index2 - 1;
-      }
-      node2.value = node2.value.replace(/[\t ]*(\r?\n|\r)[\t ]*/, "$1");
-      if (parent && block(parent)) {
-        if (!index2) {
-          node2.value = node2.value.replace(/^[\t ]+/, "");
-        }
-        if (index2 === parent.children.length - 1) {
-          node2.value = node2.value.replace(/[\t ]+$/, "");
-        }
-      }
-      if (!node2.value) {
-        parent.children.splice(index2, 1);
-        return index2;
-      }
-    }
-  }
-  const rehypeRemark = (
-    /**
-     * @type {(import('unified').Plugin<[Processor, Options?], HastRoot> & import('unified').Plugin<[Options?]|void[], HastRoot, MdastRoot>)}
-     */
-    /**
-     * @param {Processor|Options} [destination]
-     * @param {Options} [options]
-     */
-    function(destination, options) {
-      let settings;
-      let processor;
-      if (typeof destination === "function") {
-        processor = destination;
-        settings = options || {};
-      } else {
-        settings = destination || {};
-      }
-      if (settings.document === void 0 || settings.document === null) {
-        settings = Object.assign({}, settings, { document: true });
-      }
-      return processor ? bridge$1(processor, settings) : mutate$1(settings);
-    }
-  );
-  const rehypeRemark$1 = rehypeRemark;
-  function bridge$1(destination, options) {
-    return (node2, file, next) => {
-      destination.run(toMdast(node2, options), file, (error) => {
-        next(error);
-      });
-    };
-  }
-  function mutate$1(options = {}) {
-    return (node2) => {
-      const result = (
-        /** @type {MdastRoot} */
-        toMdast(node2, options)
-      );
-      return result;
-    };
-  }
   function splice(list2, start, remove, items) {
     const end = list2.length;
     let chunkStart = 0;
@@ -32712,27 +27254,27 @@ img.ProseMirror-separator {
     tokenize: tokenizeEmailAutolink,
     previous: previousEmail
   };
-  const text$4 = {};
+  const text$5 = {};
   const gfmAutolinkLiteral = {
-    text: text$4
+    text: text$5
   };
-  let code$3 = 48;
-  while (code$3 < 123) {
-    text$4[code$3] = emailAutolink;
-    code$3++;
-    if (code$3 === 58)
-      code$3 = 65;
-    else if (code$3 === 91)
-      code$3 = 97;
+  let code$4 = 48;
+  while (code$4 < 123) {
+    text$5[code$4] = emailAutolink;
+    code$4++;
+    if (code$4 === 58)
+      code$4 = 65;
+    else if (code$4 === 91)
+      code$4 = 97;
   }
-  text$4[43] = emailAutolink;
-  text$4[45] = emailAutolink;
-  text$4[46] = emailAutolink;
-  text$4[95] = emailAutolink;
-  text$4[72] = [emailAutolink, protocolAutolink];
-  text$4[104] = [emailAutolink, protocolAutolink];
-  text$4[87] = [emailAutolink, wwwAutolink];
-  text$4[119] = [emailAutolink, wwwAutolink];
+  text$5[43] = emailAutolink;
+  text$5[45] = emailAutolink;
+  text$5[46] = emailAutolink;
+  text$5[95] = emailAutolink;
+  text$5[72] = [emailAutolink, protocolAutolink];
+  text$5[104] = [emailAutolink, protocolAutolink];
+  text$5[87] = [emailAutolink, wwwAutolink];
+  text$5[119] = [emailAutolink, wwwAutolink];
   function tokenizeEmailAutolink(effects, ok2, nok) {
     const self2 = this;
     let dot;
@@ -33428,11 +27970,11 @@ img.ProseMirror-separator {
       return nok(code2);
     }
   }
-  const element = document.createElement("i");
+  const element$2 = document.createElement("i");
   function decodeNamedCharacterReference(value) {
     const characterReference2 = "&" + value + ";";
-    element.innerHTML = characterReference2;
-    const char = element.textContent;
+    element$2.innerHTML = characterReference2;
+    const char = element$2.textContent;
     if (char.charCodeAt(char.length - 1) === 59 && value !== "semi") {
       return false;
     }
@@ -34005,7 +28547,7 @@ img.ProseMirror-separator {
     }
     return gaps;
   }
-  const content$1 = {
+  const content$3 = {
     tokenize: tokenizeContent,
     resolve: resolveContent
   };
@@ -35643,7 +30185,7 @@ img.ProseMirror-separator {
       return markdownSpace(code2) ? factorySpace(effects, atBreak, "whitespace")(code2) : atBreak(code2);
     }
   }
-  const list$2 = {
+  const list$4 = {
     name: "list",
     tokenize: tokenizeListStart,
     continuation: {
@@ -35760,7 +30302,7 @@ img.ProseMirror-separator {
       self2.interrupt = void 0;
       return factorySpace(
         effects,
-        effects.attempt(list$2, ok2, nok),
+        effects.attempt(list$4, ok2, nok),
         "linePrefix",
         self2.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4
       )(code2);
@@ -36866,7 +31408,7 @@ img.ProseMirror-separator {
     }
     return string2.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&").replace(/-/g, "\\x2d");
   }
-  const convert = (
+  const convert$4 = (
     /**
      * @type {(
      *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
@@ -36879,27 +31421,27 @@ img.ProseMirror-separator {
      */
     function(test) {
       if (test === void 0 || test === null) {
-        return ok;
+        return ok$4;
       }
       if (typeof test === "string") {
-        return typeFactory(test);
+        return typeFactory$4(test);
       }
       if (typeof test === "object") {
-        return Array.isArray(test) ? anyFactory(test) : propsFactory(test);
+        return Array.isArray(test) ? anyFactory$6(test) : propsFactory$4(test);
       }
       if (typeof test === "function") {
-        return castFactory(test);
+        return castFactory$6(test);
       }
       throw new Error("Expected function, string, or object as test");
     }
   );
-  function anyFactory(tests) {
+  function anyFactory$6(tests) {
     const checks2 = [];
     let index2 = -1;
     while (++index2 < tests.length) {
-      checks2[index2] = convert(tests[index2]);
+      checks2[index2] = convert$4(tests[index2]);
     }
-    return castFactory(any2);
+    return castFactory$6(any2);
     function any2(...parameters) {
       let index3 = -1;
       while (++index3 < checks2.length) {
@@ -36909,8 +31451,8 @@ img.ProseMirror-separator {
       return false;
     }
   }
-  function propsFactory(check) {
-    return castFactory(all2);
+  function propsFactory$4(check) {
+    return castFactory$6(all2);
     function all2(node2) {
       let key2;
       for (key2 in check) {
@@ -36920,13 +31462,13 @@ img.ProseMirror-separator {
       return true;
     }
   }
-  function typeFactory(check) {
-    return castFactory(type);
+  function typeFactory$4(check) {
+    return castFactory$6(type);
     function type(node2) {
       return node2 && node2.type === check;
     }
   }
-  function castFactory(check) {
+  function castFactory$6(check) {
     return assertion;
     function assertion(node2, ...parameters) {
       return Boolean(
@@ -36935,16 +31477,16 @@ img.ProseMirror-separator {
       );
     }
   }
-  function ok() {
+  function ok$4() {
     return true;
   }
-  function color(d) {
+  function color$1(d) {
     return d;
   }
-  const CONTINUE = true;
-  const EXIT = false;
-  const SKIP = "skip";
-  const visitParents = (
+  const CONTINUE$1 = true;
+  const EXIT$1 = false;
+  const SKIP$1 = "skip";
+  const visitParents$1 = (
     /**
      * @type {(
      *   (<Tree extends Node, Check extends Test>(tree: Tree, test: Check, visitor: BuildVisitor<Tree, Check>, reverse?: boolean | null | undefined) => void) &
@@ -36964,7 +31506,7 @@ img.ProseMirror-separator {
         visitor = test;
         test = null;
       }
-      const is = convert(test);
+      const is = convert$4(test);
       const step = reverse ? -1 : 1;
       factory(tree, void 0, [])();
       function factory(node2, index2, parents) {
@@ -36978,7 +31520,7 @@ img.ProseMirror-separator {
             )
           );
           Object.defineProperty(visit2, "name", {
-            value: "node (" + color(node2.type + (name ? "<" + name + ">" : "")) + ")"
+            value: "node (" + color$1(node2.type + (name ? "<" + name + ">" : "")) + ")"
           });
         }
         return visit2;
@@ -36988,17 +31530,17 @@ img.ProseMirror-separator {
           let offset;
           let grandparents;
           if (!test || is(node2, index2, parents[parents.length - 1] || null)) {
-            result = toResult(visitor(node2, parents));
-            if (result[0] === EXIT) {
+            result = toResult$1(visitor(node2, parents));
+            if (result[0] === EXIT$1) {
               return result;
             }
           }
-          if (node2.children && result[0] !== SKIP) {
+          if (node2.children && result[0] !== SKIP$1) {
             offset = (reverse ? node2.children.length : -1) + step;
             grandparents = parents.concat(node2);
             while (offset > -1 && offset < node2.children.length) {
               subresult = factory(node2.children[offset], offset, grandparents)();
-              if (subresult[0] === EXIT) {
+              if (subresult[0] === EXIT$1) {
                 return subresult;
               }
               offset = typeof subresult[1] === "number" ? subresult[1] : offset + step;
@@ -37009,16 +31551,16 @@ img.ProseMirror-separator {
       }
     }
   );
-  function toResult(value) {
+  function toResult$1(value) {
     if (Array.isArray(value)) {
       return value;
     }
     if (typeof value === "number") {
-      return [CONTINUE, value];
+      return [CONTINUE$1, value];
     }
     return [value];
   }
-  const own$3 = {}.hasOwnProperty;
+  const own$5 = {}.hasOwnProperty;
   const findAndReplace = (
     /**
      * @type {(
@@ -37047,11 +31589,11 @@ img.ProseMirror-separator {
       if (!settings) {
         settings = {};
       }
-      const ignored = convert(settings.ignore || []);
+      const ignored = convert$4(settings.ignore || []);
       const pairs = toPairs(schema);
       let pairIndex = -1;
       while (++pairIndex < pairs.length) {
-        visitParents(tree, "text", visitor);
+        visitParents$1(tree, "text", visitor);
       }
       return tree;
       function visitor(node2, parents) {
@@ -37143,7 +31685,7 @@ img.ProseMirror-separator {
     } else {
       let key2;
       for (key2 in schema) {
-        if (own$3.call(schema, key2)) {
+        if (own$5.call(schema, key2)) {
           result.push([toExpression(key2), toFunction(schema[key2])]);
         }
       }
@@ -37738,8 +32280,8 @@ img.ProseMirror-separator {
   function peekDelete() {
     return "~";
   }
-  inlineCode$1.peek = inlineCodePeek;
-  function inlineCode$1(node2, _, state) {
+  inlineCode$2.peek = inlineCodePeek;
+  function inlineCode$2(node2, _, state) {
     let value = node2.value || "";
     let sequence = "`";
     let index2 = -1;
@@ -38059,7 +32601,7 @@ img.ProseMirror-separator {
       return result;
     }
     function inlineCodeWithTable(node2, parent, context) {
-      let value = inlineCode$1(node2, parent, context);
+      let value = inlineCode$2(node2, parent, context);
       if (context.stack.includes("tableCell")) {
         value = value.replace(/\|/g, "\\$&");
       }
@@ -38223,1029 +32765,42 @@ img.ProseMirror-separator {
       list2.push(value);
     }
   }
-  function configure$1(base2, extension2) {
+  const emptyOptions = {};
+  function toString(value, options) {
+    const settings = options || emptyOptions;
+    const includeImageAlt = typeof settings.includeImageAlt === "boolean" ? settings.includeImageAlt : true;
+    const includeHtml = typeof settings.includeHtml === "boolean" ? settings.includeHtml : true;
+    return one$2(value, includeImageAlt, includeHtml);
+  }
+  function one$2(value, includeImageAlt, includeHtml) {
+    if (node$1(value)) {
+      if ("value" in value) {
+        return value.type === "html" && !includeHtml ? "" : value.value;
+      }
+      if (includeImageAlt && "alt" in value && value.alt) {
+        return value.alt;
+      }
+      if ("children" in value) {
+        return all$3(value.children, includeImageAlt, includeHtml);
+      }
+    }
+    if (Array.isArray(value)) {
+      return all$3(value, includeImageAlt, includeHtml);
+    }
+    return "";
+  }
+  function all$3(values, includeImageAlt, includeHtml) {
+    const result = [];
     let index2 = -1;
-    let key2;
-    if (extension2.extensions) {
-      while (++index2 < extension2.extensions.length) {
-        configure$1(base2, extension2.extensions[index2]);
-      }
+    while (++index2 < values.length) {
+      result[index2] = one$2(values[index2], includeImageAlt, includeHtml);
     }
-    for (key2 in extension2) {
-      if (key2 === "extensions")
-        ;
-      else if (key2 === "unsafe" || key2 === "join") {
-        base2[key2] = [...base2[key2] || [], ...extension2[key2] || []];
-      } else if (key2 === "handlers") {
-        base2[key2] = Object.assign(base2[key2], extension2[key2] || {});
-      } else {
-        base2.options[key2] = extension2[key2];
-      }
-    }
-    return base2;
+    return result.join("");
   }
-  function blockquote$1(node2, _, state, info) {
-    const exit2 = state.enter("blockquote");
-    const tracker = state.createTracker(info);
-    tracker.move("> ");
-    tracker.shift(2);
-    const value = state.indentLines(
-      state.containerFlow(node2, tracker.current()),
-      map$2
-    );
-    exit2();
-    return value;
+  function node$1(value) {
+    return Boolean(value && typeof value === "object");
   }
-  function map$2(line, _, blank) {
-    return ">" + (blank ? "" : " ") + line;
-  }
-  function hardBreak$1(_, _1, state, info) {
-    let index2 = -1;
-    while (++index2 < state.unsafe.length) {
-      if (state.unsafe[index2].character === "\n" && patternInScope(state.stack, state.unsafe[index2])) {
-        return /[ \t]/.test(info.before) ? "" : " ";
-      }
-    }
-    return "\\\n";
-  }
-  function longestStreak(value, substring) {
-    const source2 = String(value);
-    let index2 = source2.indexOf(substring);
-    let expected = index2;
-    let count = 0;
-    let max2 = 0;
-    if (typeof substring !== "string") {
-      throw new TypeError("Expected substring");
-    }
-    while (index2 !== -1) {
-      if (index2 === expected) {
-        if (++count > max2) {
-          max2 = count;
-        }
-      } else {
-        count = 1;
-      }
-      expected = index2 + substring.length;
-      index2 = source2.indexOf(substring, expected);
-    }
-    return max2;
-  }
-  function formatCodeAsIndented(node2, state) {
-    return Boolean(
-      !state.options.fences && node2.value && // If there’s no info…
-      !node2.lang && // And there’s a non-whitespace character…
-      /[^ \r\n]/.test(node2.value) && // And the value doesn’t start or end in a blank…
-      !/^[\t ]*(?:[\r\n]|$)|(?:^|[\r\n])[\t ]*$/.test(node2.value)
-    );
-  }
-  function checkFence(state) {
-    const marker = state.options.fence || "`";
-    if (marker !== "`" && marker !== "~") {
-      throw new Error(
-        "Cannot serialize code with `" + marker + "` for `options.fence`, expected `` ` `` or `~`"
-      );
-    }
-    return marker;
-  }
-  function code$2(node2, _, state, info) {
-    const marker = checkFence(state);
-    const raw2 = node2.value || "";
-    const suffix = marker === "`" ? "GraveAccent" : "Tilde";
-    if (formatCodeAsIndented(node2, state)) {
-      const exit3 = state.enter("codeIndented");
-      const value2 = state.indentLines(raw2, map$1);
-      exit3();
-      return value2;
-    }
-    const tracker = state.createTracker(info);
-    const sequence = marker.repeat(Math.max(longestStreak(raw2, marker) + 1, 3));
-    const exit2 = state.enter("codeFenced");
-    let value = tracker.move(sequence);
-    if (node2.lang) {
-      const subexit = state.enter(`codeFencedLang${suffix}`);
-      value += tracker.move(
-        state.safe(node2.lang, {
-          before: value,
-          after: " ",
-          encode: ["`"],
-          ...tracker.current()
-        })
-      );
-      subexit();
-    }
-    if (node2.lang && node2.meta) {
-      const subexit = state.enter(`codeFencedMeta${suffix}`);
-      value += tracker.move(" ");
-      value += tracker.move(
-        state.safe(node2.meta, {
-          before: value,
-          after: "\n",
-          encode: ["`"],
-          ...tracker.current()
-        })
-      );
-      subexit();
-    }
-    value += tracker.move("\n");
-    if (raw2) {
-      value += tracker.move(raw2 + "\n");
-    }
-    value += tracker.move(sequence);
-    exit2();
-    return value;
-  }
-  function map$1(line, _, blank) {
-    return (blank ? "" : "    ") + line;
-  }
-  function checkQuote(state) {
-    const marker = state.options.quote || '"';
-    if (marker !== '"' && marker !== "'") {
-      throw new Error(
-        "Cannot serialize title with `" + marker + "` for `options.quote`, expected `\"`, or `'`"
-      );
-    }
-    return marker;
-  }
-  function definition(node2, _, state, info) {
-    const quote = checkQuote(state);
-    const suffix = quote === '"' ? "Quote" : "Apostrophe";
-    const exit2 = state.enter("definition");
-    let subexit = state.enter("label");
-    const tracker = state.createTracker(info);
-    let value = tracker.move("[");
-    value += tracker.move(
-      state.safe(state.associationId(node2), {
-        before: value,
-        after: "]",
-        ...tracker.current()
-      })
-    );
-    value += tracker.move("]: ");
-    subexit();
-    if (
-      // If there’s no url, or…
-      !node2.url || // If there are control characters or whitespace.
-      /[\0- \u007F]/.test(node2.url)
-    ) {
-      subexit = state.enter("destinationLiteral");
-      value += tracker.move("<");
-      value += tracker.move(
-        state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
-      );
-      value += tracker.move(">");
-    } else {
-      subexit = state.enter("destinationRaw");
-      value += tracker.move(
-        state.safe(node2.url, {
-          before: value,
-          after: node2.title ? " " : "\n",
-          ...tracker.current()
-        })
-      );
-    }
-    subexit();
-    if (node2.title) {
-      subexit = state.enter(`title${suffix}`);
-      value += tracker.move(" " + quote);
-      value += tracker.move(
-        state.safe(node2.title, {
-          before: value,
-          after: quote,
-          ...tracker.current()
-        })
-      );
-      value += tracker.move(quote);
-      subexit();
-    }
-    exit2();
-    return value;
-  }
-  function checkEmphasis(state) {
-    const marker = state.options.emphasis || "*";
-    if (marker !== "*" && marker !== "_") {
-      throw new Error(
-        "Cannot serialize emphasis with `" + marker + "` for `options.emphasis`, expected `*`, or `_`"
-      );
-    }
-    return marker;
-  }
-  emphasis$1.peek = emphasisPeek;
-  function emphasis$1(node2, _, state, info) {
-    const marker = checkEmphasis(state);
-    const exit2 = state.enter("emphasis");
-    const tracker = state.createTracker(info);
-    let value = tracker.move(marker);
-    value += tracker.move(
-      state.containerPhrasing(node2, {
-        before: value,
-        after: marker,
-        ...tracker.current()
-      })
-    );
-    value += tracker.move(marker);
-    exit2();
-    return value;
-  }
-  function emphasisPeek(_, _1, state) {
-    return state.options.emphasis || "*";
-  }
-  function formatHeadingAsSetext(node2, state) {
-    let literalWithBreak = false;
-    visit(node2, (node3) => {
-      if ("value" in node3 && /\r?\n|\r/.test(node3.value) || node3.type === "break") {
-        literalWithBreak = true;
-        return EXIT$1;
-      }
-    });
-    return Boolean(
-      (!node2.depth || node2.depth < 3) && toString(node2) && (state.options.setext || literalWithBreak)
-    );
-  }
-  function heading$1(node2, _, state, info) {
-    const rank = Math.max(Math.min(6, node2.depth || 1), 1);
-    const tracker = state.createTracker(info);
-    if (formatHeadingAsSetext(node2, state)) {
-      const exit3 = state.enter("headingSetext");
-      const subexit2 = state.enter("phrasing");
-      const value2 = state.containerPhrasing(node2, {
-        ...tracker.current(),
-        before: "\n",
-        after: "\n"
-      });
-      subexit2();
-      exit3();
-      return value2 + "\n" + (rank === 1 ? "=" : "-").repeat(
-        // The whole size…
-        value2.length - // Minus the position of the character after the last EOL (or
-        // 0 if there is none)…
-        (Math.max(value2.lastIndexOf("\r"), value2.lastIndexOf("\n")) + 1)
-      );
-    }
-    const sequence = "#".repeat(rank);
-    const exit2 = state.enter("headingAtx");
-    const subexit = state.enter("phrasing");
-    tracker.move(sequence + " ");
-    let value = state.containerPhrasing(node2, {
-      before: "# ",
-      after: "\n",
-      ...tracker.current()
-    });
-    if (/^[\t ]/.test(value)) {
-      value = "&#x" + value.charCodeAt(0).toString(16).toUpperCase() + ";" + value.slice(1);
-    }
-    value = value ? sequence + " " + value : sequence;
-    if (state.options.closeAtx) {
-      value += " " + sequence;
-    }
-    subexit();
-    exit2();
-    return value;
-  }
-  html$1.peek = htmlPeek;
-  function html$1(node2) {
-    return node2.value || "";
-  }
-  function htmlPeek() {
-    return "<";
-  }
-  image$1.peek = imagePeek;
-  function image$1(node2, _, state, info) {
-    const quote = checkQuote(state);
-    const suffix = quote === '"' ? "Quote" : "Apostrophe";
-    const exit2 = state.enter("image");
-    let subexit = state.enter("label");
-    const tracker = state.createTracker(info);
-    let value = tracker.move("![");
-    value += tracker.move(
-      state.safe(node2.alt, { before: value, after: "]", ...tracker.current() })
-    );
-    value += tracker.move("](");
-    subexit();
-    if (
-      // If there’s no url but there is a title…
-      !node2.url && node2.title || // If there are control characters or whitespace.
-      /[\0- \u007F]/.test(node2.url)
-    ) {
-      subexit = state.enter("destinationLiteral");
-      value += tracker.move("<");
-      value += tracker.move(
-        state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
-      );
-      value += tracker.move(">");
-    } else {
-      subexit = state.enter("destinationRaw");
-      value += tracker.move(
-        state.safe(node2.url, {
-          before: value,
-          after: node2.title ? " " : ")",
-          ...tracker.current()
-        })
-      );
-    }
-    subexit();
-    if (node2.title) {
-      subexit = state.enter(`title${suffix}`);
-      value += tracker.move(" " + quote);
-      value += tracker.move(
-        state.safe(node2.title, {
-          before: value,
-          after: quote,
-          ...tracker.current()
-        })
-      );
-      value += tracker.move(quote);
-      subexit();
-    }
-    value += tracker.move(")");
-    exit2();
-    return value;
-  }
-  function imagePeek() {
-    return "!";
-  }
-  imageReference$1.peek = imageReferencePeek;
-  function imageReference$1(node2, _, state, info) {
-    const type = node2.referenceType;
-    const exit2 = state.enter("imageReference");
-    let subexit = state.enter("label");
-    const tracker = state.createTracker(info);
-    let value = tracker.move("![");
-    const alt = state.safe(node2.alt, {
-      before: value,
-      after: "]",
-      ...tracker.current()
-    });
-    value += tracker.move(alt + "][");
-    subexit();
-    const stack = state.stack;
-    state.stack = [];
-    subexit = state.enter("reference");
-    const reference = state.safe(state.associationId(node2), {
-      before: value,
-      after: "]",
-      ...tracker.current()
-    });
-    subexit();
-    state.stack = stack;
-    exit2();
-    if (type === "full" || !alt || alt !== reference) {
-      value += tracker.move(reference + "]");
-    } else if (type === "shortcut") {
-      value = value.slice(0, -1);
-    } else {
-      value += tracker.move("]");
-    }
-    return value;
-  }
-  function imageReferencePeek() {
-    return "!";
-  }
-  function formatLinkAsAutolink(node2, state) {
-    const raw2 = toString(node2);
-    return Boolean(
-      !state.options.resourceLink && // If there’s a url…
-      node2.url && // And there’s a no title…
-      !node2.title && // And the content of `node` is a single text node…
-      node2.children && node2.children.length === 1 && node2.children[0].type === "text" && // And if the url is the same as the content…
-      (raw2 === node2.url || "mailto:" + raw2 === node2.url) && // And that starts w/ a protocol…
-      /^[a-z][a-z+.-]+:/i.test(node2.url) && // And that doesn’t contain ASCII control codes (character escapes and
-      // references don’t work), space, or angle brackets…
-      !/[\0- <>\u007F]/.test(node2.url)
-    );
-  }
-  link$1.peek = linkPeek;
-  function link$1(node2, _, state, info) {
-    const quote = checkQuote(state);
-    const suffix = quote === '"' ? "Quote" : "Apostrophe";
-    const tracker = state.createTracker(info);
-    let exit2;
-    let subexit;
-    if (formatLinkAsAutolink(node2, state)) {
-      const stack = state.stack;
-      state.stack = [];
-      exit2 = state.enter("autolink");
-      let value2 = tracker.move("<");
-      value2 += tracker.move(
-        state.containerPhrasing(node2, {
-          before: value2,
-          after: ">",
-          ...tracker.current()
-        })
-      );
-      value2 += tracker.move(">");
-      exit2();
-      state.stack = stack;
-      return value2;
-    }
-    exit2 = state.enter("link");
-    subexit = state.enter("label");
-    let value = tracker.move("[");
-    value += tracker.move(
-      state.containerPhrasing(node2, {
-        before: value,
-        after: "](",
-        ...tracker.current()
-      })
-    );
-    value += tracker.move("](");
-    subexit();
-    if (
-      // If there’s no url but there is a title…
-      !node2.url && node2.title || // If there are control characters or whitespace.
-      /[\0- \u007F]/.test(node2.url)
-    ) {
-      subexit = state.enter("destinationLiteral");
-      value += tracker.move("<");
-      value += tracker.move(
-        state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
-      );
-      value += tracker.move(">");
-    } else {
-      subexit = state.enter("destinationRaw");
-      value += tracker.move(
-        state.safe(node2.url, {
-          before: value,
-          after: node2.title ? " " : ")",
-          ...tracker.current()
-        })
-      );
-    }
-    subexit();
-    if (node2.title) {
-      subexit = state.enter(`title${suffix}`);
-      value += tracker.move(" " + quote);
-      value += tracker.move(
-        state.safe(node2.title, {
-          before: value,
-          after: quote,
-          ...tracker.current()
-        })
-      );
-      value += tracker.move(quote);
-      subexit();
-    }
-    value += tracker.move(")");
-    exit2();
-    return value;
-  }
-  function linkPeek(node2, _, state) {
-    return formatLinkAsAutolink(node2, state) ? "<" : "[";
-  }
-  linkReference$1.peek = linkReferencePeek;
-  function linkReference$1(node2, _, state, info) {
-    const type = node2.referenceType;
-    const exit2 = state.enter("linkReference");
-    let subexit = state.enter("label");
-    const tracker = state.createTracker(info);
-    let value = tracker.move("[");
-    const text2 = state.containerPhrasing(node2, {
-      before: value,
-      after: "]",
-      ...tracker.current()
-    });
-    value += tracker.move(text2 + "][");
-    subexit();
-    const stack = state.stack;
-    state.stack = [];
-    subexit = state.enter("reference");
-    const reference = state.safe(state.associationId(node2), {
-      before: value,
-      after: "]",
-      ...tracker.current()
-    });
-    subexit();
-    state.stack = stack;
-    exit2();
-    if (type === "full" || !text2 || text2 !== reference) {
-      value += tracker.move(reference + "]");
-    } else if (type === "shortcut") {
-      value = value.slice(0, -1);
-    } else {
-      value += tracker.move("]");
-    }
-    return value;
-  }
-  function linkReferencePeek() {
-    return "[";
-  }
-  function checkBulletOther(state) {
-    const bullet = checkBullet(state);
-    const bulletOther = state.options.bulletOther;
-    if (!bulletOther) {
-      return bullet === "*" ? "-" : "*";
-    }
-    if (bulletOther !== "*" && bulletOther !== "+" && bulletOther !== "-") {
-      throw new Error(
-        "Cannot serialize items with `" + bulletOther + "` for `options.bulletOther`, expected `*`, `+`, or `-`"
-      );
-    }
-    if (bulletOther === bullet) {
-      throw new Error(
-        "Expected `bullet` (`" + bullet + "`) and `bulletOther` (`" + bulletOther + "`) to be different"
-      );
-    }
-    return bulletOther;
-  }
-  function checkBulletOrdered(state) {
-    const marker = state.options.bulletOrdered || ".";
-    if (marker !== "." && marker !== ")") {
-      throw new Error(
-        "Cannot serialize items with `" + marker + "` for `options.bulletOrdered`, expected `.` or `)`"
-      );
-    }
-    return marker;
-  }
-  function checkBulletOrderedOther(state) {
-    const bulletOrdered = checkBulletOrdered(state);
-    const bulletOrderedOther = state.options.bulletOrderedOther;
-    if (!bulletOrderedOther) {
-      return bulletOrdered === "." ? ")" : ".";
-    }
-    if (bulletOrderedOther !== "." && bulletOrderedOther !== ")") {
-      throw new Error(
-        "Cannot serialize items with `" + bulletOrderedOther + "` for `options.bulletOrderedOther`, expected `*`, `+`, or `-`"
-      );
-    }
-    if (bulletOrderedOther === bulletOrdered) {
-      throw new Error(
-        "Expected `bulletOrdered` (`" + bulletOrdered + "`) and `bulletOrderedOther` (`" + bulletOrderedOther + "`) to be different"
-      );
-    }
-    return bulletOrderedOther;
-  }
-  function checkRule(state) {
-    const marker = state.options.rule || "*";
-    if (marker !== "*" && marker !== "-" && marker !== "_") {
-      throw new Error(
-        "Cannot serialize rules with `" + marker + "` for `options.rule`, expected `*`, `-`, or `_`"
-      );
-    }
-    return marker;
-  }
-  function list$1(node2, parent, state, info) {
-    const exit2 = state.enter("list");
-    const bulletCurrent = state.bulletCurrent;
-    let bullet = node2.ordered ? checkBulletOrdered(state) : checkBullet(state);
-    const bulletOther = node2.ordered ? checkBulletOrderedOther(state) : checkBulletOther(state);
-    const bulletLastUsed = state.bulletLastUsed;
-    let useDifferentMarker = false;
-    if (parent && // Explicit `other` set.
-    (node2.ordered ? state.options.bulletOrderedOther : state.options.bulletOther) && bulletLastUsed && bullet === bulletLastUsed) {
-      useDifferentMarker = true;
-    }
-    if (!node2.ordered) {
-      const firstListItem = node2.children ? node2.children[0] : void 0;
-      if (
-        // Bullet could be used as a thematic break marker:
-        (bullet === "*" || bullet === "-") && // Empty first list item:
-        firstListItem && (!firstListItem.children || !firstListItem.children[0]) && // Directly in two other list items:
-        state.stack[state.stack.length - 1] === "list" && state.stack[state.stack.length - 2] === "listItem" && state.stack[state.stack.length - 3] === "list" && state.stack[state.stack.length - 4] === "listItem" && // That are each the first child.
-        state.indexStack[state.indexStack.length - 1] === 0 && state.indexStack[state.indexStack.length - 2] === 0 && state.indexStack[state.indexStack.length - 3] === 0
-      ) {
-        useDifferentMarker = true;
-      }
-      if (checkRule(state) === bullet && firstListItem) {
-        let index2 = -1;
-        while (++index2 < node2.children.length) {
-          const item = node2.children[index2];
-          if (item && item.type === "listItem" && item.children && item.children[0] && item.children[0].type === "thematicBreak") {
-            useDifferentMarker = true;
-            break;
-          }
-        }
-      }
-    }
-    if (useDifferentMarker) {
-      bullet = bulletOther;
-    }
-    state.bulletCurrent = bullet;
-    const value = state.containerFlow(node2, info);
-    state.bulletLastUsed = bullet;
-    state.bulletCurrent = bulletCurrent;
-    exit2();
-    return value;
-  }
-  function paragraph$1(node2, _, state, info) {
-    const exit2 = state.enter("paragraph");
-    const subexit = state.enter("phrasing");
-    const value = state.containerPhrasing(node2, info);
-    subexit();
-    exit2();
-    return value;
-  }
-  function root$1(node2, _, state, info) {
-    const hasPhrasing = node2.children.some((d) => phrasing$1(d));
-    const fn = hasPhrasing ? state.containerPhrasing : state.containerFlow;
-    return fn.call(state, node2, info);
-  }
-  function checkStrong(state) {
-    const marker = state.options.strong || "*";
-    if (marker !== "*" && marker !== "_") {
-      throw new Error(
-        "Cannot serialize strong with `" + marker + "` for `options.strong`, expected `*`, or `_`"
-      );
-    }
-    return marker;
-  }
-  strong$1.peek = strongPeek;
-  function strong$1(node2, _, state, info) {
-    const marker = checkStrong(state);
-    const exit2 = state.enter("strong");
-    const tracker = state.createTracker(info);
-    let value = tracker.move(marker + marker);
-    value += tracker.move(
-      state.containerPhrasing(node2, {
-        before: value,
-        after: marker,
-        ...tracker.current()
-      })
-    );
-    value += tracker.move(marker + marker);
-    exit2();
-    return value;
-  }
-  function strongPeek(_, _1, state) {
-    return state.options.strong || "*";
-  }
-  function text$3(node2, _, state, info) {
-    return state.safe(node2.value, info);
-  }
-  function checkRuleRepetition(state) {
-    const repetition = state.options.ruleRepetition || 3;
-    if (repetition < 3) {
-      throw new Error(
-        "Cannot serialize rules with repetition `" + repetition + "` for `options.ruleRepetition`, expected `3` or more"
-      );
-    }
-    return repetition;
-  }
-  function thematicBreak$1(_, _1, state) {
-    const value = (checkRule(state) + (state.options.ruleSpaces ? " " : "")).repeat(checkRuleRepetition(state));
-    return state.options.ruleSpaces ? value.slice(0, -1) : value;
-  }
-  const handle = {
-    blockquote: blockquote$1,
-    break: hardBreak$1,
-    code: code$2,
-    definition,
-    emphasis: emphasis$1,
-    hardBreak: hardBreak$1,
-    heading: heading$1,
-    html: html$1,
-    image: image$1,
-    imageReference: imageReference$1,
-    inlineCode: inlineCode$1,
-    link: link$1,
-    linkReference: linkReference$1,
-    list: list$1,
-    listItem: listItem$1,
-    paragraph: paragraph$1,
-    root: root$1,
-    strong: strong$1,
-    text: text$3,
-    thematicBreak: thematicBreak$1
-  };
-  const join = [joinDefaults];
-  function joinDefaults(left, right, parent, state) {
-    if (right.type === "code" && formatCodeAsIndented(right, state) && (left.type === "list" || left.type === right.type && formatCodeAsIndented(left, state))) {
-      return false;
-    }
-    if (left.type === "list" && left.type === right.type && Boolean(left.ordered) === Boolean(right.ordered) && !(left.ordered ? state.options.bulletOrderedOther : state.options.bulletOther)) {
-      return false;
-    }
-    if ("spread" in parent && typeof parent.spread === "boolean") {
-      if (left.type === "paragraph" && // Two paragraphs.
-      (left.type === right.type || right.type === "definition" || // Paragraph followed by a setext heading.
-      right.type === "heading" && formatHeadingAsSetext(right, state))) {
-        return;
-      }
-      return parent.spread ? 1 : 0;
-    }
-  }
-  const fullPhrasingSpans = [
-    "autolink",
-    "destinationLiteral",
-    "destinationRaw",
-    "reference",
-    "titleQuote",
-    "titleApostrophe"
-  ];
-  const unsafe = [
-    { character: "	", after: "[\\r\\n]", inConstruct: "phrasing" },
-    { character: "	", before: "[\\r\\n]", inConstruct: "phrasing" },
-    {
-      character: "	",
-      inConstruct: ["codeFencedLangGraveAccent", "codeFencedLangTilde"]
-    },
-    {
-      character: "\r",
-      inConstruct: [
-        "codeFencedLangGraveAccent",
-        "codeFencedLangTilde",
-        "codeFencedMetaGraveAccent",
-        "codeFencedMetaTilde",
-        "destinationLiteral",
-        "headingAtx"
-      ]
-    },
-    {
-      character: "\n",
-      inConstruct: [
-        "codeFencedLangGraveAccent",
-        "codeFencedLangTilde",
-        "codeFencedMetaGraveAccent",
-        "codeFencedMetaTilde",
-        "destinationLiteral",
-        "headingAtx"
-      ]
-    },
-    { character: " ", after: "[\\r\\n]", inConstruct: "phrasing" },
-    { character: " ", before: "[\\r\\n]", inConstruct: "phrasing" },
-    {
-      character: " ",
-      inConstruct: ["codeFencedLangGraveAccent", "codeFencedLangTilde"]
-    },
-    // An exclamation mark can start an image, if it is followed by a link or
-    // a link reference.
-    {
-      character: "!",
-      after: "\\[",
-      inConstruct: "phrasing",
-      notInConstruct: fullPhrasingSpans
-    },
-    // A quote can break out of a title.
-    { character: '"', inConstruct: "titleQuote" },
-    // A number sign could start an ATX heading if it starts a line.
-    { atBreak: true, character: "#" },
-    { character: "#", inConstruct: "headingAtx", after: "(?:[\r\n]|$)" },
-    // Dollar sign and percentage are not used in markdown.
-    // An ampersand could start a character reference.
-    { character: "&", after: "[#A-Za-z]", inConstruct: "phrasing" },
-    // An apostrophe can break out of a title.
-    { character: "'", inConstruct: "titleApostrophe" },
-    // A left paren could break out of a destination raw.
-    { character: "(", inConstruct: "destinationRaw" },
-    // A left paren followed by `]` could make something into a link or image.
-    {
-      before: "\\]",
-      character: "(",
-      inConstruct: "phrasing",
-      notInConstruct: fullPhrasingSpans
-    },
-    // A right paren could start a list item or break out of a destination
-    // raw.
-    { atBreak: true, before: "\\d+", character: ")" },
-    { character: ")", inConstruct: "destinationRaw" },
-    // An asterisk can start thematic breaks, list items, emphasis, strong.
-    { atBreak: true, character: "*", after: "(?:[ 	\r\n*])" },
-    { character: "*", inConstruct: "phrasing", notInConstruct: fullPhrasingSpans },
-    // A plus sign could start a list item.
-    { atBreak: true, character: "+", after: "(?:[ 	\r\n])" },
-    // A dash can start thematic breaks, list items, and setext heading
-    // underlines.
-    { atBreak: true, character: "-", after: "(?:[ 	\r\n-])" },
-    // A dot could start a list item.
-    { atBreak: true, before: "\\d+", character: ".", after: "(?:[ 	\r\n]|$)" },
-    // Slash, colon, and semicolon are not used in markdown for constructs.
-    // A less than can start html (flow or text) or an autolink.
-    // HTML could start with an exclamation mark (declaration, cdata, comment),
-    // slash (closing tag), question mark (instruction), or a letter (tag).
-    // An autolink also starts with a letter.
-    // Finally, it could break out of a destination literal.
-    { atBreak: true, character: "<", after: "[!/?A-Za-z]" },
-    {
-      character: "<",
-      after: "[!/?A-Za-z]",
-      inConstruct: "phrasing",
-      notInConstruct: fullPhrasingSpans
-    },
-    { character: "<", inConstruct: "destinationLiteral" },
-    // An equals to can start setext heading underlines.
-    { atBreak: true, character: "=" },
-    // A greater than can start block quotes and it can break out of a
-    // destination literal.
-    { atBreak: true, character: ">" },
-    { character: ">", inConstruct: "destinationLiteral" },
-    // Question mark and at sign are not used in markdown for constructs.
-    // A left bracket can start definitions, references, labels,
-    { atBreak: true, character: "[" },
-    { character: "[", inConstruct: "phrasing", notInConstruct: fullPhrasingSpans },
-    { character: "[", inConstruct: ["label", "reference"] },
-    // A backslash can start an escape (when followed by punctuation) or a
-    // hard break (when followed by an eol).
-    // Note: typical escapes are handled in `safe`!
-    { character: "\\", after: "[\\r\\n]", inConstruct: "phrasing" },
-    // A right bracket can exit labels.
-    { character: "]", inConstruct: ["label", "reference"] },
-    // Caret is not used in markdown for constructs.
-    // An underscore can start emphasis, strong, or a thematic break.
-    { atBreak: true, character: "_" },
-    { character: "_", inConstruct: "phrasing", notInConstruct: fullPhrasingSpans },
-    // A grave accent can start code (fenced or text), or it can break out of
-    // a grave accent code fence.
-    { atBreak: true, character: "`" },
-    {
-      character: "`",
-      inConstruct: ["codeFencedLangGraveAccent", "codeFencedMetaGraveAccent"]
-    },
-    { character: "`", inConstruct: "phrasing", notInConstruct: fullPhrasingSpans },
-    // Left brace, vertical bar, right brace are not used in markdown for
-    // constructs.
-    // A tilde can start code (fenced).
-    { atBreak: true, character: "~" }
-  ];
-  function toMarkdown(tree, options = {}) {
-    const state = {
-      enter: enter2,
-      indentLines,
-      associationId: association,
-      containerPhrasing: containerPhrasingBound,
-      containerFlow: containerFlowBound,
-      createTracker: track,
-      safe: safeBound,
-      stack: [],
-      unsafe: [],
-      join: [],
-      // @ts-expect-error: we’ll fill it next.
-      handlers: {},
-      options: {},
-      indexStack: [],
-      // @ts-expect-error: we’ll add `handle` later.
-      handle: void 0
-    };
-    configure$1(state, { unsafe, join, handlers: handle });
-    configure$1(state, options);
-    if (state.options.tightDefinitions) {
-      configure$1(state, { join: [joinDefinition] });
-    }
-    state.handle = zwitch("type", {
-      invalid,
-      unknown,
-      handlers: state.handlers
-    });
-    let result = state.handle(tree, void 0, state, {
-      before: "\n",
-      after: "\n",
-      now: { line: 1, column: 1 },
-      lineShift: 0
-    });
-    if (result && result.charCodeAt(result.length - 1) !== 10 && result.charCodeAt(result.length - 1) !== 13) {
-      result += "\n";
-    }
-    return result;
-    function enter2(name) {
-      state.stack.push(name);
-      return exit2;
-      function exit2() {
-        state.stack.pop();
-      }
-    }
-  }
-  function invalid(value) {
-    throw new Error("Cannot handle value `" + value + "`, expected node");
-  }
-  function unknown(node2) {
-    throw new Error("Cannot handle unknown node `" + node2.type + "`");
-  }
-  function joinDefinition(left, right) {
-    if (left.type === "definition" && left.type === right.type) {
-      return 0;
-    }
-  }
-  function containerPhrasingBound(parent, info) {
-    return containerPhrasing(parent, this, info);
-  }
-  function containerFlowBound(parent, info) {
-    return containerFlow(parent, this, info);
-  }
-  function safeBound(value, config) {
-    return safe(this, value, config);
-  }
-  function remarkStringify(options) {
-    const compiler2 = (tree) => {
-      const settings = (
-        /** @type {Options} */
-        this.data("settings")
-      );
-      return toMarkdown(
-        tree,
-        Object.assign({}, settings, options, {
-          // Note: this option is not in the readme.
-          // The goal is for it to be set by plugins on `data` instead of being
-          // passed by users.
-          extensions: (
-            /** @type {ToMarkdownOptions['extensions']} */
-            this.data("toMarkdownExtensions") || []
-          )
-        })
-      );
-    };
-    Object.assign(this, { Compiler: compiler2 });
-  }
-  function removeUnderlines() {
-    const removeUnderlinesHelper = (tree) => {
-      let numChildElements = tree.children.length;
-      for (let i2 = 0; i2 < numChildElements; i2++) {
-        const node2 = tree.children[i2];
-        if (node2.type === "element") {
-          removeUnderlinesHelper(node2);
-          if (node2.tagName === "u") {
-            if (node2.children.length > 0) {
-              tree.children.splice(i2, 1, ...node2.children);
-              const numElementsAdded = node2.children.length - 1;
-              numChildElements += numElementsAdded;
-              i2 += numElementsAdded;
-            } else {
-              tree.children.splice(i2, 1);
-              numChildElements--;
-              i2--;
-            }
-          }
-        }
-      }
-    };
-    return removeUnderlinesHelper;
-  }
-  function cleanHTMLToMarkdown(cleanHTMLString) {
-    const markdownString = unified().use(rehypeParse, { fragment: true }).use(removeUnderlines).use(rehypeRemark$1).use(remarkGfm).use(remarkStringify).processSync(cleanHTMLString);
-    return markdownString.value;
-  }
-  function blocksToMarkdown(blocks2, schema, editor2) {
-    const exporter = createExternalHTMLExporter(schema, editor2);
-    const externalHTML = exporter.exportBlocks(blocks2);
-    return cleanHTMLToMarkdown(externalHTML);
-  }
-  function getChildIndex$1(node2) {
-    return Array.prototype.indexOf.call(node2.parentElement.childNodes, node2);
-  }
-  function isWhitespaceNode(node2) {
-    return node2.nodeType === 3 && !/\S/.test(node2.nodeValue || "");
-  }
-  function liftNestedListsToParent(element2) {
-    element2.querySelectorAll("li > ul, li > ol").forEach((list2) => {
-      const index2 = getChildIndex$1(list2);
-      const parentListItem = list2.parentElement;
-      const siblingsAfter = Array.from(parentListItem.childNodes).slice(
-        index2 + 1
-      );
-      list2.remove();
-      siblingsAfter.forEach((sibling) => {
-        sibling.remove();
-      });
-      parentListItem.insertAdjacentElement("afterend", list2);
-      siblingsAfter.reverse().forEach((sibling) => {
-        if (isWhitespaceNode(sibling)) {
-          return;
-        }
-        const siblingContainer = document.createElement("li");
-        siblingContainer.append(sibling);
-        list2.insertAdjacentElement("afterend", siblingContainer);
-      });
-      if (parentListItem.childNodes.length === 0) {
-        parentListItem.remove();
-      }
-    });
-  }
-  function createGroups(element2) {
-    element2.querySelectorAll("li + ul, li + ol").forEach((list2) => {
-      var _a, _b;
-      const listItem2 = list2.previousElementSibling;
-      const blockContainer = document.createElement("div");
-      listItem2.insertAdjacentElement("afterend", blockContainer);
-      blockContainer.append(listItem2);
-      const blockGroup = document.createElement("div");
-      blockGroup.setAttribute("data-node-type", "blockGroup");
-      blockContainer.append(blockGroup);
-      while (((_a = blockContainer.nextElementSibling) == null ? void 0 : _a.nodeName) === "UL" || ((_b = blockContainer.nextElementSibling) == null ? void 0 : _b.nodeName) === "OL") {
-        blockGroup.append(blockContainer.nextElementSibling);
-      }
-    });
-  }
-  function nestedListsToBlockNoteStructure(elementOrHTML) {
-    if (typeof elementOrHTML === "string") {
-      const element2 = document.createElement("div");
-      element2.innerHTML = elementOrHTML;
-      elementOrHTML = element2;
-    }
-    liftNestedListsToParent(elementOrHTML);
-    createGroups(elementOrHTML);
-    return elementOrHTML;
-  }
-  async function HTMLToBlocks(html2, blockSchema, icSchema, styleSchema, pmSchema) {
-    const htmlNode = nestedListsToBlockNoteStructure(html2);
-    const parser2 = DOMParser$1.fromSchema(pmSchema);
-    const parentNode2 = parser2.parse(htmlNode, {
-      topNode: pmSchema.nodes["blockGroup"].create()
-    });
-    const blocks2 = [];
-    for (let i2 = 0; i2 < parentNode2.childCount; i2++) {
-      blocks2.push(
-        nodeToBlock(parentNode2.child(i2), blockSchema, icSchema, styleSchema)
-      );
-    }
-    return blocks2;
-  }
-  const content = {
+  const content$2 = {
     tokenize: initializeContent
   };
   function initializeContent(effects) {
@@ -39524,7 +33079,7 @@ img.ProseMirror-separator {
           effects.attempt(
             this.parser.constructs.flow,
             afterConstruct,
-            effects.attempt(content$1, afterConstruct)
+            effects.attempt(content$3, afterConstruct)
           ),
           "linePrefix"
         )
@@ -39558,7 +33113,7 @@ img.ProseMirror-separator {
     resolveAll: createResolver()
   };
   const string$1 = initializeFactory("string");
-  const text$2 = initializeFactory("text");
+  const text$4 = initializeFactory("text");
   function initializeFactory(field) {
     return {
       tokenize: initializeText,
@@ -40004,19 +33559,19 @@ img.ProseMirror-separator {
     return result.join("");
   }
   const document$1 = {
-    [42]: list$2,
-    [43]: list$2,
-    [45]: list$2,
-    [48]: list$2,
-    [49]: list$2,
-    [50]: list$2,
-    [51]: list$2,
-    [52]: list$2,
-    [53]: list$2,
-    [54]: list$2,
-    [55]: list$2,
-    [56]: list$2,
-    [57]: list$2,
+    [42]: list$4,
+    [43]: list$4,
+    [45]: list$4,
+    [48]: list$4,
+    [49]: list$4,
+    [50]: list$4,
+    [51]: list$4,
+    [52]: list$4,
+    [53]: list$4,
+    [54]: list$4,
+    [55]: list$4,
+    [56]: list$4,
+    [57]: list$4,
     [62]: blockQuote
   };
   const contentInitial = {
@@ -40041,7 +33596,7 @@ img.ProseMirror-separator {
     [38]: characterReference,
     [92]: characterEscape
   };
-  const text$1 = {
+  const text$3 = {
     [-5]: lineEnding,
     [-4]: lineEnding,
     [-3]: lineEnding,
@@ -40074,7 +33629,7 @@ img.ProseMirror-separator {
     flowInitial,
     insideSpan,
     string,
-    text: text$1
+    text: text$3
   }, Symbol.toStringTag, { value: "Module" }));
   function parse(options) {
     const settings = options || {};
@@ -40086,11 +33641,11 @@ img.ProseMirror-separator {
       defined: [],
       lazy: {},
       constructs: constructs2,
-      content: create2(content),
+      content: create2(content$2),
       document: create2(document$2),
       flow: create2(flow$1),
       string: create2(string$1),
-      text: create2(text$2)
+      text: create2(text$4)
     };
     return parser2;
     function create2(initial) {
@@ -40185,7 +33740,7 @@ img.ProseMirror-separator {
     }
     return events;
   }
-  const own$2 = {}.hasOwnProperty;
+  const own$4 = {}.hasOwnProperty;
   const fromMarkdown = (
     /**
      * @type {(
@@ -40309,7 +33864,7 @@ img.ProseMirror-separator {
         thematicBreak: closer()
       }
     };
-    configure(config, (options || {}).mdastExtensions || []);
+    configure$1(config, (options || {}).mdastExtensions || []);
     const data = {};
     return compile;
     function compile(events) {
@@ -40343,7 +33898,7 @@ img.ProseMirror-separator {
       index2 = -1;
       while (++index2 < events.length) {
         const handler = config[events[index2][0]];
-        if (own$2.call(handler, events[index2][1].type)) {
+        if (own$4.call(handler, events[index2][1].type)) {
           handler[events[index2][1].type].call(
             Object.assign(
               {
@@ -40863,12 +34418,12 @@ img.ProseMirror-separator {
       offset: d.offset
     };
   }
-  function configure(combined, extensions2) {
+  function configure$1(combined, extensions2) {
     let index2 = -1;
     while (++index2 < extensions2.length) {
       const value = extensions2[index2];
       if (Array.isArray(value)) {
-        configure(combined, value);
+        configure$1(combined, value);
       } else {
         extension(combined, value);
       }
@@ -40877,7 +34432,7 @@ img.ProseMirror-separator {
   function extension(combined, extension2) {
     let key2;
     for (key2 in extension2) {
-      if (own$2.call(extension2, key2)) {
+      if (own$4.call(extension2, key2)) {
         if (key2 === "canContainEols") {
           const right = extension2[key2];
           if (right) {
@@ -40936,7 +34491,7 @@ img.ProseMirror-separator {
     };
     Object.assign(this, { Parser: parser2 });
   }
-  function blockquote(state, node2) {
+  function blockquote$2(state, node2) {
     const result = {
       type: "element",
       tagName: "blockquote",
@@ -40946,12 +34501,12 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function hardBreak(state, node2) {
+  function hardBreak$1(state, node2) {
     const result = { type: "element", tagName: "br", properties: {}, children: [] };
     state.patch(node2, result);
     return [state.applyData(node2, result), { type: "text", value: "\n" }];
   }
-  function code$1(state, node2) {
+  function code$3(state, node2) {
     const value = node2.value ? node2.value + "\n" : "";
     const lang = node2.lang ? node2.lang.match(/^[^ \t]+(?=[ \t]|$)/) : null;
     const properties = {};
@@ -40983,7 +34538,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function emphasis(state, node2) {
+  function emphasis$1(state, node2) {
     const result = {
       type: "element",
       tagName: "em",
@@ -41046,7 +34601,7 @@ img.ProseMirror-separator {
       position: node2.position
     });
   }
-  function heading(state, node2) {
+  function heading$2(state, node2) {
     const result = {
       type: "element",
       tagName: "h" + node2.depth,
@@ -41056,7 +34611,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function html(state, node2) {
+  function html$1(state, node2) {
     if (state.dangerous) {
       const result = { type: "raw", value: node2.value };
       state.patch(node2, result);
@@ -41090,7 +34645,7 @@ img.ProseMirror-separator {
     }
     return contents;
   }
-  function imageReference(state, node2) {
+  function imageReference$1(state, node2) {
     const def = state.definition(node2.identifier);
     if (!def) {
       return revert(state, node2);
@@ -41103,7 +34658,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function image(state, node2) {
+  function image$1(state, node2) {
     const properties = { src: normalizeUri(node2.url) };
     if (node2.alt !== null && node2.alt !== void 0) {
       properties.alt = node2.alt;
@@ -41115,7 +34670,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function inlineCode(state, node2) {
+  function inlineCode$1(state, node2) {
     const text2 = { type: "text", value: node2.value.replace(/\r?\n|\r/g, " ") };
     state.patch(node2, text2);
     const result = {
@@ -41127,7 +34682,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function linkReference(state, node2) {
+  function linkReference$1(state, node2) {
     const def = state.definition(node2.identifier);
     if (!def) {
       return revert(state, node2);
@@ -41145,7 +34700,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function link(state, node2) {
+  function link$1(state, node2) {
     const properties = { href: normalizeUri(node2.url) };
     if (node2.title !== null && node2.title !== void 0) {
       properties.title = node2.title;
@@ -41220,7 +34775,7 @@ img.ProseMirror-separator {
     const spread = node2.spread;
     return spread === void 0 || spread === null ? node2.children.length > 1 : spread;
   }
-  function list(state, node2) {
+  function list$3(state, node2) {
     const properties = {};
     const results = state.all(node2);
     let index2 = -1;
@@ -41243,7 +34798,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function paragraph(state, node2) {
+  function paragraph$1(state, node2) {
     const result = {
       type: "element",
       tagName: "p",
@@ -41253,12 +34808,12 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function root(state, node2) {
+  function root$2(state, node2) {
     const result = { type: "root", children: state.wrap(state.all(node2)) };
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function strong(state, node2) {
+  function strong$2(state, node2) {
     const result = {
       type: "element",
       tagName: "strong",
@@ -41287,7 +34842,7 @@ img.ProseMirror-separator {
       };
     }
   }
-  function table(state, node2) {
+  function table$1(state, node2) {
     const rows = state.all(node2);
     const firstRow = rows.shift();
     const tableContent = [];
@@ -41323,7 +34878,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function tableRow(state, node2, parent) {
+  function tableRow$1(state, node2, parent) {
     const siblings2 = parent ? parent.children : void 0;
     const rowIndex = siblings2 ? siblings2.indexOf(node2) : 1;
     const tagName = rowIndex === 0 ? "th" : "td";
@@ -41355,7 +34910,7 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function tableCell(state, node2) {
+  function tableCell$1(state, node2) {
     const result = {
       type: "element",
       tagName: "td",
@@ -41404,12 +34959,12 @@ img.ProseMirror-separator {
     }
     return endIndex > startIndex ? value.slice(startIndex, endIndex) : "";
   }
-  function text(state, node2) {
+  function text$2(state, node2) {
     const result = { type: "text", value: trimLines(String(node2.value)) };
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function thematicBreak(state, node2) {
+  function thematicBreak$1(state, node2) {
     const result = {
       type: "element",
       tagName: "hr",
@@ -41419,43 +34974,226 @@ img.ProseMirror-separator {
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  const handlers = {
-    blockquote,
-    break: hardBreak,
-    code: code$1,
+  const handlers$1 = {
+    blockquote: blockquote$2,
+    break: hardBreak$1,
+    code: code$3,
     delete: strikethrough,
-    emphasis,
+    emphasis: emphasis$1,
     footnoteReference,
     footnote,
-    heading,
-    html,
-    imageReference,
-    image,
-    inlineCode,
-    linkReference,
-    link,
+    heading: heading$2,
+    html: html$1,
+    imageReference: imageReference$1,
+    image: image$1,
+    inlineCode: inlineCode$1,
+    linkReference: linkReference$1,
+    link: link$1,
     listItem,
-    list,
-    paragraph,
-    root,
-    strong,
-    table,
-    tableCell,
-    tableRow,
-    text,
-    thematicBreak,
-    toml: ignore,
-    yaml: ignore,
-    definition: ignore,
-    footnoteDefinition: ignore
+    list: list$3,
+    paragraph: paragraph$1,
+    root: root$2,
+    strong: strong$2,
+    table: table$1,
+    tableCell: tableCell$1,
+    tableRow: tableRow$1,
+    text: text$2,
+    thematicBreak: thematicBreak$1,
+    toml: ignore$1,
+    yaml: ignore$1,
+    definition: ignore$1,
+    footnoteDefinition: ignore$1
   };
-  function ignore() {
+  function ignore$1() {
     return null;
   }
+  const convert$3 = (
+    /**
+     * @type {(
+     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok$3;
+      }
+      if (typeof test === "string") {
+        return typeFactory$3(test);
+      }
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory$5(test) : propsFactory$3(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$5(test);
+      }
+      throw new Error("Expected function, string, or object as test");
+    }
+  );
+  function anyFactory$5(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convert$3(tests[index2]);
+    }
+    return castFactory$5(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters))
+          return true;
+      }
+      return false;
+    }
+  }
+  function propsFactory$3(check) {
+    return castFactory$5(all2);
+    function all2(node2) {
+      let key2;
+      for (key2 in check) {
+        if (node2[key2] !== check[key2])
+          return false;
+      }
+      return true;
+    }
+  }
+  function typeFactory$3(check) {
+    return castFactory$5(type);
+    function type(node2) {
+      return node2 && node2.type === check;
+    }
+  }
+  function castFactory$5(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return Boolean(
+        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
+        Boolean(check.call(this, node2, ...parameters))
+      );
+    }
+  }
+  function ok$3() {
+    return true;
+  }
+  function color(d) {
+    return d;
+  }
+  const CONTINUE = true;
+  const EXIT = false;
+  const SKIP = "skip";
+  const visitParents = (
+    /**
+     * @type {(
+     *   (<Tree extends Node, Check extends Test>(tree: Tree, test: Check, visitor: BuildVisitor<Tree, Check>, reverse?: boolean | null | undefined) => void) &
+     *   (<Tree extends Node>(tree: Tree, visitor: BuildVisitor<Tree>, reverse?: boolean | null | undefined) => void)
+     * )}
+     */
+    /**
+     * @param {Node} tree
+     * @param {Test} test
+     * @param {Visitor<Node>} visitor
+     * @param {boolean | null | undefined} [reverse]
+     * @returns {void}
+     */
+    function(tree, test, visitor, reverse) {
+      if (typeof test === "function" && typeof visitor !== "function") {
+        reverse = visitor;
+        visitor = test;
+        test = null;
+      }
+      const is = convert$3(test);
+      const step = reverse ? -1 : 1;
+      factory(tree, void 0, [])();
+      function factory(node2, index2, parents) {
+        const value = node2 && typeof node2 === "object" ? node2 : {};
+        if (typeof value.type === "string") {
+          const name = (
+            // `hast`
+            typeof value.tagName === "string" ? value.tagName : (
+              // `xast`
+              typeof value.name === "string" ? value.name : void 0
+            )
+          );
+          Object.defineProperty(visit2, "name", {
+            value: "node (" + color(node2.type + (name ? "<" + name + ">" : "")) + ")"
+          });
+        }
+        return visit2;
+        function visit2() {
+          let result = [];
+          let subresult;
+          let offset;
+          let grandparents;
+          if (!test || is(node2, index2, parents[parents.length - 1] || null)) {
+            result = toResult(visitor(node2, parents));
+            if (result[0] === EXIT) {
+              return result;
+            }
+          }
+          if (node2.children && result[0] !== SKIP) {
+            offset = (reverse ? node2.children.length : -1) + step;
+            grandparents = parents.concat(node2);
+            while (offset > -1 && offset < node2.children.length) {
+              subresult = factory(node2.children[offset], offset, grandparents)();
+              if (subresult[0] === EXIT) {
+                return subresult;
+              }
+              offset = typeof subresult[1] === "number" ? subresult[1] : offset + step;
+            }
+          }
+          return result;
+        }
+      }
+    }
+  );
+  function toResult(value) {
+    if (Array.isArray(value)) {
+      return value;
+    }
+    if (typeof value === "number") {
+      return [CONTINUE, value];
+    }
+    return [value];
+  }
+  const visit = (
+    /**
+     * @type {(
+     *   (<Tree extends Node, Check extends Test>(tree: Tree, test: Check, visitor: BuildVisitor<Tree, Check>, reverse?: boolean | null | undefined) => void) &
+     *   (<Tree extends Node>(tree: Tree, visitor: BuildVisitor<Tree>, reverse?: boolean | null | undefined) => void)
+     * )}
+     */
+    /**
+     * @param {Node} tree
+     * @param {Test} test
+     * @param {Visitor} visitor
+     * @param {boolean | null | undefined} [reverse]
+     * @returns {void}
+     */
+    function(tree, test, visitor, reverse) {
+      if (typeof test === "function" && typeof visitor !== "function") {
+        reverse = visitor;
+        visitor = test;
+        test = null;
+      }
+      visitParents(tree, test, overload, reverse);
+      function overload(node2, parents) {
+        const parent = parents[parents.length - 1];
+        return visitor(
+          node2,
+          parent ? parent.children.indexOf(node2) : null,
+          parent
+        );
+      }
+    }
+  );
   function generated(node2) {
     return !node2 || !node2.position || !node2.position.start || !node2.position.start.line || !node2.position.start.column || !node2.position.end || !node2.position.end.line || !node2.position.end.column;
   }
-  const own$1 = {}.hasOwnProperty;
+  const own$3 = {}.hasOwnProperty;
   function definitions(tree) {
     const cache = /* @__PURE__ */ Object.create(null);
     if (!tree || !tree.type) {
@@ -41463,20 +35201,20 @@ img.ProseMirror-separator {
     }
     visit(tree, "definition", (definition3) => {
       const id = clean(definition3.identifier);
-      if (id && !own$1.call(cache, id)) {
+      if (id && !own$3.call(cache, id)) {
         cache[id] = definition3;
       }
     });
     return definition2;
     function definition2(identifier) {
       const id = clean(identifier);
-      return id && own$1.call(cache, id) ? cache[id] : null;
+      return id && own$3.call(cache, id) ? cache[id] : null;
     }
   }
   function clean(value) {
     return String(value || "").toUpperCase();
   }
-  const own = {}.hasOwnProperty;
+  const own$2 = {}.hasOwnProperty;
   function createState(tree, options) {
     const settings = options || {};
     const dangerous2 = settings.allowDangerousHtml || false;
@@ -41491,7 +35229,7 @@ img.ProseMirror-separator {
     state.footnoteBackLabel = settings.footnoteBackLabel || "Back to content";
     state.unknownHandler = settings.unknownHandler;
     state.passThrough = settings.passThrough;
-    state.handlers = { ...handlers, ...settings.handlers };
+    state.handlers = { ...handlers$1, ...settings.handlers };
     state.definition = definitions(tree);
     state.footnoteById = footnoteById;
     state.footnoteOrder = [];
@@ -41500,11 +35238,11 @@ img.ProseMirror-separator {
     state.applyData = applyData;
     state.one = oneBound;
     state.all = allBound;
-    state.wrap = wrap;
+    state.wrap = wrap$1;
     state.augment = augment;
     visit(tree, "footnoteDefinition", (definition2) => {
       const id = String(definition2.identifier).toUpperCase();
-      if (!own.call(footnoteById, id)) {
+      if (!own$2.call(footnoteById, id)) {
         footnoteById[id] = definition2;
       }
     });
@@ -41551,10 +35289,10 @@ img.ProseMirror-separator {
       });
     }
     function oneBound(node2, parent) {
-      return one(state, node2, parent);
+      return one$1(state, node2, parent);
     }
     function allBound(parent) {
-      return all(state, parent);
+      return all$2(state, parent);
     }
   }
   function patch(from2, to) {
@@ -41588,29 +35326,29 @@ img.ProseMirror-separator {
     }
     return result;
   }
-  function one(state, node2, parent) {
+  function one$1(state, node2, parent) {
     const type = node2 && node2.type;
     if (!type) {
       throw new Error("Expected node, got `" + node2 + "`");
     }
-    if (own.call(state.handlers, type)) {
+    if (own$2.call(state.handlers, type)) {
       return state.handlers[type](state, node2, parent);
     }
     if (state.passThrough && state.passThrough.includes(type)) {
-      return "children" in node2 ? { ...node2, children: all(state, node2) } : node2;
+      return "children" in node2 ? { ...node2, children: all$2(state, node2) } : node2;
     }
     if (state.unknownHandler) {
       return state.unknownHandler(state, node2, parent);
     }
     return defaultUnknownHandler(state, node2);
   }
-  function all(state, parent) {
+  function all$2(state, parent) {
     const values = [];
     if ("children" in parent) {
       const nodes = parent.children;
       let index2 = -1;
       while (++index2 < nodes.length) {
-        const result = one(state, nodes[index2], parent);
+        const result = one$1(state, nodes[index2], parent);
         if (result) {
           if (index2 && nodes[index2 - 1].type === "break") {
             if (!Array.isArray(result) && result.type === "text") {
@@ -41635,16 +35373,16 @@ img.ProseMirror-separator {
   }
   function defaultUnknownHandler(state, node2) {
     const data = node2.data || {};
-    const result = "value" in node2 && !(own.call(data, "hProperties") || own.call(data, "hChildren")) ? { type: "text", value: node2.value } : {
+    const result = "value" in node2 && !(own$2.call(data, "hProperties") || own$2.call(data, "hChildren")) ? { type: "text", value: node2.value } : {
       type: "element",
       tagName: "div",
       properties: {},
-      children: all(state, node2)
+      children: all$2(state, node2)
     };
     state.patch(node2, result);
     return state.applyData(node2, result);
   }
-  function wrap(nodes, loose) {
+  function wrap$1(nodes, loose) {
     const result = [];
     let index2 = -1;
     if (loose) {
@@ -41759,21 +35497,91 @@ img.ProseMirror-separator {
   const remarkRehype = (
     /** @type {(import('unified').Plugin<[Processor, Options?]|[null|undefined, Options?]|[Options]|[], MdastRoot>)} */
     function(destination, options) {
-      return destination && "run" in destination ? bridge(destination, options) : mutate(destination || options);
+      return destination && "run" in destination ? bridge$1(destination, options) : mutate$1(destination || options);
     }
   );
   const remarkRehype$1 = remarkRehype;
-  function bridge(destination, options) {
+  function bridge$1(destination, options) {
     return (node2, file, next) => {
       destination.run(toHast(node2, options), file, (error) => {
         next(error);
       });
     };
   }
-  function mutate(options) {
+  function mutate$1(options) {
     return (node2) => toHast(node2, options);
   }
-  function code(state, node2) {
+  function getChildIndex$1(node2) {
+    return Array.prototype.indexOf.call(node2.parentElement.childNodes, node2);
+  }
+  function isWhitespaceNode(node2) {
+    return node2.nodeType === 3 && !/\S/.test(node2.nodeValue || "");
+  }
+  function liftNestedListsToParent(element2) {
+    element2.querySelectorAll("li > ul, li > ol").forEach((list2) => {
+      const index2 = getChildIndex$1(list2);
+      const parentListItem = list2.parentElement;
+      const siblingsAfter = Array.from(parentListItem.childNodes).slice(
+        index2 + 1
+      );
+      list2.remove();
+      siblingsAfter.forEach((sibling) => {
+        sibling.remove();
+      });
+      parentListItem.insertAdjacentElement("afterend", list2);
+      siblingsAfter.reverse().forEach((sibling) => {
+        if (isWhitespaceNode(sibling)) {
+          return;
+        }
+        const siblingContainer = document.createElement("li");
+        siblingContainer.append(sibling);
+        list2.insertAdjacentElement("afterend", siblingContainer);
+      });
+      if (parentListItem.childNodes.length === 0) {
+        parentListItem.remove();
+      }
+    });
+  }
+  function createGroups(element2) {
+    element2.querySelectorAll("li + ul, li + ol").forEach((list2) => {
+      var _a, _b;
+      const listItem2 = list2.previousElementSibling;
+      const blockContainer = document.createElement("div");
+      listItem2.insertAdjacentElement("afterend", blockContainer);
+      blockContainer.append(listItem2);
+      const blockGroup = document.createElement("div");
+      blockGroup.setAttribute("data-node-type", "blockGroup");
+      blockContainer.append(blockGroup);
+      while (((_a = blockContainer.nextElementSibling) == null ? void 0 : _a.nodeName) === "UL" || ((_b = blockContainer.nextElementSibling) == null ? void 0 : _b.nodeName) === "OL") {
+        blockGroup.append(blockContainer.nextElementSibling);
+      }
+    });
+  }
+  function nestedListsToBlockNoteStructure(elementOrHTML) {
+    if (typeof elementOrHTML === "string") {
+      const element2 = document.createElement("div");
+      element2.innerHTML = elementOrHTML;
+      elementOrHTML = element2;
+    }
+    liftNestedListsToParent(elementOrHTML);
+    createGroups(elementOrHTML);
+    return elementOrHTML;
+  }
+  async function HTMLToBlocks(html2, blockSchema, icSchema, styleSchema, pmSchema) {
+    const htmlNode = nestedListsToBlockNoteStructure(html2);
+    const parser2 = DOMParser$1.fromSchema(pmSchema);
+    const parentNode2 = parser2.parse(htmlNode, {
+      topNode: pmSchema.nodes["blockGroup"].create()
+    });
+    const blocks2 = [];
+    for (let i2 = 0; i2 < parentNode2.childCount; i2++) {
+      blocks2.push(
+        nodeToBlock(parentNode2.child(i2), blockSchema, icSchema, styleSchema)
+      );
+    }
+    return blocks2;
+  }
+  function code$2(state, node2) {
     const value = node2.value ? node2.value + "\n" : "";
     const properties = {};
     if (node2.lang) {
@@ -41802,8 +35610,8 @@ img.ProseMirror-separator {
   function markdownToBlocks(markdown, blockSchema, icSchema, styleSchema, pmSchema) {
     const htmlString = unified().use(remarkParse).use(remarkGfm).use(remarkRehype$1, {
       handlers: {
-        ...handlers,
-        code
+        ...handlers$1,
+        code: code$2
       }
     }).use(rehypeStringify).processSync(markdown);
     return HTMLToBlocks(
@@ -41813,6 +35621,6431 @@ img.ProseMirror-separator {
       styleSchema,
       pmSchema
     );
+  }
+  function getNodeById(id, doc2) {
+    let targetNode = void 0;
+    let posBeforeNode = void 0;
+    doc2.firstChild.descendants((node2, pos) => {
+      if (targetNode) {
+        return false;
+      }
+      if (node2.type.name !== "blockContainer" || node2.attrs.id !== id) {
+        return true;
+      }
+      targetNode = node2;
+      posBeforeNode = pos + 1;
+      return false;
+    });
+    if (targetNode === void 0 || posBeforeNode === void 0) {
+      throw Error("Could not find block in the editor with matching ID.");
+    }
+    return {
+      node: targetNode,
+      posBeforeNode
+    };
+  }
+  const headingPropSchema = {
+    ...defaultProps,
+    level: { default: 1, values: [1, 2, 3] }
+  };
+  const HeadingBlockContent = createStronglyTypedTiptapNode({
+    name: "heading",
+    content: "inline*",
+    group: "blockContent",
+    addAttributes() {
+      return {
+        level: {
+          default: 1,
+          // instead of "level" attributes, use "data-level"
+          parseHTML: (element2) => {
+            const attr = element2.getAttribute("data-level");
+            const parsed = parseInt(attr);
+            if (isFinite(parsed)) {
+              return parsed;
+            }
+            return void 0;
+          },
+          renderHTML: (attributes) => {
+            return {
+              "data-level": attributes.level.toString()
+            };
+          }
+        }
+      };
+    },
+    addInputRules() {
+      return [
+        ...[1, 2, 3].map((level) => {
+          return new InputRule({
+            find: new RegExp(`^(#{${level}})\\s$`),
+            handler: ({ state, chain, range }) => {
+              chain().BNUpdateBlock(state.selection.from, {
+                type: "heading",
+                props: {
+                  level
+                }
+              }).deleteRange({ from: range.from, to: range.to });
+            }
+          });
+        })
+      ];
+    },
+    addKeyboardShortcuts() {
+      return {
+        "Mod-Alt-1": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "heading",
+          props: {
+            level: 1
+          }
+        }),
+        "Mod-Alt-2": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "heading",
+          props: {
+            level: 2
+          }
+        }),
+        "Mod-Alt-3": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "heading",
+          props: {
+            level: 3
+          }
+        })
+      };
+    },
+    parseHTML() {
+      return [
+        {
+          tag: "div[data-content-type=" + this.name + "]",
+          getAttrs: (element2) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            return {
+              level: element2.getAttribute("data-level")
+            };
+          }
+        },
+        {
+          tag: "h1",
+          attrs: { level: 1 },
+          node: "heading"
+        },
+        {
+          tag: "h2",
+          attrs: { level: 2 },
+          node: "heading"
+        },
+        {
+          tag: "h3",
+          attrs: { level: 3 },
+          node: "heading"
+        }
+      ];
+    },
+    renderHTML({ node: node2, HTMLAttributes }) {
+      var _a, _b;
+      return createDefaultBlockDOMOutputSpec(
+        this.name,
+        `h${node2.attrs.level}`,
+        {
+          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
+          ...HTMLAttributes
+        },
+        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
+      );
+    },
+    addPasteRules() {
+      return [
+        new PasteRule({
+          find: /.*/g,
+          handler: ({ state, chain, range, pasteEvent }) => {
+            var _a;
+            const { node: node2 } = getBlockInfoFromPos(
+              state.doc,
+              state.selection.from
+            );
+            const id = node2.attrs.id;
+            const { posBeforeNode } = getNodeById(id, state.doc);
+            const nodeAfter = state.doc.resolve(range.from).nodeAfter;
+            const text2 = ((_a = pasteEvent.clipboardData) == null ? void 0 : _a.getData("text")) || (nodeAfter == null ? void 0 : nodeAfter.textContent) || "";
+            chain().deleteRange({ from: range.from, to: range.to }).run();
+            parseMardown(text2, posBeforeNode, this.editor, {
+              state,
+              chain,
+              range
+            });
+          }
+        })
+      ];
+    }
+  });
+  const Heading = createBlockSpecFromStronglyTypedTiptapNode(
+    HeadingBlockContent,
+    headingPropSchema
+  );
+  const parseMardown = async (content2, posBeforeNode, editor2, props) => {
+    const { state, range } = props;
+    const blocksToInsert = await markdownToBlocks(
+      content2,
+      defaultBlockSchema,
+      defaultInlineContentSchema,
+      defaultStyleSchema,
+      state.schema
+    );
+    if (blocksToInsert == null ? void 0 : blocksToInsert.length) {
+      const nodesToInsert = [];
+      for (const blockSpec of blocksToInsert) {
+        nodesToInsert.push(
+          blockToNode(blockSpec, editor2.schema, defaultStyleSchema)
+        );
+      }
+      if (range.from === range.to) {
+        editor2.view.dispatch(
+          editor2.state.tr.insert(posBeforeNode, nodesToInsert)
+        );
+      }
+    }
+  };
+  class EventEmitter {
+    constructor() {
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      __publicField(this, "callbacks", {});
+    }
+    on(event, fn) {
+      if (!this.callbacks[event]) {
+        this.callbacks[event] = [];
+      }
+      this.callbacks[event].push(fn);
+      return () => this.off(event, fn);
+    }
+    emit(event, ...args) {
+      const callbacks = this.callbacks[event];
+      if (callbacks) {
+        callbacks.forEach((callback) => callback.apply(this, args));
+      }
+    }
+    off(event, fn) {
+      const callbacks = this.callbacks[event];
+      if (callbacks) {
+        if (fn) {
+          this.callbacks[event] = callbacks.filter((callback) => callback !== fn);
+        } else {
+          delete this.callbacks[event];
+        }
+      }
+    }
+    removeAllListeners() {
+      this.callbacks = {};
+    }
+  }
+  class ImageToolbarView {
+    constructor(pluginKey, pmView, updateImageToolbar) {
+      __publicField(this, "imageToolbarState");
+      __publicField(this, "updateImageToolbar");
+      __publicField(this, "prevWasEditable", null);
+      __publicField(this, "mouseDownHandler", () => {
+        var _a;
+        if ((_a = this.imageToolbarState) == null ? void 0 : _a.show) {
+          this.imageToolbarState.show = false;
+          this.updateImageToolbar();
+        }
+      });
+      // For dragging the whole editor.
+      __publicField(this, "dragstartHandler", () => {
+        var _a;
+        if ((_a = this.imageToolbarState) == null ? void 0 : _a.show) {
+          this.imageToolbarState.show = false;
+          this.updateImageToolbar();
+        }
+      });
+      __publicField(this, "blurHandler", (event) => {
+        var _a;
+        const editorWrapper = this.pmView.dom.parentElement;
+        if (
+          // An element is clicked.
+          event && event.relatedTarget && // Element is inside the editor.
+          (editorWrapper === event.relatedTarget || editorWrapper.contains(event.relatedTarget))
+        ) {
+          return;
+        }
+        if ((_a = this.imageToolbarState) == null ? void 0 : _a.show) {
+          this.imageToolbarState.show = false;
+          this.updateImageToolbar();
+        }
+      });
+      __publicField(this, "scrollHandler", () => {
+        var _a;
+        if ((_a = this.imageToolbarState) == null ? void 0 : _a.show) {
+          const blockElement = document.querySelector(
+            `[data-node-type="blockContainer"][data-id="${this.imageToolbarState.block.id}"]`
+          );
+          this.imageToolbarState.referencePos = blockElement.getBoundingClientRect();
+          this.updateImageToolbar();
+        }
+      });
+      this.pluginKey = pluginKey;
+      this.pmView = pmView;
+      this.updateImageToolbar = () => {
+        if (!this.imageToolbarState) {
+          throw new Error("Attempting to update uninitialized image toolbar");
+        }
+        updateImageToolbar(this.imageToolbarState);
+      };
+      pmView.dom.addEventListener("mousedown", this.mouseDownHandler);
+      pmView.dom.addEventListener("dragstart", this.dragstartHandler);
+      pmView.dom.addEventListener("blur", this.blurHandler);
+      document.addEventListener("scroll", this.scrollHandler);
+    }
+    update(view, prevState) {
+      var _a, _b;
+      const pluginState = this.pluginKey.getState(view.state);
+      if (!((_a = this.imageToolbarState) == null ? void 0 : _a.show) && pluginState.block) {
+        const blockElement = document.querySelector(
+          `[data-node-type="blockContainer"][data-id="${pluginState.block.id}"]`
+        );
+        this.imageToolbarState = {
+          show: true,
+          referencePos: blockElement.getBoundingClientRect(),
+          block: pluginState.block
+        };
+        this.updateImageToolbar();
+        return;
+      }
+      if (!view.state.selection.eq(prevState.selection) || !view.state.doc.eq(prevState.doc)) {
+        if ((_b = this.imageToolbarState) == null ? void 0 : _b.show) {
+          this.imageToolbarState.show = false;
+          this.updateImageToolbar();
+        }
+      }
+    }
+    destroy() {
+      this.pmView.dom.removeEventListener("mousedown", this.mouseDownHandler);
+      this.pmView.dom.removeEventListener("dragstart", this.dragstartHandler);
+      this.pmView.dom.removeEventListener("blur", this.blurHandler);
+      document.removeEventListener("scroll", this.scrollHandler);
+    }
+  }
+  const imageToolbarPluginKey = new PluginKey("ImageToolbarPlugin");
+  class ImageToolbarProsemirrorPlugin extends EventEmitter {
+    constructor(_editor) {
+      super();
+      __publicField(this, "view");
+      __publicField(this, "plugin");
+      this.plugin = new Plugin({
+        key: imageToolbarPluginKey,
+        view: (editorView) => {
+          this.view = new ImageToolbarView(
+            // editor,
+            imageToolbarPluginKey,
+            editorView,
+            (state) => {
+              this.emit("update", state);
+            }
+          );
+          return this.view;
+        },
+        state: {
+          init: () => {
+            return {
+              block: void 0
+            };
+          },
+          apply: (transaction) => {
+            var _a;
+            const block2 = (_a = transaction.getMeta(imageToolbarPluginKey)) == null ? void 0 : _a.block;
+            return {
+              block: block2
+            };
+          }
+        }
+      });
+    }
+    onUpdate(callback) {
+      return this.on("update", callback);
+    }
+  }
+  const imagePropSchema = {
+    textAlignment: defaultProps.textAlignment,
+    backgroundColor: defaultProps.backgroundColor,
+    // Image url.
+    url: {
+      default: ""
+    },
+    // Image caption.
+    caption: {
+      default: ""
+    },
+    // Image width in px.
+    width: {
+      default: 512
+    }
+  };
+  const textAlignmentToAlignItems = (textAlignment) => {
+    switch (textAlignment) {
+      case "left":
+        return "flex-start";
+      case "center":
+        return "center";
+      case "right":
+        return "flex-end";
+      default:
+        return "flex-start";
+    }
+  };
+  const minWidth = 64;
+  const renderImage = (block2, editor2) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "bn-image-block-content-wrapper";
+    wrapper.style.alignItems = textAlignmentToAlignItems(
+      block2.props.textAlignment
+    );
+    const addImageButton = document.createElement("div");
+    addImageButton.className = "bn-add-image-button";
+    const addImageButtonIcon = document.createElement("div");
+    addImageButtonIcon.className = "bn-add-image-button-icon";
+    const addImageButtonText = document.createElement("p");
+    addImageButtonText.className = "bn-add-image-button-text";
+    addImageButtonText.innerText = "Add Image";
+    const imageAndCaptionWrapper = document.createElement("div");
+    imageAndCaptionWrapper.className = "bn-image-and-caption-wrapper";
+    const imageWrapper = document.createElement("div");
+    imageWrapper.className = "bn-image-wrapper";
+    const image2 = document.createElement("img");
+    image2.className = "bn-image";
+    image2.src = block2.props.url;
+    image2.alt = "placeholder";
+    image2.contentEditable = "false";
+    image2.draggable = false;
+    image2.style.width = `${Math.min(
+      block2.props.width,
+      editor2.domElement.firstElementChild.clientWidth
+    )}px`;
+    const leftResizeHandle = document.createElement("div");
+    leftResizeHandle.className = "bn-image-resize-handle";
+    leftResizeHandle.style.left = "4px";
+    const rightResizeHandle = document.createElement("div");
+    rightResizeHandle.className = "bn-image-resize-handle";
+    rightResizeHandle.style.right = "4px";
+    const caption = document.createElement("p");
+    caption.className = "bn-image-caption";
+    caption.innerText = block2.props.caption;
+    caption.style.padding = block2.props.caption ? "4px" : "";
+    const handleEditorUpdate = () => {
+      var _a;
+      const selection = ((_a = editor2.getSelection()) == null ? void 0 : _a.blocks) || [];
+      const currentBlock = editor2.getTextCursorPosition().block;
+      const isSelected = [currentBlock, ...selection].find(
+        (selectedBlock) => selectedBlock.id === block2.id
+      ) !== void 0;
+      if (isSelected) {
+        addImageButton.style.outline = "4px solid rgb(100, 160, 255)";
+        imageAndCaptionWrapper.style.outline = "4px solid rgb(100, 160, 255)";
+      } else {
+        addImageButton.style.outline = "";
+        imageAndCaptionWrapper.style.outline = "";
+      }
+    };
+    editor2.onEditorContentChange(handleEditorUpdate);
+    editor2.onEditorSelectionChange(handleEditorUpdate);
+    let resizeParams;
+    const windowMouseMoveHandler = (event) => {
+      if (!resizeParams) {
+        if (!editor2.isEditable && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
+          imageWrapper.removeChild(leftResizeHandle);
+          imageWrapper.removeChild(rightResizeHandle);
+        }
+        return;
+      }
+      let newWidth;
+      if (textAlignmentToAlignItems(block2.props.textAlignment) === "center") {
+        if (resizeParams.handleUsed === "left") {
+          newWidth = resizeParams.initialWidth + (resizeParams.initialClientX - event.clientX) * 2;
+        } else {
+          newWidth = resizeParams.initialWidth + (event.clientX - resizeParams.initialClientX) * 2;
+        }
+      } else {
+        if (resizeParams.handleUsed === "left") {
+          newWidth = resizeParams.initialWidth + resizeParams.initialClientX - event.clientX;
+        } else {
+          newWidth = resizeParams.initialWidth + event.clientX - resizeParams.initialClientX;
+        }
+      }
+      if (newWidth < minWidth) {
+        image2.style.width = `${minWidth}px`;
+      } else if (newWidth > editor2.domElement.firstElementChild.clientWidth) {
+        image2.style.width = `${editor2.domElement.firstElementChild.clientWidth}px`;
+      } else {
+        image2.style.width = `${newWidth}px`;
+      }
+    };
+    const windowMouseUpHandler = (event) => {
+      if ((!event.target || !imageWrapper.contains(event.target) || !editor2.isEditable) && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
+        imageWrapper.removeChild(leftResizeHandle);
+        imageWrapper.removeChild(rightResizeHandle);
+      }
+      if (!resizeParams) {
+        return;
+      }
+      resizeParams = void 0;
+      editor2.updateBlock(block2, {
+        type: "image",
+        props: {
+          // Removes "px" from the end of the width string and converts to float.
+          width: parseFloat(image2.style.width.slice(0, -2))
+        }
+      });
+    };
+    const addImageButtonMouseDownHandler = (event) => {
+      event.preventDefault();
+    };
+    const addImageButtonClickHandler = () => {
+      editor2._tiptapEditor.view.dispatch(
+        editor2._tiptapEditor.state.tr.setMeta(imageToolbarPluginKey, {
+          block: block2
+        })
+      );
+    };
+    const imageMouseEnterHandler = () => {
+      if (editor2.isEditable) {
+        imageWrapper.appendChild(leftResizeHandle);
+        imageWrapper.appendChild(rightResizeHandle);
+      }
+    };
+    const imageMouseLeaveHandler = (event) => {
+      if (event.relatedTarget === leftResizeHandle || event.relatedTarget === rightResizeHandle) {
+        return;
+      }
+      if (resizeParams) {
+        return;
+      }
+      if (editor2.isEditable && imageWrapper.contains(leftResizeHandle) && imageWrapper.contains(rightResizeHandle)) {
+        imageWrapper.removeChild(leftResizeHandle);
+        imageWrapper.removeChild(rightResizeHandle);
+      }
+    };
+    const leftResizeHandleMouseDownHandler = (event) => {
+      event.preventDefault();
+      imageWrapper.appendChild(leftResizeHandle);
+      imageWrapper.appendChild(rightResizeHandle);
+      resizeParams = {
+        handleUsed: "left",
+        initialWidth: block2.props.width,
+        initialClientX: event.clientX
+      };
+    };
+    const rightResizeHandleMouseDownHandler = (event) => {
+      event.preventDefault();
+      imageWrapper.appendChild(leftResizeHandle);
+      imageWrapper.appendChild(rightResizeHandle);
+      resizeParams = {
+        handleUsed: "right",
+        initialWidth: block2.props.width,
+        initialClientX: event.clientX
+      };
+    };
+    addImageButton.appendChild(addImageButtonIcon);
+    addImageButton.appendChild(addImageButtonText);
+    imageAndCaptionWrapper.appendChild(imageWrapper);
+    imageWrapper.appendChild(image2);
+    imageAndCaptionWrapper.appendChild(caption);
+    if (block2.props.url === "") {
+      wrapper.appendChild(addImageButton);
+    } else {
+      wrapper.appendChild(imageAndCaptionWrapper);
+    }
+    window.addEventListener("mousemove", windowMouseMoveHandler);
+    window.addEventListener("mouseup", windowMouseUpHandler);
+    addImageButton.addEventListener("mousedown", addImageButtonMouseDownHandler);
+    addImageButton.addEventListener("click", addImageButtonClickHandler);
+    image2.addEventListener("mouseenter", imageMouseEnterHandler);
+    image2.addEventListener("mouseleave", imageMouseLeaveHandler);
+    leftResizeHandle.addEventListener(
+      "mousedown",
+      leftResizeHandleMouseDownHandler
+    );
+    rightResizeHandle.addEventListener(
+      "mousedown",
+      rightResizeHandleMouseDownHandler
+    );
+    return {
+      dom: wrapper,
+      destroy: () => {
+        window.removeEventListener("mousemove", windowMouseMoveHandler);
+        window.removeEventListener("mouseup", windowMouseUpHandler);
+        addImageButton.removeEventListener(
+          "mousedown",
+          addImageButtonMouseDownHandler
+        );
+        addImageButton.removeEventListener("click", addImageButtonClickHandler);
+        leftResizeHandle.removeEventListener(
+          "mousedown",
+          leftResizeHandleMouseDownHandler
+        );
+        rightResizeHandle.removeEventListener(
+          "mousedown",
+          rightResizeHandleMouseDownHandler
+        );
+      }
+    };
+  };
+  const Image = createBlockSpec(
+    {
+      type: "image",
+      propSchema: imagePropSchema,
+      content: "none"
+    },
+    {
+      render: renderImage,
+      toExternalHTML: (block2) => {
+        if (block2.props.url === "") {
+          const div2 = document.createElement("p");
+          div2.innerHTML = "Add Image";
+          return {
+            dom: div2
+          };
+        }
+        const figure = document.createElement("figure");
+        const img2 = document.createElement("img");
+        img2.src = block2.props.url;
+        figure.appendChild(img2);
+        if (block2.props.caption !== "") {
+          const figcaption = document.createElement("figcaption");
+          figcaption.innerHTML = block2.props.caption;
+          figure.appendChild(figcaption);
+        }
+        return {
+          dom: figure
+        };
+      },
+      parse: (element2) => {
+        if (element2.tagName === "FIGURE") {
+          const img2 = element2.querySelector("img");
+          const caption = element2.querySelector("figcaption");
+          return {
+            url: (img2 == null ? void 0 : img2.getAttribute("src")) || "",
+            caption: (caption == null ? void 0 : caption.textContent) || (img2 == null ? void 0 : img2.getAttribute("alt")) || void 0
+          };
+        } else if (element2.tagName === "IMG") {
+          return {
+            url: element2.getAttribute("src") || "",
+            caption: element2.getAttribute("alt") || void 0
+          };
+        }
+        return void 0;
+      }
+    }
+  );
+  const handleEnter = (editor2) => {
+    const { node: node2, contentType } = getBlockInfoFromPos(
+      editor2.state.doc,
+      editor2.state.selection.from
+    );
+    const selectionEmpty = editor2.state.selection.anchor === editor2.state.selection.head;
+    if (!contentType.name.endsWith("ListItem") || !selectionEmpty) {
+      return false;
+    }
+    return editor2.commands.first(({ state, chain, commands: commands2 }) => [
+      () => (
+        // Changes list item block to a text block if the content is empty.
+        commands2.command(() => {
+          if (node2.textContent.length === 0) {
+            return commands2.BNUpdateBlock(state.selection.from, {
+              type: "paragraph",
+              props: {}
+            });
+          }
+          return false;
+        })
+      ),
+      () => (
+        // Splits the current block, moving content inside that's after the cursor to a new block of the same type
+        // below.
+        commands2.command(() => {
+          if (node2.textContent.length > 0) {
+            chain().deleteSelection().BNSplitBlock(state.selection.from, true).run();
+            return true;
+          }
+          return false;
+        })
+      )
+    ]);
+  };
+  const bulletListItemPropSchema = {
+    ...defaultProps
+  };
+  const BulletListItemBlockContent = createStronglyTypedTiptapNode({
+    name: "bulletListItem",
+    content: "inline*",
+    group: "blockContent",
+    addInputRules() {
+      return [
+        // Creates an unordered list when starting with "-", "+", or "*".
+        new InputRule({
+          find: new RegExp(`^[-+*]\\s$`),
+          handler: ({ state, chain, range }) => {
+            chain().BNUpdateBlock(state.selection.from, {
+              type: "bulletListItem",
+              props: {}
+            }).deleteRange({ from: range.from, to: range.to });
+          }
+        })
+      ];
+    },
+    addKeyboardShortcuts() {
+      return {
+        Enter: () => handleEnter(this.editor),
+        "Mod-Shift-8": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "bulletListItem",
+          props: {}
+        })
+      };
+    },
+    parseHTML() {
+      return [
+        // Case for regular HTML list structure.
+        {
+          tag: "div[data-content-type=" + this.name + "]"
+          // TODO: remove if we can't come up with test case that needs this
+        },
+        {
+          tag: "li",
+          getAttrs: (element2) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            const parent = element2.parentElement;
+            if (parent === null) {
+              return false;
+            }
+            if (parent.tagName === "UL" || parent.tagName === "DIV" && parent.parentElement.tagName === "UL") {
+              return {};
+            }
+            return false;
+          },
+          node: "bulletListItem"
+        },
+        // Case for BlockNote list structure.
+        {
+          tag: "p",
+          getAttrs: (element2) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            const parent = element2.parentElement;
+            if (parent === null) {
+              return false;
+            }
+            if (parent.getAttribute("data-content-type") === "bulletListItem") {
+              return {};
+            }
+            return false;
+          },
+          priority: 300,
+          node: "bulletListItem"
+        }
+      ];
+    },
+    renderHTML({ HTMLAttributes }) {
+      var _a, _b;
+      return createDefaultBlockDOMOutputSpec(
+        this.name,
+        // We use a <p> tag, because for <li> tags we'd need a <ul> element to put
+        // them in to be semantically correct, which we can't have due to the
+        // schema.
+        "p",
+        {
+          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
+          ...HTMLAttributes
+        },
+        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
+      );
+    }
+  });
+  const BulletListItem = createBlockSpecFromStronglyTypedTiptapNode(
+    BulletListItemBlockContent,
+    bulletListItemPropSchema
+  );
+  const PLUGIN_KEY$3 = new PluginKey(`numbered-list-indexing`);
+  const NumberedListIndexingPlugin = () => {
+    return new Plugin({
+      key: PLUGIN_KEY$3,
+      appendTransaction: (_transactions, _oldState, newState) => {
+        const tr2 = newState.tr;
+        tr2.setMeta("numberedListIndexing", true);
+        let modified = false;
+        newState.doc.descendants((node2, pos) => {
+          if (node2.type.name === "blockContainer" && node2.firstChild.type.name === "numberedListItem") {
+            let newIndex = "1";
+            const isFirstBlockInDoc = pos === 1;
+            const blockInfo = getBlockInfoFromPos(tr2.doc, pos + 1);
+            if (blockInfo === void 0) {
+              return;
+            }
+            if (!isFirstBlockInDoc) {
+              const prevBlockInfo = getBlockInfoFromPos(tr2.doc, pos - 2);
+              if (prevBlockInfo === void 0) {
+                return;
+              }
+              const isFirstBlockInNestingLevel = blockInfo.depth !== prevBlockInfo.depth;
+              if (!isFirstBlockInNestingLevel) {
+                const prevBlockContentNode = prevBlockInfo.contentNode;
+                const prevBlockContentType = prevBlockInfo.contentType;
+                const isPrevBlockOrderedListItem = prevBlockContentType.name === "numberedListItem";
+                if (isPrevBlockOrderedListItem) {
+                  const prevBlockIndex = prevBlockContentNode.attrs["index"];
+                  newIndex = (parseInt(prevBlockIndex) + 1).toString();
+                }
+              }
+            }
+            const contentNode = blockInfo.contentNode;
+            const index2 = contentNode.attrs["index"];
+            if (index2 !== newIndex) {
+              modified = true;
+              tr2.setNodeMarkup(pos + 1, void 0, {
+                index: newIndex
+              });
+            }
+          }
+        });
+        return modified ? tr2 : null;
+      }
+    });
+  };
+  const numberedListItemPropSchema = {
+    ...defaultProps
+  };
+  const NumberedListItemBlockContent = createStronglyTypedTiptapNode({
+    name: "numberedListItem",
+    content: "inline*",
+    group: "blockContent",
+    addAttributes() {
+      return {
+        index: {
+          default: null,
+          parseHTML: (element2) => element2.getAttribute("data-index"),
+          renderHTML: (attributes) => {
+            return {
+              "data-index": attributes.index
+            };
+          }
+        }
+      };
+    },
+    addInputRules() {
+      return [
+        // Creates an ordered list when starting with "1.".
+        new InputRule({
+          find: new RegExp(`^1\\.\\s$`),
+          handler: ({ state, chain, range }) => {
+            chain().BNUpdateBlock(state.selection.from, {
+              type: "numberedListItem",
+              props: {}
+            }).deleteRange({ from: range.from, to: range.to });
+          }
+        })
+      ];
+    },
+    addKeyboardShortcuts() {
+      return {
+        Enter: () => handleEnter(this.editor),
+        "Mod-Shift-7": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "numberedListItem",
+          props: {}
+        })
+      };
+    },
+    addProseMirrorPlugins() {
+      return [NumberedListIndexingPlugin()];
+    },
+    parseHTML() {
+      return [
+        {
+          tag: "div[data-content-type=" + this.name + "]"
+          // TODO: remove if we can't come up with test case that needs this
+        },
+        // Case for regular HTML list structure.
+        // (e.g.: when pasting from other apps)
+        {
+          tag: "li",
+          getAttrs: (element2) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            const parent = element2.parentElement;
+            if (parent === null) {
+              return false;
+            }
+            if (parent.tagName === "OL" || parent.tagName === "DIV" && parent.parentElement.tagName === "OL") {
+              return {};
+            }
+            return false;
+          },
+          node: "numberedListItem"
+        },
+        // Case for BlockNote list structure.
+        // (e.g.: when pasting from blocknote)
+        {
+          tag: "p",
+          getAttrs: (element2) => {
+            if (typeof element2 === "string") {
+              return false;
+            }
+            const parent = element2.parentElement;
+            if (parent === null) {
+              return false;
+            }
+            if (parent.getAttribute("data-content-type") === "numberedListItem") {
+              return {};
+            }
+            return false;
+          },
+          priority: 300,
+          node: "numberedListItem"
+        }
+      ];
+    },
+    renderHTML({ HTMLAttributes }) {
+      var _a, _b;
+      return createDefaultBlockDOMOutputSpec(
+        this.name,
+        // We use a <p> tag, because for <li> tags we'd need an <ol> element to
+        // put them in to be semantically correct, which we can't have due to the
+        // schema.
+        "p",
+        {
+          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
+          ...HTMLAttributes
+        },
+        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
+      );
+    }
+  });
+  const NumberedListItem = createBlockSpecFromStronglyTypedTiptapNode(
+    NumberedListItemBlockContent,
+    numberedListItemPropSchema
+  );
+  const paragraphPropSchema = {
+    ...defaultProps
+  };
+  const ParagraphBlockContent = createStronglyTypedTiptapNode({
+    name: "paragraph",
+    content: "inline*",
+    group: "blockContent",
+    parseHTML() {
+      return [
+        { tag: "div[data-content-type=" + this.name + "]" },
+        {
+          tag: "p",
+          priority: 200,
+          node: "paragraph"
+        }
+      ];
+    },
+    renderHTML({ HTMLAttributes }) {
+      var _a, _b;
+      return createDefaultBlockDOMOutputSpec(
+        this.name,
+        "p",
+        {
+          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
+          ...HTMLAttributes
+        },
+        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
+      );
+    }
+  });
+  const Paragraph = createBlockSpecFromStronglyTypedTiptapNode(
+    ParagraphBlockContent,
+    paragraphPropSchema
+  );
+  const TableCell = Node.create({
+    name: "tableCell",
+    addOptions() {
+      return {
+        HTMLAttributes: {}
+      };
+    },
+    content: "block+",
+    addAttributes() {
+      return {
+        colspan: {
+          default: 1
+        },
+        rowspan: {
+          default: 1
+        },
+        colwidth: {
+          default: null,
+          parseHTML: (element2) => {
+            const colwidth = element2.getAttribute("colwidth");
+            const value = colwidth ? [parseInt(colwidth, 10)] : null;
+            return value;
+          }
+        }
+      };
+    },
+    tableRole: "cell",
+    isolating: true,
+    parseHTML() {
+      return [
+        { tag: "td" }
+      ];
+    },
+    renderHTML({ HTMLAttributes }) {
+      return ["td", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+    }
+  });
+  const TableHeader = Node.create({
+    name: "tableHeader",
+    addOptions() {
+      return {
+        HTMLAttributes: {}
+      };
+    },
+    content: "block+",
+    addAttributes() {
+      return {
+        colspan: {
+          default: 1
+        },
+        rowspan: {
+          default: 1
+        },
+        colwidth: {
+          default: null,
+          parseHTML: (element2) => {
+            const colwidth = element2.getAttribute("colwidth");
+            const value = colwidth ? [parseInt(colwidth, 10)] : null;
+            return value;
+          }
+        }
+      };
+    },
+    tableRole: "header_cell",
+    isolating: true,
+    parseHTML() {
+      return [
+        { tag: "th" }
+      ];
+    },
+    renderHTML({ HTMLAttributes }) {
+      return ["th", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+    }
+  });
+  const TableRow = Node.create({
+    name: "tableRow",
+    addOptions() {
+      return {
+        HTMLAttributes: {}
+      };
+    },
+    content: "(tableCell | tableHeader)*",
+    tableRole: "row",
+    parseHTML() {
+      return [
+        { tag: "tr" }
+      ];
+    },
+    renderHTML({ HTMLAttributes }) {
+      return ["tr", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+    }
+  });
+  var readFromCache;
+  var addToCache;
+  if (typeof WeakMap != "undefined") {
+    let cache = /* @__PURE__ */ new WeakMap();
+    readFromCache = (key2) => cache.get(key2);
+    addToCache = (key2, value) => {
+      cache.set(key2, value);
+      return value;
+    };
+  } else {
+    const cache = [];
+    const cacheSize = 10;
+    let cachePos = 0;
+    readFromCache = (key2) => {
+      for (let i2 = 0; i2 < cache.length; i2 += 2)
+        if (cache[i2] == key2)
+          return cache[i2 + 1];
+    };
+    addToCache = (key2, value) => {
+      if (cachePos == cacheSize)
+        cachePos = 0;
+      cache[cachePos++] = key2;
+      return cache[cachePos++] = value;
+    };
+  }
+  var TableMap = class {
+    constructor(width, height, map2, problems) {
+      this.width = width;
+      this.height = height;
+      this.map = map2;
+      this.problems = problems;
+    }
+    // Find the dimensions of the cell at the given position.
+    findCell(pos) {
+      for (let i2 = 0; i2 < this.map.length; i2++) {
+        const curPos = this.map[i2];
+        if (curPos != pos)
+          continue;
+        const left = i2 % this.width;
+        const top = i2 / this.width | 0;
+        let right = left + 1;
+        let bottom = top + 1;
+        for (let j = 1; right < this.width && this.map[i2 + j] == curPos; j++) {
+          right++;
+        }
+        for (let j = 1; bottom < this.height && this.map[i2 + this.width * j] == curPos; j++) {
+          bottom++;
+        }
+        return { left, top, right, bottom };
+      }
+      throw new RangeError(`No cell with offset ${pos} found`);
+    }
+    // Find the left side of the cell at the given position.
+    colCount(pos) {
+      for (let i2 = 0; i2 < this.map.length; i2++) {
+        if (this.map[i2] == pos) {
+          return i2 % this.width;
+        }
+      }
+      throw new RangeError(`No cell with offset ${pos} found`);
+    }
+    // Find the next cell in the given direction, starting from the cell
+    // at `pos`, if any.
+    nextCell(pos, axis, dir) {
+      const { left, right, top, bottom } = this.findCell(pos);
+      if (axis == "horiz") {
+        if (dir < 0 ? left == 0 : right == this.width)
+          return null;
+        return this.map[top * this.width + (dir < 0 ? left - 1 : right)];
+      } else {
+        if (dir < 0 ? top == 0 : bottom == this.height)
+          return null;
+        return this.map[left + this.width * (dir < 0 ? top - 1 : bottom)];
+      }
+    }
+    // Get the rectangle spanning the two given cells.
+    rectBetween(a2, b) {
+      const {
+        left: leftA,
+        right: rightA,
+        top: topA,
+        bottom: bottomA
+      } = this.findCell(a2);
+      const {
+        left: leftB,
+        right: rightB,
+        top: topB,
+        bottom: bottomB
+      } = this.findCell(b);
+      return {
+        left: Math.min(leftA, leftB),
+        top: Math.min(topA, topB),
+        right: Math.max(rightA, rightB),
+        bottom: Math.max(bottomA, bottomB)
+      };
+    }
+    // Return the position of all cells that have the top left corner in
+    // the given rectangle.
+    cellsInRect(rect) {
+      const result = [];
+      const seen = {};
+      for (let row2 = rect.top; row2 < rect.bottom; row2++) {
+        for (let col = rect.left; col < rect.right; col++) {
+          const index2 = row2 * this.width + col;
+          const pos = this.map[index2];
+          if (seen[pos])
+            continue;
+          seen[pos] = true;
+          if (col == rect.left && col && this.map[index2 - 1] == pos || row2 == rect.top && row2 && this.map[index2 - this.width] == pos) {
+            continue;
+          }
+          result.push(pos);
+        }
+      }
+      return result;
+    }
+    // Return the position at which the cell at the given row and column
+    // starts, or would start, if a cell started there.
+    positionAt(row2, col, table2) {
+      for (let i2 = 0, rowStart = 0; ; i2++) {
+        const rowEnd = rowStart + table2.child(i2).nodeSize;
+        if (i2 == row2) {
+          let index2 = col + row2 * this.width;
+          const rowEndIndex = (row2 + 1) * this.width;
+          while (index2 < rowEndIndex && this.map[index2] < rowStart)
+            index2++;
+          return index2 == rowEndIndex ? rowEnd - 1 : this.map[index2];
+        }
+        rowStart = rowEnd;
+      }
+    }
+    // Find the table map for the given table node.
+    static get(table2) {
+      return readFromCache(table2) || addToCache(table2, computeMap(table2));
+    }
+  };
+  function computeMap(table2) {
+    if (table2.type.spec.tableRole != "table")
+      throw new RangeError("Not a table node: " + table2.type.name);
+    const width = findWidth(table2), height = table2.childCount;
+    const map2 = [];
+    let mapPos = 0;
+    let problems = null;
+    const colWidths = [];
+    for (let i2 = 0, e = width * height; i2 < e; i2++)
+      map2[i2] = 0;
+    for (let row2 = 0, pos = 0; row2 < height; row2++) {
+      const rowNode = table2.child(row2);
+      pos++;
+      for (let i2 = 0; ; i2++) {
+        while (mapPos < map2.length && map2[mapPos] != 0)
+          mapPos++;
+        if (i2 == rowNode.childCount)
+          break;
+        const cellNode = rowNode.child(i2);
+        const { colspan, rowspan, colwidth } = cellNode.attrs;
+        for (let h2 = 0; h2 < rowspan; h2++) {
+          if (h2 + row2 >= height) {
+            (problems || (problems = [])).push({
+              type: "overlong_rowspan",
+              pos,
+              n: rowspan - h2
+            });
+            break;
+          }
+          const start = mapPos + h2 * width;
+          for (let w = 0; w < colspan; w++) {
+            if (map2[start + w] == 0)
+              map2[start + w] = pos;
+            else
+              (problems || (problems = [])).push({
+                type: "collision",
+                row: row2,
+                pos,
+                n: colspan - w
+              });
+            const colW = colwidth && colwidth[w];
+            if (colW) {
+              const widthIndex = (start + w) % width * 2, prev = colWidths[widthIndex];
+              if (prev == null || prev != colW && colWidths[widthIndex + 1] == 1) {
+                colWidths[widthIndex] = colW;
+                colWidths[widthIndex + 1] = 1;
+              } else if (prev == colW) {
+                colWidths[widthIndex + 1]++;
+              }
+            }
+          }
+        }
+        mapPos += colspan;
+        pos += cellNode.nodeSize;
+      }
+      const expectedPos = (row2 + 1) * width;
+      let missing = 0;
+      while (mapPos < expectedPos)
+        if (map2[mapPos++] == 0)
+          missing++;
+      if (missing)
+        (problems || (problems = [])).push({ type: "missing", row: row2, n: missing });
+      pos++;
+    }
+    const tableMap = new TableMap(width, height, map2, problems);
+    let badWidths = false;
+    for (let i2 = 0; !badWidths && i2 < colWidths.length; i2 += 2)
+      if (colWidths[i2] != null && colWidths[i2 + 1] < height)
+        badWidths = true;
+    if (badWidths)
+      findBadColWidths(tableMap, colWidths, table2);
+    return tableMap;
+  }
+  function findWidth(table2) {
+    let width = -1;
+    let hasRowSpan = false;
+    for (let row2 = 0; row2 < table2.childCount; row2++) {
+      const rowNode = table2.child(row2);
+      let rowWidth = 0;
+      if (hasRowSpan)
+        for (let j = 0; j < row2; j++) {
+          const prevRow = table2.child(j);
+          for (let i2 = 0; i2 < prevRow.childCount; i2++) {
+            const cell2 = prevRow.child(i2);
+            if (j + cell2.attrs.rowspan > row2)
+              rowWidth += cell2.attrs.colspan;
+          }
+        }
+      for (let i2 = 0; i2 < rowNode.childCount; i2++) {
+        const cell2 = rowNode.child(i2);
+        rowWidth += cell2.attrs.colspan;
+        if (cell2.attrs.rowspan > 1)
+          hasRowSpan = true;
+      }
+      if (width == -1)
+        width = rowWidth;
+      else if (width != rowWidth)
+        width = Math.max(width, rowWidth);
+    }
+    return width;
+  }
+  function findBadColWidths(map2, colWidths, table2) {
+    if (!map2.problems)
+      map2.problems = [];
+    const seen = {};
+    for (let i2 = 0; i2 < map2.map.length; i2++) {
+      const pos = map2.map[i2];
+      if (seen[pos])
+        continue;
+      seen[pos] = true;
+      const node2 = table2.nodeAt(pos);
+      if (!node2) {
+        throw new RangeError(`No cell with offset ${pos} found`);
+      }
+      let updated = null;
+      const attrs = node2.attrs;
+      for (let j = 0; j < attrs.colspan; j++) {
+        const col = (i2 + j) % map2.width;
+        const colWidth = colWidths[col * 2];
+        if (colWidth != null && (!attrs.colwidth || attrs.colwidth[j] != colWidth))
+          (updated || (updated = freshColWidth(attrs)))[j] = colWidth;
+      }
+      if (updated)
+        map2.problems.unshift({
+          type: "colwidth mismatch",
+          pos,
+          colwidth: updated
+        });
+    }
+  }
+  function freshColWidth(attrs) {
+    if (attrs.colwidth)
+      return attrs.colwidth.slice();
+    const result = [];
+    for (let i2 = 0; i2 < attrs.colspan; i2++)
+      result.push(0);
+    return result;
+  }
+  function tableNodeTypes(schema) {
+    let result = schema.cached.tableNodeTypes;
+    if (!result) {
+      result = schema.cached.tableNodeTypes = {};
+      for (const name in schema.nodes) {
+        const type = schema.nodes[name], role = type.spec.tableRole;
+        if (role)
+          result[role] = type;
+      }
+    }
+    return result;
+  }
+  var tableEditingKey = new PluginKey("selectingCells");
+  function cellAround($pos) {
+    for (let d = $pos.depth - 1; d > 0; d--)
+      if ($pos.node(d).type.spec.tableRole == "row")
+        return $pos.node(0).resolve($pos.before(d + 1));
+    return null;
+  }
+  function isInTable(state) {
+    const $head = state.selection.$head;
+    for (let d = $head.depth; d > 0; d--)
+      if ($head.node(d).type.spec.tableRole == "row")
+        return true;
+    return false;
+  }
+  function selectionCell(state) {
+    const sel = state.selection;
+    if ("$anchorCell" in sel && sel.$anchorCell) {
+      return sel.$anchorCell.pos > sel.$headCell.pos ? sel.$anchorCell : sel.$headCell;
+    } else if ("node" in sel && sel.node && sel.node.type.spec.tableRole == "cell") {
+      return sel.$anchor;
+    }
+    const $cell = cellAround(sel.$head) || cellNear(sel.$head);
+    if ($cell) {
+      return $cell;
+    }
+    throw new RangeError(`No cell found around position ${sel.head}`);
+  }
+  function cellNear($pos) {
+    for (let after = $pos.nodeAfter, pos = $pos.pos; after; after = after.firstChild, pos++) {
+      const role = after.type.spec.tableRole;
+      if (role == "cell" || role == "header_cell")
+        return $pos.doc.resolve(pos);
+    }
+    for (let before = $pos.nodeBefore, pos = $pos.pos; before; before = before.lastChild, pos--) {
+      const role = before.type.spec.tableRole;
+      if (role == "cell" || role == "header_cell")
+        return $pos.doc.resolve(pos - before.nodeSize);
+    }
+  }
+  function pointsAtCell($pos) {
+    return $pos.parent.type.spec.tableRole == "row" && !!$pos.nodeAfter;
+  }
+  function moveCellForward($pos) {
+    return $pos.node(0).resolve($pos.pos + $pos.nodeAfter.nodeSize);
+  }
+  function inSameTable($cellA, $cellB) {
+    return $cellA.depth == $cellB.depth && $cellA.pos >= $cellB.start(-1) && $cellA.pos <= $cellB.end(-1);
+  }
+  function nextCell($pos, axis, dir) {
+    const table2 = $pos.node(-1);
+    const map2 = TableMap.get(table2);
+    const tableStart = $pos.start(-1);
+    const moved = map2.nextCell($pos.pos - tableStart, axis, dir);
+    return moved == null ? null : $pos.node(0).resolve(tableStart + moved);
+  }
+  function removeColSpan(attrs, pos, n = 1) {
+    const result = { ...attrs, colspan: attrs.colspan - n };
+    if (result.colwidth) {
+      result.colwidth = result.colwidth.slice();
+      result.colwidth.splice(pos, n);
+      if (!result.colwidth.some((w) => w > 0))
+        result.colwidth = null;
+    }
+    return result;
+  }
+  var CellSelection = class _CellSelection extends Selection {
+    // A table selection is identified by its anchor and head cells. The
+    // positions given to this constructor should point _before_ two
+    // cells in the same table. They may be the same, to select a single
+    // cell.
+    constructor($anchorCell, $headCell = $anchorCell) {
+      const table2 = $anchorCell.node(-1);
+      const map2 = TableMap.get(table2);
+      const tableStart = $anchorCell.start(-1);
+      const rect = map2.rectBetween(
+        $anchorCell.pos - tableStart,
+        $headCell.pos - tableStart
+      );
+      const doc2 = $anchorCell.node(0);
+      const cells2 = map2.cellsInRect(rect).filter((p2) => p2 != $headCell.pos - tableStart);
+      cells2.unshift($headCell.pos - tableStart);
+      const ranges = cells2.map((pos) => {
+        const cell2 = table2.nodeAt(pos);
+        if (!cell2) {
+          throw RangeError(`No cell with offset ${pos} found`);
+        }
+        const from2 = tableStart + pos + 1;
+        return new SelectionRange(
+          doc2.resolve(from2),
+          doc2.resolve(from2 + cell2.content.size)
+        );
+      });
+      super(ranges[0].$from, ranges[0].$to, ranges);
+      this.$anchorCell = $anchorCell;
+      this.$headCell = $headCell;
+    }
+    map(doc2, mapping) {
+      const $anchorCell = doc2.resolve(mapping.map(this.$anchorCell.pos));
+      const $headCell = doc2.resolve(mapping.map(this.$headCell.pos));
+      if (pointsAtCell($anchorCell) && pointsAtCell($headCell) && inSameTable($anchorCell, $headCell)) {
+        const tableChanged = this.$anchorCell.node(-1) != $anchorCell.node(-1);
+        if (tableChanged && this.isRowSelection())
+          return _CellSelection.rowSelection($anchorCell, $headCell);
+        else if (tableChanged && this.isColSelection())
+          return _CellSelection.colSelection($anchorCell, $headCell);
+        else
+          return new _CellSelection($anchorCell, $headCell);
+      }
+      return TextSelection.between($anchorCell, $headCell);
+    }
+    // Returns a rectangular slice of table rows containing the selected
+    // cells.
+    content() {
+      const table2 = this.$anchorCell.node(-1);
+      const map2 = TableMap.get(table2);
+      const tableStart = this.$anchorCell.start(-1);
+      const rect = map2.rectBetween(
+        this.$anchorCell.pos - tableStart,
+        this.$headCell.pos - tableStart
+      );
+      const seen = {};
+      const rows = [];
+      for (let row2 = rect.top; row2 < rect.bottom; row2++) {
+        const rowContent = [];
+        for (let index2 = row2 * map2.width + rect.left, col = rect.left; col < rect.right; col++, index2++) {
+          const pos = map2.map[index2];
+          if (seen[pos])
+            continue;
+          seen[pos] = true;
+          const cellRect = map2.findCell(pos);
+          let cell2 = table2.nodeAt(pos);
+          if (!cell2) {
+            throw RangeError(`No cell with offset ${pos} found`);
+          }
+          const extraLeft = rect.left - cellRect.left;
+          const extraRight = cellRect.right - rect.right;
+          if (extraLeft > 0 || extraRight > 0) {
+            let attrs = cell2.attrs;
+            if (extraLeft > 0) {
+              attrs = removeColSpan(attrs, 0, extraLeft);
+            }
+            if (extraRight > 0) {
+              attrs = removeColSpan(
+                attrs,
+                attrs.colspan - extraRight,
+                extraRight
+              );
+            }
+            if (cellRect.left < rect.left) {
+              cell2 = cell2.type.createAndFill(attrs);
+              if (!cell2) {
+                throw RangeError(
+                  `Could not create cell with attrs ${JSON.stringify(attrs)}`
+                );
+              }
+            } else {
+              cell2 = cell2.type.create(attrs, cell2.content);
+            }
+          }
+          if (cellRect.top < rect.top || cellRect.bottom > rect.bottom) {
+            const attrs = {
+              ...cell2.attrs,
+              rowspan: Math.min(cellRect.bottom, rect.bottom) - Math.max(cellRect.top, rect.top)
+            };
+            if (cellRect.top < rect.top) {
+              cell2 = cell2.type.createAndFill(attrs);
+            } else {
+              cell2 = cell2.type.create(attrs, cell2.content);
+            }
+          }
+          rowContent.push(cell2);
+        }
+        rows.push(table2.child(row2).copy(Fragment.from(rowContent)));
+      }
+      const fragment = this.isColSelection() && this.isRowSelection() ? table2 : rows;
+      return new Slice(Fragment.from(fragment), 1, 1);
+    }
+    replace(tr2, content2 = Slice.empty) {
+      const mapFrom = tr2.steps.length, ranges = this.ranges;
+      for (let i2 = 0; i2 < ranges.length; i2++) {
+        const { $from, $to } = ranges[i2], mapping = tr2.mapping.slice(mapFrom);
+        tr2.replace(
+          mapping.map($from.pos),
+          mapping.map($to.pos),
+          i2 ? Slice.empty : content2
+        );
+      }
+      const sel = Selection.findFrom(
+        tr2.doc.resolve(tr2.mapping.slice(mapFrom).map(this.to)),
+        -1
+      );
+      if (sel)
+        tr2.setSelection(sel);
+    }
+    replaceWith(tr2, node2) {
+      this.replace(tr2, new Slice(Fragment.from(node2), 0, 0));
+    }
+    forEachCell(f) {
+      const table2 = this.$anchorCell.node(-1);
+      const map2 = TableMap.get(table2);
+      const tableStart = this.$anchorCell.start(-1);
+      const cells2 = map2.cellsInRect(
+        map2.rectBetween(
+          this.$anchorCell.pos - tableStart,
+          this.$headCell.pos - tableStart
+        )
+      );
+      for (let i2 = 0; i2 < cells2.length; i2++) {
+        f(table2.nodeAt(cells2[i2]), tableStart + cells2[i2]);
+      }
+    }
+    // True if this selection goes all the way from the top to the
+    // bottom of the table.
+    isColSelection() {
+      const anchorTop = this.$anchorCell.index(-1);
+      const headTop = this.$headCell.index(-1);
+      if (Math.min(anchorTop, headTop) > 0)
+        return false;
+      const anchorBottom = anchorTop + this.$anchorCell.nodeAfter.attrs.rowspan;
+      const headBottom = headTop + this.$headCell.nodeAfter.attrs.rowspan;
+      return Math.max(anchorBottom, headBottom) == this.$headCell.node(-1).childCount;
+    }
+    // Returns the smallest column selection that covers the given anchor
+    // and head cell.
+    static colSelection($anchorCell, $headCell = $anchorCell) {
+      const table2 = $anchorCell.node(-1);
+      const map2 = TableMap.get(table2);
+      const tableStart = $anchorCell.start(-1);
+      const anchorRect = map2.findCell($anchorCell.pos - tableStart);
+      const headRect = map2.findCell($headCell.pos - tableStart);
+      const doc2 = $anchorCell.node(0);
+      if (anchorRect.top <= headRect.top) {
+        if (anchorRect.top > 0)
+          $anchorCell = doc2.resolve(tableStart + map2.map[anchorRect.left]);
+        if (headRect.bottom < map2.height)
+          $headCell = doc2.resolve(
+            tableStart + map2.map[map2.width * (map2.height - 1) + headRect.right - 1]
+          );
+      } else {
+        if (headRect.top > 0)
+          $headCell = doc2.resolve(tableStart + map2.map[headRect.left]);
+        if (anchorRect.bottom < map2.height)
+          $anchorCell = doc2.resolve(
+            tableStart + map2.map[map2.width * (map2.height - 1) + anchorRect.right - 1]
+          );
+      }
+      return new _CellSelection($anchorCell, $headCell);
+    }
+    // True if this selection goes all the way from the left to the
+    // right of the table.
+    isRowSelection() {
+      const table2 = this.$anchorCell.node(-1);
+      const map2 = TableMap.get(table2);
+      const tableStart = this.$anchorCell.start(-1);
+      const anchorLeft = map2.colCount(this.$anchorCell.pos - tableStart);
+      const headLeft = map2.colCount(this.$headCell.pos - tableStart);
+      if (Math.min(anchorLeft, headLeft) > 0)
+        return false;
+      const anchorRight = anchorLeft + this.$anchorCell.nodeAfter.attrs.colspan;
+      const headRight = headLeft + this.$headCell.nodeAfter.attrs.colspan;
+      return Math.max(anchorRight, headRight) == map2.width;
+    }
+    eq(other) {
+      return other instanceof _CellSelection && other.$anchorCell.pos == this.$anchorCell.pos && other.$headCell.pos == this.$headCell.pos;
+    }
+    // Returns the smallest row selection that covers the given anchor
+    // and head cell.
+    static rowSelection($anchorCell, $headCell = $anchorCell) {
+      const table2 = $anchorCell.node(-1);
+      const map2 = TableMap.get(table2);
+      const tableStart = $anchorCell.start(-1);
+      const anchorRect = map2.findCell($anchorCell.pos - tableStart);
+      const headRect = map2.findCell($headCell.pos - tableStart);
+      const doc2 = $anchorCell.node(0);
+      if (anchorRect.left <= headRect.left) {
+        if (anchorRect.left > 0)
+          $anchorCell = doc2.resolve(
+            tableStart + map2.map[anchorRect.top * map2.width]
+          );
+        if (headRect.right < map2.width)
+          $headCell = doc2.resolve(
+            tableStart + map2.map[map2.width * (headRect.top + 1) - 1]
+          );
+      } else {
+        if (headRect.left > 0)
+          $headCell = doc2.resolve(tableStart + map2.map[headRect.top * map2.width]);
+        if (anchorRect.right < map2.width)
+          $anchorCell = doc2.resolve(
+            tableStart + map2.map[map2.width * (anchorRect.top + 1) - 1]
+          );
+      }
+      return new _CellSelection($anchorCell, $headCell);
+    }
+    toJSON() {
+      return {
+        type: "cell",
+        anchor: this.$anchorCell.pos,
+        head: this.$headCell.pos
+      };
+    }
+    static fromJSON(doc2, json) {
+      return new _CellSelection(doc2.resolve(json.anchor), doc2.resolve(json.head));
+    }
+    static create(doc2, anchorCell, headCell = anchorCell) {
+      return new _CellSelection(doc2.resolve(anchorCell), doc2.resolve(headCell));
+    }
+    getBookmark() {
+      return new CellBookmark(this.$anchorCell.pos, this.$headCell.pos);
+    }
+  };
+  CellSelection.prototype.visible = false;
+  Selection.jsonID("cell", CellSelection);
+  var CellBookmark = class _CellBookmark {
+    constructor(anchor, head2) {
+      this.anchor = anchor;
+      this.head = head2;
+    }
+    map(mapping) {
+      return new _CellBookmark(mapping.map(this.anchor), mapping.map(this.head));
+    }
+    resolve(doc2) {
+      const $anchorCell = doc2.resolve(this.anchor), $headCell = doc2.resolve(this.head);
+      if ($anchorCell.parent.type.spec.tableRole == "row" && $headCell.parent.type.spec.tableRole == "row" && $anchorCell.index() < $anchorCell.parent.childCount && $headCell.index() < $headCell.parent.childCount && inSameTable($anchorCell, $headCell))
+        return new CellSelection($anchorCell, $headCell);
+      else
+        return Selection.near($headCell, 1);
+    }
+  };
+  function drawCellSelection(state) {
+    if (!(state.selection instanceof CellSelection))
+      return null;
+    const cells2 = [];
+    state.selection.forEachCell((node2, pos) => {
+      cells2.push(
+        Decoration.node(pos, pos + node2.nodeSize, { class: "selectedCell" })
+      );
+    });
+    return DecorationSet.create(state.doc, cells2);
+  }
+  function isCellBoundarySelection({ $from, $to }) {
+    if ($from.pos == $to.pos || $from.pos < $from.pos - 6)
+      return false;
+    let afterFrom = $from.pos;
+    let beforeTo = $to.pos;
+    let depth = $from.depth;
+    for (; depth >= 0; depth--, afterFrom++)
+      if ($from.after(depth + 1) < $from.end(depth))
+        break;
+    for (let d = $to.depth; d >= 0; d--, beforeTo--)
+      if ($to.before(d + 1) > $to.start(d))
+        break;
+    return afterFrom == beforeTo && /row|table/.test($from.node(depth).type.spec.tableRole);
+  }
+  function isTextSelectionAcrossCells({ $from, $to }) {
+    let fromCellBoundaryNode;
+    let toCellBoundaryNode;
+    for (let i2 = $from.depth; i2 > 0; i2--) {
+      const node2 = $from.node(i2);
+      if (node2.type.spec.tableRole === "cell" || node2.type.spec.tableRole === "header_cell") {
+        fromCellBoundaryNode = node2;
+        break;
+      }
+    }
+    for (let i2 = $to.depth; i2 > 0; i2--) {
+      const node2 = $to.node(i2);
+      if (node2.type.spec.tableRole === "cell" || node2.type.spec.tableRole === "header_cell") {
+        toCellBoundaryNode = node2;
+        break;
+      }
+    }
+    return fromCellBoundaryNode !== toCellBoundaryNode && $to.parentOffset === 0;
+  }
+  function normalizeSelection(state, tr2, allowTableNodeSelection) {
+    const sel = (tr2 || state).selection;
+    const doc2 = (tr2 || state).doc;
+    let normalize2;
+    let role;
+    if (sel instanceof NodeSelection && (role = sel.node.type.spec.tableRole)) {
+      if (role == "cell" || role == "header_cell") {
+        normalize2 = CellSelection.create(doc2, sel.from);
+      } else if (role == "row") {
+        const $cell = doc2.resolve(sel.from + 1);
+        normalize2 = CellSelection.rowSelection($cell, $cell);
+      } else if (!allowTableNodeSelection) {
+        const map2 = TableMap.get(sel.node);
+        const start = sel.from + 1;
+        const lastCell = start + map2.map[map2.width * map2.height - 1];
+        normalize2 = CellSelection.create(doc2, start + 1, lastCell);
+      }
+    } else if (sel instanceof TextSelection && isCellBoundarySelection(sel)) {
+      normalize2 = TextSelection.create(doc2, sel.from);
+    } else if (sel instanceof TextSelection && isTextSelectionAcrossCells(sel)) {
+      normalize2 = TextSelection.create(doc2, sel.$from.start(), sel.$from.end());
+    }
+    if (normalize2)
+      (tr2 || (tr2 = state.tr)).setSelection(normalize2);
+    return tr2;
+  }
+  var fixTablesKey = new PluginKey("fix-tables");
+  function changedDescendants(old, cur, offset, f) {
+    const oldSize = old.childCount, curSize = cur.childCount;
+    outer:
+      for (let i2 = 0, j = 0; i2 < curSize; i2++) {
+        const child = cur.child(i2);
+        for (let scan = j, e = Math.min(oldSize, i2 + 3); scan < e; scan++) {
+          if (old.child(scan) == child) {
+            j = scan + 1;
+            offset += child.nodeSize;
+            continue outer;
+          }
+        }
+        f(child, offset);
+        if (j < oldSize && old.child(j).sameMarkup(child))
+          changedDescendants(old.child(j), child, offset + 1, f);
+        else
+          child.nodesBetween(0, child.content.size, f, offset + 1);
+        offset += child.nodeSize;
+      }
+  }
+  function fixTables(state, oldState) {
+    let tr2;
+    const check = (node2, pos) => {
+      if (node2.type.spec.tableRole == "table")
+        tr2 = fixTable(state, node2, pos, tr2);
+    };
+    if (!oldState)
+      state.doc.descendants(check);
+    else if (oldState.doc != state.doc)
+      changedDescendants(oldState.doc, state.doc, 0, check);
+    return tr2;
+  }
+  function fixTable(state, table2, tablePos, tr2) {
+    const map2 = TableMap.get(table2);
+    if (!map2.problems)
+      return tr2;
+    if (!tr2)
+      tr2 = state.tr;
+    const mustAdd = [];
+    for (let i2 = 0; i2 < map2.height; i2++)
+      mustAdd.push(0);
+    for (let i2 = 0; i2 < map2.problems.length; i2++) {
+      const prob = map2.problems[i2];
+      if (prob.type == "collision") {
+        const cell2 = table2.nodeAt(prob.pos);
+        if (!cell2)
+          continue;
+        const attrs = cell2.attrs;
+        for (let j = 0; j < attrs.rowspan; j++)
+          mustAdd[prob.row + j] += prob.n;
+        tr2.setNodeMarkup(
+          tr2.mapping.map(tablePos + 1 + prob.pos),
+          null,
+          removeColSpan(attrs, attrs.colspan - prob.n, prob.n)
+        );
+      } else if (prob.type == "missing") {
+        mustAdd[prob.row] += prob.n;
+      } else if (prob.type == "overlong_rowspan") {
+        const cell2 = table2.nodeAt(prob.pos);
+        if (!cell2)
+          continue;
+        tr2.setNodeMarkup(tr2.mapping.map(tablePos + 1 + prob.pos), null, {
+          ...cell2.attrs,
+          rowspan: cell2.attrs.rowspan - prob.n
+        });
+      } else if (prob.type == "colwidth mismatch") {
+        const cell2 = table2.nodeAt(prob.pos);
+        if (!cell2)
+          continue;
+        tr2.setNodeMarkup(tr2.mapping.map(tablePos + 1 + prob.pos), null, {
+          ...cell2.attrs,
+          colwidth: prob.colwidth
+        });
+      }
+    }
+    let first2, last2;
+    for (let i2 = 0; i2 < mustAdd.length; i2++)
+      if (mustAdd[i2]) {
+        if (first2 == null)
+          first2 = i2;
+        last2 = i2;
+      }
+    for (let i2 = 0, pos = tablePos + 1; i2 < map2.height; i2++) {
+      const row2 = table2.child(i2);
+      const end = pos + row2.nodeSize;
+      const add = mustAdd[i2];
+      if (add > 0) {
+        let role = "cell";
+        if (row2.firstChild) {
+          role = row2.firstChild.type.spec.tableRole;
+        }
+        const nodes = [];
+        for (let j = 0; j < add; j++) {
+          const node2 = tableNodeTypes(state.schema)[role].createAndFill();
+          if (node2)
+            nodes.push(node2);
+        }
+        const side = (i2 == 0 || first2 == i2 - 1) && last2 == i2 ? pos + 1 : end - 1;
+        tr2.insert(tr2.mapping.map(side), nodes);
+      }
+      pos = end;
+    }
+    return tr2.setMeta(fixTablesKey, { fixTables: true });
+  }
+  function pastedCells(slice) {
+    if (!slice.size)
+      return null;
+    let { content: content2, openStart, openEnd } = slice;
+    while (content2.childCount == 1 && (openStart > 0 && openEnd > 0 || content2.child(0).type.spec.tableRole == "table")) {
+      openStart--;
+      openEnd--;
+      content2 = content2.child(0).content;
+    }
+    const first2 = content2.child(0);
+    const role = first2.type.spec.tableRole;
+    const schema = first2.type.schema, rows = [];
+    if (role == "row") {
+      for (let i2 = 0; i2 < content2.childCount; i2++) {
+        let cells2 = content2.child(i2).content;
+        const left = i2 ? 0 : Math.max(0, openStart - 1);
+        const right = i2 < content2.childCount - 1 ? 0 : Math.max(0, openEnd - 1);
+        if (left || right)
+          cells2 = fitSlice(
+            tableNodeTypes(schema).row,
+            new Slice(cells2, left, right)
+          ).content;
+        rows.push(cells2);
+      }
+    } else if (role == "cell" || role == "header_cell") {
+      rows.push(
+        openStart || openEnd ? fitSlice(
+          tableNodeTypes(schema).row,
+          new Slice(content2, openStart, openEnd)
+        ).content : content2
+      );
+    } else {
+      return null;
+    }
+    return ensureRectangular(schema, rows);
+  }
+  function ensureRectangular(schema, rows) {
+    const widths = [];
+    for (let i2 = 0; i2 < rows.length; i2++) {
+      const row2 = rows[i2];
+      for (let j = row2.childCount - 1; j >= 0; j--) {
+        const { rowspan, colspan } = row2.child(j).attrs;
+        for (let r = i2; r < i2 + rowspan; r++)
+          widths[r] = (widths[r] || 0) + colspan;
+      }
+    }
+    let width = 0;
+    for (let r = 0; r < widths.length; r++)
+      width = Math.max(width, widths[r]);
+    for (let r = 0; r < widths.length; r++) {
+      if (r >= rows.length)
+        rows.push(Fragment.empty);
+      if (widths[r] < width) {
+        const empty2 = tableNodeTypes(schema).cell.createAndFill();
+        const cells2 = [];
+        for (let i2 = widths[r]; i2 < width; i2++) {
+          cells2.push(empty2);
+        }
+        rows[r] = rows[r].append(Fragment.from(cells2));
+      }
+    }
+    return { height: rows.length, width, rows };
+  }
+  function fitSlice(nodeType, slice) {
+    const node2 = nodeType.createAndFill();
+    const tr2 = new Transform(node2).replace(0, node2.content.size, slice);
+    return tr2.doc;
+  }
+  function clipCells({ width, height, rows }, newWidth, newHeight) {
+    if (width != newWidth) {
+      const added = [];
+      const newRows = [];
+      for (let row2 = 0; row2 < rows.length; row2++) {
+        const frag = rows[row2], cells2 = [];
+        for (let col = added[row2] || 0, i2 = 0; col < newWidth; i2++) {
+          let cell2 = frag.child(i2 % frag.childCount);
+          if (col + cell2.attrs.colspan > newWidth)
+            cell2 = cell2.type.createChecked(
+              removeColSpan(
+                cell2.attrs,
+                cell2.attrs.colspan,
+                col + cell2.attrs.colspan - newWidth
+              ),
+              cell2.content
+            );
+          cells2.push(cell2);
+          col += cell2.attrs.colspan;
+          for (let j = 1; j < cell2.attrs.rowspan; j++)
+            added[row2 + j] = (added[row2 + j] || 0) + cell2.attrs.colspan;
+        }
+        newRows.push(Fragment.from(cells2));
+      }
+      rows = newRows;
+      width = newWidth;
+    }
+    if (height != newHeight) {
+      const newRows = [];
+      for (let row2 = 0, i2 = 0; row2 < newHeight; row2++, i2++) {
+        const cells2 = [], source2 = rows[i2 % height];
+        for (let j = 0; j < source2.childCount; j++) {
+          let cell2 = source2.child(j);
+          if (row2 + cell2.attrs.rowspan > newHeight)
+            cell2 = cell2.type.create(
+              {
+                ...cell2.attrs,
+                rowspan: Math.max(1, newHeight - cell2.attrs.rowspan)
+              },
+              cell2.content
+            );
+          cells2.push(cell2);
+        }
+        newRows.push(Fragment.from(cells2));
+      }
+      rows = newRows;
+      height = newHeight;
+    }
+    return { width, height, rows };
+  }
+  function growTable(tr2, map2, table2, start, width, height, mapFrom) {
+    const schema = tr2.doc.type.schema;
+    const types2 = tableNodeTypes(schema);
+    let empty2;
+    let emptyHead;
+    if (width > map2.width) {
+      for (let row2 = 0, rowEnd = 0; row2 < map2.height; row2++) {
+        const rowNode = table2.child(row2);
+        rowEnd += rowNode.nodeSize;
+        const cells2 = [];
+        let add;
+        if (rowNode.lastChild == null || rowNode.lastChild.type == types2.cell)
+          add = empty2 || (empty2 = types2.cell.createAndFill());
+        else
+          add = emptyHead || (emptyHead = types2.header_cell.createAndFill());
+        for (let i2 = map2.width; i2 < width; i2++)
+          cells2.push(add);
+        tr2.insert(tr2.mapping.slice(mapFrom).map(rowEnd - 1 + start), cells2);
+      }
+    }
+    if (height > map2.height) {
+      const cells2 = [];
+      for (let i2 = 0, start2 = (map2.height - 1) * map2.width; i2 < Math.max(map2.width, width); i2++) {
+        const header = i2 >= map2.width ? false : table2.nodeAt(map2.map[start2 + i2]).type == types2.header_cell;
+        cells2.push(
+          header ? emptyHead || (emptyHead = types2.header_cell.createAndFill()) : empty2 || (empty2 = types2.cell.createAndFill())
+        );
+      }
+      const emptyRow = types2.row.create(null, Fragment.from(cells2)), rows = [];
+      for (let i2 = map2.height; i2 < height; i2++)
+        rows.push(emptyRow);
+      tr2.insert(tr2.mapping.slice(mapFrom).map(start + table2.nodeSize - 2), rows);
+    }
+    return !!(empty2 || emptyHead);
+  }
+  function isolateHorizontal(tr2, map2, table2, start, left, right, top, mapFrom) {
+    if (top == 0 || top == map2.height)
+      return false;
+    let found2 = false;
+    for (let col = left; col < right; col++) {
+      const index2 = top * map2.width + col, pos = map2.map[index2];
+      if (map2.map[index2 - map2.width] == pos) {
+        found2 = true;
+        const cell2 = table2.nodeAt(pos);
+        const { top: cellTop, left: cellLeft } = map2.findCell(pos);
+        tr2.setNodeMarkup(tr2.mapping.slice(mapFrom).map(pos + start), null, {
+          ...cell2.attrs,
+          rowspan: top - cellTop
+        });
+        tr2.insert(
+          tr2.mapping.slice(mapFrom).map(map2.positionAt(top, cellLeft, table2)),
+          cell2.type.createAndFill({
+            ...cell2.attrs,
+            rowspan: cellTop + cell2.attrs.rowspan - top
+          })
+        );
+        col += cell2.attrs.colspan - 1;
+      }
+    }
+    return found2;
+  }
+  function isolateVertical(tr2, map2, table2, start, top, bottom, left, mapFrom) {
+    if (left == 0 || left == map2.width)
+      return false;
+    let found2 = false;
+    for (let row2 = top; row2 < bottom; row2++) {
+      const index2 = row2 * map2.width + left, pos = map2.map[index2];
+      if (map2.map[index2 - 1] == pos) {
+        found2 = true;
+        const cell2 = table2.nodeAt(pos);
+        const cellLeft = map2.colCount(pos);
+        const updatePos = tr2.mapping.slice(mapFrom).map(pos + start);
+        tr2.setNodeMarkup(
+          updatePos,
+          null,
+          removeColSpan(
+            cell2.attrs,
+            left - cellLeft,
+            cell2.attrs.colspan - (left - cellLeft)
+          )
+        );
+        tr2.insert(
+          updatePos + cell2.nodeSize,
+          cell2.type.createAndFill(
+            removeColSpan(cell2.attrs, 0, left - cellLeft)
+          )
+        );
+        row2 += cell2.attrs.rowspan - 1;
+      }
+    }
+    return found2;
+  }
+  function insertCells(state, dispatch, tableStart, rect, cells2) {
+    let table2 = tableStart ? state.doc.nodeAt(tableStart - 1) : state.doc;
+    if (!table2) {
+      throw new Error("No table found");
+    }
+    let map2 = TableMap.get(table2);
+    const { top, left } = rect;
+    const right = left + cells2.width, bottom = top + cells2.height;
+    const tr2 = state.tr;
+    let mapFrom = 0;
+    function recomp() {
+      table2 = tableStart ? tr2.doc.nodeAt(tableStart - 1) : tr2.doc;
+      if (!table2) {
+        throw new Error("No table found");
+      }
+      map2 = TableMap.get(table2);
+      mapFrom = tr2.mapping.maps.length;
+    }
+    if (growTable(tr2, map2, table2, tableStart, right, bottom, mapFrom))
+      recomp();
+    if (isolateHorizontal(tr2, map2, table2, tableStart, left, right, top, mapFrom))
+      recomp();
+    if (isolateHorizontal(tr2, map2, table2, tableStart, left, right, bottom, mapFrom))
+      recomp();
+    if (isolateVertical(tr2, map2, table2, tableStart, top, bottom, left, mapFrom))
+      recomp();
+    if (isolateVertical(tr2, map2, table2, tableStart, top, bottom, right, mapFrom))
+      recomp();
+    for (let row2 = top; row2 < bottom; row2++) {
+      const from2 = map2.positionAt(row2, left, table2), to = map2.positionAt(row2, right, table2);
+      tr2.replace(
+        tr2.mapping.slice(mapFrom).map(from2 + tableStart),
+        tr2.mapping.slice(mapFrom).map(to + tableStart),
+        new Slice(cells2.rows[row2 - top], 0, 0)
+      );
+    }
+    recomp();
+    tr2.setSelection(
+      new CellSelection(
+        tr2.doc.resolve(tableStart + map2.positionAt(top, left, table2)),
+        tr2.doc.resolve(tableStart + map2.positionAt(bottom - 1, right - 1, table2))
+      )
+    );
+    dispatch(tr2);
+  }
+  var handleKeyDown$1 = keydownHandler({
+    ArrowLeft: arrow$1("horiz", -1),
+    ArrowRight: arrow$1("horiz", 1),
+    ArrowUp: arrow$1("vert", -1),
+    ArrowDown: arrow$1("vert", 1),
+    "Shift-ArrowLeft": shiftArrow("horiz", -1),
+    "Shift-ArrowRight": shiftArrow("horiz", 1),
+    "Shift-ArrowUp": shiftArrow("vert", -1),
+    "Shift-ArrowDown": shiftArrow("vert", 1),
+    Backspace: deleteCellSelection,
+    "Mod-Backspace": deleteCellSelection,
+    Delete: deleteCellSelection,
+    "Mod-Delete": deleteCellSelection
+  });
+  function maybeSetSelection(state, dispatch, selection) {
+    if (selection.eq(state.selection))
+      return false;
+    if (dispatch)
+      dispatch(state.tr.setSelection(selection).scrollIntoView());
+    return true;
+  }
+  function arrow$1(axis, dir) {
+    return (state, dispatch, view) => {
+      if (!view)
+        return false;
+      const sel = state.selection;
+      if (sel instanceof CellSelection) {
+        return maybeSetSelection(
+          state,
+          dispatch,
+          Selection.near(sel.$headCell, dir)
+        );
+      }
+      if (axis != "horiz" && !sel.empty)
+        return false;
+      const end = atEndOfCell(view, axis, dir);
+      if (end == null)
+        return false;
+      if (axis == "horiz") {
+        return maybeSetSelection(
+          state,
+          dispatch,
+          Selection.near(state.doc.resolve(sel.head + dir), dir)
+        );
+      } else {
+        const $cell = state.doc.resolve(end);
+        const $next = nextCell($cell, axis, dir);
+        let newSel;
+        if ($next)
+          newSel = Selection.near($next, 1);
+        else if (dir < 0)
+          newSel = Selection.near(state.doc.resolve($cell.before(-1)), -1);
+        else
+          newSel = Selection.near(state.doc.resolve($cell.after(-1)), 1);
+        return maybeSetSelection(state, dispatch, newSel);
+      }
+    };
+  }
+  function shiftArrow(axis, dir) {
+    return (state, dispatch, view) => {
+      if (!view)
+        return false;
+      const sel = state.selection;
+      let cellSel;
+      if (sel instanceof CellSelection) {
+        cellSel = sel;
+      } else {
+        const end = atEndOfCell(view, axis, dir);
+        if (end == null)
+          return false;
+        cellSel = new CellSelection(state.doc.resolve(end));
+      }
+      const $head = nextCell(cellSel.$headCell, axis, dir);
+      if (!$head)
+        return false;
+      return maybeSetSelection(
+        state,
+        dispatch,
+        new CellSelection(cellSel.$anchorCell, $head)
+      );
+    };
+  }
+  function deleteCellSelection(state, dispatch) {
+    const sel = state.selection;
+    if (!(sel instanceof CellSelection))
+      return false;
+    if (dispatch) {
+      const tr2 = state.tr;
+      const baseContent = tableNodeTypes(state.schema).cell.createAndFill().content;
+      sel.forEachCell((cell2, pos) => {
+        if (!cell2.content.eq(baseContent))
+          tr2.replace(
+            tr2.mapping.map(pos + 1),
+            tr2.mapping.map(pos + cell2.nodeSize - 1),
+            new Slice(baseContent, 0, 0)
+          );
+      });
+      if (tr2.docChanged)
+        dispatch(tr2);
+    }
+    return true;
+  }
+  function handleTripleClick(view, pos) {
+    const doc2 = view.state.doc, $cell = cellAround(doc2.resolve(pos));
+    if (!$cell)
+      return false;
+    view.dispatch(view.state.tr.setSelection(new CellSelection($cell)));
+    return true;
+  }
+  function handlePaste(view, _, slice) {
+    if (!isInTable(view.state))
+      return false;
+    let cells2 = pastedCells(slice);
+    const sel = view.state.selection;
+    if (sel instanceof CellSelection) {
+      if (!cells2)
+        cells2 = {
+          width: 1,
+          height: 1,
+          rows: [
+            Fragment.from(
+              fitSlice(tableNodeTypes(view.state.schema).cell, slice)
+            )
+          ]
+        };
+      const table2 = sel.$anchorCell.node(-1);
+      const start = sel.$anchorCell.start(-1);
+      const rect = TableMap.get(table2).rectBetween(
+        sel.$anchorCell.pos - start,
+        sel.$headCell.pos - start
+      );
+      cells2 = clipCells(cells2, rect.right - rect.left, rect.bottom - rect.top);
+      insertCells(view.state, view.dispatch, start, rect, cells2);
+      return true;
+    } else if (cells2) {
+      const $cell = selectionCell(view.state);
+      const start = $cell.start(-1);
+      insertCells(
+        view.state,
+        view.dispatch,
+        start,
+        TableMap.get($cell.node(-1)).findCell($cell.pos - start),
+        cells2
+      );
+      return true;
+    } else {
+      return false;
+    }
+  }
+  function handleMouseDown(view, startEvent) {
+    var _a;
+    if (startEvent.ctrlKey || startEvent.metaKey)
+      return;
+    const startDOMCell = domInCell(view, startEvent.target);
+    let $anchor;
+    if (startEvent.shiftKey && view.state.selection instanceof CellSelection) {
+      setCellSelection(view.state.selection.$anchorCell, startEvent);
+      startEvent.preventDefault();
+    } else if (startEvent.shiftKey && startDOMCell && ($anchor = cellAround(view.state.selection.$anchor)) != null && ((_a = cellUnderMouse(view, startEvent)) == null ? void 0 : _a.pos) != $anchor.pos) {
+      setCellSelection($anchor, startEvent);
+      startEvent.preventDefault();
+    } else if (!startDOMCell) {
+      return;
+    }
+    function setCellSelection($anchor2, event) {
+      let $head = cellUnderMouse(view, event);
+      const starting = tableEditingKey.getState(view.state) == null;
+      if (!$head || !inSameTable($anchor2, $head)) {
+        if (starting)
+          $head = $anchor2;
+        else
+          return;
+      }
+      const selection = new CellSelection($anchor2, $head);
+      if (starting || !view.state.selection.eq(selection)) {
+        const tr2 = view.state.tr.setSelection(selection);
+        if (starting)
+          tr2.setMeta(tableEditingKey, $anchor2.pos);
+        view.dispatch(tr2);
+      }
+    }
+    function stop() {
+      view.root.removeEventListener("mouseup", stop);
+      view.root.removeEventListener("dragstart", stop);
+      view.root.removeEventListener("mousemove", move);
+      if (tableEditingKey.getState(view.state) != null)
+        view.dispatch(view.state.tr.setMeta(tableEditingKey, -1));
+    }
+    function move(_event) {
+      const event = _event;
+      const anchor = tableEditingKey.getState(view.state);
+      let $anchor2;
+      if (anchor != null) {
+        $anchor2 = view.state.doc.resolve(anchor);
+      } else if (domInCell(view, event.target) != startDOMCell) {
+        $anchor2 = cellUnderMouse(view, startEvent);
+        if (!$anchor2)
+          return stop();
+      }
+      if ($anchor2)
+        setCellSelection($anchor2, event);
+    }
+    view.root.addEventListener("mouseup", stop);
+    view.root.addEventListener("dragstart", stop);
+    view.root.addEventListener("mousemove", move);
+  }
+  function atEndOfCell(view, axis, dir) {
+    if (!(view.state.selection instanceof TextSelection))
+      return null;
+    const { $head } = view.state.selection;
+    for (let d = $head.depth - 1; d >= 0; d--) {
+      const parent = $head.node(d), index2 = dir < 0 ? $head.index(d) : $head.indexAfter(d);
+      if (index2 != (dir < 0 ? 0 : parent.childCount))
+        return null;
+      if (parent.type.spec.tableRole == "cell" || parent.type.spec.tableRole == "header_cell") {
+        const cellPos = $head.before(d);
+        const dirStr = axis == "vert" ? dir > 0 ? "down" : "up" : dir > 0 ? "right" : "left";
+        return view.endOfTextblock(dirStr) ? cellPos : null;
+      }
+    }
+    return null;
+  }
+  function domInCell(view, dom) {
+    for (; dom && dom != view.dom; dom = dom.parentNode) {
+      if (dom.nodeName == "TD" || dom.nodeName == "TH") {
+        return dom;
+      }
+    }
+    return null;
+  }
+  function cellUnderMouse(view, event) {
+    const mousePos = view.posAtCoords({
+      left: event.clientX,
+      top: event.clientY
+    });
+    if (!mousePos)
+      return null;
+    return mousePos ? cellAround(view.state.doc.resolve(mousePos.pos)) : null;
+  }
+  var TableView = class {
+    constructor(node2, cellMinWidth) {
+      this.node = node2;
+      this.cellMinWidth = cellMinWidth;
+      this.dom = document.createElement("div");
+      this.dom.className = "tableWrapper";
+      this.table = this.dom.appendChild(document.createElement("table"));
+      this.colgroup = this.table.appendChild(document.createElement("colgroup"));
+      updateColumnsOnResize(node2, this.colgroup, this.table, cellMinWidth);
+      this.contentDOM = this.table.appendChild(document.createElement("tbody"));
+    }
+    update(node2) {
+      if (node2.type != this.node.type)
+        return false;
+      this.node = node2;
+      updateColumnsOnResize(node2, this.colgroup, this.table, this.cellMinWidth);
+      return true;
+    }
+    ignoreMutation(record) {
+      return record.type == "attributes" && (record.target == this.table || this.colgroup.contains(record.target));
+    }
+  };
+  function updateColumnsOnResize(node2, colgroup2, table2, cellMinWidth, overrideCol, overrideValue) {
+    var _a;
+    let totalWidth = 0;
+    let fixedWidth = true;
+    let nextDOM = colgroup2.firstChild;
+    const row2 = node2.firstChild;
+    if (!row2)
+      return;
+    for (let i2 = 0, col = 0; i2 < row2.childCount; i2++) {
+      const { colspan, colwidth } = row2.child(i2).attrs;
+      for (let j = 0; j < colspan; j++, col++) {
+        const hasWidth = overrideCol == col ? overrideValue : colwidth && colwidth[j];
+        const cssWidth = hasWidth ? hasWidth + "px" : "";
+        totalWidth += hasWidth || cellMinWidth;
+        if (!hasWidth)
+          fixedWidth = false;
+        if (!nextDOM) {
+          colgroup2.appendChild(document.createElement("col")).style.width = cssWidth;
+        } else {
+          if (nextDOM.style.width != cssWidth)
+            nextDOM.style.width = cssWidth;
+          nextDOM = nextDOM.nextSibling;
+        }
+      }
+    }
+    while (nextDOM) {
+      const after = nextDOM.nextSibling;
+      (_a = nextDOM.parentNode) == null ? void 0 : _a.removeChild(nextDOM);
+      nextDOM = after;
+    }
+    if (fixedWidth) {
+      table2.style.width = totalWidth + "px";
+      table2.style.minWidth = "";
+    } else {
+      table2.style.width = "";
+      table2.style.minWidth = totalWidth + "px";
+    }
+  }
+  var columnResizingPluginKey = new PluginKey(
+    "tableColumnResizing"
+  );
+  function columnResizing({
+    handleWidth = 5,
+    cellMinWidth = 25,
+    View = TableView,
+    lastColumnResizable = true
+  } = {}) {
+    const plugin = new Plugin({
+      key: columnResizingPluginKey,
+      state: {
+        init(_, state) {
+          plugin.spec.props.nodeViews[tableNodeTypes(state.schema).table.name] = (node2, view) => new View(node2, cellMinWidth, view);
+          return new ResizeState(-1, false);
+        },
+        apply(tr2, prev) {
+          return prev.apply(tr2);
+        }
+      },
+      props: {
+        attributes: (state) => {
+          const pluginState = columnResizingPluginKey.getState(state);
+          return pluginState && pluginState.activeHandle > -1 ? { class: "resize-cursor" } : {};
+        },
+        handleDOMEvents: {
+          mousemove: (view, event) => {
+            handleMouseMove(
+              view,
+              event,
+              handleWidth,
+              cellMinWidth,
+              lastColumnResizable
+            );
+          },
+          mouseleave: (view) => {
+            handleMouseLeave(view);
+          },
+          mousedown: (view, event) => {
+            handleMouseDown2(view, event, cellMinWidth);
+          }
+        },
+        decorations: (state) => {
+          const pluginState = columnResizingPluginKey.getState(state);
+          if (pluginState && pluginState.activeHandle > -1) {
+            return handleDecorations(state, pluginState.activeHandle);
+          }
+        },
+        nodeViews: {}
+      }
+    });
+    return plugin;
+  }
+  var ResizeState = class _ResizeState {
+    constructor(activeHandle, dragging) {
+      this.activeHandle = activeHandle;
+      this.dragging = dragging;
+    }
+    apply(tr2) {
+      const state = this;
+      const action = tr2.getMeta(columnResizingPluginKey);
+      if (action && action.setHandle != null)
+        return new _ResizeState(action.setHandle, false);
+      if (action && action.setDragging !== void 0)
+        return new _ResizeState(state.activeHandle, action.setDragging);
+      if (state.activeHandle > -1 && tr2.docChanged) {
+        let handle2 = tr2.mapping.map(state.activeHandle, -1);
+        if (!pointsAtCell(tr2.doc.resolve(handle2))) {
+          handle2 = -1;
+        }
+        return new _ResizeState(handle2, state.dragging);
+      }
+      return state;
+    }
+  };
+  function handleMouseMove(view, event, handleWidth, cellMinWidth, lastColumnResizable) {
+    const pluginState = columnResizingPluginKey.getState(view.state);
+    if (!pluginState)
+      return;
+    if (!pluginState.dragging) {
+      const target = domCellAround$1(event.target);
+      let cell2 = -1;
+      if (target) {
+        const { left, right } = target.getBoundingClientRect();
+        if (event.clientX - left <= handleWidth)
+          cell2 = edgeCell(view, event, "left", handleWidth);
+        else if (right - event.clientX <= handleWidth)
+          cell2 = edgeCell(view, event, "right", handleWidth);
+      }
+      if (cell2 != pluginState.activeHandle) {
+        if (!lastColumnResizable && cell2 !== -1) {
+          const $cell = view.state.doc.resolve(cell2);
+          const table2 = $cell.node(-1);
+          const map2 = TableMap.get(table2);
+          const tableStart = $cell.start(-1);
+          const col = map2.colCount($cell.pos - tableStart) + $cell.nodeAfter.attrs.colspan - 1;
+          if (col == map2.width - 1) {
+            return;
+          }
+        }
+        updateHandle(view, cell2);
+      }
+    }
+  }
+  function handleMouseLeave(view) {
+    const pluginState = columnResizingPluginKey.getState(view.state);
+    if (pluginState && pluginState.activeHandle > -1 && !pluginState.dragging)
+      updateHandle(view, -1);
+  }
+  function handleMouseDown2(view, event, cellMinWidth) {
+    const pluginState = columnResizingPluginKey.getState(view.state);
+    if (!pluginState || pluginState.activeHandle == -1 || pluginState.dragging)
+      return false;
+    const cell2 = view.state.doc.nodeAt(pluginState.activeHandle);
+    const width = currentColWidth(view, pluginState.activeHandle, cell2.attrs);
+    view.dispatch(
+      view.state.tr.setMeta(columnResizingPluginKey, {
+        setDragging: { startX: event.clientX, startWidth: width }
+      })
+    );
+    function finish(event2) {
+      window.removeEventListener("mouseup", finish);
+      window.removeEventListener("mousemove", move);
+      const pluginState2 = columnResizingPluginKey.getState(view.state);
+      if (pluginState2 == null ? void 0 : pluginState2.dragging) {
+        updateColumnWidth(
+          view,
+          pluginState2.activeHandle,
+          draggedWidth(pluginState2.dragging, event2, cellMinWidth)
+        );
+        view.dispatch(
+          view.state.tr.setMeta(columnResizingPluginKey, { setDragging: null })
+        );
+      }
+    }
+    function move(event2) {
+      if (!event2.which)
+        return finish(event2);
+      const pluginState2 = columnResizingPluginKey.getState(view.state);
+      if (!pluginState2)
+        return;
+      if (pluginState2.dragging) {
+        const dragged = draggedWidth(pluginState2.dragging, event2, cellMinWidth);
+        displayColumnWidth(view, pluginState2.activeHandle, dragged, cellMinWidth);
+      }
+    }
+    window.addEventListener("mouseup", finish);
+    window.addEventListener("mousemove", move);
+    event.preventDefault();
+    return true;
+  }
+  function currentColWidth(view, cellPos, { colspan, colwidth }) {
+    const width = colwidth && colwidth[colwidth.length - 1];
+    if (width)
+      return width;
+    const dom = view.domAtPos(cellPos);
+    const node2 = dom.node.childNodes[dom.offset];
+    let domWidth = node2.offsetWidth, parts = colspan;
+    if (colwidth) {
+      for (let i2 = 0; i2 < colspan; i2++)
+        if (colwidth[i2]) {
+          domWidth -= colwidth[i2];
+          parts--;
+        }
+    }
+    return domWidth / parts;
+  }
+  function domCellAround$1(target) {
+    while (target && target.nodeName != "TD" && target.nodeName != "TH")
+      target = target.classList && target.classList.contains("ProseMirror") ? null : target.parentNode;
+    return target;
+  }
+  function edgeCell(view, event, side, handleWidth) {
+    const offset = side == "right" ? -handleWidth : handleWidth;
+    const found2 = view.posAtCoords({
+      left: event.clientX + offset,
+      top: event.clientY
+    });
+    if (!found2)
+      return -1;
+    const { pos } = found2;
+    const $cell = cellAround(view.state.doc.resolve(pos));
+    if (!$cell)
+      return -1;
+    if (side == "right")
+      return $cell.pos;
+    const map2 = TableMap.get($cell.node(-1)), start = $cell.start(-1);
+    const index2 = map2.map.indexOf($cell.pos - start);
+    return index2 % map2.width == 0 ? -1 : start + map2.map[index2 - 1];
+  }
+  function draggedWidth(dragging, event, cellMinWidth) {
+    const offset = event.clientX - dragging.startX;
+    return Math.max(cellMinWidth, dragging.startWidth + offset);
+  }
+  function updateHandle(view, value) {
+    view.dispatch(
+      view.state.tr.setMeta(columnResizingPluginKey, { setHandle: value })
+    );
+  }
+  function updateColumnWidth(view, cell2, width) {
+    const $cell = view.state.doc.resolve(cell2);
+    const table2 = $cell.node(-1), map2 = TableMap.get(table2), start = $cell.start(-1);
+    const col = map2.colCount($cell.pos - start) + $cell.nodeAfter.attrs.colspan - 1;
+    const tr2 = view.state.tr;
+    for (let row2 = 0; row2 < map2.height; row2++) {
+      const mapIndex = row2 * map2.width + col;
+      if (row2 && map2.map[mapIndex] == map2.map[mapIndex - map2.width])
+        continue;
+      const pos = map2.map[mapIndex];
+      const attrs = table2.nodeAt(pos).attrs;
+      const index2 = attrs.colspan == 1 ? 0 : col - map2.colCount(pos);
+      if (attrs.colwidth && attrs.colwidth[index2] == width)
+        continue;
+      const colwidth = attrs.colwidth ? attrs.colwidth.slice() : zeroes(attrs.colspan);
+      colwidth[index2] = width;
+      tr2.setNodeMarkup(start + pos, null, { ...attrs, colwidth });
+    }
+    if (tr2.docChanged)
+      view.dispatch(tr2);
+  }
+  function displayColumnWidth(view, cell2, width, cellMinWidth) {
+    const $cell = view.state.doc.resolve(cell2);
+    const table2 = $cell.node(-1), start = $cell.start(-1);
+    const col = TableMap.get(table2).colCount($cell.pos - start) + $cell.nodeAfter.attrs.colspan - 1;
+    let dom = view.domAtPos($cell.start(-1)).node;
+    while (dom && dom.nodeName != "TABLE") {
+      dom = dom.parentNode;
+    }
+    if (!dom)
+      return;
+    updateColumnsOnResize(
+      table2,
+      dom.firstChild,
+      dom,
+      cellMinWidth,
+      col,
+      width
+    );
+  }
+  function zeroes(n) {
+    return Array(n).fill(0);
+  }
+  function handleDecorations(state, cell2) {
+    const decorations = [];
+    const $cell = state.doc.resolve(cell2);
+    const table2 = $cell.node(-1);
+    if (!table2) {
+      return DecorationSet.empty;
+    }
+    const map2 = TableMap.get(table2);
+    const start = $cell.start(-1);
+    const col = map2.colCount($cell.pos - start) + $cell.nodeAfter.attrs.colspan;
+    for (let row2 = 0; row2 < map2.height; row2++) {
+      const index2 = col + row2 * map2.width - 1;
+      if ((col == map2.width || map2.map[index2] != map2.map[index2 + 1]) && (row2 == 0 || map2.map[index2] != map2.map[index2 - map2.width])) {
+        const cellPos = map2.map[index2];
+        const pos = start + cellPos + table2.nodeAt(cellPos).nodeSize - 1;
+        const dom = document.createElement("div");
+        dom.className = "column-resize-handle";
+        decorations.push(Decoration.widget(pos, dom));
+      }
+    }
+    return DecorationSet.create(state.doc, decorations);
+  }
+  function selectedRect(state) {
+    const sel = state.selection;
+    const $pos = selectionCell(state);
+    const table2 = $pos.node(-1);
+    const tableStart = $pos.start(-1);
+    const map2 = TableMap.get(table2);
+    const rect = sel instanceof CellSelection ? map2.rectBetween(
+      sel.$anchorCell.pos - tableStart,
+      sel.$headCell.pos - tableStart
+    ) : map2.findCell($pos.pos - tableStart);
+    return { ...rect, tableStart, map: map2, table: table2 };
+  }
+  function rowIsHeader(map2, table2, row2) {
+    var _a;
+    const headerCell = tableNodeTypes(table2.type.schema).header_cell;
+    for (let col = 0; col < map2.width; col++)
+      if (((_a = table2.nodeAt(map2.map[col + row2 * map2.width])) == null ? void 0 : _a.type) != headerCell)
+        return false;
+    return true;
+  }
+  function addRow(tr2, { map: map2, tableStart, table: table2 }, row2) {
+    var _a;
+    let rowPos = tableStart;
+    for (let i2 = 0; i2 < row2; i2++)
+      rowPos += table2.child(i2).nodeSize;
+    const cells2 = [];
+    let refRow = row2 > 0 ? -1 : 0;
+    if (rowIsHeader(map2, table2, row2 + refRow))
+      refRow = row2 == 0 || row2 == map2.height ? null : 0;
+    for (let col = 0, index2 = map2.width * row2; col < map2.width; col++, index2++) {
+      if (row2 > 0 && row2 < map2.height && map2.map[index2] == map2.map[index2 - map2.width]) {
+        const pos = map2.map[index2];
+        const attrs = table2.nodeAt(pos).attrs;
+        tr2.setNodeMarkup(tableStart + pos, null, {
+          ...attrs,
+          rowspan: attrs.rowspan + 1
+        });
+        col += attrs.colspan - 1;
+      } else {
+        const type = refRow == null ? tableNodeTypes(table2.type.schema).cell : (_a = table2.nodeAt(map2.map[index2 + refRow * map2.width])) == null ? void 0 : _a.type;
+        const node2 = type == null ? void 0 : type.createAndFill();
+        if (node2)
+          cells2.push(node2);
+      }
+    }
+    tr2.insert(rowPos, tableNodeTypes(table2.type.schema).row.create(null, cells2));
+    return tr2;
+  }
+  function addRowBefore(state, dispatch) {
+    if (!isInTable(state))
+      return false;
+    if (dispatch) {
+      const rect = selectedRect(state);
+      dispatch(addRow(state.tr, rect, rect.top));
+    }
+    return true;
+  }
+  function addRowAfter(state, dispatch) {
+    if (!isInTable(state))
+      return false;
+    if (dispatch) {
+      const rect = selectedRect(state);
+      dispatch(addRow(state.tr, rect, rect.bottom));
+    }
+    return true;
+  }
+  function deprecated_toggleHeader(type) {
+    return function(state, dispatch) {
+      if (!isInTable(state))
+        return false;
+      if (dispatch) {
+        const types2 = tableNodeTypes(state.schema);
+        const rect = selectedRect(state), tr2 = state.tr;
+        const cells2 = rect.map.cellsInRect(
+          type == "column" ? {
+            left: rect.left,
+            top: 0,
+            right: rect.right,
+            bottom: rect.map.height
+          } : type == "row" ? {
+            left: 0,
+            top: rect.top,
+            right: rect.map.width,
+            bottom: rect.bottom
+          } : rect
+        );
+        const nodes = cells2.map((pos) => rect.table.nodeAt(pos));
+        for (let i2 = 0; i2 < cells2.length; i2++)
+          if (nodes[i2].type == types2.header_cell)
+            tr2.setNodeMarkup(
+              rect.tableStart + cells2[i2],
+              types2.cell,
+              nodes[i2].attrs
+            );
+        if (tr2.steps.length == 0)
+          for (let i2 = 0; i2 < cells2.length; i2++)
+            tr2.setNodeMarkup(
+              rect.tableStart + cells2[i2],
+              types2.header_cell,
+              nodes[i2].attrs
+            );
+        dispatch(tr2);
+      }
+      return true;
+    };
+  }
+  function isHeaderEnabledByType(type, rect, types2) {
+    const cellPositions = rect.map.cellsInRect({
+      left: 0,
+      top: 0,
+      right: type == "row" ? rect.map.width : 1,
+      bottom: type == "column" ? rect.map.height : 1
+    });
+    for (let i2 = 0; i2 < cellPositions.length; i2++) {
+      const cell2 = rect.table.nodeAt(cellPositions[i2]);
+      if (cell2 && cell2.type !== types2.header_cell) {
+        return false;
+      }
+    }
+    return true;
+  }
+  function toggleHeader(type, options) {
+    options = options || { useDeprecatedLogic: false };
+    if (options.useDeprecatedLogic)
+      return deprecated_toggleHeader(type);
+    return function(state, dispatch) {
+      if (!isInTable(state))
+        return false;
+      if (dispatch) {
+        const types2 = tableNodeTypes(state.schema);
+        const rect = selectedRect(state), tr2 = state.tr;
+        const isHeaderRowEnabled = isHeaderEnabledByType("row", rect, types2);
+        const isHeaderColumnEnabled = isHeaderEnabledByType(
+          "column",
+          rect,
+          types2
+        );
+        const isHeaderEnabled = type === "column" ? isHeaderRowEnabled : type === "row" ? isHeaderColumnEnabled : false;
+        const selectionStartsAt = isHeaderEnabled ? 1 : 0;
+        const cellsRect = type == "column" ? {
+          left: 0,
+          top: selectionStartsAt,
+          right: 1,
+          bottom: rect.map.height
+        } : type == "row" ? {
+          left: selectionStartsAt,
+          top: 0,
+          right: rect.map.width,
+          bottom: 1
+        } : rect;
+        const newType = type == "column" ? isHeaderColumnEnabled ? types2.cell : types2.header_cell : type == "row" ? isHeaderRowEnabled ? types2.cell : types2.header_cell : types2.cell;
+        rect.map.cellsInRect(cellsRect).forEach((relativeCellPos) => {
+          const cellPos = relativeCellPos + rect.tableStart;
+          const cell2 = tr2.doc.nodeAt(cellPos);
+          if (cell2) {
+            tr2.setNodeMarkup(cellPos, newType, cell2.attrs);
+          }
+        });
+        dispatch(tr2);
+      }
+      return true;
+    };
+  }
+  toggleHeader("row", {
+    useDeprecatedLogic: true
+  });
+  toggleHeader("column", {
+    useDeprecatedLogic: true
+  });
+  toggleHeader("cell", {
+    useDeprecatedLogic: true
+  });
+  function findNextCell($cell, dir) {
+    if (dir < 0) {
+      const before = $cell.nodeBefore;
+      if (before)
+        return $cell.pos - before.nodeSize;
+      for (let row2 = $cell.index(-1) - 1, rowEnd = $cell.before(); row2 >= 0; row2--) {
+        const rowNode = $cell.node(-1).child(row2);
+        const lastChild = rowNode.lastChild;
+        if (lastChild) {
+          return rowEnd - 1 - lastChild.nodeSize;
+        }
+        rowEnd -= rowNode.nodeSize;
+      }
+    } else {
+      if ($cell.index() < $cell.parent.childCount - 1) {
+        return $cell.pos + $cell.nodeAfter.nodeSize;
+      }
+      const table2 = $cell.node(-1);
+      for (let row2 = $cell.indexAfter(-1), rowStart = $cell.after(); row2 < table2.childCount; row2++) {
+        const rowNode = table2.child(row2);
+        if (rowNode.childCount)
+          return rowStart + 1;
+        rowStart += rowNode.nodeSize;
+      }
+    }
+    return null;
+  }
+  function goToNextCell(direction) {
+    return function(state, dispatch) {
+      if (!isInTable(state))
+        return false;
+      const cell2 = findNextCell(selectionCell(state), direction);
+      if (cell2 == null)
+        return false;
+      if (dispatch) {
+        const $cell = state.doc.resolve(cell2);
+        dispatch(
+          state.tr.setSelection(TextSelection.between($cell, moveCellForward($cell))).scrollIntoView()
+        );
+      }
+      return true;
+    };
+  }
+  function deleteTable(state, dispatch) {
+    const $pos = state.selection.$anchor;
+    for (let d = $pos.depth; d > 0; d--) {
+      const node2 = $pos.node(d);
+      if (node2.type.spec.tableRole == "table") {
+        if (dispatch)
+          dispatch(
+            state.tr.delete($pos.before(d), $pos.after(d)).scrollIntoView()
+          );
+        return true;
+      }
+    }
+    return false;
+  }
+  function tableEditing({
+    allowTableNodeSelection = false
+  } = {}) {
+    return new Plugin({
+      key: tableEditingKey,
+      // This piece of state is used to remember when a mouse-drag
+      // cell-selection is happening, so that it can continue even as
+      // transactions (which might move its anchor cell) come in.
+      state: {
+        init() {
+          return null;
+        },
+        apply(tr2, cur) {
+          const set = tr2.getMeta(tableEditingKey);
+          if (set != null)
+            return set == -1 ? null : set;
+          if (cur == null || !tr2.docChanged)
+            return cur;
+          const { deleted, pos } = tr2.mapping.mapResult(cur);
+          return deleted ? null : pos;
+        }
+      },
+      props: {
+        decorations: drawCellSelection,
+        handleDOMEvents: {
+          mousedown: handleMouseDown
+        },
+        createSelectionBetween(view) {
+          return tableEditingKey.getState(view.state) != null ? view.state.selection : null;
+        },
+        handleTripleClick,
+        handleKeyDown: handleKeyDown$1,
+        handlePaste
+      },
+      appendTransaction(_, oldState, state) {
+        return normalizeSelection(
+          state,
+          fixTables(state, oldState),
+          allowTableNodeSelection
+        );
+      }
+    });
+  }
+  const TableExtension = Extension.create({
+    name: "BlockNoteTableExtension",
+    addProseMirrorPlugins: () => {
+      return [
+        columnResizing({
+          cellMinWidth: 100
+        }),
+        tableEditing()
+      ];
+    },
+    addKeyboardShortcuts() {
+      return {
+        // Makes enter create a new line within the cell.
+        Enter: () => {
+          return false;
+        },
+        // Ensures that backspace won't delete the table if the text cursor is at
+        // the start of a cell and the selection is empty.
+        Backspace: () => {
+          return this.editor.commands.first(({ commands: commands2 }) => [
+            // Deletes the selection if it's not empty.
+            () => commands2.deleteSelection(),
+            // Undoes an input rule if one was triggered in the last editor state change.
+            () => commands2.undoInputRule(),
+            // Reverts block content type to a paragraph if the selection is at the start of the block.
+            () => commands2.command(({ state }) => {
+              const { contentType } = getBlockInfoFromPos(
+                state.doc,
+                state.selection.from
+              );
+              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+              const isParagraph = contentType.name === "paragraph";
+              if (selectionAtBlockStart && !isParagraph) {
+                return commands2.BNUpdateBlock(state.selection.from, {
+                  type: "paragraph",
+                  props: {}
+                });
+              }
+              return false;
+            }),
+            // Removes a level of nesting if the block is indented if the selection is at the start of the block.
+            () => commands2.command(({ state }) => {
+              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+              if (selectionAtBlockStart) {
+                return commands2.liftListItem("blockContainer");
+              }
+              return false;
+            }),
+            // Merges block with the previous one if it isn't indented, isn't the first block in the doc, and the selection
+            // is at the start of the block.
+            () => commands2.command(({ state }) => {
+              const { depth, startPos } = getBlockInfoFromPos(
+                state.doc,
+                state.selection.from
+              );
+              const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
+              const selectionEmpty = state.selection.anchor === state.selection.head;
+              const blockAtDocStart = startPos === 2;
+              const posBetweenBlocks = startPos - 1;
+              if (!blockAtDocStart && selectionAtBlockStart && selectionEmpty && depth > 1) {
+                return commands2.BNMergeBlocks(posBetweenBlocks);
+              }
+              return false;
+            })
+          ]);
+        }
+      };
+    },
+    extendNodeSchema(extension2) {
+      const context = {
+        name: extension2.name,
+        options: extension2.options,
+        storage: extension2.storage
+      };
+      return {
+        tableRole: callOrReturn(
+          getExtensionField(extension2, "tableRole", context)
+        )
+      };
+    }
+  });
+  const tablePropSchema = {
+    ...defaultProps
+  };
+  const TableBlockContent = createStronglyTypedTiptapNode({
+    name: "table",
+    content: "tableRow+",
+    group: "blockContent",
+    tableRole: "table",
+    isolating: true,
+    parseHTML() {
+      return [{ tag: "table" }];
+    },
+    renderHTML({ HTMLAttributes }) {
+      var _a, _b;
+      return createDefaultBlockDOMOutputSpec(
+        this.name,
+        "table",
+        {
+          ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockContent) || {},
+          ...HTMLAttributes
+        },
+        ((_b = this.options.domAttributes) == null ? void 0 : _b.inlineContent) || {}
+      );
+    },
+    addCommands() {
+      return {
+        goToNextCell: () => ({ state, dispatch }) => {
+          return goToNextCell(1)(state, dispatch);
+        },
+        goToPreviousCell: () => ({ state, dispatch }) => {
+          return goToNextCell(-1)(state, dispatch);
+        },
+        addRowBefore: () => ({ state, dispatch }) => {
+          return addRowBefore(state, dispatch);
+        },
+        addRowAfter: () => ({ state, dispatch }) => {
+          return addRowAfter(state, dispatch);
+        },
+        deleteTable: () => ({ state, dispatch }) => {
+          return deleteTable(state, dispatch);
+        }
+      };
+    },
+    addKeyboardShortcuts() {
+      return {
+        Tab: () => {
+          if (this.editor.commands.goToNextCell()) {
+            return true;
+          }
+          if (!this.editor.can().addRowAfter()) {
+            return false;
+          }
+          return this.editor.chain().addRowAfter().goToNextCell().run();
+        },
+        "Shift-Tab": () => this.editor.commands.goToPreviousCell(),
+        Backspace: deleteTableWhenAllCellsSelected,
+        "Mod-Backspace": deleteTableWhenAllCellsSelected,
+        Delete: deleteTableWhenAllCellsSelected,
+        "Mod-Delete": deleteTableWhenAllCellsSelected
+      };
+    }
+  });
+  const TableParagraph = Node.create({
+    name: "tableParagraph",
+    group: "tableContent",
+    content: "blockContainer+",
+    parseHTML() {
+      return [{ tag: "div" }];
+    },
+    renderHTML({ HTMLAttributes }) {
+      return [
+        "div",
+        mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
+        0
+      ];
+    }
+  });
+  const Table = createBlockSpecFromStronglyTypedTiptapNode(
+    TableBlockContent,
+    tablePropSchema,
+    [
+      TableExtension,
+      TableParagraph,
+      TableHeader.extend({
+        content: "tableContent"
+      }),
+      TableCell.extend({
+        content: "tableContent"
+      }),
+      TableRow
+    ]
+  );
+  function isCellSelection(value) {
+    return value instanceof CellSelection;
+  }
+  const deleteTableWhenAllCellsSelected = ({
+    editor: editor2
+  }) => {
+    const { selection } = editor2.state;
+    if (!isCellSelection(selection)) {
+      return false;
+    }
+    let cellCount = 0;
+    const table2 = findParentNodeClosestToPos(
+      selection.ranges[0].$from,
+      (node2) => {
+        return node2.type.name === "table";
+      }
+    );
+    table2 == null ? void 0 : table2.node.descendants((node2) => {
+      if (["tableCell", "tableHeader"].includes(node2.type.name)) {
+        cellCount += 1;
+      }
+    });
+    const allCellsSelected = cellCount === selection.ranges.length;
+    if (!allCellsSelected) {
+      return false;
+    }
+    editor2.commands.deleteTable();
+    return true;
+  };
+  const defaultBlockSpecs = {
+    paragraph: Paragraph,
+    heading: Heading,
+    bulletListItem: BulletListItem,
+    numberedListItem: NumberedListItem,
+    image: Image,
+    table: Table
+  };
+  const defaultBlockSchema = getBlockSchemaFromSpecs(defaultBlockSpecs);
+  const defaultStyleSpecs = {
+    bold: createStyleSpecFromTipTapMark(Bold, "boolean"),
+    italic: createStyleSpecFromTipTapMark(Italic, "boolean"),
+    underline: createStyleSpecFromTipTapMark(Underline, "boolean"),
+    strike: createStyleSpecFromTipTapMark(Strike, "boolean"),
+    code: createStyleSpecFromTipTapMark(Code, "boolean"),
+    textColor: TextColor,
+    backgroundColor: BackgroundColor
+  };
+  const defaultStyleSchema = getStyleSchemaFromSpecs(defaultStyleSpecs);
+  const defaultInlineContentSpecs = {
+    text: { config: "text", implementation: {} },
+    link: { config: "link", implementation: {} }
+  };
+  const defaultInlineContentSchema = getInlineContentSchemaFromSpecs(
+    defaultInlineContentSpecs
+  );
+  function insertBlocks(blocksToInsert, referenceBlock, placement = "before", editor2) {
+    const ttEditor = editor2._tiptapEditor;
+    const id = typeof referenceBlock === "string" ? referenceBlock : referenceBlock.id;
+    const nodesToInsert = [];
+    for (const blockSpec of blocksToInsert) {
+      nodesToInsert.push(
+        blockToNode(blockSpec, ttEditor.schema, editor2.styleSchema)
+      );
+    }
+    const { node: node2, posBeforeNode } = getNodeById(id, ttEditor.state.doc);
+    if (placement === "before") {
+      ttEditor.view.dispatch(
+        ttEditor.state.tr.insert(posBeforeNode, nodesToInsert)
+      );
+    }
+    if (placement === "after") {
+      ttEditor.view.dispatch(
+        ttEditor.state.tr.insert(posBeforeNode + node2.nodeSize, nodesToInsert)
+      );
+    }
+    if (placement === "nested") {
+      if (node2.childCount < 2) {
+        const blockGroupNode = ttEditor.state.schema.nodes["blockGroup"].create(
+          {},
+          nodesToInsert
+        );
+        ttEditor.view.dispatch(
+          ttEditor.state.tr.insert(
+            posBeforeNode + node2.firstChild.nodeSize + 1,
+            blockGroupNode
+          )
+        );
+      }
+    }
+    const insertedBlocks = [];
+    for (const node22 of nodesToInsert) {
+      insertedBlocks.push(
+        nodeToBlock(
+          node22,
+          editor2.blockSchema,
+          editor2.inlineContentSchema,
+          editor2.styleSchema,
+          editor2.blockCache
+        )
+      );
+    }
+    return insertedBlocks;
+  }
+  function updateBlock(blockToUpdate, update, editor2) {
+    const ttEditor = editor2._tiptapEditor;
+    const id = typeof blockToUpdate === "string" ? blockToUpdate : blockToUpdate.id;
+    const { posBeforeNode } = getNodeById(id, ttEditor.state.doc);
+    ttEditor.commands.BNUpdateBlock(posBeforeNode + 1, update);
+    const blockContainerNode = ttEditor.state.doc.resolve(posBeforeNode + 1).node();
+    return nodeToBlock(
+      blockContainerNode,
+      editor2.blockSchema,
+      editor2.inlineContentSchema,
+      editor2.styleSchema,
+      editor2.blockCache
+    );
+  }
+  function removeBlocksWithCallback(blocksToRemove, editor2, callback) {
+    const ttEditor = editor2._tiptapEditor;
+    const tr2 = ttEditor.state.tr;
+    const idsOfBlocksToRemove = new Set(
+      blocksToRemove.map(
+        (block2) => typeof block2 === "string" ? block2 : block2.id
+      )
+    );
+    const removedBlocks = [];
+    let removedSize = 0;
+    ttEditor.state.doc.descendants((node2, pos) => {
+      if (idsOfBlocksToRemove.size === 0) {
+        return false;
+      }
+      if (node2.type.name !== "blockContainer" || !idsOfBlocksToRemove.has(node2.attrs.id)) {
+        return true;
+      }
+      removedBlocks.push(
+        nodeToBlock(
+          node2,
+          editor2.blockSchema,
+          editor2.inlineContentSchema,
+          editor2.styleSchema,
+          editor2.blockCache
+        )
+      );
+      idsOfBlocksToRemove.delete(node2.attrs.id);
+      removedSize = (callback == null ? void 0 : callback(node2, pos, tr2, removedSize)) || removedSize;
+      const oldDocSize = tr2.doc.nodeSize;
+      tr2.delete(pos - removedSize - 1, pos - removedSize + node2.nodeSize + 1);
+      const newDocSize = tr2.doc.nodeSize;
+      removedSize += oldDocSize - newDocSize;
+      return false;
+    });
+    if (idsOfBlocksToRemove.size > 0) {
+      const notFoundIds = [...idsOfBlocksToRemove].join("\n");
+      throw Error(
+        "Blocks with the following IDs could not be found in the editor: " + notFoundIds
+      );
+    }
+    ttEditor.view.dispatch(tr2);
+    return removedBlocks;
+  }
+  function removeBlocks(blocksToRemove, editor2) {
+    return removeBlocksWithCallback(blocksToRemove, editor2);
+  }
+  function replaceBlocks(blocksToRemove, blocksToInsert, editor2) {
+    const ttEditor = editor2._tiptapEditor;
+    const nodesToInsert = [];
+    for (const block2 of blocksToInsert) {
+      nodesToInsert.push(blockToNode(block2, ttEditor.schema, editor2.styleSchema));
+    }
+    const idOfFirstBlock = typeof blocksToRemove[0] === "string" ? blocksToRemove[0] : blocksToRemove[0].id;
+    const removedBlocks = removeBlocksWithCallback(
+      blocksToRemove,
+      editor2,
+      (node2, pos, tr2, removedSize) => {
+        if (node2.attrs.id === idOfFirstBlock) {
+          const oldDocSize = tr2.doc.nodeSize;
+          tr2.insert(pos, nodesToInsert);
+          const newDocSize = tr2.doc.nodeSize;
+          return removedSize + oldDocSize - newDocSize;
+        }
+        return removedSize;
+      }
+    );
+    const insertedBlocks = [];
+    for (const node2 of nodesToInsert) {
+      insertedBlocks.push(
+        nodeToBlock(
+          node2,
+          editor2.blockSchema,
+          editor2.inlineContentSchema,
+          editor2.styleSchema,
+          editor2.blockCache
+        )
+      );
+    }
+    return { insertedBlocks, removedBlocks };
+  }
+  const isElement = (
+    /**
+     * @type {(
+     *   (() => false) &
+     *   (<T extends Element = Element>(node: unknown, test?: PredicateTest<T>, index?: number, parent?: Parent, context?: unknown) => node is T) &
+     *   ((node: unknown, test: Test, index?: number, parent?: Parent, context?: unknown) => boolean)
+     * )}
+     */
+    /**
+     * @param {unknown} [node]
+     * @param {Test | undefined} [test]
+     * @param {number | null | undefined} [index]
+     * @param {Parent | null | undefined} [parent]
+     * @param {unknown} [context]
+     * @returns {boolean}
+     */
+    // eslint-disable-next-line max-params
+    function(node2, test, index2, parent, context) {
+      const check = convertElement$1(test);
+      if (index2 !== void 0 && index2 !== null && (typeof index2 !== "number" || index2 < 0 || index2 === Number.POSITIVE_INFINITY)) {
+        throw new Error("Expected positive finite index for child node");
+      }
+      if (parent !== void 0 && parent !== null && (!parent.type || !parent.children)) {
+        throw new Error("Expected parent node");
+      }
+      if (!node2 || !node2.type || typeof node2.type !== "string") {
+        return false;
+      }
+      if ((parent === void 0 || parent === null) !== (index2 === void 0 || index2 === null)) {
+        throw new Error("Expected both parent and index");
+      }
+      return check.call(context, node2, index2, parent);
+    }
+  );
+  const convertElement$1 = (
+    /**
+     * @type {(
+     *   (<T extends Element>(test: T['tagName'] | TestFunctionPredicate<T>) => AssertPredicate<T>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test | null | undefined} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return element$1;
+      }
+      if (typeof test === "string") {
+        return tagNameFactory$1(test);
+      }
+      if (typeof test === "object") {
+        return anyFactory$4(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$4(test);
+      }
+      throw new Error("Expected function, string, or array as test");
+    }
+  );
+  function anyFactory$4(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convertElement$1(tests[index2]);
+    }
+    return castFactory$4(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  function tagNameFactory$1(check) {
+    return tagName;
+    function tagName(node2) {
+      return element$1(node2) && node2.tagName === check;
+    }
+  }
+  function castFactory$4(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return element$1(node2) && Boolean(check.call(this, node2, ...parameters));
+    }
+  }
+  function element$1(node2) {
+    return Boolean(
+      node2 && typeof node2 === "object" && // @ts-expect-error Looks like a node.
+      node2.type === "element" && // @ts-expect-error Looks like an element.
+      typeof node2.tagName === "string"
+    );
+  }
+  const embedded = convertElement$1([
+    "audio",
+    "canvas",
+    "embed",
+    "iframe",
+    "img",
+    "math",
+    "object",
+    "picture",
+    "svg",
+    "video"
+  ]);
+  const convert$2 = (
+    /**
+     * @type {(
+     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok$2;
+      }
+      if (typeof test === "string") {
+        return typeFactory$2(test);
+      }
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory$3(test) : propsFactory$2(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$3(test);
+      }
+      throw new Error("Expected function, string, or object as test");
+    }
+  );
+  function anyFactory$3(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convert$2(tests[index2]);
+    }
+    return castFactory$3(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters))
+          return true;
+      }
+      return false;
+    }
+  }
+  function propsFactory$2(check) {
+    return castFactory$3(all2);
+    function all2(node2) {
+      let key2;
+      for (key2 in check) {
+        if (node2[key2] !== check[key2])
+          return false;
+      }
+      return true;
+    }
+  }
+  function typeFactory$2(check) {
+    return castFactory$3(type);
+    function type(node2) {
+      return node2 && node2.type === check;
+    }
+  }
+  function castFactory$3(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return Boolean(
+        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
+        Boolean(check.call(this, node2, ...parameters))
+      );
+    }
+  }
+  function ok$2() {
+    return true;
+  }
+  function whitespace$1(thing) {
+    const value = (
+      // @ts-expect-error looks like a node.
+      thing && typeof thing === "object" && thing.type === "text" ? (
+        // @ts-expect-error looks like a text.
+        thing.value || ""
+      ) : thing
+    );
+    return typeof value === "string" && value.replace(/[ \t\n\f\r]/g, "") === "";
+  }
+  const blocks = [
+    "address",
+    // Flow content.
+    "article",
+    // Sections and headings.
+    "aside",
+    // Sections and headings.
+    "blockquote",
+    // Flow content.
+    "body",
+    // Page.
+    "br",
+    // Contribute whitespace intrinsically.
+    "caption",
+    // Similar to block.
+    "center",
+    // Flow content, legacy.
+    "col",
+    // Similar to block.
+    "colgroup",
+    // Similar to block.
+    "dd",
+    // Lists.
+    "dialog",
+    // Flow content.
+    "dir",
+    // Lists, legacy.
+    "div",
+    // Flow content.
+    "dl",
+    // Lists.
+    "dt",
+    // Lists.
+    "figcaption",
+    // Flow content.
+    "figure",
+    // Flow content.
+    "footer",
+    // Flow content.
+    "form",
+    // Flow content.
+    "h1",
+    // Sections and headings.
+    "h2",
+    // Sections and headings.
+    "h3",
+    // Sections and headings.
+    "h4",
+    // Sections and headings.
+    "h5",
+    // Sections and headings.
+    "h6",
+    // Sections and headings.
+    "head",
+    // Page.
+    "header",
+    // Flow content.
+    "hgroup",
+    // Sections and headings.
+    "hr",
+    // Flow content.
+    "html",
+    // Page.
+    "legend",
+    // Flow content.
+    "li",
+    // Block-like.
+    "li",
+    // Similar to block.
+    "listing",
+    // Flow content, legacy
+    "main",
+    // Flow content.
+    "menu",
+    // Lists.
+    "nav",
+    // Sections and headings.
+    "ol",
+    // Lists.
+    "optgroup",
+    // Similar to block.
+    "option",
+    // Similar to block.
+    "p",
+    // Flow content.
+    "plaintext",
+    // Flow content, legacy
+    "pre",
+    // Flow content.
+    "section",
+    // Sections and headings.
+    "summary",
+    // Similar to block.
+    "table",
+    // Similar to block.
+    "tbody",
+    // Similar to block.
+    "td",
+    // Block-like.
+    "td",
+    // Similar to block.
+    "tfoot",
+    // Similar to block.
+    "th",
+    // Block-like.
+    "th",
+    // Similar to block.
+    "thead",
+    // Similar to block.
+    "tr",
+    // Similar to block.
+    "ul",
+    // Lists.
+    "wbr",
+    // Contribute whitespace intrinsically.
+    "xmp"
+    // Flow content, legacy
+  ];
+  const content$1 = [
+    // Form.
+    "button",
+    "input",
+    "select",
+    "textarea"
+  ];
+  const skippable$1 = [
+    "area",
+    "base",
+    "basefont",
+    "dialog",
+    "datalist",
+    "head",
+    "link",
+    "meta",
+    "noembed",
+    "noframes",
+    "param",
+    "rp",
+    "script",
+    "source",
+    "style",
+    "template",
+    "track",
+    "title"
+  ];
+  const ignorableNode = convert$2(["doctype", "comment"]);
+  function rehypeMinifyWhitespace(options = {}) {
+    const collapse = collapseFactory(
+      options.newlines ? replaceNewlines : replaceWhitespace
+    );
+    return (tree) => {
+      minify(tree, { collapse, whitespace: "normal" });
+    };
+  }
+  function minify(node2, context) {
+    if ("children" in node2) {
+      const settings = Object.assign({}, context);
+      if (node2.type === "root" || blocklike(node2)) {
+        settings.before = true;
+        settings.after = true;
+      }
+      settings.whitespace = inferWhiteSpace(node2, context);
+      return all$1(node2, settings);
+    }
+    if (node2.type === "text") {
+      if (context.whitespace === "normal") {
+        return minifyText(node2, context);
+      }
+      if (context.whitespace === "nowrap") {
+        node2.value = context.collapse(node2.value);
+      }
+    }
+    return { remove: false, ignore: ignorableNode(node2), stripAtStart: false };
+  }
+  function minifyText(node2, context) {
+    const value = context.collapse(node2.value);
+    const result = { remove: false, ignore: false, stripAtStart: false };
+    let start = 0;
+    let end = value.length;
+    if (context.before && removable(value.charAt(0))) {
+      start++;
+    }
+    if (start !== end && removable(value.charAt(end - 1))) {
+      if (context.after) {
+        end--;
+      } else {
+        result.stripAtStart = true;
+      }
+    }
+    if (start === end) {
+      result.remove = true;
+    } else {
+      node2.value = value.slice(start, end);
+    }
+    return result;
+  }
+  function all$1(parent, context) {
+    let before = context.before;
+    const after = context.after;
+    const children = parent.children;
+    let length2 = children.length;
+    let index2 = -1;
+    while (++index2 < length2) {
+      const result = minify(
+        children[index2],
+        Object.assign({}, context, {
+          before,
+          after: collapsableAfter(children, index2, after)
+        })
+      );
+      if (result.remove) {
+        children.splice(index2, 1);
+        index2--;
+        length2--;
+      } else if (!result.ignore) {
+        before = result.stripAtStart;
+      }
+      if (content(children[index2])) {
+        before = false;
+      }
+    }
+    return { remove: false, ignore: false, stripAtStart: Boolean(before || after) };
+  }
+  function collapsableAfter(nodes, index2, after) {
+    while (++index2 < nodes.length) {
+      const node2 = nodes[index2];
+      let result = inferBoundary(node2);
+      if (result === void 0 && "children" in node2 && !skippable(node2)) {
+        result = collapsableAfter(node2.children, -1);
+      }
+      if (typeof result === "boolean") {
+        return result;
+      }
+    }
+    return after;
+  }
+  function inferBoundary(node2) {
+    if (node2.type === "element") {
+      if (content(node2)) {
+        return false;
+      }
+      if (blocklike(node2)) {
+        return true;
+      }
+    } else if (node2.type === "text") {
+      if (!whitespace$1(node2)) {
+        return false;
+      }
+    } else if (!ignorableNode(node2)) {
+      return false;
+    }
+  }
+  function content(node2) {
+    return embedded(node2) || isElement(node2, content$1);
+  }
+  function blocklike(node2) {
+    return isElement(node2, blocks);
+  }
+  function skippable(node2) {
+    return Boolean(
+      "properties" in node2 && node2.properties && node2.properties.hidden
+    ) || ignorableNode(node2) || isElement(node2, skippable$1);
+  }
+  function removable(character) {
+    return character === " " || character === "\n";
+  }
+  function replaceNewlines(value) {
+    const match = /\r?\n|\r/.exec(value);
+    return match ? match[0] : " ";
+  }
+  function replaceWhitespace() {
+    return " ";
+  }
+  function collapseFactory(replace2) {
+    return collapse;
+    function collapse(value) {
+      return String(value).replace(/[\t\n\v\f\r ]+/g, replace2);
+    }
+  }
+  function inferWhiteSpace(node2, context) {
+    if ("tagName" in node2 && node2.properties) {
+      switch (node2.tagName) {
+        case "listing":
+        case "plaintext":
+        case "script":
+        case "style":
+        case "xmp":
+          return "pre";
+        case "nobr":
+          return "nowrap";
+        case "pre":
+          return node2.properties.wrap ? "pre-wrap" : "pre";
+        case "td":
+        case "th":
+          return node2.properties.noWrap ? "nowrap" : context.whitespace;
+        case "textarea":
+          return "pre-wrap";
+      }
+    }
+    return context.whitespace;
+  }
+  function all(h2, parent) {
+    const nodes = parent.children || [];
+    const values = [];
+    let index2 = -1;
+    while (++index2 < nodes.length) {
+      const result = one(h2, nodes[index2], parent);
+      if (Array.isArray(result)) {
+        values.push(...result);
+      } else if (result) {
+        values.push(result);
+      }
+    }
+    let start = 0;
+    let end = values.length;
+    while (start < end && values[start].type === "break") {
+      start++;
+    }
+    while (end > start && values[end - 1].type === "break") {
+      end--;
+    }
+    return start === 0 && end === values.length ? values : values.slice(start, end);
+  }
+  const own$1 = {}.hasOwnProperty;
+  function wrapText(h2, value) {
+    return h2.wrapText ? value : value.replace(/\r?\n|\r/g, " ");
+  }
+  function one(h2, node2, parent) {
+    let fn;
+    if (node2.type === "element") {
+      if (node2.properties && node2.properties.dataMdast === "ignore") {
+        return;
+      }
+      if (own$1.call(h2.handlers, node2.tagName)) {
+        fn = h2.handlers[node2.tagName];
+      }
+    } else if (own$1.call(h2.handlers, node2.type)) {
+      fn = h2.handlers[node2.type];
+    }
+    if (typeof fn === "function") {
+      return fn(h2, node2, parent);
+    }
+    return unknown$1(h2, node2);
+  }
+  function unknown$1(h2, node2) {
+    if (typeof node2.value === "string") {
+      return h2(node2, "text", wrapText(h2, node2.value));
+    }
+    return all(h2, node2);
+  }
+  const own = {}.hasOwnProperty;
+  function hasProperty$1(node2, field) {
+    const value = typeof field === "string" && isNode$1(node2) && node2.type === "element" && node2.properties && own.call(node2.properties, field) && node2.properties[field];
+    return value !== null && value !== void 0 && value !== false;
+  }
+  function isNode$1(value) {
+    return Boolean(value && typeof value === "object" && "type" in value);
+  }
+  const list$2 = /* @__PURE__ */ new Set(["pingback", "prefetch", "stylesheet"]);
+  function isBodyOkLink(node2) {
+    if (!isElement(node2, "link")) {
+      return false;
+    }
+    if (hasProperty$1(node2, "itemProp")) {
+      return true;
+    }
+    const props = node2.properties || {};
+    const rel = props.rel || [];
+    let index2 = -1;
+    if (!Array.isArray(rel) || rel.length === 0) {
+      return false;
+    }
+    while (++index2 < rel.length) {
+      if (!list$2.has(String(rel[index2]))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  const basic = convertElement$1([
+    "a",
+    "abbr",
+    // `area` is in fact only phrasing if it is inside a `map` element.
+    // However, since `area`s are required to be inside a `map` element, and it’s
+    // a rather involved check, it’s ignored here for now.
+    "area",
+    "b",
+    "bdi",
+    "bdo",
+    "br",
+    "button",
+    "cite",
+    "code",
+    "data",
+    "datalist",
+    "del",
+    "dfn",
+    "em",
+    "i",
+    "input",
+    "ins",
+    "kbd",
+    "keygen",
+    "label",
+    "map",
+    "mark",
+    "meter",
+    "noscript",
+    "output",
+    "progress",
+    "q",
+    "ruby",
+    "s",
+    "samp",
+    "script",
+    "select",
+    "small",
+    "span",
+    "strong",
+    "sub",
+    "sup",
+    "template",
+    "textarea",
+    "time",
+    "u",
+    "var",
+    "wbr"
+  ]);
+  const meta = convertElement$1("meta");
+  function phrasing$2(value) {
+    return Boolean(
+      node(value) && (value.type === "text" || basic(value) || embedded(value) || isBodyOkLink(value) || meta(value) && hasProperty$1(value, "itemProp"))
+    );
+  }
+  function node(value) {
+    return value && typeof value === "object" && "type" in value;
+  }
+  const convert$1 = (
+    /**
+     * @type {(
+     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok$1;
+      }
+      if (typeof test === "string") {
+        return typeFactory$1(test);
+      }
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory$2(test) : propsFactory$1(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$2(test);
+      }
+      throw new Error("Expected function, string, or object as test");
+    }
+  );
+  function anyFactory$2(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convert$1(tests[index2]);
+    }
+    return castFactory$2(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters))
+          return true;
+      }
+      return false;
+    }
+  }
+  function propsFactory$1(check) {
+    return castFactory$2(all2);
+    function all2(node2) {
+      let key2;
+      for (key2 in check) {
+        if (node2[key2] !== check[key2])
+          return false;
+      }
+      return true;
+    }
+  }
+  function typeFactory$1(check) {
+    return castFactory$2(type);
+    function type(node2) {
+      return node2 && node2.type === check;
+    }
+  }
+  function castFactory$2(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return Boolean(
+        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
+        Boolean(check.call(this, node2, ...parameters))
+      );
+    }
+  }
+  function ok$1() {
+    return true;
+  }
+  const phrasing$1 = (
+    /** @type {AssertPredicatePhrasing} */
+    convert$1([
+      "break",
+      "delete",
+      "emphasis",
+      "footnote",
+      "footnoteReference",
+      "image",
+      "imageReference",
+      "inlineCode",
+      "link",
+      "linkReference",
+      "strong",
+      "text"
+    ])
+  );
+  function wrap(nodes) {
+    return runs(nodes, onphrasing);
+    function onphrasing(nodes2) {
+      const head2 = nodes2[0];
+      if (nodes2.length === 1 && head2.type === "text" && (head2.value === " " || head2.value === "\n")) {
+        return [];
+      }
+      return { type: "paragraph", children: nodes2 };
+    }
+  }
+  function wrapNeeded(nodes) {
+    let index2 = -1;
+    let node2;
+    while (++index2 < nodes.length) {
+      node2 = nodes[index2];
+      if (!phrasing(node2) || "children" in node2 && wrapNeeded(node2.children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function runs(nodes, onphrasing, onnonphrasing) {
+    const nonphrasing = onnonphrasing || identity;
+    const flattened = flatten(nodes);
+    let result = [];
+    let index2 = -1;
+    let queue;
+    let node2;
+    while (++index2 < flattened.length) {
+      node2 = flattened[index2];
+      if (phrasing(node2)) {
+        if (!queue)
+          queue = [];
+        queue.push(node2);
+      } else {
+        if (queue) {
+          result = result.concat(onphrasing(queue));
+          queue = void 0;
+        }
+        result = result.concat(nonphrasing(node2));
+      }
+    }
+    if (queue) {
+      result = result.concat(onphrasing(queue));
+    }
+    return result;
+  }
+  function flatten(nodes) {
+    let flattened = [];
+    let index2 = -1;
+    let node2;
+    while (++index2 < nodes.length) {
+      node2 = nodes[index2];
+      if ((node2.type === "delete" || node2.type === "link") && wrapNeeded(node2.children)) {
+        flattened = flattened.concat(split(node2));
+      } else {
+        flattened.push(node2);
+      }
+    }
+    return flattened;
+  }
+  function split(node2) {
+    return runs(node2.children, onphrasing, onnonphrasing);
+    function onnonphrasing(child) {
+      if ("children" in child && "children" in node2) {
+        const { children, ...rest } = node2;
+        return {
+          ...child,
+          // @ts-expect-error: assume matching parent & child.
+          children: [{ ...extend$1(true, {}, rest), children: child.children }]
+        };
+      }
+      return { ...child };
+    }
+    function onphrasing(nodes) {
+      const { children, ...rest } = node2;
+      return { ...extend$1(true, {}, rest), children: nodes };
+    }
+  }
+  function phrasing(node2) {
+    return node2.data && node2.data.hName ? phrasing$2({
+      type: "element",
+      tagName: node2.data.hName,
+      properties: {},
+      children: []
+    }) : phrasing$1(node2);
+  }
+  function identity(n) {
+    return n;
+  }
+  function wrapChildren(h2, node2) {
+    return wrap(all(h2, node2));
+  }
+  function resolve(h2, url) {
+    if (url === null || url === void 0) {
+      return "";
+    }
+    if (h2.frozenBaseUrl) {
+      return String(new URL(url, h2.frozenBaseUrl));
+    }
+    return url;
+  }
+  function a(h2, node2) {
+    const props = node2.properties;
+    return h2(
+      node2,
+      "link",
+      {
+        title: props.title || null,
+        url: resolve(h2, String(props.href || "") || null)
+      },
+      all(h2, node2)
+    );
+  }
+  function base(h2, node2) {
+    if (!h2.baseFound) {
+      h2.frozenBaseUrl = String(node2.properties && node2.properties.href || "") || null;
+      h2.baseFound = true;
+    }
+  }
+  function blockquote$1(h2, node2) {
+    return h2(node2, "blockquote", wrapChildren(h2, node2));
+  }
+  function br$1(h2, node2) {
+    return h2.wrapText ? h2(node2, "break") : h2(node2, "text", " ");
+  }
+  const convertElement = (
+    /**
+     * @type {(
+     *   (<T extends Element>(test: T['tagName'] | TestFunctionPredicate<T>) => AssertPredicate<T>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test | null | undefined} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return element;
+      }
+      if (typeof test === "string") {
+        return tagNameFactory(test);
+      }
+      if (typeof test === "object") {
+        return anyFactory$1(test);
+      }
+      if (typeof test === "function") {
+        return castFactory$1(test);
+      }
+      throw new Error("Expected function, string, or array as test");
+    }
+  );
+  function anyFactory$1(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convertElement(tests[index2]);
+    }
+    return castFactory$1(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  function tagNameFactory(check) {
+    return tagName;
+    function tagName(node2) {
+      return element(node2) && node2.tagName === check;
+    }
+  }
+  function castFactory$1(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return element(node2) && Boolean(check.call(this, node2, ...parameters));
+    }
+  }
+  function element(node2) {
+    return Boolean(
+      node2 && typeof node2 === "object" && // @ts-expect-error Looks like a node.
+      node2.type === "element" && // @ts-expect-error Looks like an element.
+      typeof node2.tagName === "string"
+    );
+  }
+  const convert = (
+    /**
+     * @type {(
+     *   (<Kind extends Node>(test: PredicateTest<Kind>) => AssertPredicate<Kind>) &
+     *   ((test?: Test) => AssertAnything)
+     * )}
+     */
+    /**
+     * @param {Test} [test]
+     * @returns {AssertAnything}
+     */
+    function(test) {
+      if (test === void 0 || test === null) {
+        return ok;
+      }
+      if (typeof test === "string") {
+        return typeFactory(test);
+      }
+      if (typeof test === "object") {
+        return Array.isArray(test) ? anyFactory(test) : propsFactory(test);
+      }
+      if (typeof test === "function") {
+        return castFactory(test);
+      }
+      throw new Error("Expected function, string, or object as test");
+    }
+  );
+  function anyFactory(tests) {
+    const checks2 = [];
+    let index2 = -1;
+    while (++index2 < tests.length) {
+      checks2[index2] = convert(tests[index2]);
+    }
+    return castFactory(any2);
+    function any2(...parameters) {
+      let index3 = -1;
+      while (++index3 < checks2.length) {
+        if (checks2[index3].call(this, ...parameters))
+          return true;
+      }
+      return false;
+    }
+  }
+  function propsFactory(check) {
+    return castFactory(all2);
+    function all2(node2) {
+      let key2;
+      for (key2 in check) {
+        if (node2[key2] !== check[key2])
+          return false;
+      }
+      return true;
+    }
+  }
+  function typeFactory(check) {
+    return castFactory(type);
+    function type(node2) {
+      return node2 && node2.type === check;
+    }
+  }
+  function castFactory(check) {
+    return assertion;
+    function assertion(node2, ...parameters) {
+      return Boolean(
+        node2 && typeof node2 === "object" && "type" in node2 && // @ts-expect-error: fine.
+        Boolean(check.call(this, node2, ...parameters))
+      );
+    }
+  }
+  function ok() {
+    return true;
+  }
+  const findAfter = (
+    /**
+     * @type {(
+     *  (<T extends Node>(node: Parent, index: Node | number, test: import('unist-util-is').PredicateTest<T>) => T | null) &
+     *  ((node: Parent, index: Node | number, test?: Test) => Node | null)
+     * )}
+     */
+    /**
+     * @param {Parent} parent
+     * @param {Node | number} index
+     * @param {Test} [test]
+     * @returns {Node | null}
+     */
+    function(parent, index2, test) {
+      const is = convert(test);
+      if (!parent || !parent.type || !parent.children) {
+        throw new Error("Expected parent node");
+      }
+      if (typeof index2 === "number") {
+        if (index2 < 0 || index2 === Number.POSITIVE_INFINITY) {
+          throw new Error("Expected positive finite number as index");
+        }
+      } else {
+        index2 = parent.children.indexOf(index2);
+        if (index2 < 0) {
+          throw new Error("Expected child node or index");
+        }
+      }
+      while (++index2 < parent.children.length) {
+        if (is(parent.children[index2], index2, parent)) {
+          return parent.children[index2];
+        }
+      }
+      return null;
+    }
+  );
+  const searchLineFeeds = /\n/g;
+  const searchTabOrSpaces = /[\t ]+/g;
+  const br = convertElement("br");
+  const p$2 = convertElement("p");
+  const cell$1 = convertElement(["th", "td"]);
+  const row = convertElement("tr");
+  const notRendered = convertElement([
+    // List from: <https://html.spec.whatwg.org/#hidden-elements>
+    "datalist",
+    "head",
+    "noembed",
+    "noframes",
+    "noscript",
+    // Act as if we support scripting.
+    "rp",
+    "script",
+    "style",
+    "template",
+    "title",
+    // Hidden attribute.
+    hidden,
+    // From: <https://html.spec.whatwg.org/#flow-content-3>
+    closedDialog
+  ]);
+  const blockOrCaption = convertElement([
+    "address",
+    // Flow content
+    "article",
+    // Sections and headings
+    "aside",
+    // Sections and headings
+    "blockquote",
+    // Flow content
+    "body",
+    // Page
+    "caption",
+    // `table-caption`
+    "center",
+    // Flow content (legacy)
+    "dd",
+    // Lists
+    "dialog",
+    // Flow content
+    "dir",
+    // Lists (legacy)
+    "dl",
+    // Lists
+    "dt",
+    // Lists
+    "div",
+    // Flow content
+    "figure",
+    // Flow content
+    "figcaption",
+    // Flow content
+    "footer",
+    // Flow content
+    "form,",
+    // Flow content
+    "h1",
+    // Sections and headings
+    "h2",
+    // Sections and headings
+    "h3",
+    // Sections and headings
+    "h4",
+    // Sections and headings
+    "h5",
+    // Sections and headings
+    "h6",
+    // Sections and headings
+    "header",
+    // Flow content
+    "hgroup",
+    // Sections and headings
+    "hr",
+    // Flow content
+    "html",
+    // Page
+    "legend",
+    // Flow content
+    "listing",
+    // Flow content (legacy)
+    "main",
+    // Flow content
+    "menu",
+    // Lists
+    "nav",
+    // Sections and headings
+    "ol",
+    // Lists
+    "p",
+    // Flow content
+    "plaintext",
+    // Flow content (legacy)
+    "pre",
+    // Flow content
+    "section",
+    // Sections and headings
+    "ul",
+    // Lists
+    "xmp"
+    // Flow content (legacy)
+  ]);
+  function toText(tree, options = {}) {
+    const children = "children" in tree ? tree.children : [];
+    const block2 = blockOrCaption(tree);
+    const whitespace2 = inferWhitespace(tree, {
+      whitespace: options.whitespace || "normal",
+      breakBefore: false,
+      breakAfter: false
+    });
+    const results = [];
+    if (tree.type === "text" || tree.type === "comment") {
+      results.push(
+        ...collectText(tree, {
+          whitespace: whitespace2,
+          breakBefore: true,
+          breakAfter: true
+        })
+      );
+    }
+    let index2 = -1;
+    while (++index2 < children.length) {
+      results.push(
+        ...innerTextCollection(children[index2], tree, {
+          whitespace: whitespace2,
+          breakBefore: index2 ? void 0 : block2,
+          breakAfter: index2 < children.length - 1 ? br(children[index2 + 1]) : block2
+        })
+      );
+    }
+    const result = [];
+    let count;
+    index2 = -1;
+    while (++index2 < results.length) {
+      const value = results[index2];
+      if (typeof value === "number") {
+        if (count !== void 0 && value > count)
+          count = value;
+      } else if (value) {
+        if (count !== void 0 && count > -1) {
+          result.push("\n".repeat(count) || " ");
+        }
+        count = -1;
+        result.push(value);
+      }
+    }
+    return result.join("");
+  }
+  function innerTextCollection(node2, parent, info) {
+    if (node2.type === "element") {
+      return collectElement(node2, parent, info);
+    }
+    if (node2.type === "text") {
+      return info.whitespace === "normal" ? collectText(node2, info) : collectPreText(node2);
+    }
+    return [];
+  }
+  function collectElement(node2, parent, info) {
+    const whitespace2 = inferWhitespace(node2, info);
+    const children = node2.children || [];
+    let index2 = -1;
+    let items = [];
+    if (notRendered(node2)) {
+      return items;
+    }
+    let prefix2;
+    let suffix;
+    if (br(node2)) {
+      suffix = "\n";
+    } else if (row(node2) && findAfter(parent, node2, row)) {
+      suffix = "\n";
+    } else if (p$2(node2)) {
+      prefix2 = 2;
+      suffix = 2;
+    } else if (blockOrCaption(node2)) {
+      prefix2 = 1;
+      suffix = 1;
+    }
+    while (++index2 < children.length) {
+      items = items.concat(
+        innerTextCollection(children[index2], node2, {
+          whitespace: whitespace2,
+          breakBefore: index2 ? void 0 : prefix2,
+          breakAfter: index2 < children.length - 1 ? br(children[index2 + 1]) : suffix
+        })
+      );
+    }
+    if (cell$1(node2) && findAfter(parent, node2, cell$1)) {
+      items.push("	");
+    }
+    if (prefix2)
+      items.unshift(prefix2);
+    if (suffix)
+      items.push(suffix);
+    return items;
+  }
+  function collectText(node2, info) {
+    const value = String(node2.value);
+    const lines = [];
+    const result = [];
+    let start = 0;
+    while (start <= value.length) {
+      searchLineFeeds.lastIndex = start;
+      const match = searchLineFeeds.exec(value);
+      const end = match && "index" in match ? match.index : value.length;
+      lines.push(
+        // Any sequence of collapsible spaces and tabs immediately preceding or
+        // following a segment break is removed.
+        trimAndCollapseSpacesAndTabs(
+          // […] ignoring bidi formatting characters (characters with the
+          // Bidi_Control property [UAX9]: ALM, LTR, RTL, LRE-RLO, LRI-PDI) as if
+          // they were not there.
+          value.slice(start, end).replace(/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ""),
+          start === 0 ? info.breakBefore : true,
+          end === value.length ? info.breakAfter : true
+        )
+      );
+      start = end + 1;
+    }
+    let index2 = -1;
+    let join2;
+    while (++index2 < lines.length) {
+      if (lines[index2].charCodeAt(lines[index2].length - 1) === 8203 || index2 < lines.length - 1 && lines[index2 + 1].charCodeAt(0) === 8203) {
+        result.push(lines[index2]);
+        join2 = void 0;
+      } else if (lines[index2]) {
+        if (typeof join2 === "number")
+          result.push(join2);
+        result.push(lines[index2]);
+        join2 = 0;
+      } else if (index2 === 0 || index2 === lines.length - 1) {
+        result.push(0);
+      }
+    }
+    return result;
+  }
+  function collectPreText(node2) {
+    return [String(node2.value)];
+  }
+  function trimAndCollapseSpacesAndTabs(value, breakBefore, breakAfter) {
+    const result = [];
+    let start = 0;
+    let end;
+    while (start < value.length) {
+      searchTabOrSpaces.lastIndex = start;
+      const match = searchTabOrSpaces.exec(value);
+      end = match ? match.index : value.length;
+      if (!start && !end && match && !breakBefore) {
+        result.push("");
+      }
+      if (start !== end) {
+        result.push(value.slice(start, end));
+      }
+      start = match ? end + match[0].length : end;
+    }
+    if (start !== end && !breakAfter) {
+      result.push("");
+    }
+    return result.join(" ");
+  }
+  function inferWhitespace(node2, info) {
+    if (node2.type === "element") {
+      const props = node2.properties || {};
+      switch (node2.tagName) {
+        case "listing":
+        case "plaintext":
+        case "xmp": {
+          return "pre";
+        }
+        case "nobr": {
+          return "nowrap";
+        }
+        case "pre": {
+          return props.wrap ? "pre-wrap" : "pre";
+        }
+        case "td":
+        case "th": {
+          return props.noWrap ? "nowrap" : info.whitespace;
+        }
+        case "textarea": {
+          return "pre-wrap";
+        }
+      }
+    }
+    return info.whitespace;
+  }
+  function hidden(node2) {
+    return Boolean((node2.properties || {}).hidden);
+  }
+  function closedDialog(node2) {
+    return node2.tagName === "dialog" && !(node2.properties || {}).open;
+  }
+  function trimTrailingLines(value) {
+    const input2 = String(value);
+    let end = input2.length;
+    while (end > 0) {
+      const code2 = input2.codePointAt(end - 1);
+      if (code2 !== void 0 && (code2 === 10 || code2 === 13)) {
+        end--;
+      } else {
+        break;
+      }
+    }
+    return input2.slice(0, end);
+  }
+  const prefix = "language-";
+  const pre = convertElement$1("pre");
+  const isCode = convertElement$1("code");
+  function code$1(h2, node2) {
+    const children = node2.children;
+    let index2 = -1;
+    let classList;
+    let lang;
+    if (pre(node2)) {
+      while (++index2 < children.length) {
+        const child = children[index2];
+        if (isCode(child) && child.properties && child.properties.className && Array.isArray(child.properties.className)) {
+          classList = child.properties.className;
+          break;
+        }
+      }
+    }
+    if (classList) {
+      index2 = -1;
+      while (++index2 < classList.length) {
+        if (String(classList[index2]).slice(0, prefix.length) === prefix) {
+          lang = String(classList[index2]).slice(prefix.length);
+          break;
+        }
+      }
+    }
+    return h2(
+      node2,
+      "code",
+      { lang: lang || null, meta: null },
+      trimTrailingLines(wrapText(h2, toText(node2)))
+    );
+  }
+  function comment(h2, node2) {
+    return h2(node2, "html", "<!--" + wrapText(h2, node2.value) + "-->");
+  }
+  function del(h2, node2) {
+    return h2(node2, "delete", all(h2, node2));
+  }
+  function listItemsSpread(children) {
+    let index2 = -1;
+    if (children.length > 1) {
+      while (++index2 < children.length) {
+        if (children[index2].spread) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  function wrapListItems(h2, node2) {
+    const children = all(h2, node2);
+    let index2 = -1;
+    while (++index2 < children.length) {
+      const child = children[index2];
+      if (child.type !== "listItem") {
+        children[index2] = {
+          type: "listItem",
+          spread: false,
+          checked: null,
+          // @ts-expect-error Assume `children[index]` is block content.
+          children: [child]
+        };
+      }
+    }
+    return children;
+  }
+  const div = convertElement$1("div");
+  const dt = convertElement$1("dt");
+  const dd = convertElement$1("dd");
+  function dl(h2, node2) {
+    const children = node2.children;
+    let index2 = -1;
+    let clean2 = [];
+    const groups = [];
+    let group = { titles: [], definitions: [] };
+    let child;
+    let result;
+    while (++index2 < children.length) {
+      child = children[index2];
+      clean2 = clean2.concat(div(child) ? child.children : child);
+    }
+    index2 = -1;
+    while (++index2 < clean2.length) {
+      child = clean2[index2];
+      if (dt(child)) {
+        if (dd(clean2[index2 - 1])) {
+          groups.push(group);
+          group = { titles: [], definitions: [] };
+        }
+        group.titles.push(child);
+      } else {
+        group.definitions.push(child);
+      }
+    }
+    groups.push(group);
+    index2 = -1;
+    const content2 = [];
+    while (++index2 < groups.length) {
+      result = [
+        ...handle$1(h2, groups[index2].titles),
+        ...handle$1(h2, groups[index2].definitions)
+      ];
+      if (result.length > 0) {
+        content2.push({
+          type: "listItem",
+          spread: result.length > 1,
+          checked: null,
+          children: result
+        });
+      }
+    }
+    if (content2.length > 0) {
+      return h2(
+        node2,
+        "list",
+        { ordered: false, start: null, spread: listItemsSpread(content2) },
+        content2
+      );
+    }
+  }
+  function handle$1(h2, children) {
+    const nodes = wrapListItems(h2, { type: "element", tagName: "x", children });
+    if (nodes.length === 0) {
+      return [];
+    }
+    if (nodes.length === 1) {
+      return nodes[0].children;
+    }
+    return [
+      {
+        type: "list",
+        ordered: false,
+        start: null,
+        spread: listItemsSpread(nodes),
+        children: nodes
+      }
+    ];
+  }
+  function em(h2, node2) {
+    return h2(node2, "emphasis", all(h2, node2));
+  }
+  function heading$1(h2, node2) {
+    const depth = Number(node2.tagName.charAt(1)) || 1;
+    const wrap2 = h2.wrapText;
+    h2.wrapText = false;
+    const result = h2(node2, "heading", { depth }, all(h2, node2));
+    h2.wrapText = wrap2;
+    return result;
+  }
+  function hr(h2, node2) {
+    return h2(node2, "thematicBreak");
+  }
+  function iframe(h2, node2) {
+    const props = node2.properties;
+    const src = String(props.src || "");
+    const title = String(props.title || "");
+    if (src && title) {
+      return {
+        type: "link",
+        title: null,
+        url: resolve(h2, src),
+        children: [{ type: "text", value: wrapText(h2, title) }]
+      };
+    }
+  }
+  function img(h2, node2) {
+    const props = node2.properties;
+    return h2(node2, "image", {
+      url: resolve(h2, String(props.src || "") || null),
+      title: props.title || null,
+      alt: props.alt || ""
+    });
+  }
+  function inlineCode(h2, node2) {
+    return h2(node2, "inlineCode", wrapText(h2, toText(node2)));
+  }
+  const option = convertElement$1("option");
+  function findSelectedOptions(h2, node2, properties) {
+    const props = properties || node2.properties;
+    let options = findOptions(node2);
+    const size = Math.min(Number.parseInt(String(props.size), 10), 0) || (props.multiple ? 4 : 1);
+    let index2 = -1;
+    const selectedOptions = [];
+    const values = [];
+    while (++index2 < options.length) {
+      if (hasProperty$1(options[index2], "selected")) {
+        selectedOptions.push(options[index2]);
+      }
+    }
+    const list2 = selectedOptions.length > 0 ? selectedOptions : options;
+    options = list2.slice(0, size);
+    index2 = -1;
+    while (++index2 < options.length) {
+      const option2 = options[index2];
+      const content2 = wrapText(h2, toText(option2));
+      const props2 = option2.properties;
+      const label = content2 || String(props2.label || "");
+      const value = String(props2.value || "") || content2;
+      values.push([value, label === value ? null : label]);
+    }
+    return values;
+  }
+  function findOptions(node2) {
+    const children = node2.children;
+    let index2 = -1;
+    let results = [];
+    let child;
+    while (++index2 < children.length) {
+      child = children[index2];
+      if (Array.isArray(child.children)) {
+        results = results.concat(findOptions(child));
+      }
+      if (option(child) && !hasProperty$1(child, "disabled")) {
+        results.push(child);
+      }
+    }
+    return results;
+  }
+  const datalist = convertElement$1("datalist");
+  function input$1(h2, node2) {
+    const props = node2.properties;
+    let value = String(props.value || props.placeholder || "");
+    const results = [];
+    const texts = [];
+    let values = [];
+    let index2 = -1;
+    let list2;
+    if (props.disabled || props.type === "hidden" || props.type === "file") {
+      return;
+    }
+    if (props.type === "checkbox" || props.type === "radio") {
+      return h2(
+        node2,
+        "text",
+        wrapText(h2, h2[props.checked ? "checked" : "unchecked"])
+      );
+    }
+    if (props.type === "image") {
+      return props.alt || value ? h2(node2, "image", {
+        url: resolve(h2, String(props.src || "") || null),
+        title: wrapText(h2, String(props.title || "")) || null,
+        alt: wrapText(h2, String(props.alt || value))
+      }) : [];
+    }
+    if (value) {
+      values = [[value, null]];
+    } else if (
+      // `list` is not supported on these types:
+      props.type !== "password" && props.type !== "file" && props.type !== "submit" && props.type !== "reset" && props.type !== "button" && props.list
+    ) {
+      list2 = String(props.list).toUpperCase();
+      if (own$1.call(h2.nodeById, list2) && datalist(h2.nodeById[list2])) {
+        values = findSelectedOptions(h2, h2.nodeById[list2], props);
+      }
+    }
+    if (values.length === 0) {
+      return;
+    }
+    if (props.type === "password") {
+      values[0] = ["•".repeat(values[0][0].length), null];
+    }
+    if (props.type === "url" || props.type === "email") {
+      while (++index2 < values.length) {
+        value = resolve(h2, values[index2][0]);
+        results.push(
+          h2(
+            node2,
+            "link",
+            {
+              title: null,
+              url: wrapText(h2, props.type === "email" ? "mailto:" + value : value)
+            },
+            [{ type: "text", value: wrapText(h2, values[index2][1] || value) }]
+          )
+        );
+        if (index2 !== values.length - 1) {
+          results.push({ type: "text", value: ", " });
+        }
+      }
+      return results;
+    }
+    while (++index2 < values.length) {
+      texts.push(
+        values[index2][1] ? values[index2][1] + " (" + values[index2][0] + ")" : values[index2][0]
+      );
+    }
+    return h2(node2, "text", wrapText(h2, texts.join(", ")));
+  }
+  const p$1 = convertElement$1("p");
+  const input = convertElement$1("input");
+  function li(h2, node2) {
+    const head2 = node2.children[0];
+    let checked = null;
+    let checkbox;
+    let clone;
+    if (p$1(head2)) {
+      checkbox = head2.children[0];
+      if (input(checkbox) && checkbox.properties && (checkbox.properties.type === "checkbox" || checkbox.properties.type === "radio")) {
+        checked = Boolean(checkbox.properties.checked);
+        clone = {
+          ...node2,
+          children: [
+            { ...head2, children: head2.children.slice(1) },
+            ...node2.children.slice(1)
+          ]
+        };
+      }
+    }
+    const content2 = wrapChildren(h2, clone || node2);
+    return h2(node2, "listItem", { spread: content2.length > 1, checked }, content2);
+  }
+  const ol = convertElement$1("ol");
+  function list$1(h2, node2) {
+    const ordered = ol(node2);
+    const children = wrapListItems(h2, node2);
+    let start = null;
+    if (ordered) {
+      start = hasProperty$1(node2, "start") ? (
+        // @ts-expect-error: `props` exist.
+        Number.parseInt(String(node2.properties.start), 10)
+      ) : 1;
+    }
+    return h2(
+      node2,
+      "list",
+      { ordered, start, spread: listItemsSpread(children) },
+      children
+    );
+  }
+  const source = convertElement$1("source");
+  const video = convertElement$1("video");
+  function media(h2, node2) {
+    let nodes = all(h2, node2);
+    const properties = node2.properties;
+    const poster = video(node2) && String(properties.poster || "");
+    let src = String(properties.src || "");
+    let index2 = -1;
+    let linkInFallbackContent = false;
+    let child;
+    visit({ type: "root", children: nodes }, "link", findLink);
+    if (linkInFallbackContent || wrapNeeded(nodes)) {
+      return nodes;
+    }
+    while (!src && ++index2 < node2.children.length) {
+      child = node2.children[index2];
+      if (source(child)) {
+        src = String(child.properties.src || "");
+      }
+    }
+    if (poster) {
+      nodes = [
+        {
+          type: "image",
+          title: null,
+          url: resolve(h2, poster),
+          alt: toString({ children: nodes })
+        }
+      ];
+    }
+    return {
+      type: "link",
+      // @ts-expect-error Types are broken.
+      title: node2.properties.title || null,
+      url: resolve(h2, src),
+      // @ts-expect-error Assume phrasing content.
+      children: nodes
+    };
+    function findLink() {
+      linkInFallbackContent = true;
+      return EXIT;
+    }
+  }
+  function p(h2, node2) {
+    const nodes = all(h2, node2);
+    if (nodes.length > 0) {
+      return h2(node2, "paragraph", nodes);
+    }
+  }
+  function q(h2, node2) {
+    const expected = h2.quotes[h2.qNesting % h2.quotes.length];
+    h2.qNesting++;
+    const contents = all(h2, node2);
+    h2.qNesting--;
+    contents.unshift({ type: "text", value: expected.charAt(0) });
+    contents.push({
+      type: "text",
+      value: expected.length > 1 ? expected.charAt(1) : expected
+    });
+    return contents;
+  }
+  function root$1(h2, node2) {
+    let children = all(h2, node2);
+    if (h2.document || wrapNeeded(children)) {
+      children = wrap(children);
+    }
+    return h2(node2, "root", children);
+  }
+  function select(h2, node2) {
+    const values = findSelectedOptions(h2, node2);
+    let index2 = -1;
+    const results = [];
+    let value;
+    while (++index2 < values.length) {
+      value = values[index2];
+      results.push(value[1] ? value[1] + " (" + value[0] + ")" : value[0]);
+    }
+    if (results.length > 0) {
+      return h2(node2, "text", wrapText(h2, results.join(", ")));
+    }
+  }
+  function strong$1(h2, node2) {
+    return h2(node2, "strong", all(h2, node2));
+  }
+  function tableCell(h2, node2) {
+    const wrap2 = h2.wrapText;
+    h2.wrapText = false;
+    const result = h2(node2, "tableCell", all(h2, node2));
+    if (node2.properties && (node2.properties.rowSpan || node2.properties.colSpan)) {
+      const data = result.data || (result.data = {});
+      if (node2.properties.rowSpan)
+        data.rowSpan = node2.properties.rowSpan;
+      if (node2.properties.colSpan)
+        data.colSpan = node2.properties.colSpan;
+    }
+    h2.wrapText = wrap2;
+    return result;
+  }
+  function tableRow(h2, node2) {
+    return h2(node2, "tableRow", all(h2, node2));
+  }
+  const thead = convertElement$1("thead");
+  const tr$1 = convertElement$1("tr");
+  const cell = convertElement$1(["th", "td"]);
+  function table(h2, node2) {
+    if (h2.inTable) {
+      return h2(node2, "text", wrapText(h2, toText(node2)));
+    }
+    h2.inTable = true;
+    const { headless, align } = inspect(node2);
+    const rows = toRows(all(h2, node2), headless);
+    let columns = 1;
+    let rowIndex = -1;
+    while (++rowIndex < rows.length) {
+      const cells2 = rows[rowIndex].children;
+      let cellIndex = -1;
+      while (++cellIndex < cells2.length) {
+        const cell2 = cells2[cellIndex];
+        if (cell2.data) {
+          const colSpan = Number.parseInt(String(cell2.data.colSpan), 10) || 1;
+          const rowSpan = Number.parseInt(String(cell2.data.rowSpan), 10) || 1;
+          if (colSpan > 1 || rowSpan > 1) {
+            let otherRowIndex = rowIndex - 1;
+            while (++otherRowIndex < rowIndex + rowSpan) {
+              let colIndex = cellIndex - 1;
+              while (++colIndex < cellIndex + colSpan) {
+                if (!rows[otherRowIndex]) {
+                  break;
+                }
+                const newCells = [];
+                if (otherRowIndex !== rowIndex || colIndex !== cellIndex) {
+                  newCells.push({ type: "tableCell", children: [] });
+                }
+                rows[otherRowIndex].children.splice(colIndex, 0, ...newCells);
+              }
+            }
+          }
+          if ("colSpan" in cell2.data)
+            delete cell2.data.colSpan;
+          if ("rowSpan" in cell2.data)
+            delete cell2.data.rowSpan;
+          if (Object.keys(cell2.data).length === 0)
+            delete cell2.data;
+        }
+      }
+      if (cells2.length > columns)
+        columns = cells2.length;
+    }
+    rowIndex = -1;
+    while (++rowIndex < rows.length) {
+      const cells2 = rows[rowIndex].children;
+      let cellIndex = cells2.length - 1;
+      while (++cellIndex < columns) {
+        cells2.push({ type: "tableCell", children: [] });
+      }
+    }
+    let alignIndex = align.length - 1;
+    while (++alignIndex < columns) {
+      align.push(null);
+    }
+    h2.inTable = false;
+    return h2(node2, "table", { align }, rows);
+  }
+  function inspect(node2) {
+    let headless = true;
+    let rowIndex = 0;
+    let cellIndex = 0;
+    const align = [null];
+    visit(node2, "element", (child) => {
+      if (child.tagName === "table" && node2 !== child) {
+        return SKIP;
+      }
+      if (cell(child) && child.properties) {
+        if (!align[cellIndex]) {
+          align[cellIndex] = String(child.properties.align || "") || null;
+        }
+        if (headless && rowIndex < 2 && child.tagName === "th") {
+          headless = false;
+        }
+        cellIndex++;
+      } else if (thead(child)) {
+        headless = false;
+      } else if (tr$1(child)) {
+        rowIndex++;
+        cellIndex = 0;
+      }
+    });
+    return { align, headless };
+  }
+  function toRows(children, headless) {
+    let index2 = -1;
+    const nodes = [];
+    let queue;
+    if (headless) {
+      nodes.push({ type: "tableRow", children: [] });
+    }
+    while (++index2 < children.length) {
+      const node2 = children[index2];
+      if (node2.type === "tableRow") {
+        if (queue) {
+          node2.children.unshift(...queue);
+          queue = void 0;
+        }
+        nodes.push(node2);
+      } else {
+        if (!queue)
+          queue = [];
+        queue.push(node2);
+      }
+    }
+    if (queue) {
+      nodes[nodes.length - 1].children.push(...queue);
+    }
+    index2 = -1;
+    while (++index2 < nodes.length) {
+      nodes[index2].children = toCells(nodes[index2].children);
+    }
+    return nodes;
+  }
+  function toCells(children) {
+    const nodes = [];
+    let index2 = -1;
+    let node2;
+    let queue;
+    while (++index2 < children.length) {
+      node2 = children[index2];
+      if (node2.type === "tableCell") {
+        if (queue) {
+          node2.children.unshift(...queue);
+          queue = void 0;
+        }
+        nodes.push(node2);
+      } else {
+        if (!queue)
+          queue = [];
+        queue.push(node2);
+      }
+    }
+    if (queue) {
+      node2 = nodes[nodes.length - 1];
+      if (!node2) {
+        node2 = { type: "tableCell", children: [] };
+        nodes.push(node2);
+      }
+      node2.children.push(...queue);
+    }
+    return nodes;
+  }
+  function text$1(h2, node2) {
+    return h2(node2, "text", wrapText(h2, node2.value));
+  }
+  function textarea(h2, node2) {
+    return h2(node2, "text", wrapText(h2, toText(node2)));
+  }
+  function wbr(h2, node2) {
+    return h2(node2, "text", "​");
+  }
+  const handlers = {
+    root: root$1,
+    text: text$1,
+    comment,
+    doctype: ignore,
+    applet: ignore,
+    area: ignore,
+    basefont: ignore,
+    bgsound: ignore,
+    caption: ignore,
+    col: ignore,
+    colgroup: ignore,
+    command: ignore,
+    content: ignore,
+    datalist: ignore,
+    dialog: ignore,
+    element: ignore,
+    embed: ignore,
+    frame: ignore,
+    frameset: ignore,
+    isindex: ignore,
+    keygen: ignore,
+    link: ignore,
+    math: ignore,
+    menu: ignore,
+    menuitem: ignore,
+    meta: ignore,
+    nextid: ignore,
+    noembed: ignore,
+    noframes: ignore,
+    optgroup: ignore,
+    option: ignore,
+    param: ignore,
+    script: ignore,
+    shadow: ignore,
+    source: ignore,
+    spacer: ignore,
+    style: ignore,
+    svg: ignore,
+    template: ignore,
+    title: ignore,
+    track: ignore,
+    abbr: all,
+    acronym: all,
+    bdi: all,
+    bdo: all,
+    big: all,
+    blink: all,
+    button: all,
+    canvas: all,
+    cite: all,
+    data: all,
+    details: all,
+    dfn: all,
+    font: all,
+    ins: all,
+    label: all,
+    map: all,
+    marquee: all,
+    meter: all,
+    nobr: all,
+    noscript: all,
+    object: all,
+    output: all,
+    progress: all,
+    rb: all,
+    rbc: all,
+    rp: all,
+    rt: all,
+    rtc: all,
+    ruby: all,
+    slot: all,
+    small: all,
+    span: all,
+    sup: all,
+    sub: all,
+    tbody: all,
+    tfoot: all,
+    thead: all,
+    time: all,
+    address: wrapChildren,
+    article: wrapChildren,
+    aside: wrapChildren,
+    body: wrapChildren,
+    center: wrapChildren,
+    div: wrapChildren,
+    fieldset: wrapChildren,
+    figcaption: wrapChildren,
+    figure: wrapChildren,
+    form: wrapChildren,
+    footer: wrapChildren,
+    header: wrapChildren,
+    hgroup: wrapChildren,
+    html: wrapChildren,
+    legend: wrapChildren,
+    main: wrapChildren,
+    multicol: wrapChildren,
+    nav: wrapChildren,
+    picture: wrapChildren,
+    section: wrapChildren,
+    a,
+    audio: media,
+    b: strong$1,
+    base,
+    blockquote: blockquote$1,
+    br: br$1,
+    code: inlineCode,
+    dir: list$1,
+    dl,
+    dt: li,
+    dd: li,
+    del,
+    em,
+    h1: heading$1,
+    h2: heading$1,
+    h3: heading$1,
+    h4: heading$1,
+    h5: heading$1,
+    h6: heading$1,
+    hr,
+    i: em,
+    iframe,
+    img,
+    image: img,
+    input: input$1,
+    kbd: inlineCode,
+    li,
+    listing: code$1,
+    mark: em,
+    ol: list$1,
+    p,
+    plaintext: code$1,
+    pre: code$1,
+    q,
+    s: del,
+    samp: inlineCode,
+    select,
+    strike: del,
+    strong: strong$1,
+    summary: p,
+    table,
+    td: tableCell,
+    textarea,
+    th: tableCell,
+    tr: tableRow,
+    tt: inlineCode,
+    u: em,
+    ul: list$1,
+    var: inlineCode,
+    video: media,
+    wbr,
+    xmp: code$1
+  };
+  function ignore() {
+  }
+  const block = convert$2(["heading", "paragraph", "root"]);
+  function toMdast(tree, options = {}) {
+    const byId = {};
+    let mdast;
+    const h2 = Object.assign(
+      /**
+       * @type {HWithProps & HWithoutProps}
+       */
+      /**
+       * @param {Node} node
+       * @param {string} type
+       * @param {Properties|string|Array<Node>} [props]
+       * @param {string|Array<Node>} [children]
+       */
+      (node2, type, props, children) => {
+        let properties;
+        if (typeof props === "string" || Array.isArray(props)) {
+          children = props;
+          properties = {};
+        } else {
+          properties = props;
+        }
+        const result2 = { type, ...properties };
+        if (typeof children === "string") {
+          result2.value = children;
+        } else if (children) {
+          result2.children = children;
+        }
+        if (node2.position) {
+          result2.position = node2.position;
+        }
+        return result2;
+      },
+      {
+        nodeById: byId,
+        baseFound: false,
+        inTable: false,
+        wrapText: true,
+        /** @type {string|null} */
+        frozenBaseUrl: null,
+        qNesting: 0,
+        handlers: options.handlers ? { ...handlers, ...options.handlers } : handlers,
+        document: options.document,
+        checked: options.checked || "[x]",
+        unchecked: options.unchecked || "[ ]",
+        quotes: options.quotes || ['"']
+      }
+    );
+    visit(tree, "element", (node2) => {
+      const id = node2.properties && "id" in node2.properties && String(node2.properties.id).toUpperCase();
+      if (id && !own$1.call(byId, id)) {
+        byId[id] = node2;
+      }
+    });
+    rehypeMinifyWhitespace({ newlines: options.newlines === true })(tree);
+    const result = one(h2, tree, void 0);
+    if (!result) {
+      mdast = { type: "root", children: [] };
+    } else if (Array.isArray(result)) {
+      mdast = { type: "root", children: result };
+    } else {
+      mdast = result;
+    }
+    visit(mdast, "text", ontext);
+    return mdast;
+    function ontext(node2, index2, parent) {
+      if (index2 === null || !parent) {
+        return;
+      }
+      const previous2 = parent.children[index2 - 1];
+      if (previous2 && previous2.type === node2.type) {
+        previous2.value += node2.value;
+        parent.children.splice(index2, 1);
+        if (previous2.position && node2.position) {
+          previous2.position.end = node2.position.end;
+        }
+        return index2 - 1;
+      }
+      node2.value = node2.value.replace(/[\t ]*(\r?\n|\r)[\t ]*/, "$1");
+      if (parent && block(parent)) {
+        if (!index2) {
+          node2.value = node2.value.replace(/^[\t ]+/, "");
+        }
+        if (index2 === parent.children.length - 1) {
+          node2.value = node2.value.replace(/[\t ]+$/, "");
+        }
+      }
+      if (!node2.value) {
+        parent.children.splice(index2, 1);
+        return index2;
+      }
+    }
+  }
+  const rehypeRemark = (
+    /**
+     * @type {(import('unified').Plugin<[Processor, Options?], HastRoot> & import('unified').Plugin<[Options?]|void[], HastRoot, MdastRoot>)}
+     */
+    /**
+     * @param {Processor|Options} [destination]
+     * @param {Options} [options]
+     */
+    function(destination, options) {
+      let settings;
+      let processor;
+      if (typeof destination === "function") {
+        processor = destination;
+        settings = options || {};
+      } else {
+        settings = destination || {};
+      }
+      if (settings.document === void 0 || settings.document === null) {
+        settings = Object.assign({}, settings, { document: true });
+      }
+      return processor ? bridge(processor, settings) : mutate(settings);
+    }
+  );
+  const rehypeRemark$1 = rehypeRemark;
+  function bridge(destination, options) {
+    return (node2, file, next) => {
+      destination.run(toMdast(node2, options), file, (error) => {
+        next(error);
+      });
+    };
+  }
+  function mutate(options = {}) {
+    return (node2) => {
+      const result = (
+        /** @type {MdastRoot} */
+        toMdast(node2, options)
+      );
+      return result;
+    };
+  }
+  function configure(base2, extension2) {
+    let index2 = -1;
+    let key2;
+    if (extension2.extensions) {
+      while (++index2 < extension2.extensions.length) {
+        configure(base2, extension2.extensions[index2]);
+      }
+    }
+    for (key2 in extension2) {
+      if (key2 === "extensions")
+        ;
+      else if (key2 === "unsafe" || key2 === "join") {
+        base2[key2] = [...base2[key2] || [], ...extension2[key2] || []];
+      } else if (key2 === "handlers") {
+        base2[key2] = Object.assign(base2[key2], extension2[key2] || {});
+      } else {
+        base2.options[key2] = extension2[key2];
+      }
+    }
+    return base2;
+  }
+  function blockquote(node2, _, state, info) {
+    const exit2 = state.enter("blockquote");
+    const tracker = state.createTracker(info);
+    tracker.move("> ");
+    tracker.shift(2);
+    const value = state.indentLines(
+      state.containerFlow(node2, tracker.current()),
+      map$2
+    );
+    exit2();
+    return value;
+  }
+  function map$2(line, _, blank) {
+    return ">" + (blank ? "" : " ") + line;
+  }
+  function hardBreak(_, _1, state, info) {
+    let index2 = -1;
+    while (++index2 < state.unsafe.length) {
+      if (state.unsafe[index2].character === "\n" && patternInScope(state.stack, state.unsafe[index2])) {
+        return /[ \t]/.test(info.before) ? "" : " ";
+      }
+    }
+    return "\\\n";
+  }
+  function longestStreak(value, substring) {
+    const source2 = String(value);
+    let index2 = source2.indexOf(substring);
+    let expected = index2;
+    let count = 0;
+    let max2 = 0;
+    if (typeof substring !== "string") {
+      throw new TypeError("Expected substring");
+    }
+    while (index2 !== -1) {
+      if (index2 === expected) {
+        if (++count > max2) {
+          max2 = count;
+        }
+      } else {
+        count = 1;
+      }
+      expected = index2 + substring.length;
+      index2 = source2.indexOf(substring, expected);
+    }
+    return max2;
+  }
+  function formatCodeAsIndented(node2, state) {
+    return Boolean(
+      !state.options.fences && node2.value && // If there’s no info…
+      !node2.lang && // And there’s a non-whitespace character…
+      /[^ \r\n]/.test(node2.value) && // And the value doesn’t start or end in a blank…
+      !/^[\t ]*(?:[\r\n]|$)|(?:^|[\r\n])[\t ]*$/.test(node2.value)
+    );
+  }
+  function checkFence(state) {
+    const marker = state.options.fence || "`";
+    if (marker !== "`" && marker !== "~") {
+      throw new Error(
+        "Cannot serialize code with `" + marker + "` for `options.fence`, expected `` ` `` or `~`"
+      );
+    }
+    return marker;
+  }
+  function code(node2, _, state, info) {
+    const marker = checkFence(state);
+    const raw2 = node2.value || "";
+    const suffix = marker === "`" ? "GraveAccent" : "Tilde";
+    if (formatCodeAsIndented(node2, state)) {
+      const exit3 = state.enter("codeIndented");
+      const value2 = state.indentLines(raw2, map$1);
+      exit3();
+      return value2;
+    }
+    const tracker = state.createTracker(info);
+    const sequence = marker.repeat(Math.max(longestStreak(raw2, marker) + 1, 3));
+    const exit2 = state.enter("codeFenced");
+    let value = tracker.move(sequence);
+    if (node2.lang) {
+      const subexit = state.enter(`codeFencedLang${suffix}`);
+      value += tracker.move(
+        state.safe(node2.lang, {
+          before: value,
+          after: " ",
+          encode: ["`"],
+          ...tracker.current()
+        })
+      );
+      subexit();
+    }
+    if (node2.lang && node2.meta) {
+      const subexit = state.enter(`codeFencedMeta${suffix}`);
+      value += tracker.move(" ");
+      value += tracker.move(
+        state.safe(node2.meta, {
+          before: value,
+          after: "\n",
+          encode: ["`"],
+          ...tracker.current()
+        })
+      );
+      subexit();
+    }
+    value += tracker.move("\n");
+    if (raw2) {
+      value += tracker.move(raw2 + "\n");
+    }
+    value += tracker.move(sequence);
+    exit2();
+    return value;
+  }
+  function map$1(line, _, blank) {
+    return (blank ? "" : "    ") + line;
+  }
+  function checkQuote(state) {
+    const marker = state.options.quote || '"';
+    if (marker !== '"' && marker !== "'") {
+      throw new Error(
+        "Cannot serialize title with `" + marker + "` for `options.quote`, expected `\"`, or `'`"
+      );
+    }
+    return marker;
+  }
+  function definition(node2, _, state, info) {
+    const quote = checkQuote(state);
+    const suffix = quote === '"' ? "Quote" : "Apostrophe";
+    const exit2 = state.enter("definition");
+    let subexit = state.enter("label");
+    const tracker = state.createTracker(info);
+    let value = tracker.move("[");
+    value += tracker.move(
+      state.safe(state.associationId(node2), {
+        before: value,
+        after: "]",
+        ...tracker.current()
+      })
+    );
+    value += tracker.move("]: ");
+    subexit();
+    if (
+      // If there’s no url, or…
+      !node2.url || // If there are control characters or whitespace.
+      /[\0- \u007F]/.test(node2.url)
+    ) {
+      subexit = state.enter("destinationLiteral");
+      value += tracker.move("<");
+      value += tracker.move(
+        state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
+      );
+      value += tracker.move(">");
+    } else {
+      subexit = state.enter("destinationRaw");
+      value += tracker.move(
+        state.safe(node2.url, {
+          before: value,
+          after: node2.title ? " " : "\n",
+          ...tracker.current()
+        })
+      );
+    }
+    subexit();
+    if (node2.title) {
+      subexit = state.enter(`title${suffix}`);
+      value += tracker.move(" " + quote);
+      value += tracker.move(
+        state.safe(node2.title, {
+          before: value,
+          after: quote,
+          ...tracker.current()
+        })
+      );
+      value += tracker.move(quote);
+      subexit();
+    }
+    exit2();
+    return value;
+  }
+  function checkEmphasis(state) {
+    const marker = state.options.emphasis || "*";
+    if (marker !== "*" && marker !== "_") {
+      throw new Error(
+        "Cannot serialize emphasis with `" + marker + "` for `options.emphasis`, expected `*`, or `_`"
+      );
+    }
+    return marker;
+  }
+  emphasis.peek = emphasisPeek;
+  function emphasis(node2, _, state, info) {
+    const marker = checkEmphasis(state);
+    const exit2 = state.enter("emphasis");
+    const tracker = state.createTracker(info);
+    let value = tracker.move(marker);
+    value += tracker.move(
+      state.containerPhrasing(node2, {
+        before: value,
+        after: marker,
+        ...tracker.current()
+      })
+    );
+    value += tracker.move(marker);
+    exit2();
+    return value;
+  }
+  function emphasisPeek(_, _1, state) {
+    return state.options.emphasis || "*";
+  }
+  function formatHeadingAsSetext(node2, state) {
+    let literalWithBreak = false;
+    visit(node2, (node3) => {
+      if ("value" in node3 && /\r?\n|\r/.test(node3.value) || node3.type === "break") {
+        literalWithBreak = true;
+        return EXIT;
+      }
+    });
+    return Boolean(
+      (!node2.depth || node2.depth < 3) && toString(node2) && (state.options.setext || literalWithBreak)
+    );
+  }
+  function heading(node2, _, state, info) {
+    const rank = Math.max(Math.min(6, node2.depth || 1), 1);
+    const tracker = state.createTracker(info);
+    if (formatHeadingAsSetext(node2, state)) {
+      const exit3 = state.enter("headingSetext");
+      const subexit2 = state.enter("phrasing");
+      const value2 = state.containerPhrasing(node2, {
+        ...tracker.current(),
+        before: "\n",
+        after: "\n"
+      });
+      subexit2();
+      exit3();
+      return value2 + "\n" + (rank === 1 ? "=" : "-").repeat(
+        // The whole size…
+        value2.length - // Minus the position of the character after the last EOL (or
+        // 0 if there is none)…
+        (Math.max(value2.lastIndexOf("\r"), value2.lastIndexOf("\n")) + 1)
+      );
+    }
+    const sequence = "#".repeat(rank);
+    const exit2 = state.enter("headingAtx");
+    const subexit = state.enter("phrasing");
+    tracker.move(sequence + " ");
+    let value = state.containerPhrasing(node2, {
+      before: "# ",
+      after: "\n",
+      ...tracker.current()
+    });
+    if (/^[\t ]/.test(value)) {
+      value = "&#x" + value.charCodeAt(0).toString(16).toUpperCase() + ";" + value.slice(1);
+    }
+    value = value ? sequence + " " + value : sequence;
+    if (state.options.closeAtx) {
+      value += " " + sequence;
+    }
+    subexit();
+    exit2();
+    return value;
+  }
+  html.peek = htmlPeek;
+  function html(node2) {
+    return node2.value || "";
+  }
+  function htmlPeek() {
+    return "<";
+  }
+  image.peek = imagePeek;
+  function image(node2, _, state, info) {
+    const quote = checkQuote(state);
+    const suffix = quote === '"' ? "Quote" : "Apostrophe";
+    const exit2 = state.enter("image");
+    let subexit = state.enter("label");
+    const tracker = state.createTracker(info);
+    let value = tracker.move("![");
+    value += tracker.move(
+      state.safe(node2.alt, { before: value, after: "]", ...tracker.current() })
+    );
+    value += tracker.move("](");
+    subexit();
+    if (
+      // If there’s no url but there is a title…
+      !node2.url && node2.title || // If there are control characters or whitespace.
+      /[\0- \u007F]/.test(node2.url)
+    ) {
+      subexit = state.enter("destinationLiteral");
+      value += tracker.move("<");
+      value += tracker.move(
+        state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
+      );
+      value += tracker.move(">");
+    } else {
+      subexit = state.enter("destinationRaw");
+      value += tracker.move(
+        state.safe(node2.url, {
+          before: value,
+          after: node2.title ? " " : ")",
+          ...tracker.current()
+        })
+      );
+    }
+    subexit();
+    if (node2.title) {
+      subexit = state.enter(`title${suffix}`);
+      value += tracker.move(" " + quote);
+      value += tracker.move(
+        state.safe(node2.title, {
+          before: value,
+          after: quote,
+          ...tracker.current()
+        })
+      );
+      value += tracker.move(quote);
+      subexit();
+    }
+    value += tracker.move(")");
+    exit2();
+    return value;
+  }
+  function imagePeek() {
+    return "!";
+  }
+  imageReference.peek = imageReferencePeek;
+  function imageReference(node2, _, state, info) {
+    const type = node2.referenceType;
+    const exit2 = state.enter("imageReference");
+    let subexit = state.enter("label");
+    const tracker = state.createTracker(info);
+    let value = tracker.move("![");
+    const alt = state.safe(node2.alt, {
+      before: value,
+      after: "]",
+      ...tracker.current()
+    });
+    value += tracker.move(alt + "][");
+    subexit();
+    const stack = state.stack;
+    state.stack = [];
+    subexit = state.enter("reference");
+    const reference = state.safe(state.associationId(node2), {
+      before: value,
+      after: "]",
+      ...tracker.current()
+    });
+    subexit();
+    state.stack = stack;
+    exit2();
+    if (type === "full" || !alt || alt !== reference) {
+      value += tracker.move(reference + "]");
+    } else if (type === "shortcut") {
+      value = value.slice(0, -1);
+    } else {
+      value += tracker.move("]");
+    }
+    return value;
+  }
+  function imageReferencePeek() {
+    return "!";
+  }
+  function formatLinkAsAutolink(node2, state) {
+    const raw2 = toString(node2);
+    return Boolean(
+      !state.options.resourceLink && // If there’s a url…
+      node2.url && // And there’s a no title…
+      !node2.title && // And the content of `node` is a single text node…
+      node2.children && node2.children.length === 1 && node2.children[0].type === "text" && // And if the url is the same as the content…
+      (raw2 === node2.url || "mailto:" + raw2 === node2.url) && // And that starts w/ a protocol…
+      /^[a-z][a-z+.-]+:/i.test(node2.url) && // And that doesn’t contain ASCII control codes (character escapes and
+      // references don’t work), space, or angle brackets…
+      !/[\0- <>\u007F]/.test(node2.url)
+    );
+  }
+  link.peek = linkPeek;
+  function link(node2, _, state, info) {
+    const quote = checkQuote(state);
+    const suffix = quote === '"' ? "Quote" : "Apostrophe";
+    const tracker = state.createTracker(info);
+    let exit2;
+    let subexit;
+    if (formatLinkAsAutolink(node2, state)) {
+      const stack = state.stack;
+      state.stack = [];
+      exit2 = state.enter("autolink");
+      let value2 = tracker.move("<");
+      value2 += tracker.move(
+        state.containerPhrasing(node2, {
+          before: value2,
+          after: ">",
+          ...tracker.current()
+        })
+      );
+      value2 += tracker.move(">");
+      exit2();
+      state.stack = stack;
+      return value2;
+    }
+    exit2 = state.enter("link");
+    subexit = state.enter("label");
+    let value = tracker.move("[");
+    value += tracker.move(
+      state.containerPhrasing(node2, {
+        before: value,
+        after: "](",
+        ...tracker.current()
+      })
+    );
+    value += tracker.move("](");
+    subexit();
+    if (
+      // If there’s no url but there is a title…
+      !node2.url && node2.title || // If there are control characters or whitespace.
+      /[\0- \u007F]/.test(node2.url)
+    ) {
+      subexit = state.enter("destinationLiteral");
+      value += tracker.move("<");
+      value += tracker.move(
+        state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
+      );
+      value += tracker.move(">");
+    } else {
+      subexit = state.enter("destinationRaw");
+      value += tracker.move(
+        state.safe(node2.url, {
+          before: value,
+          after: node2.title ? " " : ")",
+          ...tracker.current()
+        })
+      );
+    }
+    subexit();
+    if (node2.title) {
+      subexit = state.enter(`title${suffix}`);
+      value += tracker.move(" " + quote);
+      value += tracker.move(
+        state.safe(node2.title, {
+          before: value,
+          after: quote,
+          ...tracker.current()
+        })
+      );
+      value += tracker.move(quote);
+      subexit();
+    }
+    value += tracker.move(")");
+    exit2();
+    return value;
+  }
+  function linkPeek(node2, _, state) {
+    return formatLinkAsAutolink(node2, state) ? "<" : "[";
+  }
+  linkReference.peek = linkReferencePeek;
+  function linkReference(node2, _, state, info) {
+    const type = node2.referenceType;
+    const exit2 = state.enter("linkReference");
+    let subexit = state.enter("label");
+    const tracker = state.createTracker(info);
+    let value = tracker.move("[");
+    const text2 = state.containerPhrasing(node2, {
+      before: value,
+      after: "]",
+      ...tracker.current()
+    });
+    value += tracker.move(text2 + "][");
+    subexit();
+    const stack = state.stack;
+    state.stack = [];
+    subexit = state.enter("reference");
+    const reference = state.safe(state.associationId(node2), {
+      before: value,
+      after: "]",
+      ...tracker.current()
+    });
+    subexit();
+    state.stack = stack;
+    exit2();
+    if (type === "full" || !text2 || text2 !== reference) {
+      value += tracker.move(reference + "]");
+    } else if (type === "shortcut") {
+      value = value.slice(0, -1);
+    } else {
+      value += tracker.move("]");
+    }
+    return value;
+  }
+  function linkReferencePeek() {
+    return "[";
+  }
+  function checkBulletOther(state) {
+    const bullet = checkBullet(state);
+    const bulletOther = state.options.bulletOther;
+    if (!bulletOther) {
+      return bullet === "*" ? "-" : "*";
+    }
+    if (bulletOther !== "*" && bulletOther !== "+" && bulletOther !== "-") {
+      throw new Error(
+        "Cannot serialize items with `" + bulletOther + "` for `options.bulletOther`, expected `*`, `+`, or `-`"
+      );
+    }
+    if (bulletOther === bullet) {
+      throw new Error(
+        "Expected `bullet` (`" + bullet + "`) and `bulletOther` (`" + bulletOther + "`) to be different"
+      );
+    }
+    return bulletOther;
+  }
+  function checkBulletOrdered(state) {
+    const marker = state.options.bulletOrdered || ".";
+    if (marker !== "." && marker !== ")") {
+      throw new Error(
+        "Cannot serialize items with `" + marker + "` for `options.bulletOrdered`, expected `.` or `)`"
+      );
+    }
+    return marker;
+  }
+  function checkBulletOrderedOther(state) {
+    const bulletOrdered = checkBulletOrdered(state);
+    const bulletOrderedOther = state.options.bulletOrderedOther;
+    if (!bulletOrderedOther) {
+      return bulletOrdered === "." ? ")" : ".";
+    }
+    if (bulletOrderedOther !== "." && bulletOrderedOther !== ")") {
+      throw new Error(
+        "Cannot serialize items with `" + bulletOrderedOther + "` for `options.bulletOrderedOther`, expected `*`, `+`, or `-`"
+      );
+    }
+    if (bulletOrderedOther === bulletOrdered) {
+      throw new Error(
+        "Expected `bulletOrdered` (`" + bulletOrdered + "`) and `bulletOrderedOther` (`" + bulletOrderedOther + "`) to be different"
+      );
+    }
+    return bulletOrderedOther;
+  }
+  function checkRule(state) {
+    const marker = state.options.rule || "*";
+    if (marker !== "*" && marker !== "-" && marker !== "_") {
+      throw new Error(
+        "Cannot serialize rules with `" + marker + "` for `options.rule`, expected `*`, `-`, or `_`"
+      );
+    }
+    return marker;
+  }
+  function list(node2, parent, state, info) {
+    const exit2 = state.enter("list");
+    const bulletCurrent = state.bulletCurrent;
+    let bullet = node2.ordered ? checkBulletOrdered(state) : checkBullet(state);
+    const bulletOther = node2.ordered ? checkBulletOrderedOther(state) : checkBulletOther(state);
+    const bulletLastUsed = state.bulletLastUsed;
+    let useDifferentMarker = false;
+    if (parent && // Explicit `other` set.
+    (node2.ordered ? state.options.bulletOrderedOther : state.options.bulletOther) && bulletLastUsed && bullet === bulletLastUsed) {
+      useDifferentMarker = true;
+    }
+    if (!node2.ordered) {
+      const firstListItem = node2.children ? node2.children[0] : void 0;
+      if (
+        // Bullet could be used as a thematic break marker:
+        (bullet === "*" || bullet === "-") && // Empty first list item:
+        firstListItem && (!firstListItem.children || !firstListItem.children[0]) && // Directly in two other list items:
+        state.stack[state.stack.length - 1] === "list" && state.stack[state.stack.length - 2] === "listItem" && state.stack[state.stack.length - 3] === "list" && state.stack[state.stack.length - 4] === "listItem" && // That are each the first child.
+        state.indexStack[state.indexStack.length - 1] === 0 && state.indexStack[state.indexStack.length - 2] === 0 && state.indexStack[state.indexStack.length - 3] === 0
+      ) {
+        useDifferentMarker = true;
+      }
+      if (checkRule(state) === bullet && firstListItem) {
+        let index2 = -1;
+        while (++index2 < node2.children.length) {
+          const item = node2.children[index2];
+          if (item && item.type === "listItem" && item.children && item.children[0] && item.children[0].type === "thematicBreak") {
+            useDifferentMarker = true;
+            break;
+          }
+        }
+      }
+    }
+    if (useDifferentMarker) {
+      bullet = bulletOther;
+    }
+    state.bulletCurrent = bullet;
+    const value = state.containerFlow(node2, info);
+    state.bulletLastUsed = bullet;
+    state.bulletCurrent = bulletCurrent;
+    exit2();
+    return value;
+  }
+  function paragraph(node2, _, state, info) {
+    const exit2 = state.enter("paragraph");
+    const subexit = state.enter("phrasing");
+    const value = state.containerPhrasing(node2, info);
+    subexit();
+    exit2();
+    return value;
+  }
+  function root(node2, _, state, info) {
+    const hasPhrasing = node2.children.some((d) => phrasing$1(d));
+    const fn = hasPhrasing ? state.containerPhrasing : state.containerFlow;
+    return fn.call(state, node2, info);
+  }
+  function checkStrong(state) {
+    const marker = state.options.strong || "*";
+    if (marker !== "*" && marker !== "_") {
+      throw new Error(
+        "Cannot serialize strong with `" + marker + "` for `options.strong`, expected `*`, or `_`"
+      );
+    }
+    return marker;
+  }
+  strong.peek = strongPeek;
+  function strong(node2, _, state, info) {
+    const marker = checkStrong(state);
+    const exit2 = state.enter("strong");
+    const tracker = state.createTracker(info);
+    let value = tracker.move(marker + marker);
+    value += tracker.move(
+      state.containerPhrasing(node2, {
+        before: value,
+        after: marker,
+        ...tracker.current()
+      })
+    );
+    value += tracker.move(marker + marker);
+    exit2();
+    return value;
+  }
+  function strongPeek(_, _1, state) {
+    return state.options.strong || "*";
+  }
+  function text(node2, _, state, info) {
+    return state.safe(node2.value, info);
+  }
+  function checkRuleRepetition(state) {
+    const repetition = state.options.ruleRepetition || 3;
+    if (repetition < 3) {
+      throw new Error(
+        "Cannot serialize rules with repetition `" + repetition + "` for `options.ruleRepetition`, expected `3` or more"
+      );
+    }
+    return repetition;
+  }
+  function thematicBreak(_, _1, state) {
+    const value = (checkRule(state) + (state.options.ruleSpaces ? " " : "")).repeat(checkRuleRepetition(state));
+    return state.options.ruleSpaces ? value.slice(0, -1) : value;
+  }
+  const handle = {
+    blockquote,
+    break: hardBreak,
+    code,
+    definition,
+    emphasis,
+    hardBreak,
+    heading,
+    html,
+    image,
+    imageReference,
+    inlineCode: inlineCode$2,
+    link,
+    linkReference,
+    list,
+    listItem: listItem$1,
+    paragraph,
+    root,
+    strong,
+    text,
+    thematicBreak
+  };
+  const join = [joinDefaults];
+  function joinDefaults(left, right, parent, state) {
+    if (right.type === "code" && formatCodeAsIndented(right, state) && (left.type === "list" || left.type === right.type && formatCodeAsIndented(left, state))) {
+      return false;
+    }
+    if (left.type === "list" && left.type === right.type && Boolean(left.ordered) === Boolean(right.ordered) && !(left.ordered ? state.options.bulletOrderedOther : state.options.bulletOther)) {
+      return false;
+    }
+    if ("spread" in parent && typeof parent.spread === "boolean") {
+      if (left.type === "paragraph" && // Two paragraphs.
+      (left.type === right.type || right.type === "definition" || // Paragraph followed by a setext heading.
+      right.type === "heading" && formatHeadingAsSetext(right, state))) {
+        return;
+      }
+      return parent.spread ? 1 : 0;
+    }
+  }
+  const fullPhrasingSpans = [
+    "autolink",
+    "destinationLiteral",
+    "destinationRaw",
+    "reference",
+    "titleQuote",
+    "titleApostrophe"
+  ];
+  const unsafe = [
+    { character: "	", after: "[\\r\\n]", inConstruct: "phrasing" },
+    { character: "	", before: "[\\r\\n]", inConstruct: "phrasing" },
+    {
+      character: "	",
+      inConstruct: ["codeFencedLangGraveAccent", "codeFencedLangTilde"]
+    },
+    {
+      character: "\r",
+      inConstruct: [
+        "codeFencedLangGraveAccent",
+        "codeFencedLangTilde",
+        "codeFencedMetaGraveAccent",
+        "codeFencedMetaTilde",
+        "destinationLiteral",
+        "headingAtx"
+      ]
+    },
+    {
+      character: "\n",
+      inConstruct: [
+        "codeFencedLangGraveAccent",
+        "codeFencedLangTilde",
+        "codeFencedMetaGraveAccent",
+        "codeFencedMetaTilde",
+        "destinationLiteral",
+        "headingAtx"
+      ]
+    },
+    { character: " ", after: "[\\r\\n]", inConstruct: "phrasing" },
+    { character: " ", before: "[\\r\\n]", inConstruct: "phrasing" },
+    {
+      character: " ",
+      inConstruct: ["codeFencedLangGraveAccent", "codeFencedLangTilde"]
+    },
+    // An exclamation mark can start an image, if it is followed by a link or
+    // a link reference.
+    {
+      character: "!",
+      after: "\\[",
+      inConstruct: "phrasing",
+      notInConstruct: fullPhrasingSpans
+    },
+    // A quote can break out of a title.
+    { character: '"', inConstruct: "titleQuote" },
+    // A number sign could start an ATX heading if it starts a line.
+    { atBreak: true, character: "#" },
+    { character: "#", inConstruct: "headingAtx", after: "(?:[\r\n]|$)" },
+    // Dollar sign and percentage are not used in markdown.
+    // An ampersand could start a character reference.
+    { character: "&", after: "[#A-Za-z]", inConstruct: "phrasing" },
+    // An apostrophe can break out of a title.
+    { character: "'", inConstruct: "titleApostrophe" },
+    // A left paren could break out of a destination raw.
+    { character: "(", inConstruct: "destinationRaw" },
+    // A left paren followed by `]` could make something into a link or image.
+    {
+      before: "\\]",
+      character: "(",
+      inConstruct: "phrasing",
+      notInConstruct: fullPhrasingSpans
+    },
+    // A right paren could start a list item or break out of a destination
+    // raw.
+    { atBreak: true, before: "\\d+", character: ")" },
+    { character: ")", inConstruct: "destinationRaw" },
+    // An asterisk can start thematic breaks, list items, emphasis, strong.
+    { atBreak: true, character: "*", after: "(?:[ 	\r\n*])" },
+    { character: "*", inConstruct: "phrasing", notInConstruct: fullPhrasingSpans },
+    // A plus sign could start a list item.
+    { atBreak: true, character: "+", after: "(?:[ 	\r\n])" },
+    // A dash can start thematic breaks, list items, and setext heading
+    // underlines.
+    { atBreak: true, character: "-", after: "(?:[ 	\r\n-])" },
+    // A dot could start a list item.
+    { atBreak: true, before: "\\d+", character: ".", after: "(?:[ 	\r\n]|$)" },
+    // Slash, colon, and semicolon are not used in markdown for constructs.
+    // A less than can start html (flow or text) or an autolink.
+    // HTML could start with an exclamation mark (declaration, cdata, comment),
+    // slash (closing tag), question mark (instruction), or a letter (tag).
+    // An autolink also starts with a letter.
+    // Finally, it could break out of a destination literal.
+    { atBreak: true, character: "<", after: "[!/?A-Za-z]" },
+    {
+      character: "<",
+      after: "[!/?A-Za-z]",
+      inConstruct: "phrasing",
+      notInConstruct: fullPhrasingSpans
+    },
+    { character: "<", inConstruct: "destinationLiteral" },
+    // An equals to can start setext heading underlines.
+    { atBreak: true, character: "=" },
+    // A greater than can start block quotes and it can break out of a
+    // destination literal.
+    { atBreak: true, character: ">" },
+    { character: ">", inConstruct: "destinationLiteral" },
+    // Question mark and at sign are not used in markdown for constructs.
+    // A left bracket can start definitions, references, labels,
+    { atBreak: true, character: "[" },
+    { character: "[", inConstruct: "phrasing", notInConstruct: fullPhrasingSpans },
+    { character: "[", inConstruct: ["label", "reference"] },
+    // A backslash can start an escape (when followed by punctuation) or a
+    // hard break (when followed by an eol).
+    // Note: typical escapes are handled in `safe`!
+    { character: "\\", after: "[\\r\\n]", inConstruct: "phrasing" },
+    // A right bracket can exit labels.
+    { character: "]", inConstruct: ["label", "reference"] },
+    // Caret is not used in markdown for constructs.
+    // An underscore can start emphasis, strong, or a thematic break.
+    { atBreak: true, character: "_" },
+    { character: "_", inConstruct: "phrasing", notInConstruct: fullPhrasingSpans },
+    // A grave accent can start code (fenced or text), or it can break out of
+    // a grave accent code fence.
+    { atBreak: true, character: "`" },
+    {
+      character: "`",
+      inConstruct: ["codeFencedLangGraveAccent", "codeFencedMetaGraveAccent"]
+    },
+    { character: "`", inConstruct: "phrasing", notInConstruct: fullPhrasingSpans },
+    // Left brace, vertical bar, right brace are not used in markdown for
+    // constructs.
+    // A tilde can start code (fenced).
+    { atBreak: true, character: "~" }
+  ];
+  function toMarkdown(tree, options = {}) {
+    const state = {
+      enter: enter2,
+      indentLines,
+      associationId: association,
+      containerPhrasing: containerPhrasingBound,
+      containerFlow: containerFlowBound,
+      createTracker: track,
+      safe: safeBound,
+      stack: [],
+      unsafe: [],
+      join: [],
+      // @ts-expect-error: we’ll fill it next.
+      handlers: {},
+      options: {},
+      indexStack: [],
+      // @ts-expect-error: we’ll add `handle` later.
+      handle: void 0
+    };
+    configure(state, { unsafe, join, handlers: handle });
+    configure(state, options);
+    if (state.options.tightDefinitions) {
+      configure(state, { join: [joinDefinition] });
+    }
+    state.handle = zwitch("type", {
+      invalid,
+      unknown,
+      handlers: state.handlers
+    });
+    let result = state.handle(tree, void 0, state, {
+      before: "\n",
+      after: "\n",
+      now: { line: 1, column: 1 },
+      lineShift: 0
+    });
+    if (result && result.charCodeAt(result.length - 1) !== 10 && result.charCodeAt(result.length - 1) !== 13) {
+      result += "\n";
+    }
+    return result;
+    function enter2(name) {
+      state.stack.push(name);
+      return exit2;
+      function exit2() {
+        state.stack.pop();
+      }
+    }
+  }
+  function invalid(value) {
+    throw new Error("Cannot handle value `" + value + "`, expected node");
+  }
+  function unknown(node2) {
+    throw new Error("Cannot handle unknown node `" + node2.type + "`");
+  }
+  function joinDefinition(left, right) {
+    if (left.type === "definition" && left.type === right.type) {
+      return 0;
+    }
+  }
+  function containerPhrasingBound(parent, info) {
+    return containerPhrasing(parent, this, info);
+  }
+  function containerFlowBound(parent, info) {
+    return containerFlow(parent, this, info);
+  }
+  function safeBound(value, config) {
+    return safe(this, value, config);
+  }
+  function remarkStringify(options) {
+    const compiler2 = (tree) => {
+      const settings = (
+        /** @type {Options} */
+        this.data("settings")
+      );
+      return toMarkdown(
+        tree,
+        Object.assign({}, settings, options, {
+          // Note: this option is not in the readme.
+          // The goal is for it to be set by plugins on `data` instead of being
+          // passed by users.
+          extensions: (
+            /** @type {ToMarkdownOptions['extensions']} */
+            this.data("toMarkdownExtensions") || []
+          )
+        })
+      );
+    };
+    Object.assign(this, { Compiler: compiler2 });
+  }
+  function removeUnderlines() {
+    const removeUnderlinesHelper = (tree) => {
+      let numChildElements = tree.children.length;
+      for (let i2 = 0; i2 < numChildElements; i2++) {
+        const node2 = tree.children[i2];
+        if (node2.type === "element") {
+          removeUnderlinesHelper(node2);
+          if (node2.tagName === "u") {
+            if (node2.children.length > 0) {
+              tree.children.splice(i2, 1, ...node2.children);
+              const numElementsAdded = node2.children.length - 1;
+              numChildElements += numElementsAdded;
+              i2 += numElementsAdded;
+            } else {
+              tree.children.splice(i2, 1);
+              numChildElements--;
+              i2--;
+            }
+          }
+        }
+      }
+    };
+    return removeUnderlinesHelper;
+  }
+  function cleanHTMLToMarkdown(cleanHTMLString) {
+    const markdownString = unified().use(rehypeParse, { fragment: true }).use(removeUnderlines).use(rehypeRemark$1).use(remarkGfm).use(remarkStringify).processSync(cleanHTMLString);
+    return markdownString.value;
+  }
+  function blocksToMarkdown(blocks2, schema, editor2) {
+    const exporter = createExternalHTMLExporter(schema, editor2);
+    const externalHTML = exporter.exportBlocks(blocks2);
+    return cleanHTMLToMarkdown(externalHTML);
   }
   class FormattingToolbarView {
     constructor(editor2, pmView, updateFormattingToolbar) {
@@ -43106,6 +43339,28 @@ img.ProseMirror-separator {
                       }
                     ]
                   ]
+                },
+                {
+                  cells: [
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ],
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ],
+                    [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "", styles: {} }]
+                      }
+                    ]
+                  ]
                 }
               ]
             }
@@ -43207,7 +43462,6 @@ img.ProseMirror-separator {
             "Found table cell element, but could not find surrounding blockContent element."
           );
         }
-        this.tableId = blockEl.id;
         if (this.state !== void 0 && this.state.show && this.tableId === blockEl.id && this.state.rowIndex === rowIndex && this.state.colIndex === colIndex) {
           return;
         }
@@ -43227,9 +43481,28 @@ img.ProseMirror-separator {
             this.editor.blockCache
           );
           this.tablePos = pos + 1;
-          console.log(block2, node2);
           return false;
         });
+        if (block2 && block2["type"] !== "table" && this.tablePos) {
+          const resolvePos = this.pmView.state.doc.resolve(this.tablePos);
+          const tableNode = findParentNodeClosestToPos(resolvePos, (node2) => {
+            return node2.type.name === "table";
+          });
+          if (tableNode) {
+            const containerNode = this.pmView.state.doc.resolve(tableNode.pos).node();
+            if (containerNode) {
+              block2 = nodeToBlock(
+                containerNode,
+                this.editor.blockSchema,
+                this.editor.inlineContentSchema,
+                this.editor.styleSchema,
+                this.editor.blockCache
+              );
+              this.tablePos = tableNode.pos + 1;
+              this.tableId = tableNode.node.attrs.id;
+            }
+          }
+        }
         this.state = {
           show: true,
           referencePosCell: cellRect,
@@ -43349,7 +43622,6 @@ img.ProseMirror-separator {
         updateState(this.state);
       };
       pmView.dom.addEventListener("mousemove", this.mouseMoveHandler);
-      console.log(pmView.dom);
       document.addEventListener("dragover", this.dragOverHandler);
       document.addEventListener("drop", this.dropHandler);
       document.addEventListener("scroll", this.scrollHandler);
