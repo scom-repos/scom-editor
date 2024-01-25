@@ -63,8 +63,10 @@ export const addVideoBlock = (blocknote: any) => {
           getAttrs: (element: string|HTMLElement) => {
             if (typeof element === "string") return false;
             const child = element.firstChild as HTMLElement;
-            if (!child || child.tagName !== 'a') return false;
-            return getData(child);
+            if (child?.nodeName === 'A') {
+              return getData(child);
+            }
+            return false;
           },
           priority: 405,
           node: 'video'

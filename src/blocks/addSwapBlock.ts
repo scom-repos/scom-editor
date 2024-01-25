@@ -77,8 +77,7 @@ export const addSwapBlock = (blocknote: any) => {
               return false;
             }
             const child = element.firstChild as HTMLElement;
-            if (!child) return false;
-            if (child.nodeName === 'A' && child.getAttribute('href')) {
+            if (child?.nodeName === 'A' && child.getAttribute('href')) {
               const href = child.getAttribute('href');
               return getData(href);
             }

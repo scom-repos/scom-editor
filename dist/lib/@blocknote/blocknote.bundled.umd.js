@@ -35622,28 +35622,6 @@ img.ProseMirror-separator {
       pmSchema
     );
   }
-  function getNodeById(id, doc2) {
-    let targetNode = void 0;
-    let posBeforeNode = void 0;
-    doc2.firstChild.descendants((node2, pos) => {
-      if (targetNode) {
-        return false;
-      }
-      if (node2.type.name !== "blockContainer" || node2.attrs.id !== id) {
-        return true;
-      }
-      targetNode = node2;
-      posBeforeNode = pos + 1;
-      return false;
-    });
-    if (targetNode === void 0 || posBeforeNode === void 0) {
-      throw Error("Could not find block in the editor with matching ID.");
-    }
-    return {
-      node: targetNode,
-      posBeforeNode
-    };
-  }
   const headingPropSchema = {
     ...defaultProps,
     level: { default: 1, values: [1, 2, 3] }
@@ -35764,16 +35742,15 @@ img.ProseMirror-separator {
               state.doc,
               state.selection.from
             );
-            const id = node2.attrs.id;
-            const { posBeforeNode } = getNodeById(id, state.doc);
-            const nodeAfter = state.doc.resolve(range.from).nodeAfter;
-            const text2 = ((_a = pasteEvent.clipboardData) == null ? void 0 : _a.getData("text")) || (nodeAfter == null ? void 0 : nodeAfter.textContent) || "";
-            chain().deleteRange({ from: range.from, to: range.to }).run();
-            parseMardown(text2, posBeforeNode, this.editor, {
-              state,
-              chain,
-              range
-            });
+            const text2 = ((_a = pasteEvent.clipboardData) == null ? void 0 : _a.getData("text")) || "";
+            if (text2) {
+              parseMardown(text2, this.editor, {
+                state,
+                chain,
+                range,
+                node: node2
+              });
+            }
           }
         })
       ];
@@ -35783,7 +35760,7 @@ img.ProseMirror-separator {
     HeadingBlockContent,
     headingPropSchema
   );
-  const parseMardown = async (content2, posBeforeNode, editor2, props) => {
+  const parseMardown = async (content2, editor2, props) => {
     const { state, range } = props;
     const blocksToInsert = await markdownToBlocks(
       content2,
@@ -35799,9 +35776,10 @@ img.ProseMirror-separator {
           blockToNode(blockSpec, editor2.schema, defaultStyleSchema)
         );
       }
-      if (range.from === range.to) {
+      if (range.from !== range.to) {
+        const slice = new Slice(Fragment.from(nodesToInsert), 0, 0);
         editor2.view.dispatch(
-          editor2.state.tr.insert(posBeforeNode, nodesToInsert)
+          editor2.state.tr.replaceRange(range.from, range.to, slice)
         );
       }
     }
@@ -38541,10 +38519,6 @@ img.ProseMirror-separator {
     },
     addKeyboardShortcuts() {
       return {
-        // Makes enter create a new line within the cell.
-        Enter: () => {
-          return false;
-        },
         // Ensures that backspace won't delete the table if the text cursor is at
         // the start of a cell and the selection is empty.
         Backspace: () => {
@@ -38655,15 +38629,6 @@ img.ProseMirror-separator {
     },
     addKeyboardShortcuts() {
       return {
-        Tab: () => {
-          if (this.editor.commands.goToNextCell()) {
-            return true;
-          }
-          if (!this.editor.can().addRowAfter()) {
-            return false;
-          }
-          return this.editor.chain().addRowAfter().goToNextCell().run();
-        },
         "Shift-Tab": () => this.editor.commands.goToPreviousCell(),
         Backspace: deleteTableWhenAllCellsSelected,
         "Mod-Backspace": deleteTableWhenAllCellsSelected,
@@ -38757,6 +38722,28 @@ img.ProseMirror-separator {
   const defaultInlineContentSchema = getInlineContentSchemaFromSpecs(
     defaultInlineContentSpecs
   );
+  function getNodeById(id, doc2) {
+    let targetNode = void 0;
+    let posBeforeNode = void 0;
+    doc2.firstChild.descendants((node2, pos) => {
+      if (targetNode) {
+        return false;
+      }
+      if (node2.type.name !== "blockContainer" || node2.attrs.id !== id) {
+        return true;
+      }
+      targetNode = node2;
+      posBeforeNode = pos + 1;
+      return false;
+    });
+    if (targetNode === void 0 || posBeforeNode === void 0) {
+      throw Error("Could not find block in the editor with matching ID.");
+    }
+    return {
+      node: targetNode,
+      posBeforeNode
+    };
+  }
   function insertBlocks(blocksToInsert, referenceBlock, placement = "before", editor2) {
     const ttEditor = editor2._tiptapEditor;
     const id = typeof referenceBlock === "string" ? referenceBlock : referenceBlock.id;
@@ -43499,7 +43486,7 @@ img.ProseMirror-separator {
                 this.editor.blockCache
               );
               this.tablePos = tableNode.pos + 1;
-              this.tableId = tableNode.node.attrs.id;
+              this.tableId = block2.id;
             }
           }
         }
@@ -54775,6 +54762,18 @@ img.ProseMirror-separator {
         // editor since the browser will try to use tab for keyboard navigation.
         Tab: () => {
           this.editor.commands.sinkListItem("blockContainer");
+          const currentEl = this.editor.view.domAtPos(
+            this.editor.state.selection.from
+          ).node;
+          if (currentEl.closest("table")) {
+            if (this.editor.commands.goToNextCell()) {
+              return true;
+            }
+            if (!this.editor.can().addRowAfter()) {
+              return false;
+            }
+            return this.editor.chain().addRowAfter().goToNextCell().run();
+          }
           return true;
         },
         "Shift-Tab": () => {
@@ -55753,4 +55752,4 @@ img.ProseMirror-separator {
   exports2.wrapInBlockStructure = wrapInBlockStructure;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });
-//# sourceMappingURL=blocknote.bundled.umd.js.map
+//# sourceMappingURL=blocknote.bundled.umd.cjs.map

@@ -2106,6 +2106,7 @@ define("@scom/scom-editor/components/tableToolbar.tsx", ["require", "exports", "
             this.addEventListener("dragend", this.dragEnd);
         }
         _handleClick(event, stopPropagation) {
+            this.editor.focus();
             this.onButtonClicked();
             return true;
         }
@@ -2752,9 +2753,10 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
                             if (typeof element === "string")
                                 return false;
                             const child = element.firstChild;
-                            if (!child || child.tagName !== 'a')
-                                return false;
-                            return getData(child);
+                            if (child?.nodeName === 'A') {
+                                return getData(child);
+                            }
+                            return false;
                         },
                         priority: 405,
                         node: 'video'
@@ -2808,7 +2810,7 @@ define("@scom/scom-editor/blocks/addImageBlock.ts", ["require", "exports", "@ijs
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addImageBlock = void 0;
     function getData(element) {
-        if (element.nodeName === 'IMG') {
+        if (element?.nodeName === 'IMG') {
             return {
                 url: element.getAttribute('src'),
                 altText: element.getAttribute('alt')
@@ -3087,10 +3089,7 @@ define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijs
                                 return false;
                             }
                             const child = element.firstChild;
-                            if (!child) {
-                                return false;
-                            }
-                            if (child.nodeName === 'A' && child.getAttribute('href')) {
+                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
                                 const href = child.getAttribute('href');
                                 return getData(href);
                             }
@@ -3239,11 +3238,11 @@ define("@scom/scom-editor/blocks/addTweetBlock.ts", ["require", "exports", "@ijs
                                 return false;
                             }
                             const child = element.firstChild;
-                            if (!child || child.tagName !== 'a')
-                                return false;
-                            const url = child.getAttribute('href');
-                            if (url && twitterRegex.test(url)) {
-                                return { url };
+                            if (child?.nodeName === 'A') {
+                                const url = child.getAttribute('href');
+                                if (url && twitterRegex.test(url)) {
+                                    return { url };
+                                }
                             }
                             return false;
                         },
@@ -3384,9 +3383,7 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                                 return false;
                             }
                             const child = element.firstChild;
-                            if (!child)
-                                return false;
-                            if (child.nodeName === 'A' && child.getAttribute('href')) {
+                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
                                 const href = child.getAttribute('href');
                                 return getData(href);
                             }

@@ -4,7 +4,7 @@ import { ScomEditorCustomBlock } from "../components/index";
 import { execCustomBLock } from "./utils";
 
 function getData(element: HTMLElement) {
-  if (element.nodeName === 'IMG') {
+  if (element?.nodeName === 'IMG') {
     return {
       url: element.getAttribute('src'),
       altText: element.getAttribute('alt')

@@ -59,10 +59,11 @@ export const addTweetBlock = (blocknote: any) => {
               return false;
             }
             const child = element.firstChild as HTMLElement;
-            if (!child || child.tagName !== 'a') return false;
-            const url = child.getAttribute('href');
-            if (url && twitterRegex.test(url)) {
-              return { url };
+            if (child?.nodeName === 'A') {
+              const url = child.getAttribute('href');
+              if (url && twitterRegex.test(url)) {
+                return { url };
+              }
             }
             return false;
           },
