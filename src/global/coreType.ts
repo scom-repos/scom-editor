@@ -82,7 +82,7 @@ export type BlockNoteEditorOptions = Partial<{
   parentElement: Control;
   editable: boolean;
   initialContent: PartialBlock[];
-  blockSchema: any;
+  blockSpecs: any;
   editorDOMAttributes: Record<string, string>;
   onEditorReady: (editor: BlockNoteEditor) => void;
   onEditorContentChange: (editor: BlockNoteEditor) => void;

@@ -22,8 +22,8 @@ interface ScomEditorDragHandleElement extends ControlElement {
   editor?: BlockNoteEditor;
   onDeleted?: deletedCallback;
   onSetColor?: setColorCallback;
-  unfreezeMenu?: any;
-  freezeMenu?: any;
+  unfreezeMenu?: () => void;
+  freezeMenu?: () => void;
 }
 
 interface ISideMenu {
@@ -62,8 +62,8 @@ export class ScomEditorDragHandle extends Module {
 
   onDeleted: deletedCallback;
   onSetColor: setColorCallback;
-  unfreezeMenu: any;
-  freezeMenu: any;
+  unfreezeMenu: () => void;
+  freezeMenu: () => void;
 
   static async create(options?: ScomEditorDragHandleElement, parent?: Container) {
     let self = new this(parent, options);

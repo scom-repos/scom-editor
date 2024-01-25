@@ -70,7 +70,7 @@ declare module "@scom/scom-editor/global/coreType.ts" {
         parentElement: Control;
         editable: boolean;
         initialContent: PartialBlock[];
-        blockSchema: any;
+        blockSpecs: any;
         editorDOMAttributes: Record<string, string>;
         onEditorReady: (editor: BlockNoteEditor) => void;
         onEditorContentChange: (editor: BlockNoteEditor) => void;
@@ -563,8 +563,8 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         editor?: BlockNoteEditor;
         onDeleted?: deletedCallback;
         onSetColor?: setColorCallback;
-        unfreezeMenu?: any;
-        freezeMenu?: any;
+        unfreezeMenu?: () => void;
+        freezeMenu?: () => void;
     }
     interface ISideMenu {
         block: Block;
@@ -585,8 +585,8 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
         private _menuData;
         onDeleted: deletedCallback;
         onSetColor: setColorCallback;
-        unfreezeMenu: any;
-        freezeMenu: any;
+        unfreezeMenu: () => void;
+        freezeMenu: () => void;
         static create(options?: ScomEditorDragHandleElement, parent?: Container): Promise<ScomEditorDragHandle>;
         constructor(parent?: Container, options?: any);
         get block(): Block;
@@ -833,15 +833,74 @@ declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
         render(): any;
     }
 }
+/// <amd-module name="@scom/scom-editor/components/tableMenu.tsx" />
+declare module "@scom/scom-editor/components/tableMenu.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    interface ScomEditorTableMenuElement extends ControlElement {
+        orientation: "row" | "column";
+        editor: BlockNoteEditor;
+        block: any;
+        index: number;
+        onClose?: () => void;
+    }
+    interface ITableMenu {
+        orientation: "row" | "column";
+        editor: BlockNoteEditor;
+        block: any;
+        index: number;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor--table-menu']: ScomEditorTableMenuElement;
+            }
+        }
+    }
+    export class ScomEditorTableMenu extends Module {
+        private menuElm;
+        private _data;
+        private _menuData;
+        onClose: () => void;
+        static create(options?: ScomEditorTableMenuElement, parent?: Container): Promise<ScomEditorTableMenu>;
+        constructor(parent?: Container, options?: any);
+        get block(): any;
+        set block(value: any);
+        get editor(): BlockNoteEditor;
+        set editor(value: BlockNoteEditor);
+        get index(): number;
+        set index(value: number);
+        get orientation(): 'row' | 'column';
+        set orientation(value: 'row' | 'column');
+        setData(value: ITableMenu): Promise<void>;
+        private renderUI;
+        private updateMenuData;
+        private handleMenu;
+        init(): Promise<void>;
+        render(): any;
+    }
+}
 /// <amd-module name="@scom/scom-editor/components/tableToolbar.tsx" />
 declare module "@scom/scom-editor/components/tableToolbar.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
     import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     interface ScomEditorTableToolbarElement extends ControlElement {
-        editor?: BlockNoteEditor;
+        editor: BlockNoteEditor;
+        block: any;
+        orientation: "row" | "column";
+        index: number;
+        dragStart: (e: any) => void;
+        dragEnd: (e: any) => void;
+        freezeHandles?: () => void;
+        unfreezeHandles?: () => void;
+        showOtherSide?: () => void;
+        hideOtherSide?: () => void;
     }
     interface ITableToolbar {
         editor: BlockNoteEditor;
+        block: any;
+        orientation: "row" | "column";
+        index: number;
     }
     global {
         namespace JSX {
@@ -851,21 +910,28 @@ declare module "@scom/scom-editor/components/tableToolbar.tsx" {
         }
     }
     export class ScomEditorTableToolbar extends Module {
-        private pnlTableToolbar;
+        private tableMenu;
+        private btnTableToolbar;
         private _data;
-        private _oldBlock;
-        private _block;
+        showOtherSide: () => void;
+        hideOtherSide: () => void;
+        dragStart: (e: any) => void;
+        dragEnd: (e: any) => void;
+        freezeHandles: () => void;
+        unfreezeHandles: () => void;
         static create(options?: ScomEditorTableToolbarElement, parent?: Container): Promise<ScomEditorTableToolbar>;
         constructor(parent?: Container, options?: any);
+        get block(): any;
+        set block(value: any);
         get editor(): BlockNoteEditor;
         set editor(value: BlockNoteEditor);
-        private getToolbarButtons;
-        private getDropdownItems;
+        get index(): number;
+        set index(value: number);
+        get orientation(): 'row' | 'column';
+        set orientation(value: 'row' | 'column');
         setData(value: ITableToolbar): void;
-        onRefresh(): void;
-        private renderUI;
-        private updateBlock;
-        private renderList;
+        protected _handleClick(event: MouseEvent, stopPropagation?: boolean): boolean;
+        private onButtonClicked;
         init(): void;
         render(): any;
     }

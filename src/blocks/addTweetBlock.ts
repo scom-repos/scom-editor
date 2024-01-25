@@ -3,6 +3,8 @@ import { Block, BlockNoteEditor } from "../global/index";
 import { ScomEditorCustomBlock } from "../components/index";
 import { execCustomBLock } from "./utils";
 
+const twitterRegex = /https:\/\/(twitter.com)\/\w*\/status\/(\d{19}$)/g;
+
 export const addTweetBlock = (blocknote: any) => {
   const TweetBlock = blocknote.createBlockSpec({
     type: "tweet",
@@ -12,8 +14,10 @@ export const addTweetBlock = (blocknote: any) => {
       width: {default: 512},
       height: {default: 'auto'}
     },
-    containsInlineContent: false,
-    render: (block: Block, editor: BlockNoteEditor) => {
+    content: "none"
+  },
+  {
+    render: (block: Block) => {
       const wrapper = new Panel();
       const { url } = JSON.parse(JSON.stringify(block.props));
       const data = {
@@ -27,7 +31,7 @@ export const addTweetBlock = (blocknote: any) => {
         dom: wrapper
       };
     },
-    parse: () => {
+    parseFn: () => {
       return [
         {
           tag: "div[data-content-type=tweet]",
@@ -35,36 +39,50 @@ export const addTweetBlock = (blocknote: any) => {
         },
         {
           tag: "a",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
+          getAttrs: (element: string|HTMLElement) => {
+            if (typeof element === "string") {
               return false;
             }
-            if (element2.getAttribute('href')) {
-              const href = element2.getAttribute('href');
-              const regex = /https:\/\/(twitter.com)\/\w*\/status\/(\d{19}$)/gm;
-              if (regex.test(href)) {
-                return {
-                  url: href
-                }
-              }
+            const url = element.getAttribute('href');
+            if (url && twitterRegex.test(url)) {
+              return { url };
             }
             return false;
           },
           priority: 406,
           node: 'tweet'
-        }
+        },
+        {
+          tag: "p",
+          getAttrs: (element: string|HTMLElement) => {
+            if (typeof element === "string") {
+              return false;
+            }
+            const child = element.firstChild as HTMLElement;
+            if (!child || child.tagName !== 'a') return false;
+            const url = child.getAttribute('href');
+            if (url && twitterRegex.test(url)) {
+              return { url };
+            }
+            return false;
+          },
+          priority: 407,
+          node: 'tweet'
+        },
       ]
     },
-    renderInnerHTML: (attrs: any) => {
+    toExternalHTML: (block: any, editor: any) => {
       const link = document.createElement("a");
-      const url = attrs.url || "";
+      const url = block.props.url || "";
       link.setAttribute("href", url);
       link.textContent = 'tweet';
-      return link;
+      const wrapper = document.createElement("p");
+      wrapper.appendChild(link);
+      return { dom: wrapper };
     },
     pasteRules: [
       {
-        find: /https:\/\/(twitter.com)\/\w*\/status\/(\d{19}$)/gm,
+        find: twitterRegex,
         handler(props: any) {
           const { state, chain, range } = props;
           const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;

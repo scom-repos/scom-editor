@@ -3,6 +3,20 @@ import { Block, BlockNoteEditor } from "../global/index";
 import { ScomEditorCustomBlock } from "../components/index";
 import { execCustomBLock } from "./utils";
 
+const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
+const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+function getData(element: HTMLElement) {
+  if (element.getAttribute('href')) {
+    const href = element.getAttribute('href');
+    if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
+      return {
+        url: href
+      }
+    }
+  }
+  return false;
+}
+
 export const addVideoBlock = (blocknote: any) => {
   const VideoBlock = blocknote.createBlockSpec({
     type: "video",
@@ -12,8 +26,10 @@ export const addVideoBlock = (blocknote: any) => {
       width: {default: 512},
       height: {default: 'auto'}
     },
-    containsInlineContent: false,
-    render: (block: Block, editor: BlockNoteEditor) => {
+    content: "none"
+  },
+  {
+    render: (block: Block) => {
       const wrapper = new Panel();
       const { url } = JSON.parse(JSON.stringify(block.props));
       const data = {
@@ -27,70 +43,48 @@ export const addVideoBlock = (blocknote: any) => {
         dom: wrapper
       };
     },
-    parse: () => {
+    parseFn: () => {
       return [
         {
           tag: "div[data-content-type=video]",
-          node: 'video'
+          contentElement: "[data-editable]"
         },
         {
           tag: "a",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            if (element2.getAttribute('href')) {
-              const href = element2.getAttribute('href');
-              const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
-              const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
-              if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
-                return {
-                  url: href
-                }
-              }
-            }
-            return false;
+          getAttrs: (element: string|HTMLElement) => {
+            if (typeof element === "string") return false;
+            return getData(element);
           },
-          priority: 400,
+          priority: 404,
           node: 'video'
         },
         {
           tag: "p",
-          getAttrs: (element2: any) => {
-            if (typeof element2 === "string") {
-              return false;
-            }
-            const child = element2.firstChild;
-            if (!child) {
-              return false;
-            }
-            if (child.getAttribute('href')) {
-              const href = child.getAttribute('href');
-              const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
-              const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
-              if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
-                return {
-                  url: href
-                }
-              }
-            }
-            return false;
+          getAttrs: (element: string|HTMLElement) => {
+            if (typeof element === "string") return false;
+            const child = element.firstChild as HTMLElement;
+            if (!child || child.tagName !== 'a') return false;
+            return getData(child);
           },
-          priority: 410,
+          priority: 405,
           node: 'video'
-        },
+        }
       ]
     },
-    renderInnerHTML: (attrs: any) => {
+    toExternalHTML: (block: any, editor: any) => {
       const link = document.createElement("a");
-      const url = attrs.url || "";
+      const url = block.props.url || "";
       link.setAttribute("href", url);
       link.textContent = 'video';
-      return link;
+      const wrapper = document.createElement("p");
+      wrapper.appendChild(link);
+      return {
+        dom: wrapper
+      }
     },
     pasteRules: [
       {
-        find: /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g,
+        find: youtubeUrlRegex,
         handler(props: any) {
           const { state, chain, range } = props;
           const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;

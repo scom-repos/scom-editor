@@ -112,17 +112,18 @@ export class ScomEditor extends Module {
     const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
     const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
 
-    const customSchema = {
-      ...this._blocknoteObj.defaultBlockSchema,
+    const blockSpecs = {
+      ...this._blocknoteObj.defaultBlockSpecs,
       video: VideoBlock,
       imageWidget: ImageBlock,
       swap: SwapBlock,
       chart: ChartBlock,
       tweet: TweetBlock
     };
+
     const editorConfig: BlockNoteEditorOptions = {
       parentElement: this.pnlEditor,
-      blockSchema: customSchema,
+      blockSpecs,
       slashMenuItems: [
         ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
         VideoSlashItem,
@@ -169,7 +170,7 @@ export class ScomEditor extends Module {
     let value = '';
     const blocks = editor.topLevelBlocks;
     blocks.pop();
-    value = await editor.blocksToMarkdown(blocks);
+    value = await editor.blocksToMarkdownLossy(blocks);
     this.value = value;
     console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
@@ -205,7 +206,7 @@ export class ScomEditor extends Module {
     this._data = data;
     if (!this._editor) await this.initEditor();
     if (data.value) {
-      const blocks: Block[] = await this._editor.markdownToBlocks(data.value);
+      const blocks: Block[] = await this._editor.tryParseMarkdownToBlocks(data.value);
       this.renderEditor(JSON.parse(JSON.stringify(blocks)));
     }
   }
@@ -213,7 +214,7 @@ export class ScomEditor extends Module {
   async setValue(value: string) {
     this.value = value;
     if (!this._editor) return;
-    const blocks: Block[] = await this._editor.markdownToBlocks(value);
+    const blocks: Block[] = await this._editor.tryParseMarkdownToBlocks(value);
     this._editor.replaceBlocks(this._editor.topLevelBlocks, blocks);
   }
 

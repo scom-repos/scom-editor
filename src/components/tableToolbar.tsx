@@ -4,21 +4,31 @@ import {
   Styles,
   Module,
   Container,
-  HStack,
+  Button
 } from '@ijstech/components';
-import { Block, BlockNoteEditor } from '../global/index';
-import { IToolbarDropdownItem, createButton } from './utils';
-import { ScomEditorToolbarDropdown } from './toolbarDropdown';
-import { buttonHoverStyle } from './index.css';
+import { BlockNoteEditor } from '../global/index';
+import { ScomEditorTableMenu } from './tableMenu';
 
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorTableToolbarElement extends ControlElement {
-  editor?: BlockNoteEditor;
+  editor: BlockNoteEditor;
+  block: any;
+  orientation: "row" | "column";
+  index: number;
+  dragStart: (e: any) => void;
+  dragEnd: (e: any) => void;
+  freezeHandles?: () => void;
+  unfreezeHandles?: () => void;
+  showOtherSide?: () => void;
+  hideOtherSide?: () => void;
 }
 
 interface ITableToolbar {
   editor: BlockNoteEditor;
+  block: any;
+  orientation: "row" | "column";
+  index: number;
 }
 
 declare global {
@@ -31,23 +41,17 @@ declare global {
 
 @customElements('i-scom-editor-table-toolbar')
 export class ScomEditorTableToolbar extends Module {
-  private pnlTableToolbar: HStack;
+  private tableMenu: ScomEditorTableMenu;
+  private btnTableToolbar: Button;
 
   private _data: ITableToolbar;
-  private _oldBlock: Block = {
-    id: '',
-    type: '',
-    props: undefined,
-    content: [],
-    children: []
-  };
-  private _block: Block = {
-    id: '',
-    type: '',
-    props: undefined,
-    content: [],
-    children: []
-  };
+
+  showOtherSide: () => void;
+  hideOtherSide: () => void;
+  dragStart: (e: any) => void;
+  dragEnd: (e: any) => void;
+  freezeHandles: () => void;
+  unfreezeHandles: () => void;
 
   static async create(options?: ScomEditorTableToolbarElement, parent?: Container) {
     let self = new this(parent, options);
@@ -57,6 +61,14 @@ export class ScomEditorTableToolbar extends Module {
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
+    this.onButtonClicked = this.onButtonClicked.bind(this);
+  }
+
+  get block() {
+    return this._data.block;
+  }
+  set block(value: any) {
+    this._data.block = value;
   }
 
   get editor() {
@@ -66,189 +78,87 @@ export class ScomEditorTableToolbar extends Module {
     this._data.editor = value;
   }
 
-  private getToolbarButtons(editor: BlockNoteEditor) {
-    const iconProps = {width: '0.75rem', height: '0.75rem', fill: Theme.text.primary};
-    const toolTipProps = {placement: 'bottom'};
-    const customProps = {
-      display: 'inline-flex',
-      grid: {verticalAlignment: 'center'},
-      height: '100%',
-      minHeight: '1.875rem',
-      padding: {top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem'}
-    }
-
-    return [
-      // {
-      //   icon: {...iconProps, name: 'expand-alt'},
-      //   tooltip: {...toolTipProps, content: `Fix table to page width`},
-      //   onClick: () => {
-      //     editor._tiptapEditor.chain().focus().fixTables().run();
-      //   }
-      // },
-      {
-        customControl: () => {
-          let dropdown = new ScomEditorToolbarDropdown(undefined, {
-            ...customProps,
-            caption: 'Options',
-            items: this.getDropdownItems(this.editor),
-            class: buttonHoverStyle
-          });
-          return dropdown;
-        }
-      }
-    ]
+  get index() {
+    return this._data.index;
+  }
+  set index(value: number) {
+    this._data.index = value;
   }
 
-  private getDropdownItems(editor: BlockNoteEditor) {
-    const items: IToolbarDropdownItem[] = [
-      {
-        icon: {name: 'plus-circle'},
-        text: `Insert column before`,
-        isDisabled: !editor._tiptapEditor.can().addColumnBefore(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().addColumnBefore().run();
-        }
-      },
-      {
-        icon: {name: 'plus-circle'},
-        text: `Insert column after`,
-        isDisabled: !editor._tiptapEditor.can().addColumnAfter(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().addColumnAfter().run();
-        }
-      },
-      {
-        icon: {name: 'minus-circle'},
-        text: `Delete column`,
-        isDisabled: !editor._tiptapEditor.can().deleteColumn(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().deleteColumn().run();
-        }
-      },
-      {
-        icon: {name: 'plus-circle'},
-        text: `Insert row before`,
-        isDisabled: !editor._tiptapEditor.can().addRowBefore(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().addRowBefore().run();
-        }
-      },
-      {
-        icon: {name: 'plus-circle'},
-        text: `Insert row after`,
-        isDisabled: !editor._tiptapEditor.can().addRowBefore(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().addRowBefore().run();
-        }
-      },
-      {
-        icon: {name: 'times'},
-        text: `Delete row`,
-        isDisabled: !editor._tiptapEditor.can().deleteRow(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().deleteRow().run();
-        }
-      },
-      {
-        icon: {name: 'times'},
-        text: `Delete table`,
-        isDisabled: !editor._tiptapEditor.can().deleteTable(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().deleteTable().run();
-        }
-      },
-      {
-        icon: {name: 'object-ungroup'},
-        text: `Split cell`,
-        isDisabled: !editor._tiptapEditor.can().splitCell(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().splitCell().run();
-        }
-      },
-      {
-        icon: {name: 'columns'},
-        text: `Merge cells`,
-        isDisabled: !editor._tiptapEditor.can().mergeCells(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().mergeCells().run();
-        }
-      },
-      {
-        icon: {name: 'toggle-on'},
-        text: `Toggle header column`,
-        isDisabled: !editor._tiptapEditor.can().toggleHeaderColumn(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().toggleHeaderColumn().run();
-        }
-      },
-      {
-        icon: {name: 'toggle-on'},
-        text: `Toggle header row`,
-        isDisabled: !editor._tiptapEditor.can().toggleHeaderColumn(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().toggleHeaderColumn().run();
-        }
-      },
-      {
-        icon: {name: 'toggle-on'},
-        text: `Toggle header cells`,
-        isDisabled: !editor._tiptapEditor.can().toggleHeaderCell(),
-        onClick: () => {
-          editor._tiptapEditor.chain().focus().toggleHeaderCell().run();
-        }
-      }
-    ]
-    return items;
+  get orientation() {
+    return this._data.orientation;
+  }
+  set orientation(value: 'row'|'column') {
+    this._data.orientation = value;
   }
 
   setData(value: ITableToolbar) {
     this._data = value;
-    this.renderUI();
+    this.addEventListener("dragstart", this.dragStart);
+    this.addEventListener("dragend", this.dragEnd);
   }
 
-  onRefresh() {
-    this.updateBlock();
-    if (this._oldBlock?.id !== this._block?.id) {
-      this.renderList()
-    }
+  protected _handleClick(event: MouseEvent, stopPropagation?: boolean): boolean {
+    this.onButtonClicked();
+    return true;
   }
-
-  private renderUI() {
-    this.updateBlock();
-    this.renderList();
-  }
-
-  private updateBlock() {
-    this._oldBlock = {...this._block};
-    const block = this.editor.getTextCursorPosition().block;
-    this._block = block;
-  }
-
-  private async renderList() {
-    this.pnlTableToolbar.clearInnerHTML();
-    let buttonList: any = this.getToolbarButtons(this.editor);
-    for (let props of buttonList) {
-      if (props.customControl) {
-        const elm = props.customControl();
-        this.pnlTableToolbar.appendChild(elm);
-      } else {
-        const btn = createButton(props, this.pnlTableToolbar);
-        this.pnlTableToolbar.appendChild(btn);
+  private onButtonClicked() {
+    if (this.tableMenu) {
+      this.tableMenu.setData({...this._data});
+    } else {
+      this.tableMenu = new ScomEditorTableMenu(undefined, {...this._data});
+      this.tableMenu.onClose = () => {
+        this.tableMenu.closeModal();
+        if (this.unfreezeHandles) this.unfreezeHandles();
       }
     }
+    this.tableMenu.openModal({
+      showBackdrop: false,
+      popupPlacement: "rightTop",
+      position: 'absolute',
+      minWidth: '9.375rem',
+      maxWidth: '10rem',
+      linkTo: this,
+      zIndex: 9999,
+      onOpen: () => {
+        if (this.freezeHandles) this.freezeHandles();
+        if (this.hideOtherSide) this.hideOtherSide();
+      },
+      onClose: () => {
+        if (this.unfreezeHandles) this.unfreezeHandles();
+        if (this.showOtherSide) this.showOtherSide();
+      }
+    })
   }
 
   init() {
     super.init();
+    this.showOtherSide = this.getAttribute('showOtherSide', true) || this.showOtherSide;
+    this.hideOtherSide = this.getAttribute('hideOtherSide', true) || this.hideOtherSide;
+    this.dragStart = this.getAttribute('dragStart', true) || this.dragStart;
+    this.dragEnd = this.getAttribute('dragEnd', true) || this.dragEnd;
+    this.freezeHandles = this.getAttribute('freezeHandles', true) || this.freezeHandles;
+    this.unfreezeHandles = this.getAttribute('unfreezeHandles', true) || this.unfreezeHandles;
+    const block = this.getAttribute('block', true);
     const editor = this.getAttribute('editor', true);
-    if (editor) this.setData({editor});
+    const index = this.getAttribute('index', true);
+    const orientation = this.getAttribute('orientation', true);
+    this.setData({ block, editor, index, orientation});
+    this.draggable = true;
   }
 
   render() {
     return (
-      <i-panel>
-        <i-hstack id="pnlTableToolbar" width={'100%'} verticalAlignment='center' gap="0.125rem" overflow={'hidden'}></i-hstack>
-      </i-panel>
+      <i-button
+        id="btnTableToolbar"
+        icon={{name: "ellipsis-h", width: 14, height: 14}}
+        border={{radius: '0.25rem', width: '1px', style: 'solid', color: Theme.divider}}
+        padding={{top: '0.15rem', bottom: '0.15rem', left: '0.25rem', right: '0.25rem'}}
+        font={{size: '0.875rem'}}
+        background={{color: Theme.background.modal}}
+        boxShadow='none'
+        // class={buttonHoverStyle}
+      ></i-button>
     )
   }
 }
