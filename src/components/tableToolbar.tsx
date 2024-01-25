@@ -99,6 +99,7 @@ export class ScomEditorTableToolbar extends Module {
   }
 
   protected _handleClick(event: MouseEvent, stopPropagation?: boolean): boolean {
+    this.editor.focus();
     this.onButtonClicked();
     return true;
   }
