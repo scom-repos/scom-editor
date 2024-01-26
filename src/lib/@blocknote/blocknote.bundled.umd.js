@@ -43027,8 +43027,11 @@ img.ProseMirror-separator {
         if (((_c = this.sideMenuState) == null ? void 0 : _c.show) && ((_d = this.hoveredBlock) == null ? void 0 : _d.hasAttribute("data-id")) && ((_e = this.hoveredBlock) == null ? void 0 : _e.getAttribute("data-id")) === block2.id) {
           return;
         }
-        this.hoveredBlock = block2.node;
-        const blockContent = block2.node.firstChild;
+        const outsideTable = block2.node.closest(".tableWrapper");
+        const tableContainer = outsideTable?.parentElement;
+        const currentNode = tableContainer || block2.node;
+        this.hoveredBlock = currentNode;
+        const blockContent = currentNode.firstChild;
         if (!blockContent) {
           return;
         }
@@ -43099,9 +43102,13 @@ img.ProseMirror-separator {
       this.menuFrozen = true;
       const blockContent = this.hoveredBlock.firstChild;
       const blockContentBoundingBox = blockContent.getBoundingClientRect();
+      const isTable = blockContent.querySelector("table");
+
       const pos = this.pmView.posAtCoords({
         left: blockContentBoundingBox.left + blockContentBoundingBox.width / 2,
-        top: blockContentBoundingBox.top + blockContentBoundingBox.height / 2
+        top: isTable
+          ? blockContentBoundingBox.top + blockContentBoundingBox.height
+          : blockContentBoundingBox.top + blockContentBoundingBox.height / 2,
       });
       if (!pos) {
         return;
@@ -43592,7 +43599,9 @@ img.ProseMirror-separator {
           const tableElement = document.querySelector(
             `[data-node-type="blockContainer"][data-id="${this.tableId}"] table`
           );
-          const cellElement = tableElement.querySelector(
+          const cellElement = this.state.rowIndex === 0 ? tableElement.querySelector(
+            `tr:nth-child(${this.state.rowIndex + 1}) > th:nth-child(${this.state.colIndex + 1})`
+          ) : tableElement.querySelector(
             `tr:nth-child(${this.state.rowIndex + 1}) > td:nth-child(${this.state.colIndex + 1})`
           );
           this.state.referencePosTable = tableElement.getBoundingClientRect();
@@ -55752,4 +55761,4 @@ img.ProseMirror-separator {
   exports2.wrapInBlockStructure = wrapInBlockStructure;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });
-//# sourceMappingURL=blocknote.bundled.umd.cjs.map
+//# sourceMappingURL=blocknote.bundled.umd.js.map

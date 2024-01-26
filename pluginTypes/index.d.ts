@@ -930,7 +930,7 @@ declare module "@scom/scom-editor/components/tableToolbar.tsx" {
         get orientation(): 'row' | 'column';
         set orientation(value: 'row' | 'column');
         setData(value: ITableToolbar): void;
-        protected _handleClick(event: MouseEvent, stopPropagation?: boolean): boolean;
+        protected _handleMouseDown(event: MouseEvent, stopPropagation?: boolean): boolean;
         private onButtonClicked;
         init(): void;
         render(): any;

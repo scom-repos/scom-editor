@@ -8,6 +8,7 @@ import {
 } from '@ijstech/components';
 import { BlockNoteEditor } from '../global/index';
 import { ScomEditorTableMenu } from './tableMenu';
+import { buttonHoverStyle } from './index.css';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -94,15 +95,18 @@ export class ScomEditorTableToolbar extends Module {
 
   setData(value: ITableToolbar) {
     this._data = value;
-    this.addEventListener("dragstart", this.dragStart);
-    this.addEventListener("dragend", this.dragEnd);
+    // this.addEventListener("dragstart", this.dragStart);
+    // this.addEventListener("dragend", this.dragEnd);
+    this.btnTableToolbar.icon.name = this.orientation === 'row' ? 'grip-vertical' : 'grip-horizontal';
   }
 
-  protected _handleClick(event: MouseEvent, stopPropagation?: boolean): boolean {
-    this.editor.focus();
+  protected _handleMouseDown(event: MouseEvent, stopPropagation?: boolean): boolean {
+    event.stopPropagation();
     this.onButtonClicked();
+    event.preventDefault();
     return true;
   }
+
   private onButtonClicked() {
     if (this.tableMenu) {
       this.tableMenu.setData({...this._data});
@@ -121,15 +125,13 @@ export class ScomEditorTableToolbar extends Module {
       maxWidth: '10rem',
       linkTo: this,
       zIndex: 9999,
-      onOpen: () => {
-        if (this.freezeHandles) this.freezeHandles();
-        if (this.hideOtherSide) this.hideOtherSide();
-      },
       onClose: () => {
         if (this.unfreezeHandles) this.unfreezeHandles();
         if (this.showOtherSide) this.showOtherSide();
       }
     })
+    if (this.freezeHandles) this.freezeHandles();
+    if (this.hideOtherSide) this.hideOtherSide();
   }
 
   init() {
@@ -152,13 +154,13 @@ export class ScomEditorTableToolbar extends Module {
     return (
       <i-button
         id="btnTableToolbar"
-        icon={{name: "ellipsis-h", width: 14, height: 14}}
+        icon={{name: "grip-vertical", width: 14, height: 14}}
         border={{radius: '0.25rem', width: '1px', style: 'solid', color: Theme.divider}}
         padding={{top: '0.15rem', bottom: '0.15rem', left: '0.25rem', right: '0.25rem'}}
         font={{size: '0.875rem'}}
         background={{color: Theme.background.modal}}
         boxShadow='none'
-        // class={buttonHoverStyle}
+        class={buttonHoverStyle}
       ></i-button>
     )
   }
