@@ -270,7 +270,7 @@ export class ScomEditorSideMenu extends Module {
           ></i-button>
           <i-button
             id="btnDrag"
-            icon={{name: "ellipsis-v", width: '0.75rem', height: '0.75rem', fill: Theme.text.secondary}}
+            icon={{name: "grip-vertical", width: '0.75rem', height: '0.75rem', fill: Theme.text.secondary}}
             background={{color: 'transparent'}}
             boxShadow='none'
             class={buttonHoverStyle}

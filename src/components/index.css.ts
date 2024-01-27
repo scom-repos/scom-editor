@@ -2,6 +2,7 @@ import { Styles } from "@ijstech/components";
 const Theme = Styles.Theme.ThemeVars;
 
 export const buttonHoverStyle = Styles.style({
+  pointerEvents: 'auto',
   $nest: {
     '&:hover': {
       background: `${Theme.action.hoverBackground}!important`

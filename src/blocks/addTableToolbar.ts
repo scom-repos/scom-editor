@@ -1,5 +1,7 @@
 import { BlockNoteEditor } from '../global/index';
 import { ScomEditorTableToolbar, getModalContainer } from '../components/index';
+import { Styles } from '@ijstech/components';
+const Theme = Styles.Theme.ThemeVars;
 
 export const addTableToolbar = async (editor: BlockNoteEditor) => {
   let columnTableHandle: ScomEditorTableToolbar;
@@ -83,13 +85,20 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         index: colIndex,
         block,
         position: 'absolute',
-        zIndex: 1000,
+        zIndex: 9999,
+        background: {color: Theme.background.main},
         dragStart: editor.tableHandles!.colDragStart,
         dragEnd: editor.tableHandles!.dragEnd,
         freezeHandles: editor.tableHandles!.freezeHandles,
         unfreezeHandles: editor.tableHandles!.unfreezeHandles,
-        showOtherSide: () => hideRow = false,
-        hideOtherSide: () => hideRow = true,
+        showOtherSide: () => {
+          hideRow = false;
+          rowTableHandle.visible = show && draggedCellOrientation !== "col" && !hideRow;
+        },
+        hideOtherSide: () => {
+          hideRow = true;
+          rowTableHandle.visible = show && draggedCellOrientation !== "col" && !hideRow;
+        },
         visible: false
       })
       columnTableHandle.id = "column";
@@ -111,13 +120,20 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         index: rowIndex!,
         block,
         position: 'absolute',
-        zIndex: 1000,
+        zIndex: 9999,
+        background: {color: Theme.background.main},
         dragStart: editor.tableHandles!.rowDragStart,
         dragEnd: editor.tableHandles!.dragEnd,
         freezeHandles: editor.tableHandles!.freezeHandles,
         unfreezeHandles: editor.tableHandles!.unfreezeHandles,
-        showOtherSide: () => hideCol = false,
-        hideOtherSide: () => hideCol = true,
+        showOtherSide: () => {
+          hideCol = false;
+          columnTableHandle.visible = show && draggedCellOrientation !== "row" && !hideCol;
+        },
+        hideOtherSide: () => {
+          hideCol = true;
+          columnTableHandle.visible = show && draggedCellOrientation !== "row" && !hideCol;
+        },
         visible: false
       });
       rowTableHandle.id = "row";
