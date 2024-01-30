@@ -1,4 +1,4 @@
-import { Modal } from "@ijstech/components";
+import { Control, Modal } from "@ijstech/components";
 import { BlockNoteEditor, CustomFormattingToolbarState } from '../global/index';
 import { MediaBlockTypes, ScomEditorFormattingToolbar, createModal, getModalContainer, getPlacement } from '../components/index';
 
@@ -16,8 +16,7 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
         overflow: 'hidden',
         maxHeight: '2rem',
         minWidth: 'max-content',
-        isChildFixed: true,
-        closeOnScrollChildFixed: false
+        zIndex: 9999
       })
       modal.id = 'mdFormatting';
     }
@@ -40,10 +39,11 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
 
     if (formattingToolbarState.show) {
       if (blockID) {
-        const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
+        const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`) as Control;
         if (blockEl) {
           modal.linkTo = blockEl;
-          modal.position = 'fixed';
+          modal.showBackdrop = false;
+          modal.position = 'absolute';
           if (modal.visible) modal.refresh();
           else modal.visible = true;
         }

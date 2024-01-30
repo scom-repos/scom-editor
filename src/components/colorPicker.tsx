@@ -95,8 +95,6 @@ export class ScomEditorColorPicker extends Module {
   }
 
   showModal(parent?: Control, popupPlacement?: string) {
-    // const sideMenu = getToolbar('sideMenu');
-    // if (sideMenu && !sideMenu.visible) sideMenu.visible = true;
     getModalContainer().appendChild(this.mdColorPicker);
     this.mdColorPicker.position = 'fixed';
     if (parent) this.mdColorPicker.linkTo = parent;

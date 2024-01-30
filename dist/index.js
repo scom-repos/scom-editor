@@ -30,7 +30,7 @@ define("@scom/scom-editor/global/helper.ts", ["require", "exports"], function (r
     exports.isAppleOS = isAppleOS;
     function formatKeyboardShortcut(shortcut) {
         if ((0, exports.isAppleOS)()) {
-            return shortcut.replace("Mod", "⌘");
+            return shortcut.replace("Mod", "&#8984;");
         }
         else {
             return shortcut.replace("Mod", "Ctrl");
@@ -466,8 +466,6 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
             return this._data;
         }
         showModal(parent, popupPlacement) {
-            // const sideMenu = getToolbar('sideMenu');
-            // if (sideMenu && !sideMenu.visible) sideMenu.visible = true;
             (0, utils_1.getModalContainer)().appendChild(this.mdColorPicker);
             this.mdColorPicker.position = 'fixed';
             if (parent)
@@ -824,6 +822,7 @@ define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ij
             this.mdLink.position = 'fixed';
             if (parent)
                 this.mdLink.linkTo = parent;
+            this.inputLink.focus();
             this.mdLink.refresh();
             this.mdLink.visible = true;
         }
@@ -831,8 +830,9 @@ define("@scom/scom-editor/components/linkModal.tsx", ["require", "exports", "@ij
             this.mdLink.visible = false;
         }
         handleInput(target, event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
+            event.preventDefault();
+            event.stopPropagation();
+            if (event.key === 'Enter' && target.value) {
                 if (this.onInputChanged)
                     this.onInputChanged(target, event);
             }
@@ -918,11 +918,11 @@ define("@scom/scom-editor/components/linkButton.tsx", ["require", "exports", "@i
             const id = target.id;
             const prop = id === 'inputLink' ? 'url' : 'text';
             this._data[prop] = target.value;
-            if (!this._data.url)
-                return;
-            this.mdCreateLink.closeModal();
-            if (this.setLink)
-                this.setLink(this._data.text, this._data.url);
+            if (this._data.url) {
+                if (this.setLink)
+                    this.setLink(this._data.text, this._data.url);
+                this.mdCreateLink.closeModal();
+            }
         }
         showModal() {
             this.mdCreateLink.setData({ text: this.text, url: this.url });
@@ -1022,7 +1022,6 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
             this.mdMenu.showBackdrop = false;
             this.mdMenu.linkTo = parent;
             this.mdMenu.popupPlacement = 'left';
-            // this.mdMenu.position = 'fixed';
             this.mdMenu.visible = true;
         }
         onHideMenu() {
@@ -1054,10 +1053,7 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
                 this.setData({ block, editor });
         }
         render() {
-            return (this.$render("i-modal", { id: "mdMenu", popupPlacement: "left", showBackdrop: false, minWidth: 0, maxWidth: '6.25rem', visible: false, position: "absolute", zIndex: 9999, 
-                // isChildFixed={true}
-                // closeOnScrollChildFixed={true}
-                class: index_css_2.customModalStyle, onOpen: this.onModalOpen, onClose: this.onModalClose },
+            return (this.$render("i-modal", { id: "mdMenu", popupPlacement: "left", showBackdrop: false, minWidth: 0, maxWidth: '6.25rem', visible: false, position: "absolute", zIndex: 9999, class: index_css_2.customModalStyle, onOpen: this.onModalOpen, onClose: this.onModalClose },
                 this.$render("i-panel", null,
                     this.$render("i-menu", { id: "menuElm", padding: { top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem' }, font: { color: Theme.text.primary, size: '0.75rem' }, boxShadow: Theme.shadows[1], width: '100%', mode: "vertical", data: this._menuData, background: { color: Theme.background.modal }, onItemClick: this.handleMenu }),
                     this.$render("i-scom-editor-color-picker", { id: "mdPicker", onSelected: this.onColorClicked }))));
@@ -1679,8 +1675,8 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                 : editor.addStyles({ [prop]: color });
         }
         setLink(editor, text, url) {
-            editor.createLink(url, text || editor.getSelectedText());
             editor.focus();
+            editor.createLink(url, text || editor.getSelectedText());
         }
         getToolbarButtons(editor) {
             const iconProps = { width: '0.75rem', height: '0.75rem', fill: Theme.text.primary };
@@ -2389,8 +2385,7 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
                     overflow: 'hidden',
                     maxHeight: '2rem',
                     minWidth: 'max-content',
-                    isChildFixed: true,
-                    closeOnScrollChildFixed: false
+                    zIndex: 9999
                 });
                 modal.id = 'mdFormatting';
             }
@@ -2413,7 +2408,8 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
                     const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
                     if (blockEl) {
                         modal.linkTo = blockEl;
-                        modal.position = 'fixed';
+                        modal.showBackdrop = false;
+                        modal.position = 'absolute';
                         if (modal.visible)
                             modal.refresh();
                         else
@@ -2515,8 +2511,6 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                     padding: { left: 0, top: 0, right: 0, bottom: 0 },
                     border: { radius: 0, style: 'none' },
                     position: 'absolute',
-                    // isChildFixed: true,
-                    // closeOnScrollChildFixed: true,
                     zIndex: 9999,
                     onClose: closeSideMenu
                 });
@@ -2536,7 +2530,6 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                     modal.linkTo = sideMenu;
                     modal.showBackdrop = false;
                     modal.popupPlacement = isTable ? 'topLeft' : 'rightTop';
-                    // modal.position = 'fixed';
                     let innerMdX = 0;
                     let innerMdY = 0;
                     if (isTable) {

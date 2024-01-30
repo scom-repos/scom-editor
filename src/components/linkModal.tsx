@@ -81,6 +81,7 @@ export class ScomEditorMdLink extends Module {
     getModalContainer().appendChild(this.mdLink);
     this.mdLink.position = 'fixed';
     if (parent) this.mdLink.linkTo = parent;
+    this.inputLink.focus();
     this.mdLink.refresh();
     this.mdLink.visible = true;
   }
@@ -90,8 +91,9 @@ export class ScomEditorMdLink extends Module {
   }
 
   private handleInput(target: Input, event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === 'Enter' && target.value) {
       if (this.onInputChanged) this.onInputChanged(target, event);
     }
   }
