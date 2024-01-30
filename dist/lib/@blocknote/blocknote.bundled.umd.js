@@ -43028,7 +43028,7 @@ img.ProseMirror-separator {
           return;
         }
         const outsideTable = block2.node.closest(".tableWrapper");
-        const tableContainer = outsideTable?.parentElement;
+        const tableContainer = outsideTable == null ? void 0 : outsideTable.parentElement;
         const currentNode = tableContainer || block2.node;
         this.hoveredBlock = currentNode;
         const blockContent = currentNode.firstChild;
@@ -43103,12 +43103,9 @@ img.ProseMirror-separator {
       const blockContent = this.hoveredBlock.firstChild;
       const blockContentBoundingBox = blockContent.getBoundingClientRect();
       const isTable = blockContent.querySelector("table");
-
       const pos = this.pmView.posAtCoords({
         left: blockContentBoundingBox.left + blockContentBoundingBox.width / 2,
-        top: isTable
-          ? blockContentBoundingBox.top + blockContentBoundingBox.height
-          : blockContentBoundingBox.top + blockContentBoundingBox.height / 2,
+        top: isTable ? blockContentBoundingBox.top + blockContentBoundingBox.height : blockContentBoundingBox.top + blockContentBoundingBox.height / 2
       });
       if (!pos) {
         return;
@@ -54770,7 +54767,6 @@ img.ProseMirror-separator {
         // Always returning true for tab key presses ensures they're not captured by the browser. Otherwise, they blur the
         // editor since the browser will try to use tab for keyboard navigation.
         Tab: () => {
-          this.editor.commands.sinkListItem("blockContainer");
           const currentEl = this.editor.view.domAtPos(
             this.editor.state.selection.from
           ).node;
@@ -54782,6 +54778,8 @@ img.ProseMirror-separator {
               return false;
             }
             return this.editor.chain().addRowAfter().goToNextCell().run();
+          } else {
+            this.editor.commands.sinkListItem("blockContainer");
           }
           return true;
         },

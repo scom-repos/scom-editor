@@ -102,8 +102,8 @@ export class ScomEditorFormattingToolbar extends Module {
   }
 
   private setLink(editor: BlockNoteEditor, text: string, url: string) {
-    editor.createLink(url, text || editor.getSelectedText());
     editor.focus();
+    editor.createLink(url, text || editor.getSelectedText());
   }
 
   private getToolbarButtons(editor: BlockNoteEditor) {

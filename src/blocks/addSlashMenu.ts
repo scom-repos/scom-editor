@@ -47,8 +47,6 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         padding: {left: 0, top: 0, right: 0, bottom: 0},
         border: {radius: 0, style: 'none'},
         position: 'absolute',
-        // isChildFixed: true,
-        // closeOnScrollChildFixed: true,
         zIndex: 9999,
         onClose: closeSideMenu
       })
@@ -76,7 +74,6 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         modal.linkTo = sideMenu;
         modal.showBackdrop = false
         modal.popupPlacement = isTable ? 'topLeft' : 'rightTop';
-        // modal.position = 'fixed';
         let innerMdX = 0;
         let innerMdY = 0;
         if (isTable) {

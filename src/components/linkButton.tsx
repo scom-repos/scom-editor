@@ -102,9 +102,10 @@ export class ScomEditorLink extends Module {
     const id = target.id;
     const prop = id === 'inputLink' ? 'url' : 'text';
     this._data[prop] = target.value;
-    if (!this._data.url) return;
-    this.mdCreateLink.closeModal();
-    if (this.setLink) this.setLink(this._data.text, this._data.url);
+    if (this._data.url) {
+      if (this.setLink) this.setLink(this._data.text, this._data.url);
+      this.mdCreateLink.closeModal();
+    }
   }
 
   private showModal() {

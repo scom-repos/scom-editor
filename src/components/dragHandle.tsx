@@ -123,7 +123,6 @@ export class ScomEditorDragHandle extends Module {
     this.mdMenu.showBackdrop = false;
     this.mdMenu.linkTo = parent;
     this.mdMenu.popupPlacement = 'left';
-    // this.mdMenu.position = 'fixed';
     this.mdMenu.visible = true;
   }
 
@@ -166,8 +165,6 @@ export class ScomEditorDragHandle extends Module {
         visible={false}
         position="absolute"
         zIndex={9999}
-        // isChildFixed={true}
-        // closeOnScrollChildFixed={true}
         class={customModalStyle}
         onOpen={this.onModalOpen}
         onClose={this.onModalClose}
