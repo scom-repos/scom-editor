@@ -36227,10 +36227,18 @@ img.ProseMirror-separator {
         // Changes list item block to a text block if the content is empty.
         commands2.command(() => {
           if (node2.textContent.length === 0) {
-            return commands2.BNUpdateBlock(state.selection.from, {
-              type: "paragraph",
-              props: {}
-            });
+            const currentEl = editor2.view.domAtPos(editor2.state.selection.from).node;
+            if (currentEl.closest("table")) {
+              return chain().setHardBreak().BNUpdateBlock(state.selection.from, {
+                type: "paragraph",
+                props: {}
+              }).run();
+            } else {
+              return commands2.BNUpdateBlock(state.selection.from, {
+                type: "paragraph",
+                props: {}
+              });
+            }
           }
           return false;
         })
@@ -36509,6 +36517,15 @@ img.ProseMirror-separator {
     name: "paragraph",
     content: "inline*",
     group: "blockContent",
+    addKeyboardShortcuts() {
+      return {
+        Enter: () => handleEnter(this.editor),
+        "Mod-Alt-0": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "paragraph",
+          props: {}
+        })
+      };
+    },
     parseHTML() {
       return [
         { tag: "div[data-content-type=" + this.name + "]" },
@@ -38519,6 +38536,16 @@ img.ProseMirror-separator {
     },
     addKeyboardShortcuts() {
       return {
+        // Enter: () => {
+        //   const currentEl = this.editor.view.domAtPos(
+        //     this.editor.state.selection.from
+        //   ).node as Element;
+        //   if (currentEl.closest("table")) {
+        //     this.editor.commands.setHardBreak();
+        //     return true;
+        //   }
+        //   return false;
+        // },
         // Ensures that backspace won't delete the table if the text cursor is at
         // the start of a cell and the selection is empty.
         Backspace: () => {
@@ -42019,6 +42046,10 @@ img.ProseMirror-separator {
               numChildElements--;
               i2--;
             }
+          } else if (node2.tagName === "br") {
+            tree.children.splice(i2, 1, { type: "text", value: "<br>" });
+            numChildElements--;
+            i2--;
           }
         }
       }
@@ -42026,7 +42057,13 @@ img.ProseMirror-separator {
     return removeUnderlinesHelper;
   }
   function cleanHTMLToMarkdown(cleanHTMLString) {
-    const markdownString = unified().use(rehypeParse, { fragment: true }).use(removeUnderlines).use(rehypeRemark$1).use(remarkGfm).use(remarkStringify).processSync(cleanHTMLString);
+    const markdownString = unified().use(rehypeParse, { fragment: true }).use(removeUnderlines).use(rehypeRemark$1, { newlines: true }).use(remarkGfm).use(remarkStringify).processSync(cleanHTMLString);
+    if (markdownString.value) {
+      markdownString.value = markdownString.value.replace(
+        /\\<br>/g,
+        "\n"
+      );
+    }
     return markdownString.value;
   }
   function blocksToMarkdown(blocks2, schema, editor2) {
@@ -54754,7 +54791,14 @@ img.ProseMirror-separator {
           const selectionAtBlockStart = state.selection.$anchor.parentOffset === 0;
           const blockEmpty = node2.textContent.length === 0;
           if (!blockEmpty) {
-            chain().deleteSelection().BNSplitBlock(state.selection.from, selectionAtBlockStart).run();
+            const currentEl = this.editor.view.domAtPos(
+              this.editor.state.selection.from
+            ).node;
+            if (currentEl.closest("table")) {
+              chain().deleteSelection().setHardBreak().run();
+            } else {
+              chain().deleteSelection().BNSplitBlock(state.selection.from, selectionAtBlockStart).run();
+            }
             return true;
           }
           return false;
@@ -54786,10 +54830,7 @@ img.ProseMirror-separator {
         "Shift-Tab": () => {
           this.editor.commands.liftListItem("blockContainer");
           return true;
-        },
-        "Mod-Alt-0": () => this.editor.commands.BNCreateBlock(
-          this.editor.state.selection.anchor + 2
-        )
+        }
       };
     }
   });
