@@ -177,6 +177,30 @@ declare module "@scom/scom-editor/components/utils.ts" {
             hint: string;
             shortcut: string;
         };
+        "Heading 4": {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
+        "Heading 5": {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
+        "Heading 6": {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+            shortcut: string;
+        };
         "Numbered List": {
             group: string;
             icon: {
