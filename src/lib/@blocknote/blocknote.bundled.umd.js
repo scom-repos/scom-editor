@@ -35624,7 +35624,7 @@ img.ProseMirror-separator {
   }
   const headingPropSchema = {
     ...defaultProps,
-    level: { default: 1, values: [1, 2, 3] }
+    level: { default: 1, values: [1, 2, 3, 4, 5, 6] }
   };
   const HeadingBlockContent = createStronglyTypedTiptapNode({
     name: "heading",
@@ -35653,7 +35653,7 @@ img.ProseMirror-separator {
     },
     addInputRules() {
       return [
-        ...[1, 2, 3].map((level) => {
+        ...[1, 2, 3, 4, 5, 6].map((level) => {
           return new InputRule({
             find: new RegExp(`^(#{${level}})\\s$`),
             handler: ({ state, chain, range }) => {
@@ -35687,6 +35687,24 @@ img.ProseMirror-separator {
           props: {
             level: 3
           }
+        }),
+        "Mod-Alt-4": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "heading",
+          props: {
+            level: 4
+          }
+        }),
+        "Mod-Alt-5": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "heading",
+          props: {
+            level: 5
+          }
+        }),
+        "Mod-Alt-6": () => this.editor.commands.BNUpdateBlock(this.editor.state.selection.anchor, {
+          type: "heading",
+          props: {
+            level: 6
+          }
         })
       };
     },
@@ -35716,6 +35734,21 @@ img.ProseMirror-separator {
         {
           tag: "h3",
           attrs: { level: 3 },
+          node: "heading"
+        },
+        {
+          tag: "h4",
+          attrs: { level: 4 },
+          node: "heading"
+        },
+        {
+          tag: "h5",
+          attrs: { level: 5 },
+          node: "heading"
+        },
+        {
+          tag: "h6",
+          attrs: { level: 6 },
           node: "heading"
         }
       ];
@@ -43253,7 +43286,7 @@ img.ProseMirror-separator {
     return insertedBlock;
   }
   const getDefaultSlashMenuItems = (schema = defaultBlockSchema) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e, _f;
     const slashMenuItems = [];
     if ("heading" in schema && "level" in schema.heading.propSchema) {
       if ((_a = schema.heading.propSchema.level.values) == null ? void 0 : _a.includes(1)) {
@@ -43283,6 +43316,36 @@ img.ProseMirror-separator {
           execute: (editor2) => insertOrUpdateBlock(editor2, {
             type: "heading",
             props: { level: 3 }
+          })
+        });
+      }
+      if ((_d = schema.heading.propSchema.level.values) == null ? void 0 : _d.includes(4)) {
+        slashMenuItems.push({
+          name: "Heading 4",
+          aliases: ["h4", "heading4", "subheading"],
+          execute: (editor2) => insertOrUpdateBlock(editor2, {
+            type: "heading",
+            props: { level: 4 }
+          })
+        });
+      }
+      if ((_e = schema.heading.propSchema.level.values) == null ? void 0 : _e.includes(5)) {
+        slashMenuItems.push({
+          name: "Heading 5",
+          aliases: ["h5", "heading5", "subheading"],
+          execute: (editor2) => insertOrUpdateBlock(editor2, {
+            type: "heading",
+            props: { level: 5 }
+          })
+        });
+      }
+      if ((_f = schema.heading.propSchema.level.values) == null ? void 0 : _f.includes(6)) {
+        slashMenuItems.push({
+          name: "Heading 6",
+          aliases: ["h6", "heading6", "subheading"],
+          execute: (editor2) => insertOrUpdateBlock(editor2, {
+            type: "heading",
+            props: { level: 6 }
           })
         });
       }

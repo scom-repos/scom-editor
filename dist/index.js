@@ -158,6 +158,33 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
                 block.props.level === 3,
         },
         {
+            name: "Heading 4",
+            type: "heading",
+            props: { level: 4 },
+            icon: { name: 'heading' },
+            isSelected: (block) => block.type === "heading" &&
+                "level" in block.props &&
+                block.props.level === 4,
+        },
+        {
+            name: "Heading 5",
+            type: "heading",
+            props: { level: 5 },
+            icon: { name: 'heading' },
+            isSelected: (block) => block.type === "heading" &&
+                "level" in block.props &&
+                block.props.level === 5,
+        },
+        {
+            name: "Heading 6",
+            type: "heading",
+            props: { level: 6 },
+            icon: { name: 'heading' },
+            isSelected: (block) => block.type === "heading" &&
+                "level" in block.props &&
+                block.props.level === 6,
+        },
+        {
             name: "Bullet List",
             type: "bulletListItem",
             icon: { name: 'list-ul' },
@@ -189,6 +216,24 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
                 icon: { name: 'heading' },
                 hint: "Used for subsections and group headings",
                 shortcut: (0, index_1.formatKeyboardShortcut)("Mod-Alt-3"),
+            },
+            "Heading 4": {
+                group: "Headings",
+                icon: { name: 'heading' },
+                hint: "Used for subsections and group headings",
+                shortcut: (0, index_1.formatKeyboardShortcut)("Mod-Alt-4"),
+            },
+            "Heading 5": {
+                group: "Headings",
+                icon: { name: 'heading' },
+                hint: "Used for subsections and group headings",
+                shortcut: (0, index_1.formatKeyboardShortcut)("Mod-Alt-5"),
+            },
+            "Heading 6": {
+                group: "Headings",
+                icon: { name: 'heading' },
+                hint: "Used for subsections and group headings",
+                shortcut: (0, index_1.formatKeyboardShortcut)("Mod-Alt-6"),
             },
             "Numbered List": {
                 group: "Basic blocks",
