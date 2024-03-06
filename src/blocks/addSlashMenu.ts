@@ -78,7 +78,8 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
         let innerMdY = 0;
         if (isTable) {
           const { x: blockX, y: blockY } = blockEl.getBoundingClientRect();
-          innerMdX = blockX;
+          const { x: sideMenuX } = sideMenu.getBoundingClientRect();
+          innerMdX = blockX - sideMenuX;
           innerMdY = blockY;
         }
         const innerModal = modal.querySelector('.modal') as HTMLElement;

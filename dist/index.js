@@ -2579,7 +2579,8 @@ define("@scom/scom-editor/blocks/addSlashMenu.ts", ["require", "exports", "@scom
                     let innerMdY = 0;
                     if (isTable) {
                         const { x: blockX, y: blockY } = blockEl.getBoundingClientRect();
-                        innerMdX = blockX;
+                        const { x: sideMenuX } = sideMenu.getBoundingClientRect();
+                        innerMdX = blockX - sideMenuX;
                         innerMdY = blockY;
                     }
                     const innerModal = modal.querySelector('.modal');
