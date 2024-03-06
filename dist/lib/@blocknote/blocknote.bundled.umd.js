@@ -26135,7 +26135,6 @@ img.ProseMirror-separator {
               }
             }
           }
-          continue;
         }
         const blockGroup = blockContainer.children.length === 2 ? blockContainer.children[1] : null;
         const isListItemBlock = listItemBlockTypes.has(
@@ -38702,14 +38701,29 @@ img.ProseMirror-separator {
     group: "tableContent",
     content: "blockContainer+",
     parseHTML() {
-      return [{ tag: "div" }];
+      return [{ tag: "div[data-node-type=" + this.name + "]" }];
     },
     renderHTML({ HTMLAttributes }) {
-      return [
-        "div",
-        mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
-        0
-      ];
+      var _a;
+      const blockGroupHTMLAttributes = {
+        ...((_a = this.options.domAttributes) == null ? void 0 : _a.blockGroup) || {},
+        ...HTMLAttributes
+      };
+      const blockGroup = document.createElement("div");
+      blockGroup.className = mergeCSSClasses(
+        "bn-block-table-paragraph",
+        blockGroupHTMLAttributes.class
+      );
+      blockGroup.setAttribute("data-node-type", "tableParagraph");
+      for (const [attribute, value] of Object.entries(blockGroupHTMLAttributes)) {
+        if (attribute !== "class") {
+          blockGroup.setAttribute(attribute, value);
+        }
+      }
+      return {
+        dom: blockGroup,
+        contentDOM: blockGroup
+      };
     }
   });
   const Table = createBlockSpecFromStronglyTypedTiptapNode(
@@ -54441,7 +54455,7 @@ img.ProseMirror-separator {
     name: "blockContainer",
     group: "blockContainer",
     // A block always contains content, and optionally a blockGroup which contains nested blocks
-    content: "(blockContent blockGroup?) | tableContent",
+    content: "blockContent blockGroup?",
     // Ensures content-specific keyboard handlers trigger first.
     priority: 50,
     defining: true,
