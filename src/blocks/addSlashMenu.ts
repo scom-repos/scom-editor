@@ -43,7 +43,7 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
     const blockID = block?.id;
     if (!modal) {
       modal = await createModal({
-        popupPlacement: "rightTop",
+        popupPlacement: "topLeft",
         padding: {left: 0, top: 0, right: 0, bottom: 0},
         border: {radius: 0, style: 'none'},
         position: 'absolute',
@@ -67,26 +67,26 @@ export const addSlashMenu = (editor: BlockNoteEditor) => {
 
       const sideMenu = getToolbar('sideMenu');
       const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`) as Control;
-      const isTable = blockEl.closest('table');
+      // const isTable = blockEl.closest('table');
       if (sideMenu) {
         openSideMenu();
         editor.sideMenu.freezeMenu();
-        modal.linkTo = sideMenu;
+        modal.linkTo = blockEl;
         modal.showBackdrop = false
-        modal.popupPlacement = isTable ? 'topLeft' : 'rightTop';
-        let innerMdX = 0;
-        let innerMdY = 0;
-        if (isTable) {
-          const { x: blockX, y: blockY } = blockEl.getBoundingClientRect();
-          const { x: sideMenuX } = sideMenu.getBoundingClientRect();
-          innerMdX = blockX - sideMenuX;
-          innerMdY = blockY;
-        }
-        const innerModal = modal.querySelector('.modal') as HTMLElement;
-        if (innerModal) {
-          innerModal.style.left = `${innerMdX}px`;
-          innerModal.style.top = `${innerMdY}px`;
-        }
+        modal.popupPlacement = 'topLeft';
+        // let innerMdX = 0;
+        // let innerMdY = 0;
+        // if (isTable) {
+        //   const { x: blockX, y: blockY } = blockEl.getBoundingClientRect();
+        //   const { x: sideMenuX } = sideMenu.getBoundingClientRect();
+        //   innerMdX = blockX - sideMenuX;
+        //   innerMdY = blockY;
+        // }
+        // const innerModal = modal.querySelector('.modal') as HTMLElement;
+        // if (innerModal) {
+        //   innerModal.style.left = `${innerMdX}px`;
+        //   innerModal.style.top = `${innerMdY}px`;
+        // }
         if (modal.visible) modal.refresh();
         else modal.visible = true;
       } else {
