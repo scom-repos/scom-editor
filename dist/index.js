@@ -1735,6 +1735,8 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                 minHeight: '1.875rem',
                 padding: { top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem' }
             };
+            const blocks = editor.getSelection()?.blocks || [];
+            const hasTable = blocks.some(block => block.type === 'table');
             return [
                 {
                     icon: { ...iconProps, name: 'image' },
@@ -1750,11 +1752,10 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                 },
                 {
                     customControl: (element) => {
-                        const currentBlock = this.editor.getTextCursorPosition().block;
                         let blockType = new blockTypeButton_1.ScomEditorBlockType(undefined, {
                             ...customProps,
                             block: this._block,
-                            visible: !this.isMediaBlock && this._block.type !== 'table',
+                            visible: !this.isMediaBlock && !hasTable,
                             stack: { shrink: '0' },
                             onItemClicked: (item) => this.setBlockType(editor, item),
                             onValidate: (item) => {
@@ -1803,6 +1804,7 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                 },
                 {
                     icon: { ...iconProps, name: 'align-left' },
+                    visible: !hasTable,
                     tooltip: { ...toolTipProps, content: 'Align Text Left' },
                     isSelected: this._block.props?.textAlignment === 'left',
                     onClick: () => {
@@ -1812,6 +1814,7 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                 {
                     icon: { ...iconProps, name: 'align-center' },
                     tooltip: { ...toolTipProps, content: 'Align Text Center' },
+                    visible: !hasTable,
                     isSelected: this._block.props?.textAlignment === 'center',
                     onClick: () => {
                         this.setAlignment(editor, 'center');
@@ -1819,6 +1822,7 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
                 },
                 {
                     icon: { ...iconProps, name: 'align-right' },
+                    visible: !hasTable,
                     isSelected: this._block.props?.textAlignment === 'right',
                     tooltip: { ...toolTipProps, content: 'Align Text Right' },
                     onClick: () => {
@@ -1887,9 +1891,10 @@ define("@scom/scom-editor/components/formattingToolbar.tsx", ["require", "export
         }
         onRefresh() {
             this.updateBlock();
-            if (this._oldBlock?.id !== this._block?.id) {
-                this.renderList();
-            }
+            // if (this._oldBlock?.id !== this._block?.id) {
+            //   this.renderList()
+            // }
+            this.renderList();
         }
         renderUI() {
             this.updateBlock();
@@ -2439,7 +2444,7 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
             if (!(0, index_3.getModalContainer)().contains(modal))
                 (0, index_3.getModalContainer)().appendChild(modal);
             if (formattingToolbar) {
-                formattingToolbar.onRefresh();
+                formattingToolbarState.show && formattingToolbar.onRefresh();
             }
             else {
                 formattingToolbar = await index_3.ScomEditorFormattingToolbar.create({

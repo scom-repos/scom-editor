@@ -24,7 +24,7 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
       getModalContainer().appendChild(modal);
 
     if (formattingToolbar) {
-      formattingToolbar.onRefresh();
+      formattingToolbarState.show && formattingToolbar.onRefresh();
     } else {
       formattingToolbar = await ScomEditorFormattingToolbar.create({
         editor: editor

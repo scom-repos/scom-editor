@@ -116,6 +116,8 @@ export class ScomEditorFormattingToolbar extends Module {
       minHeight: '1.875rem',
       padding: {top: '0px', bottom: '0px', left: '0.5rem', right: '0.5rem'}
     }
+    const blocks = editor.getSelection()?.blocks || [];
+    const hasTable = blocks.some(block => block.type === 'table');
 
     return [
       {
@@ -132,11 +134,10 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         customControl: (element: Container) => {
-          const currentBlock = this.editor.getTextCursorPosition().block;
           let blockType = new ScomEditorBlockType(undefined, {
             ...customProps,
             block: this._block,
-            visible: !this.isMediaBlock && this._block.type !== 'table',
+            visible: !this.isMediaBlock && !hasTable,
             stack: {shrink: '0'},
             onItemClicked: (item: IBlockTypeItem) => this.setBlockType(editor, item),
             onValidate: (item: IBlockTypeItem) => {
@@ -185,6 +186,7 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         icon: {...iconProps, name: 'align-left'},
+        visible: !hasTable,
         tooltip: {...toolTipProps, content: 'Align Text Left'},
         isSelected: this._block.props?.textAlignment === 'left',
         onClick: () => {
@@ -194,6 +196,7 @@ export class ScomEditorFormattingToolbar extends Module {
       {
         icon: {...iconProps, name: 'align-center'},
         tooltip: {...toolTipProps, content: 'Align Text Center'},
+        visible: !hasTable,
         isSelected: this._block.props?.textAlignment === 'center',
         onClick: () => {
           this.setAlignment(editor, 'center');
@@ -201,6 +204,7 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         icon: {...iconProps, name: 'align-right'},
+        visible: !hasTable,
         isSelected: this._block.props?.textAlignment === 'right',
         tooltip: {...toolTipProps, content: 'Align Text Right'},
         onClick: () => {
@@ -275,9 +279,10 @@ export class ScomEditorFormattingToolbar extends Module {
 
   onRefresh() {
     this.updateBlock();
-    if (this._oldBlock?.id !== this._block?.id) {
-      this.renderList()
-    }
+    // if (this._oldBlock?.id !== this._block?.id) {
+    //   this.renderList()
+    // }
+    this.renderList()
   }
 
   private renderUI() {
