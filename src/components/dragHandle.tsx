@@ -113,7 +113,7 @@ export class ScomEditorDragHandle extends Module {
       if (this.onDeleted) this.onDeleted()
     } else {
       if (this.editor) this.editor.focus();
-      this.mdPicker.showModal(this.mdMenu, 'rightTop');
+      this.mdPicker.showModal(this.mdMenu, 'right');
       if (this.freezeMenu) this.freezeMenu();
     }
   }

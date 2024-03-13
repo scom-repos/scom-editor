@@ -155,7 +155,7 @@ NESTED BLOCKS
 /* Ordered */
 .bn-block-content[data-content-type="numberedListItem"] {
   display: flex;
-  gap: 1.2em;
+  gap: 1em;
 }
 
 [data-content-type="numberedListItem"] {
@@ -176,12 +176,14 @@ NESTED BLOCKS
   > .bn-block
   > .bn-block-content[data-content-type="numberedListItem"]::before {
   content: var(--index) ".";
+  display: inline-block;
+  min-width: 1.5rem;
 }
 
 /* Unordered */
 .bn-block-content[data-content-type="bulletListItem"] {
   display: flex;
-  gap: 1.2em;
+  gap: 1em;
 }
 
 /* No list nesting */

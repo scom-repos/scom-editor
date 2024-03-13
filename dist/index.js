@@ -512,14 +512,14 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
         }
         showModal(parent, popupPlacement) {
             (0, utils_1.getModalContainer)().appendChild(this.mdColorPicker);
-            this.mdColorPicker.position = 'fixed';
             if (parent)
                 this.mdColorPicker.linkTo = parent;
+            this.mdColorPicker.position = 'fixed';
             const { top, height } = this.getBoundingClientRect();
             const maxHeight = window.innerHeight - (top + height);
             this.pnlColors.maxHeight = maxHeight <= 200 ? 200 : maxHeight;
             if (maxHeight <= 200) {
-                this.mdColorPicker.popupPlacement = 'rightTop';
+                this.mdColorPicker.popupPlacement = 'right';
             }
             else {
                 this.mdColorPicker.popupPlacement = popupPlacement || 'bottom';
@@ -579,7 +579,9 @@ define("@scom/scom-editor/components/colorPicker.tsx", ["require", "exports", "@
             this.setData({ textColor, backgroundColor });
         }
         render() {
-            return (this.$render("i-modal", { id: "mdColorPicker", popupPlacement: "bottom", minWidth: 200, maxWidth: 200, isChildFixed: true, closeOnScrollChildFixed: true, border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false, zIndex: 30001, visible: false, onClose: this.handleClose },
+            return (this.$render("i-modal", { id: "mdColorPicker", popupPlacement: "bottom", minWidth: 200, maxWidth: 200, isChildFixed: true, 
+                // closeOnScrollChildFixed={true}
+                border: { radius: '0.375rem' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, boxShadow: Theme.shadows[1], showBackdrop: false, zIndex: 30001, visible: false, onClose: this.handleClose },
                 this.$render("i-vstack", { id: "pnlColors", overflow: { y: 'auto' } })));
         }
     };
@@ -1057,7 +1059,7 @@ define("@scom/scom-editor/components/dragHandle.tsx", ["require", "exports", "@i
             else {
                 if (this.editor)
                     this.editor.focus();
-                this.mdPicker.showModal(this.mdMenu, 'rightTop');
+                this.mdPicker.showModal(this.mdMenu, 'right');
                 if (this.freezeMenu)
                     this.freezeMenu();
             }
