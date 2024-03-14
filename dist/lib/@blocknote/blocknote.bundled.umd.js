@@ -27078,7 +27078,12 @@ img.ProseMirror-separator {
       ];
     },
     renderHTML({ HTMLAttributes }) {
-      return ["span", HTMLAttributes, 0];
+      const { "data-background-color": stringValue = "" } = HTMLAttributes;
+      return [
+        "span",
+        { ...HTMLAttributes, style: `background-color: ${stringValue};` },
+        0
+      ];
     }
   });
   const BackgroundColor = createStyleSpecFromTipTapMark(
@@ -27115,7 +27120,8 @@ img.ProseMirror-separator {
       ];
     },
     renderHTML({ HTMLAttributes }) {
-      return ["span", HTMLAttributes, 0];
+      const { "data-text-color": stringValue = "" } = HTMLAttributes;
+      return ["span", { ...HTMLAttributes, style: `color: ${stringValue};` }, 0];
     }
   });
   const TextColor = createStyleSpecFromTipTapMark(TextColorMark, "string");
@@ -35608,11 +35614,12 @@ img.ProseMirror-separator {
   }
   function markdownToBlocks(markdown, blockSchema, icSchema, styleSchema, pmSchema) {
     const htmlString = unified().use(remarkParse).use(remarkGfm).use(remarkRehype$1, {
+      allowDangerousHtml: true,
       handlers: {
         ...handlers$1,
         code: code$2
       }
-    }).use(rehypeStringify).processSync(markdown);
+    }).use(rehypeStringify, { allowDangerousHtml: true }).processSync(markdown);
     return HTMLToBlocks(
       htmlString.value,
       blockSchema,
@@ -42104,7 +42111,19 @@ img.ProseMirror-separator {
     return removeUnderlinesHelper;
   }
   function cleanHTMLToMarkdown(cleanHTMLString) {
-    const markdownString = unified().use(rehypeParse, { fragment: true }).use(removeUnderlines).use(rehypeRemark$1, { newlines: true }).use(remarkGfm).use(remarkStringify).processSync(cleanHTMLString);
+    const markdownString = unified().use(rehypeParse, { fragment: true }).use(removeUnderlines).use(rehypeRemark$1, {
+      newlines: true,
+      handlers: {
+        span: (state, node2) => {
+          const result = {
+            type: "html",
+            value: toHtml(node2)
+          };
+          state(node2, result);
+          return result;
+        }
+      }
+    }).use(remarkGfm).use(remarkStringify).processSync(cleanHTMLString);
     if (markdownString.value) {
       markdownString.value = markdownString.value.replace(
         /\\<br>/g,

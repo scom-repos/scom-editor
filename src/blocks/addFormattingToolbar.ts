@@ -50,6 +50,9 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
       } else {
         modal.visible = false;
       }
+    } else {
+      // modal.visible = false;
+      // TODO: check blur event on format plugin
     }
   });
 };
