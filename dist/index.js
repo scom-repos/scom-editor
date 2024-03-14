@@ -2475,7 +2475,8 @@ define("@scom/scom-editor/blocks/addFormattingToolbar.ts", ["require", "exports"
                 }
             }
             else {
-                modal.visible = false;
+                // modal.visible = false;
+                // TODO: check blur event on format plugin
             }
         });
     };
