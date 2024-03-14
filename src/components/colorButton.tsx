@@ -67,6 +67,8 @@ export class ScomEditorColor extends Module {
 
   async setData(value: IColorPicker) {
     this._data = value;
+    this.btnColor.font = {size: '0.75rem', color: this.textColor === 'default' ? Theme.text.primary : this.textColor};
+    this.btnColor.background.color = this.backgroundColor === 'default' ? 'transparent' : this.backgroundColor;
     this.mdPicker.setData({
       textColor: this.textColor,
       backgroundColor: this.backgroundColor

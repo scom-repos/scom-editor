@@ -42155,8 +42155,8 @@ img.ProseMirror-separator {
         const editorWrapper = this.pmView.dom.parentElement;
         if (
           // An element is clicked.
-          event && event.relatedTarget && // Element is inside the editor.
-          (editorWrapper === event.relatedTarget || editorWrapper.contains(event.relatedTarget))
+          event && event.target && // Element is inside the editor.
+          (editorWrapper === event.target || editorWrapper.contains(event.target))
         ) {
           return;
         }
