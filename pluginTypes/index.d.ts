@@ -279,6 +279,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        File: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -1092,6 +1099,9 @@ declare module "@scom/scom-editor/blocks/utils.ts" {
     import { BlockNoteEditor, PartialBlock } from "@scom/scom-editor/global/index.ts";
     export const execCustomBLock: (editor: BlockNoteEditor, block: PartialBlock) => void;
     export function parseUrl(href: string): any;
+    export const getFileContent: (url: string) => Promise<string>;
+    export function getFileType(ext: string): string;
+    export function getBlockFromExtension(url: string): Promise<any>;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addVideoBlock.ts" />
 declare module "@scom/scom-editor/blocks/addVideoBlock.ts" {
@@ -1146,6 +1156,17 @@ declare module "@scom/scom-editor/blocks/addTweetBlock.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-editor/blocks/addFileBlock.ts" />
+declare module "@scom/scom-editor/blocks/addFileBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export function addFileBlock(): {
+        FileSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => Promise<void>;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFormattingToolbar } from "@scom/scom-editor/blocks/addFormattingToolbar.ts";
@@ -1157,6 +1178,8 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addTableToolbar } from "@scom/scom-editor/blocks/addTableToolbar.ts";
     export { addChartBlock } from "@scom/scom-editor/blocks/addChartBlock.ts";
     export { addTweetBlock } from "@scom/scom-editor/blocks/addTweetBlock.ts";
+    export { addFileBlock } from "@scom/scom-editor/blocks/addFileBlock.ts";
+    export * from "@scom/scom-editor/blocks/utils.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
 declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
@@ -1177,6 +1200,7 @@ declare module "@scom/scom-editor/index.css.ts" {
 /// <amd-module name="@scom/scom-editor" />
 declare module "@scom/scom-editor" {
     import { Module, ControlElement, Container } from '@ijstech/components';
+    import { Block } from "@scom/scom-editor/global/index.ts";
     type onChangedCallback = (value: string) => void;
     interface ScomEditorElement extends ControlElement {
         value?: string;
@@ -1211,6 +1235,8 @@ declare module "@scom/scom-editor" {
         private getData;
         private setData;
         setValue(value: string): Promise<void>;
+        insertFile(url: string): Promise<void>;
+        insertBlock(block: Block): void;
         private updateTag;
         private setTag;
         private updateStyle;

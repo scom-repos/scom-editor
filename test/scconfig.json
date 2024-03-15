@@ -29,7 +29,8 @@
     "@scom/scom-image",
     "@scom/scom-video",
     "@scom/scom-swap",
-    "@scom/scom-twitter-post"
+    "@scom/scom-twitter-post",
+    "@scom/scom-storage"
   ],
   "menus": [
     {

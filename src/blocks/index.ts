@@ -7,3 +7,5 @@ export { addImageBlock } from './addImageBlock';
 export { addTableToolbar } from './addTableToolbar';
 export { addChartBlock } from './addChartBlock';
 export { addTweetBlock } from './addTweetBlock';
+export { addFileBlock } from './addFileBlock';
+export * from './utils';
