@@ -20,7 +20,10 @@ import {
   addImageBlock,
   addTableToolbar,
   addChartBlock,
-  addTweetBlock
+  addTweetBlock,
+  addFileBlock,
+  execCustomBLock,
+  getBlockFromExtension
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
 import { getModalContainer, getToolbar, getToolbars, removeContainer } from './components/index';
@@ -66,6 +69,7 @@ export class ScomEditor extends Module {
   private _blocknoteObj: any;
   private _editor: any;
   private _data: IEditor;
+
   tag: any = {};
 
   private timer: any;
@@ -111,6 +115,7 @@ export class ScomEditor extends Module {
     const { SwapSlashItem, SwapBlock } =  addSwapBlock(this._blocknoteObj);
     const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
     const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
+    const { FileSlashItem } = addFileBlock();
 
     const blockSpecs = {
       ...this._blocknoteObj.defaultBlockSpecs,
@@ -128,6 +133,7 @@ export class ScomEditor extends Module {
         ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
         VideoSlashItem,
         ImageSlashItem,
+        FileSlashItem,
         SwapSlashItem,
         ChartSlashItem,
         TweetSlashItem
@@ -216,6 +222,22 @@ export class ScomEditor extends Module {
     if (!this._editor) return;
     const blocks: Block[] = await this._editor.tryParseMarkdownToBlocks(value);
     this._editor.replaceBlocks(this._editor.topLevelBlocks, blocks);
+  }
+
+  async insertFile(url: string) {
+    try {
+      const block = await getBlockFromExtension(url);
+      if (block) execCustomBLock(this._editor, block);
+    } catch (error) { }
+  }
+
+  insertBlock(block: Block) {
+    const currentBlock = this._editor.getTextCursorPosition().block;
+    this._editor.insertBlocks([block], currentBlock, "after");
+    this._editor.setTextCursorPosition(
+      this._editor.getTextCursorPosition().nextBlock!,
+      "end"
+    );
   }
 
   private updateTag(type: 'light' | 'dark', value: any) {

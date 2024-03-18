@@ -28,3 +28,52 @@ export function parseUrl(href: string) {
   }
   return null;
 }
+
+export const getFileContent = async (url: string) => {
+  let result = '';
+  if (url) {
+    const response = await fetch(url);
+    try {
+      if (response.ok) {
+        result = await response.text();
+      }
+    } catch (err) { }
+  }
+  return result;
+}
+
+export function getFileType(ext: string) {
+  let result = '';
+  const video = ['mp4', 'webm', 'mov', 'm3u8'];
+  const image = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+  const markdown = ['md'];
+  if (video.includes(ext)) {
+    result = 'video';
+  } else if (image.includes(ext)) {
+    result = 'image';
+  } else if (markdown.includes(ext)) {
+    result = 'markdown';
+  }
+  return result;
+}
+
+export async function getBlockFromExtension(url: string) {
+  let block = null;
+  const ext = url.split('.').pop().toLowerCase();
+  const fileType = getFileType(ext);
+  switch (fileType) {
+    case 'image':
+      block = {
+        type: "imageWidget",
+        props: { url }
+      }
+      break;
+    case 'video':
+      block = {
+        type: "video",
+        props: { url }
+      }
+      break;
+  }
+  return block
+}

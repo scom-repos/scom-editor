@@ -192,6 +192,11 @@ export function getExtraFields () {
       icon: {image: {url: assets.fullPath('img/twitter.svg'), width: '100%', height: '100%', display: 'inline-block'}},
       hint: "Insert a twitter post",
     },
+    File: {
+      group: "Media",
+      icon: {name: 'file'},
+      hint: "Insert a file",
+    }
   };
   return extraFields;
 }
