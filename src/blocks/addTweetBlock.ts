@@ -44,7 +44,9 @@ export const addTweetBlock = (blocknote: any) => {
               return false;
             }
             const url = element.getAttribute('href');
-            if (url && twitterRegex.test(url)) {
+            const match = url && twitterRegex.test(url);
+            twitterRegex.lastIndex = 0;
+            if (match) {
               return { url };
             }
             return false;
@@ -61,7 +63,9 @@ export const addTweetBlock = (blocknote: any) => {
             const child = element.firstChild as HTMLElement;
             if (child?.nodeName === 'A') {
               const url = child.getAttribute('href');
-              if (url && twitterRegex.test(url)) {
+              const match = url && twitterRegex.test(url);
+              twitterRegex.lastIndex = 0;
+              if (match) {
                 return { url };
               }
             }

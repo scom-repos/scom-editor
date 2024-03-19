@@ -2837,12 +2837,12 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
     exports.addVideoBlock = void 0;
     const findRegex = /(?:https?:\/\/\S+\.(?:mp4|webm|mov|ogg|m3u8))|(?:https:\/\/(?:www\.|m\.)?(youtu.*be.*)\/(?:watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$)))/g;
     function getData(element) {
-        if (element.getAttribute('href')) {
-            const href = element.getAttribute('href');
-            if (findRegex.test(href)) {
-                return {
-                    url: href
-                };
+        const url = element.getAttribute('href');
+        if (url) {
+            const match = findRegex.test(url);
+            findRegex.lastIndex = 0;
+            if (match) {
+                return { url };
             }
         }
         return false;
@@ -2874,10 +2874,6 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
             },
             parseFn: () => {
                 return [
-                    {
-                        tag: "div[data-content-type=video]",
-                        contentElement: "[data-editable]"
-                    },
                     {
                         tag: "a",
                         getAttrs: (element) => {
@@ -3379,7 +3375,9 @@ define("@scom/scom-editor/blocks/addTweetBlock.ts", ["require", "exports", "@ijs
                                 return false;
                             }
                             const url = element.getAttribute('href');
-                            if (url && twitterRegex.test(url)) {
+                            const match = url && twitterRegex.test(url);
+                            twitterRegex.lastIndex = 0;
+                            if (match) {
                                 return { url };
                             }
                             return false;
@@ -3396,7 +3394,9 @@ define("@scom/scom-editor/blocks/addTweetBlock.ts", ["require", "exports", "@ijs
                             const child = element.firstChild;
                             if (child?.nodeName === 'A') {
                                 const url = child.getAttribute('href');
-                                if (url && twitterRegex.test(url)) {
+                                const match = url && twitterRegex.test(url);
+                                twitterRegex.lastIndex = 0;
+                                if (match) {
                                     return { url };
                                 }
                             }
