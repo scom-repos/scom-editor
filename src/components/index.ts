@@ -11,4 +11,4 @@ export { ScomEditorTableToolbar } from './tableToolbar';
 export { ScomEditorChart } from './chart';
 export { ScomEditorCustomBlock } from './customBlock';
 export * from './utils';
-export { buttonHoverStyle, customModalStyle } from './index.css';
+export { buttonHoverStyle, customModalStyle, modalStyle } from './index.css';

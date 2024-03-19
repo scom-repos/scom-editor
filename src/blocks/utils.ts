@@ -1,6 +1,7 @@
 import { BlockNoteEditor, PartialBlock, parseStringToObject } from "../global/index";
 
 export const execCustomBLock = (editor: BlockNoteEditor, block: PartialBlock) => {
+  // TODO: add loading
   const currentBlock = editor.getTextCursorPosition().block;
   if (
     Array.isArray(currentBlock.content) &&

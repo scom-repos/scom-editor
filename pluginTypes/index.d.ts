@@ -120,6 +120,7 @@ declare module "@scom/scom-editor/components/index.css.ts" {
     export const buttonHoverStyle: string;
     export const settingStyle: string;
     export const customModalStyle: string;
+    export const modalStyle: string;
 }
 /// <amd-module name="@scom/scom-editor/assets.ts" />
 declare module "@scom/scom-editor/assets.ts" {
@@ -1072,7 +1073,7 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorChart } from "@scom/scom-editor/components/chart.tsx";
     export { ScomEditorCustomBlock } from "@scom/scom-editor/components/customBlock.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
-    export { buttonHoverStyle, customModalStyle } from "@scom/scom-editor/components/index.css.ts";
+    export { buttonHoverStyle, customModalStyle, modalStyle } from "@scom/scom-editor/components/index.css.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addFormattingToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addFormattingToolbar.ts" {

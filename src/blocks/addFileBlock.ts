@@ -1,6 +1,10 @@
 import { ScomStorage } from '@scom/scom-storage';
 import { BlockNoteEditor } from "../global/index";
 import { execCustomBLock, getBlockFromExtension } from './utils';
+import { modalStyle } from '../components/index';
+import { Styles } from '@ijstech/components';
+
+const Theme = Styles.Theme.ThemeVars;
 
 async function renderBlock(editor: BlockNoteEditor, url: string) {
   try {
@@ -27,7 +31,10 @@ export function addFileBlock() {
         width: 800,
         maxWidth: '100%',
         height: '90vh',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        zIndex: 1000,
+        closeIcon: {width: '1rem', height: '1rem', name: 'times', fill: Theme.text.primary, margin: {bottom: '0.5rem'}},
+        class: modalStyle
       })
     },
     aliases: ["file", "media"]
