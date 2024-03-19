@@ -5,12 +5,12 @@ import { execCustomBLock } from "./utils";
 
 const findRegex = /(?:https?:\/\/\S+\.(?:mp4|webm|mov|ogg|m3u8))|(?:https:\/\/(?:www\.|m\.)?(youtu.*be.*)\/(?:watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$)))/g;
 function getData(element: HTMLElement) {
-  if (element.getAttribute('href')) {
-    const href = element.getAttribute('href');
-    if (findRegex.test(href)) {
-      return {
-        url: href
-      }
+  const url = element.getAttribute('href')
+  if (url) {
+    const match = findRegex.test(url);
+    findRegex.lastIndex = 0;
+    if (match) {
+      return { url };
     }
   }
   return false;
@@ -46,7 +46,7 @@ export const addVideoBlock = (blocknote: any) => {
       return [
         {
           tag: "div[data-content-type=video]",
-          contentElement: "[data-editable]"
+          node: 'video'
         },
         {
           tag: "a",
