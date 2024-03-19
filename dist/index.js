@@ -1296,7 +1296,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                 return;
             this._data.block = value;
             this.dragHandle.block = value;
-            this.id = `side-${this.block.id}`;
+            // this.id = `side-${this.block.id}`;
             this.updateButtons();
         }
         get editor() {
@@ -1317,7 +1317,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
             this.btnDrag.draggable = true;
             this.updateButtons();
-            this.id = `side-${this.block.id}`;
+            // this.id = `side-${this.block.id}`;
         }
         updateButtons() {
             this.btnEdit.visible = this.isEditShown;
@@ -2781,15 +2781,11 @@ define("@scom/scom-editor/blocks/utils.ts", ["require", "exports", "@scom/scom-e
         let result = '';
         const video = ['mp4', 'webm', 'mov', 'm3u8'];
         const image = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
-        const markdown = ['md'];
         if (video.includes(ext)) {
             result = 'video';
         }
         else if (image.includes(ext)) {
             result = 'image';
-        }
-        else if (markdown.includes(ext)) {
-            result = 'markdown';
         }
         return result;
     }
@@ -2809,6 +2805,22 @@ define("@scom/scom-editor/blocks/utils.ts", ["require", "exports", "@scom/scom-e
                 block = {
                     type: "video",
                     props: { url }
+                };
+                break;
+            default:
+                block = {
+                    type: 'paragraph',
+                    content: [
+                        {
+                            type: "link",
+                            content: [{
+                                    type: "text",
+                                    text: url,
+                                    styles: {}
+                                }],
+                            href: url
+                        }
+                    ]
                 };
                 break;
         }
