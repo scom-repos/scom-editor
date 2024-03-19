@@ -77,7 +77,7 @@ export class ScomEditorSideMenu extends Module {
     if (value.id && value.id === this._data?.block?.id) return;
     this._data.block = value;
     this.dragHandle.block = value;
-    this.id = `side-${this.block.id}`;
+    // this.id = `side-${this.block.id}`;
     this.updateButtons();
   }
 
@@ -101,7 +101,7 @@ export class ScomEditorSideMenu extends Module {
     this.btnDrag.addEventListener("dragend", this.editor.sideMenu.blockDragEnd);
     this.btnDrag.draggable = true;
     this.updateButtons();
-    this.id = `side-${this.block.id}`;
+    // this.id = `side-${this.block.id}`;
   }
 
   private updateButtons() {

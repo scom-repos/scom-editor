@@ -332,6 +332,12 @@ NESTED BLOCKS
   width: 100%;
   height: auto;
 }
+.bn-block-content.bn-is-empty .bn-inline-content:before {
+  visibility: hidden;
+}
+.ProseMirror-focused .bn-block-content.bn-is-empty .bn-inline-content:before {
+  visibility: visible;
+}
 
 .bn-block-content.bn-is-empty.bn-has-anchor .bn-inline-content:before {
   content: "Enter text or type '/' for commands";

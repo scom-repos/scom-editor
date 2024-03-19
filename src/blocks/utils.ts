@@ -47,13 +47,10 @@ export function getFileType(ext: string) {
   let result = '';
   const video = ['mp4', 'webm', 'mov', 'm3u8'];
   const image = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
-  const markdown = ['md'];
   if (video.includes(ext)) {
     result = 'video';
   } else if (image.includes(ext)) {
     result = 'image';
-  } else if (markdown.includes(ext)) {
-    result = 'markdown';
   }
   return result;
 }
@@ -73,6 +70,22 @@ export async function getBlockFromExtension(url: string) {
       block = {
         type: "video",
         props: { url }
+      }
+      break;
+    default:
+      block = {
+        type: 'paragraph',
+        content: [
+          {
+            type: "link",
+            content: [{
+              type: "text",
+              text: url,
+              styles: {}
+            }],
+            href: url
+          }
+        ]
       }
       break;
   }
