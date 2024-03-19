@@ -70,6 +70,8 @@ export class ScomEditorCustomBlock extends Module {
     if (!this.blockEl || (this.blockEl && module !== this.currentModule)) {
       try {
         this.blockEl = await application.createElement(module);
+        this.blockEl.display = 'block';
+        if (module === 'scom-video') this.blockEl.minWidth = '7rem';
       } catch {}
       this.currentModule = module;
       this.blockWrapper.clearInnerHTML();
