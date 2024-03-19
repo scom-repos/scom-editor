@@ -3,12 +3,11 @@ import { Block, BlockNoteEditor } from "../global/index";
 import { ScomEditorCustomBlock } from "../components/index";
 import { execCustomBLock } from "./utils";
 
-const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
-const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+const findRegex = /(?:https?:\/\/\S+\.(?:mp4|webm|mov|ogg|m3u8))|(?:https:\/\/(?:www\.|m\.)?(youtu.*be.*)\/(?:watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$)))/g;
 function getData(element: HTMLElement) {
   if (element.getAttribute('href')) {
     const href = element.getAttribute('href');
-    if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
+    if (findRegex.test(href)) {
       return {
         url: href
       }
@@ -86,11 +85,10 @@ export const addVideoBlock = (blocknote: any) => {
     },
     pasteRules: [
       {
-        find: youtubeUrlRegex,
+        find: findRegex,
         handler(props: any) {
           const { state, chain, range } = props;
           const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
-
           chain().BNUpdateBlock(state.selection.from, {
             type: "video",
             props: {

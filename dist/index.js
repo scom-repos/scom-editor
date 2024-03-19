@@ -2377,6 +2377,9 @@ define("@scom/scom-editor/components/customBlock.tsx", ["require", "exports", "@
             if (!this.blockEl || (this.blockEl && module !== this.currentModule)) {
                 try {
                     this.blockEl = await components_19.application.createElement(module);
+                    this.blockEl.display = 'block';
+                    if (module === 'scom-video')
+                        this.blockEl.minWidth = '7rem';
                 }
                 catch { }
                 this.currentModule = module;
@@ -2832,12 +2835,11 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addVideoBlock = void 0;
-    const videoUrlRegex = /https:\/\/\S+\.(mp4|webm)/g;
-    const youtubeUrlRegex = /https:\/\/(?:www\.|m\.)(youtu.*be.*)\/(watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$))/g;
+    const findRegex = /(?:https?:\/\/\S+\.(?:mp4|webm|mov|ogg|m3u8))|(?:https:\/\/(?:www\.|m\.)?(youtu.*be.*)\/(?:watch\?v=|embed\/|v|shorts|)(.*?((?=[&#?])|$)))/g;
     function getData(element) {
         if (element.getAttribute('href')) {
             const href = element.getAttribute('href');
-            if (videoUrlRegex.test(href) || youtubeUrlRegex.test(href)) {
+            if (findRegex.test(href)) {
                 return {
                     url: href
                 };
@@ -2915,7 +2917,7 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
             },
             pasteRules: [
                 {
-                    find: youtubeUrlRegex,
+                    find: findRegex,
                     handler(props) {
                         const { state, chain, range } = props;
                         const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
