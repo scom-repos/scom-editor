@@ -102,6 +102,8 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         visible: false
       })
       columnTableHandle.id = "column";
+    }
+    if (!getModalContainer().contains(columnTableHandle)) {
       getModalContainer().appendChild(columnTableHandle);
     }
 
@@ -137,6 +139,9 @@ export const addTableToolbar = async (editor: BlockNoteEditor) => {
         visible: false
       });
       rowTableHandle.id = "row";
+    }
+
+    if (!getModalContainer().contains(rowTableHandle)) {
       getModalContainer().appendChild(rowTableHandle);
     }
   });

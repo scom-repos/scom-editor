@@ -35,12 +35,14 @@ type onChangedCallback = (value: string) => void;
 
 interface ScomEditorElement extends ControlElement {
   value?: string;
+  viewer?: boolean;
   lazyLoad?: boolean;
   onChanged?: onChangedCallback;
 }
 
 interface IEditor {
   value?: string;
+  viewer?: boolean;
 }
 
 declare global {
@@ -87,6 +89,13 @@ export class ScomEditor extends Module {
     this._data.value = data ?? '';
   }
 
+  get viewer() {
+    return this._data.viewer ?? false;
+  }
+  set viewer(data: boolean) {
+    this._data.viewer = data ?? false;
+  }
+
   getEditor() {
     return this._editor;
   }
@@ -129,6 +138,7 @@ export class ScomEditor extends Module {
     const editorConfig: BlockNoteEditorOptions = {
       parentElement: this.pnlEditor,
       blockSpecs,
+      editable: !this.viewer,
       slashMenuItems: [
         ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
         VideoSlashItem,
@@ -158,13 +168,11 @@ export class ScomEditor extends Module {
     addHyperlinkToolbar(this._editor);
     addTableToolbar(this._editor);
     this._editor.domElement.addEventListener('focus', () => {
-      // this._editor.sideMenu.unfreezeMenu();
       const sideMenu = getToolbar('sideMenu');
       if (sideMenu) sideMenu.opacity = 1;
     })
 
     this._editor.domElement.addEventListener("blur", (event: MouseEvent) => {
-      // this._editor.sideMenu.freezeMenu();
       const sideMenus = getModalContainer().querySelectorAll('i-scom-editor-side-menu');
       for (let menu of sideMenus) {
         (menu as Control).opacity = 0;
@@ -402,7 +410,8 @@ export class ScomEditor extends Module {
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
       const value = this.getAttribute('value', true);
-      await this.setData({ value });
+      const viewer = this.getAttribute('viewer', true);
+      await this.setData({ value, viewer });
     }
   }
 
