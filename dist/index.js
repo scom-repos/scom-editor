@@ -2875,6 +2875,10 @@ define("@scom/scom-editor/blocks/addVideoBlock.ts", ["require", "exports", "@ijs
             parseFn: () => {
                 return [
                     {
+                        tag: "div[data-content-type=video]",
+                        node: 'video'
+                    },
+                    {
                         tag: "a",
                         getAttrs: (element) => {
                             if (typeof element === "string")
@@ -3792,6 +3796,12 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         set value(data) {
             this._data.value = data ?? '';
         }
+        get viewer() {
+            return this._data.viewer ?? false;
+        }
+        set viewer(data) {
+            this._data.viewer = data ?? false;
+        }
         getEditor() {
             return this._editor;
         }
@@ -3832,6 +3842,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             const editorConfig = {
                 parentElement: this.pnlEditor,
                 blockSpecs,
+                editable: !this.viewer,
                 slashMenuItems: [
                     ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
                     VideoSlashItem,
@@ -3863,13 +3874,11 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             (0, index_15.addHyperlinkToolbar)(this._editor);
             (0, index_15.addTableToolbar)(this._editor);
             this._editor.domElement.addEventListener('focus', () => {
-                // this._editor.sideMenu.unfreezeMenu();
                 const sideMenu = (0, index_16.getToolbar)('sideMenu');
                 if (sideMenu)
                     sideMenu.opacity = 1;
             });
             this._editor.domElement.addEventListener("blur", (event) => {
-                // this._editor.sideMenu.freezeMenu();
                 const sideMenus = (0, index_16.getModalContainer)().querySelectorAll('i-scom-editor-side-menu');
                 for (let menu of sideMenus) {
                     menu.opacity = 0;
@@ -4097,7 +4106,8 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {
                 const value = this.getAttribute('value', true);
-                await this.setData({ value });
+                const viewer = this.getAttribute('viewer', true);
+                await this.setData({ value, viewer });
             }
         }
         render() {

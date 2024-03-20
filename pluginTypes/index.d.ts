@@ -1205,6 +1205,7 @@ declare module "@scom/scom-editor" {
     type onChangedCallback = (value: string) => void;
     interface ScomEditorElement extends ControlElement {
         value?: string;
+        viewer?: boolean;
         lazyLoad?: boolean;
         onChanged?: onChangedCallback;
     }
@@ -1226,6 +1227,8 @@ declare module "@scom/scom-editor" {
         constructor(parent?: Container, options?: any);
         get value(): string;
         set value(data: string);
+        get viewer(): boolean;
+        set viewer(data: boolean);
         getEditor(): any;
         static create(options?: ScomEditorElement, parent?: Container): Promise<ScomEditor>;
         private initEditor;
