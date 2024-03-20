@@ -3138,6 +3138,8 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
                     visible: false
                 });
                 columnTableHandle.id = "column";
+            }
+            if (!(0, index_10.getModalContainer)().contains(columnTableHandle)) {
                 (0, index_10.getModalContainer)().appendChild(columnTableHandle);
             }
             const { x: rowX, y: rowY } = getReferenceClientRectRow()?.();
@@ -3173,6 +3175,8 @@ define("@scom/scom-editor/blocks/addTableToolbar.ts", ["require", "exports", "@s
                     visible: false
                 });
                 rowTableHandle.id = "row";
+            }
+            if (!(0, index_10.getModalContainer)().contains(rowTableHandle)) {
                 (0, index_10.getModalContainer)().appendChild(rowTableHandle);
             }
         });
