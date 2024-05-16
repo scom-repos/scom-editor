@@ -4103,6 +4103,11 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             (0, index_16.removeContainer)();
             (0, index_16.getToolbars)().clear();
         }
+        focus() {
+            if (!this._editor)
+                return;
+            this._editor.focus();
+        }
         async init() {
             super.init();
             (0, index_16.removeContainer)();
@@ -4115,7 +4120,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             }
         }
         render() {
-            return (this.$render("i-panel", { id: "pnlEditor", background: { color: Theme.background.main }, font: { color: Theme.text.primary }, border: { radius: 'inherit' } }));
+            return (this.$render("i-panel", { id: "pnlEditor", height: "100%", background: { color: Theme.background.main }, font: { color: Theme.text.primary }, border: { radius: 'inherit' } }));
         }
     };
     ScomEditor = __decorate([

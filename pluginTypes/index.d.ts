@@ -1266,6 +1266,7 @@ declare module "@scom/scom-editor" {
         private _getActions;
         private getWidgetSchemas;
         onHide(): void;
+        focus(): void;
         init(): Promise<void>;
         render(): any;
     }

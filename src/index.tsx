@@ -403,6 +403,11 @@ export class ScomEditor extends Module {
     getToolbars().clear();
   }
 
+  focus() {
+    if (!this._editor) return;
+    this._editor.focus();
+  }
+
   async init() {
     super.init();
     removeContainer();
@@ -419,6 +424,7 @@ export class ScomEditor extends Module {
     return (
       <i-panel
         id="pnlEditor"
+        height="100%"
         background={{ color: Theme.background.main }}
         font={{ color: Theme.text.primary }}
         border={{ radius: 'inherit' }}
