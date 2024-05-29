@@ -1293,7 +1293,8 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             return this._data.block;
         }
         set block(value) {
-            if (value.id && value.id === this._data?.block?.id)
+            if (value.id && value.id === this._data?.block?.id &&
+                value.type == this._data?.block?.type)
                 return;
             this._data.block = value;
             this.dragHandle.block = value;
