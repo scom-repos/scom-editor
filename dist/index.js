@@ -451,7 +451,7 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
             localPath: 'scom-swap'
         }
     };
-    const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
+    const WIDGET_LOADER_URL = 'https://widget.noto.fan';
     const getWidgetEmbedUrl = (block) => {
         const type = block.type;
         let module = null;
@@ -1399,7 +1399,8 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                     }
                     else if (block.type === 'swap') {
                         const { tokens, networks, title, logo, category, providers } = newProps;
-                        this.updateBlock(block, { tokens, networks, title, logo, category, providers });
+                        const defaultChainId = networks[0].chainId;
+                        this.updateBlock(block, { tokens, networks, title, logo, category, providers, defaultChainId });
                     }
                     else if (block.type === 'chart') {
                         const { name, apiEndpoint, dataSource, queryId, title, options, mode } = newProps;
@@ -2399,6 +2400,8 @@ define("@scom/scom-editor/components/customBlock.tsx", ["require", "exports", "@
                         sideMenu.openConfig(block, this);
                     break;
             }
+            if (this.blockEl.ready)
+                await this.blockEl.ready();
             await this.blockEl.setData(JSON.parse(JSON.stringify(properties)));
         }
         getActions() {
@@ -2757,7 +2760,7 @@ define("@scom/scom-editor/blocks/utils.ts", ["require", "exports", "@scom/scom-e
     };
     exports.execCustomBLock = execCustomBLock;
     function parseUrl(href) {
-        const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
+        const WIDGET_LOADER_URL = "https://widget.noto.fan";
         if (href.startsWith(WIDGET_LOADER_URL)) {
             const [_, params = ''] = href.split('?');
             const dataStr = params.replace('data=', '');

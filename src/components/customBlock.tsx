@@ -88,6 +88,7 @@ export class ScomEditorCustomBlock extends Module {
         if (sideMenu && !properties?.providers?.length) sideMenu.openConfig(block, this);
         break;
     }
+    if (this.blockEl.ready) await this.blockEl.ready();
     await this.blockEl.setData(JSON.parse(JSON.stringify(properties)));
   }
 
