@@ -351,7 +351,7 @@ export const WidgetMapping: {[key: string]: any} = {
   }
 }
 
-const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
+const WIDGET_URL = 'https://widget.noto.fan';
 export const getWidgetEmbedUrl = (block: PartialBlock) => {
   const type = block.type as string;
   let module = null;
@@ -368,8 +368,9 @@ export const getWidgetEmbedUrl = (block: PartialBlock) => {
       module,
       properties: { ...block.props },
     };
-    const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
-    return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
+    const encodedWidgetDataString = encodeURIComponent(window.btoa(JSON.stringify(widgetData)));
+    const moduleName = module.name.slice(1);
+    return `${WIDGET_URL}/#!/${moduleName}/${encodedWidgetDataString}`;
   }
   return '';
 }

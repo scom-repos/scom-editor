@@ -451,7 +451,7 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
             localPath: 'scom-swap'
         }
     };
-    const WIDGET_LOADER_URL = 'https://widget.noto.fan';
+    const WIDGET_URL = 'https://widget.noto.fan';
     const getWidgetEmbedUrl = (block) => {
         const type = block.type;
         let module = null;
@@ -469,8 +469,9 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
                 module,
                 properties: { ...block.props },
             };
-            const encodedWidgetDataString = window.btoa(JSON.stringify(widgetData));
-            return `${WIDGET_LOADER_URL}?data=${encodedWidgetDataString}`;
+            const encodedWidgetDataString = encodeURIComponent(window.btoa(JSON.stringify(widgetData)));
+            const moduleName = module.name.slice(1);
+            return `${WIDGET_URL}/#!/${moduleName}/${encodedWidgetDataString}`;
         }
         return '';
     };
@@ -2760,10 +2761,11 @@ define("@scom/scom-editor/blocks/utils.ts", ["require", "exports", "@scom/scom-e
     };
     exports.execCustomBLock = execCustomBLock;
     function parseUrl(href) {
-        const WIDGET_LOADER_URL = "https://widget.noto.fan";
-        if (href.startsWith(WIDGET_LOADER_URL)) {
-            const [_, params = ''] = href.split('?');
-            const dataStr = params.replace('data=', '');
+        const WIDGET_URL = "https://widget.noto.fan";
+        if (href.startsWith(WIDGET_URL)) {
+            let arr = href.split('/scom/');
+            let paths = arr[1].split('/');
+            const dataStr = paths.slice(1).join('/');
             return dataStr ? (0, index_7.parseStringToObject)(dataStr) : null;
         }
         return null;

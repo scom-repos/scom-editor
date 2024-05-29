@@ -21,10 +21,11 @@ export const execCustomBLock = (editor: BlockNoteEditor, block: PartialBlock) =>
 }
 
 export function parseUrl(href: string) {
-  const WIDGET_LOADER_URL = 'https://ipfs.scom.dev/ipfs/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4';
-  if (href.startsWith(WIDGET_LOADER_URL)) {
-    const [_, params = ''] = href.split('?');
-    const dataStr = params.replace('data=', '');
+  const WIDGET_URL = "https://widget.noto.fan";
+  if (href.startsWith(WIDGET_URL)) {
+    let arr = href.split('/scom/');
+    let paths = arr[1].split('/');
+    const dataStr = paths.slice(1).join('/');
     return dataStr ? parseStringToObject(dataStr) : null;
   }
   return null;
