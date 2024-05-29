@@ -74,7 +74,10 @@ export class ScomEditorSideMenu extends Module {
     return this._data.block;
   }
   set block(value: Block) {
-    if (value.id && value.id === this._data?.block?.id) return;
+    if (
+      value.id && value.id === this._data?.block?.id &&
+      value.type == this._data?.block?.type
+    ) return;
     this._data.block = value;
     this.dragHandle.block = value;
     // this.id = `side-${this.block.id}`;
@@ -188,7 +191,8 @@ export class ScomEditorSideMenu extends Module {
           this.updateBlock(block, { url, cid, link, altText, keyword, photoId, backgroundColor });
         } else if (block.type === 'swap') {
           const { tokens, networks, title, logo, category, providers } = newProps;
-          this.updateBlock(block, { tokens, networks, title, logo, category, providers });
+          const defaultChainId = networks[0].chainId;
+          this.updateBlock(block, { tokens, networks, title, logo, category, providers, defaultChainId });
         }  else if (block.type === 'chart') {
           const { name, apiEndpoint, dataSource, queryId, title, options, mode } = newProps;
           this.updateBlock(block, { name, apiEndpoint, dataSource, queryId, title, options, mode });
