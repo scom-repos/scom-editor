@@ -185,7 +185,7 @@ export class ScomEditor extends Module {
     const blocks = editor.topLevelBlocks;
     blocks.pop();
     value = await editor.blocksToMarkdownLossy(blocks);
-    this.value = value;
+    this.value = value.replace(/\[(swap|chart)\]\((.*)\)/g, "$2");
     console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
     const sideMenu = getToolbar('sideMenu');
