@@ -36,6 +36,7 @@ export function addFileBlock() {
         closeIcon: {width: '1rem', height: '1rem', name: 'times', fill: Theme.text.primary, margin: {bottom: '0.5rem'}},
         class: modalStyle
       })
+      storageEl.onShow();
     },
     aliases: ["file", "media"]
   }
