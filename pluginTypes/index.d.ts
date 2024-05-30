@@ -669,7 +669,7 @@ declare module "@scom/scom-editor/components/settingsForm.tsx" {
         constructor(parent?: Container, options?: any);
         get data(): ISettingsForm;
         set data(value: ISettingsForm);
-        setData(value: ISettingsForm): void;
+        setData(value: ISettingsForm): Promise<void>;
         private renderForm;
         private onChartNameChanged;
         private onSave;
