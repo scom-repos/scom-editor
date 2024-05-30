@@ -63,9 +63,9 @@ export class ScomEditorSettingsForm extends Module {
     this._data = value;
   }
 
-  setData(value: ISettingsForm) {
+  async setData(value: ISettingsForm) {
     this._data = value;
-    this.renderForm();
+    await this.renderForm();
   }
 
   private async renderForm() {

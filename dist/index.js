@@ -1156,9 +1156,9 @@ define("@scom/scom-editor/components/settingsForm.tsx", ["require", "exports", "
         set data(value) {
             this._data = value;
         }
-        setData(value) {
+        async setData(value) {
             this._data = value;
-            this.renderForm();
+            await this.renderForm();
         }
         async renderForm() {
             const { action, onConfirm, block } = this.data;
@@ -1432,18 +1432,16 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
             }
             return null;
         }
-        renderForm(data) {
-            if (this.actionForm) {
-                this.actionForm.setData(data);
+        async renderForm(data) {
+            if (!this.actionForm) {
+                this.actionForm = new settingsForm_1.ScomEditorSettingsForm();
             }
-            else {
-                this.actionForm = new settingsForm_1.ScomEditorSettingsForm(undefined, { data });
-            }
-            this.actionForm.openModal({
+            const modal = this.actionForm.openModal({
                 title: 'Edit',
                 width: '40rem'
             });
-            this.actionForm.refresh();
+            await this.actionForm.setData(data);
+            modal.refresh();
         }
         async updateBlock(block, props) {
             this.editor.updateBlock(block, { props });

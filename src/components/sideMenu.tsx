@@ -223,17 +223,16 @@ export class ScomEditorSideMenu extends Module {
     return null;
   }
 
-  private renderForm(data: ISettingsForm) {
-    if (this.actionForm) {
-      this.actionForm.setData(data);
-    } else {
-      this.actionForm = new ScomEditorSettingsForm(undefined, { data });
+  private async renderForm(data: ISettingsForm) {
+    if (!this.actionForm) {
+      this.actionForm = new ScomEditorSettingsForm();
     }
-    this.actionForm.openModal({
+    const modal = this.actionForm.openModal({
       title: 'Edit',
       width: '40rem'
     });
-    this.actionForm.refresh();
+    await this.actionForm.setData(data);
+    modal.refresh();
   }
 
   private async updateBlock (block: Block, props: Record<string, string>) {
