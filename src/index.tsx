@@ -54,11 +54,6 @@ declare global {
 }
 
 const path = application.currentModuleDir;
-RequireJS.config({
-  paths: {
-    'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
-  }
-})
 const libPlugins = [
   'blocknote'
 ];
@@ -206,6 +201,11 @@ export class ScomEditor extends Module {
 
   private loadPlugin() {
     return new Promise((resolve, reject) => {
+      RequireJS.config({
+        paths: {
+          'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
+        }
+      })
       RequireJS.require(libPlugins, (blocknote: any) => {
         resolve(blocknote);
       });

@@ -3785,11 +3785,6 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
     exports.ScomEditor = void 0;
     const Theme = components_29.Styles.Theme.ThemeVars;
     const path = components_29.application.currentModuleDir;
-    components_29.RequireJS.config({
-        paths: {
-            'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
-        }
-    });
     const libPlugins = [
         'blocknote'
     ];
@@ -3920,7 +3915,13 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             document.head.append(link);
         }
         loadPlugin() {
+            const moduleDir = this['currentModuleDir'] || path;
             return new Promise((resolve, reject) => {
+                components_29.RequireJS.config({
+                    paths: {
+                        'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
+                    }
+                });
                 components_29.RequireJS.require(libPlugins, (blocknote) => {
                     resolve(blocknote);
                 });
