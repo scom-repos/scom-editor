@@ -28,6 +28,7 @@
     "@scom/scom-counter",
     "@scom/scom-image",
     "@scom/scom-video",
+    "@scom/scom-staking",
     "@scom/scom-swap",
     "@scom/scom-twitter-post",
     "@scom/scom-storage"

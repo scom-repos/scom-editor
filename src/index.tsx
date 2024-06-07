@@ -23,7 +23,8 @@ import {
   addTweetBlock,
   addFileBlock,
   execCustomBLock,
-  getBlockFromExtension
+  getBlockFromExtension,
+  addStakingBlock
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
 import { getModalContainer, getToolbar, getToolbars, removeContainer } from './components/index';
@@ -119,6 +120,7 @@ export class ScomEditor extends Module {
     const { SwapSlashItem, SwapBlock } =  addSwapBlock(this._blocknoteObj);
     const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
     const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
+    const { StakingBlock, StakingSlashItem } = addStakingBlock(this._blocknoteObj);
     const { FileSlashItem } = addFileBlock();
 
     const blockSpecs = {
@@ -126,6 +128,7 @@ export class ScomEditor extends Module {
       video: VideoBlock,
       imageWidget: ImageBlock,
       swap: SwapBlock,
+      staking: StakingBlock,
       chart: ChartBlock,
       tweet: TweetBlock
     };
@@ -140,6 +143,7 @@ export class ScomEditor extends Module {
         ImageSlashItem,
         FileSlashItem,
         SwapSlashItem,
+        StakingSlashItem,
         ChartSlashItem,
         TweetSlashItem
       ],
@@ -180,7 +184,7 @@ export class ScomEditor extends Module {
     const blocks = editor.topLevelBlocks;
     blocks.pop();
     value = await editor.blocksToMarkdownLossy(blocks);
-    this.value = value.replace(/\[(swap|chart)\]\((.*)\)/g, "$2");
+    this.value = value.replace(/\[(swap|staking|chart)\]\((.*)\)/g, "$2");
     console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
     const sideMenu = getToolbar('sideMenu');

@@ -30,6 +30,7 @@
         "@scom/scom-mixed-chart": "^0.1.10",
         "@scom/scom-pie-chart": "^0.1.12",
         "@scom/scom-scatter-chart": "^0.1.11",
+        "@scom/scom-staking": "^0.1.16",
         "@scom/scom-swap": "^0.1.25",
         "@scom/scom-commission-claim": "^0.1.10",
         "@scom/scom-commission-fee-setup": "^0.1.1",

@@ -163,6 +163,7 @@ export class ScomEditorSideMenu extends Module {
       case 'imageWidget':
       case 'swap':
       case 'tweet':
+      case 'staking':
         module = blockEl.querySelector('i-scom-editor-custom-block');
         editAction = module.getActions()[0];
         break;
@@ -196,6 +197,9 @@ export class ScomEditorSideMenu extends Module {
         }  else if (block.type === 'chart') {
           const { name, apiEndpoint, dataSource, queryId, title, options, mode } = newProps;
           this.updateBlock(block, { name, apiEndpoint, dataSource, queryId, title, options, mode });
+        } else if (block.type === 'staking') {
+          const { chainId, name, desc, logo, getTokenURL, showContractLink, staking } = newProps;
+          this.updateBlock(block, { chainId, name, desc, logo, getTokenURL, showContractLink, staking });
         }
         this.actionForm.closeModal();
       }
