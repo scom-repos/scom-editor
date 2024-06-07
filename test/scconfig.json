@@ -29,6 +29,7 @@
     "@scom/scom-image",
     "@scom/scom-video",
     "@scom/scom-swap",
+    "@scom/scom-xchain-widget",
     "@scom/scom-twitter-post",
     "@scom/scom-storage"
   ],

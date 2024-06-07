@@ -30,6 +30,9 @@ export const settingStyle = Styles.style({
           outline: '1px solid transparent'
         },
       }
+    },
+    'i-scom-token-input > i-hstack > i-vstack': {
+      margin: '0 !important'
     }
   }
 })
