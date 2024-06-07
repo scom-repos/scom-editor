@@ -23,6 +23,7 @@ import {
   addTweetBlock,
   addFileBlock,
   execCustomBLock,
+  addStakingBlock,
   addXchainBlock,
   getBlockFromExtension
 } from './blocks/index';
@@ -55,11 +56,6 @@ declare global {
 }
 
 const path = application.currentModuleDir;
-RequireJS.config({
-  paths: {
-    'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
-  }
-})
 const libPlugins = [
   'blocknote'
 ];
@@ -126,6 +122,7 @@ export class ScomEditor extends Module {
     const { XchainSlashItem, XchainBlock } = addXchainBlock(this._blocknoteObj);
     const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
     const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
+    const { StakingBlock, StakingSlashItem } = addStakingBlock(this._blocknoteObj);
     const { FileSlashItem } = addFileBlock();
 
     const blockSpecs = {
@@ -133,6 +130,7 @@ export class ScomEditor extends Module {
       video: VideoBlock,
       imageWidget: ImageBlock,
       swap: SwapBlock,
+      staking: StakingBlock,
       xchain: XchainBlock,
       chart: ChartBlock,
       tweet: TweetBlock
@@ -148,6 +146,7 @@ export class ScomEditor extends Module {
         ImageSlashItem,
         FileSlashItem,
         SwapSlashItem,
+        StakingSlashItem,
         XchainSlashItem,
         ChartSlashItem,
         TweetSlashItem
@@ -189,7 +188,7 @@ export class ScomEditor extends Module {
     const blocks = editor.topLevelBlocks;
     blocks.pop();
     value = await editor.blocksToMarkdownLossy(blocks);
-    this.value = value.replace(/\[(swap|chart)\]\((.*)\)/g, "$2");
+    this.value = value.replace(/\[(swap|staking|chart)\]\((.*)\)/g, "$2");
     console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
     const sideMenu = getToolbar('sideMenu');
@@ -210,6 +209,11 @@ export class ScomEditor extends Module {
 
   private loadPlugin() {
     return new Promise((resolve, reject) => {
+      RequireJS.config({
+        paths: {
+          'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
+        }
+      })
       RequireJS.require(libPlugins, (blocknote: any) => {
         resolve(blocknote);
       });

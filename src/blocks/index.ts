@@ -8,5 +8,6 @@ export { addTableToolbar } from './addTableToolbar';
 export { addChartBlock } from './addChartBlock';
 export { addTweetBlock } from './addTweetBlock';
 export { addFileBlock } from './addFileBlock';
+export { addStakingBlock } from './addStakingBlock';
 export { addXchainBlock } from './addXchainBlock';
 export * from './utils';

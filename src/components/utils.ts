@@ -201,7 +201,12 @@ export function getExtraFields () {
       group: "Media",
       icon: {name: 'file'},
       hint: "Insert a file",
-    }
+    },
+    Staking: {
+      group: "Widget",
+      icon: { name: 'hand-holding-usd' },
+      hint: "Insert a staking widget"
+    },
   };
   return extraFields;
 }
@@ -339,7 +344,7 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking'];
 export const MediaBlockTypes = ['image', ...CustomBlockTypes];
 export const WidgetMapping: {[key: string]: any} = {
   video: {
@@ -353,6 +358,10 @@ export const WidgetMapping: {[key: string]: any} = {
   swap: {
     name: '@scom/scom-swap',
     localPath: 'scom-swap'
+  },
+  staking: {
+    name: '@scom/scom-staking',
+    localPath: 'scom-staking'
   },
   xchain: {
     name: '@scom/scom-xchain-widget',

@@ -295,6 +295,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        Staking: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -1176,6 +1183,18 @@ declare module "@scom/scom-editor/blocks/addFileBlock.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-editor/blocks/addStakingBlock.ts" />
+declare module "@scom/scom-editor/blocks/addStakingBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addStakingBlock: (blocknote: any) => {
+        StakingBlock: any;
+        StakingSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor/blocks/addXchainBlock.ts" />
 declare module "@scom/scom-editor/blocks/addXchainBlock.ts" {
     import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
@@ -1200,6 +1219,7 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addChartBlock } from "@scom/scom-editor/blocks/addChartBlock.ts";
     export { addTweetBlock } from "@scom/scom-editor/blocks/addTweetBlock.ts";
     export { addFileBlock } from "@scom/scom-editor/blocks/addFileBlock.ts";
+    export { addStakingBlock } from "@scom/scom-editor/blocks/addStakingBlock.ts";
     export { addXchainBlock } from "@scom/scom-editor/blocks/addXchainBlock.ts";
     export * from "@scom/scom-editor/blocks/utils.ts";
 }
