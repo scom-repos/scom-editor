@@ -23,7 +23,6 @@ import {
   addTweetBlock,
   addFileBlock,
   execCustomBLock,
-  getBlockFromExtension,
   addStakingBlock,
   addXchainBlock,
   getBlockFromExtension
