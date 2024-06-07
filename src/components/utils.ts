@@ -177,6 +177,11 @@ export function getExtraFields () {
       icon: {name: 'exchange-alt'},
       hint: "Insert a swap widget",
     },
+    Xchain: {
+      group: "Widget",
+      icon: {name: 'exchange-alt'},
+      hint: "Insert an xchain widget",
+    },
     Table: {
       group: "Basic blocks",
       icon: { name: 'table' },
@@ -334,7 +339,7 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'tweet'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet'];
 export const MediaBlockTypes = ['image', ...CustomBlockTypes];
 export const WidgetMapping: {[key: string]: any} = {
   video: {
@@ -348,6 +353,10 @@ export const WidgetMapping: {[key: string]: any} = {
   swap: {
     name: '@scom/scom-swap',
     localPath: 'scom-swap'
+  },
+  xchain: {
+    name: '@scom/scom-xchain-widget',
+    localPath: 'scom-xchain-widget'
   }
 }
 

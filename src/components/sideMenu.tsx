@@ -162,6 +162,7 @@ export class ScomEditorSideMenu extends Module {
       case 'video':
       case 'imageWidget':
       case 'swap':
+      case 'xchain':
       case 'tweet':
         module = blockEl.querySelector('i-scom-editor-custom-block');
         editAction = module.getActions()[0];
@@ -193,7 +194,11 @@ export class ScomEditorSideMenu extends Module {
           const { tokens, networks, title, logo, category, providers } = newProps;
           const defaultChainId = networks[0].chainId;
           this.updateBlock(block, { tokens, networks, title, logo, category, providers, defaultChainId });
-        }  else if (block.type === 'chart') {
+        } else if (block.type === 'xchain') {
+          const { tokens, networks } = newProps;
+          const defaultChainId = networks[0].chainId;
+          this.updateBlock(block, { tokens, networks, defaultChainId });
+        } else if (block.type === 'chart') {
           const { name, apiEndpoint, dataSource, queryId, title, options, mode } = newProps;
           this.updateBlock(block, { name, apiEndpoint, dataSource, queryId, title, options, mode });
         }
