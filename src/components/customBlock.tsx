@@ -87,6 +87,9 @@ export class ScomEditorCustomBlock extends Module {
       case "scom-swap":
         if (sideMenu && !properties?.providers?.length) sideMenu.openConfig(block, this);
         break;
+      case "scom-xchain-widget":
+      if (sideMenu && !properties?.tokens?.length) sideMenu.openConfig(block, this);
+        break;
       case "scom-staking":
         if (sideMenu && !properties?.chainId) sideMenu.openConfig(block, this);
         break;
