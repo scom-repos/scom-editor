@@ -177,6 +177,11 @@ export function getExtraFields () {
       icon: {name: 'exchange-alt'},
       hint: "Insert a swap widget",
     },
+    Xchain: {
+      group: "Widget",
+      icon: {name: 'exchange-alt'},
+      hint: "Insert an xchain widget",
+    },
     Table: {
       group: "Basic blocks",
       icon: { name: 'table' },
@@ -339,7 +344,7 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'tweet', 'staking'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking'];
 export const MediaBlockTypes = ['image', ...CustomBlockTypes];
 export const WidgetMapping: {[key: string]: any} = {
   video: {
@@ -358,6 +363,10 @@ export const WidgetMapping: {[key: string]: any} = {
     name: '@scom/scom-staking',
     localPath: 'scom-staking'
   },
+  xchain: {
+    name: '@scom/scom-xchain-widget',
+    localPath: 'scom-xchain-widget'
+  }
 }
 
 const WIDGET_URL = 'https://widget.noto.fan';

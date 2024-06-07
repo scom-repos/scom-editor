@@ -119,6 +119,7 @@ declare module "@scom/scom-editor/global/index.ts" {
 declare module "@scom/scom-editor/components/index.css.ts" {
     export const buttonHoverStyle: string;
     export const settingStyle: string;
+    export const formStyle: string;
     export const customModalStyle: string;
     export const modalStyle: string;
 }
@@ -248,6 +249,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             hint: string;
         };
         Swap: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
+        Xchain: {
             group: string;
             icon: {
                 name: string;
@@ -1187,6 +1195,18 @@ declare module "@scom/scom-editor/blocks/addStakingBlock.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-editor/blocks/addXchainBlock.ts" />
+declare module "@scom/scom-editor/blocks/addXchainBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addXchainBlock: (blocknote: any) => {
+        XchainBlock: any;
+        XchainSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFormattingToolbar } from "@scom/scom-editor/blocks/addFormattingToolbar.ts";
@@ -1200,6 +1220,7 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addTweetBlock } from "@scom/scom-editor/blocks/addTweetBlock.ts";
     export { addFileBlock } from "@scom/scom-editor/blocks/addFileBlock.ts";
     export { addStakingBlock } from "@scom/scom-editor/blocks/addStakingBlock.ts";
+    export { addXchainBlock } from "@scom/scom-editor/blocks/addXchainBlock.ts";
     export * from "@scom/scom-editor/blocks/utils.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />

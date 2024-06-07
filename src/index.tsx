@@ -24,7 +24,9 @@ import {
   addFileBlock,
   execCustomBLock,
   getBlockFromExtension,
-  addStakingBlock
+  addStakingBlock,
+  addXchainBlock,
+  getBlockFromExtension
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
 import { getModalContainer, getToolbar, getToolbars, removeContainer } from './components/index';
@@ -108,7 +110,7 @@ export class ScomEditor extends Module {
       this.addCSS(cssPath, 'blocknote');
       this._blocknoteObj = await this.loadPlugin();
       this.renderEditor();
-    } catch {}
+    } catch { }
   }
 
   private async renderEditor(initialContent?: PartialBlock[]) {
@@ -117,7 +119,8 @@ export class ScomEditor extends Module {
     removeContainer();
     const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
     const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
-    const { SwapSlashItem, SwapBlock } =  addSwapBlock(this._blocknoteObj);
+    const { SwapSlashItem, SwapBlock } = addSwapBlock(this._blocknoteObj);
+    const { XchainSlashItem, XchainBlock } = addXchainBlock(this._blocknoteObj);
     const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
     const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
     const { StakingBlock, StakingSlashItem } = addStakingBlock(this._blocknoteObj);
@@ -129,6 +132,7 @@ export class ScomEditor extends Module {
       imageWidget: ImageBlock,
       swap: SwapBlock,
       staking: StakingBlock,
+      xchain: XchainBlock,
       chart: ChartBlock,
       tweet: TweetBlock
     };
@@ -144,6 +148,7 @@ export class ScomEditor extends Module {
         FileSlashItem,
         SwapSlashItem,
         StakingSlashItem,
+        XchainSlashItem,
         ChartSlashItem,
         TweetSlashItem
       ],
