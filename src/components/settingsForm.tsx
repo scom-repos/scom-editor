@@ -11,7 +11,7 @@ import {
   IComboItem
 } from '@ijstech/components';
 import { Block } from '../global/index';
-import { settingStyle } from './index.css';
+import { formStyle, settingStyle } from './index.css';
 import { getChartTypeOptions } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
@@ -174,7 +174,7 @@ export class ScomEditorSettingsForm extends Module {
   render() {
     return (
       <i-panel padding={{top: '1rem', bottom: '1rem', left: '1rem', right: '1rem'}}>
-        <i-form id="actionForm" visible={false}></i-form>
+        <i-form id="actionForm" visible={false} class={formStyle}></i-form>
         <i-vstack
           id="pnlForm"
           gap={'0.625rem'}

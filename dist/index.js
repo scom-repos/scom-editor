@@ -62,7 +62,7 @@ define("@scom/scom-editor/global/index.ts", ["require", "exports", "@scom/scom-e
 define("@scom/scom-editor/components/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.modalStyle = exports.customModalStyle = exports.settingStyle = exports.buttonHoverStyle = void 0;
+    exports.modalStyle = exports.customModalStyle = exports.formStyle = exports.settingStyle = exports.buttonHoverStyle = void 0;
     const Theme = components_1.Styles.Theme.ThemeVars;
     exports.buttonHoverStyle = components_1.Styles.style({
         pointerEvents: 'auto',
@@ -92,7 +92,11 @@ define("@scom/scom-editor/components/index.css.ts", ["require", "exports", "@ijs
                         outline: '1px solid transparent'
                     },
                 }
-            },
+            }
+        }
+    });
+    exports.formStyle = components_1.Styles.style({
+        $nest: {
             'i-scom-token-input > i-hstack > i-vstack': {
                 margin: '0 !important'
             }
@@ -1261,7 +1265,7 @@ define("@scom/scom-editor/components/settingsForm.tsx", ["require", "exports", "
         }
         render() {
             return (this.$render("i-panel", { padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' } },
-                this.$render("i-form", { id: "actionForm", visible: false }),
+                this.$render("i-form", { id: "actionForm", visible: false, class: index_css_3.formStyle }),
                 this.$render("i-vstack", { id: "pnlForm", gap: '0.625rem', width: '100%', visible: false, class: index_css_3.settingStyle })));
         }
     };
