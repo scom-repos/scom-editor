@@ -119,6 +119,7 @@ declare module "@scom/scom-editor/global/index.ts" {
 declare module "@scom/scom-editor/components/index.css.ts" {
     export const buttonHoverStyle: string;
     export const settingStyle: string;
+    export const formStyle: string;
     export const customModalStyle: string;
     export const modalStyle: string;
 }
