@@ -302,6 +302,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        Voting: {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -1207,6 +1214,18 @@ declare module "@scom/scom-editor/blocks/addXchainBlock.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-editor/blocks/addVotingBlock.ts" />
+declare module "@scom/scom-editor/blocks/addVotingBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addVotingBlock: (blocknote: any) => {
+        VotingBlock: any;
+        VotingSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFormattingToolbar } from "@scom/scom-editor/blocks/addFormattingToolbar.ts";
@@ -1221,6 +1240,7 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFileBlock } from "@scom/scom-editor/blocks/addFileBlock.ts";
     export { addStakingBlock } from "@scom/scom-editor/blocks/addStakingBlock.ts";
     export { addXchainBlock } from "@scom/scom-editor/blocks/addXchainBlock.ts";
+    export { addVotingBlock } from "@scom/scom-editor/blocks/addVotingBlock.ts";
     export * from "@scom/scom-editor/blocks/utils.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
