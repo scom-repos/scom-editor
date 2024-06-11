@@ -49,7 +49,6 @@ export const addVotingBlock = (blocknote: any) => {
                     },
                     {
                         tag: "a",
-
                         getAttrs: (element: string | HTMLElement) => {
                             if (typeof element === "string") {
                                 return false;
