@@ -165,6 +165,7 @@ export class ScomEditorSideMenu extends Module {
       case 'xchain':
       case 'tweet':
       case 'staking':
+      case 'voting':
         module = blockEl.querySelector('i-scom-editor-custom-block');
         editAction = module.getActions()[0];
         break;
@@ -205,6 +206,9 @@ export class ScomEditorSideMenu extends Module {
         } else if (block.type === 'staking') {
           const { chainId, name, desc, logo, getTokenURL, showContractLink, staking } = newProps;
           this.updateBlock(block, { chainId, name, desc, logo, getTokenURL, showContractLink, staking });
+        } else if (block.type === 'voting') {
+          const { title, backgroundImage, buttons, fontColor } = newProps;
+          this.updateBlock(block, { title, backgroundImage, buttons, fontColor });
         }
         this.actionForm.closeModal();
       }

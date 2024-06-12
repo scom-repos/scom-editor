@@ -207,6 +207,11 @@ export function getExtraFields () {
       icon: { name: 'hand-holding-usd' },
       hint: "Insert a staking widget"
     },
+    Voting: {
+      group: "Widget",
+      icon: { name: 'vote-yea' },
+      hint: "Insert a voting widget"
+    }
   };
   return extraFields;
 }
@@ -344,7 +349,7 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting'];
 export const MediaBlockTypes = ['image', ...CustomBlockTypes];
 export const WidgetMapping: {[key: string]: any} = {
   video: {
@@ -366,6 +371,10 @@ export const WidgetMapping: {[key: string]: any} = {
   xchain: {
     name: '@scom/scom-xchain-widget',
     localPath: 'scom-xchain-widget'
+  },
+  voting: {
+    name: '@scom/scom-voting',
+    localPath: 'scom-voting'
   }
 }
 

@@ -49,6 +49,7 @@
         "@scom/scom-wallet-modal": "^0.1.1",
         "@scom/scom-twitter-post": "^0.1.1",
         "@scom/scom-xchain-widget": "git@github.com:scom-repos/scom-xchain-widget.git",
+        "@scom/scom-voting": "git@github.com:scom-repos/scom-voting.git",
         "@scom/scom-editor": "file:./ref"
     },
     "scripts": {
