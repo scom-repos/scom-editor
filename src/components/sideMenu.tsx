@@ -207,8 +207,8 @@ export class ScomEditorSideMenu extends Module {
           const { chainId, name, desc, logo, getTokenURL, showContractLink, staking } = newProps;
           this.updateBlock(block, { chainId, name, desc, logo, getTokenURL, showContractLink, staking });
         } else if (block.type === 'voting') {
-          const { chainId, votingAddress } = newProps;
-          this.updateBlock(block, { chainId, votingAddress, defaultChainId: chainId });
+          const { title, backgroundImage, buttons } = newProps;
+          this.updateBlock(block, { title, backgroundImage, buttons });
         }
         this.actionForm.closeModal();
       }

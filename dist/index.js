@@ -481,8 +481,8 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
             localPath: 'scom-xchain-widget'
         },
         voting: {
-            name: '@scom/scom-governance-voting',
-            localPath: 'scom-governance-voting'
+            name: '@scom/scom-voting',
+            localPath: 'scom-voting'
         }
     };
     const WIDGET_URL = 'https://widget.noto.fan';
@@ -1455,8 +1455,8 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                         this.updateBlock(block, { chainId, name, desc, logo, getTokenURL, showContractLink, staking });
                     }
                     else if (block.type === 'voting') {
-                        const { chainId, votingAddress } = newProps;
-                        this.updateBlock(block, { chainId, votingAddress, defaultChainId: chainId });
+                        const { title, backgroundImage, buttons } = newProps;
+                        this.updateBlock(block, { title, backgroundImage, buttons });
                     }
                     this.actionForm.closeModal();
                 }
@@ -2457,8 +2457,8 @@ define("@scom/scom-editor/components/customBlock.tsx", ["require", "exports", "@
                     if (sideMenu && !properties?.chainId)
                         sideMenu.openConfig(block, this);
                     break;
-                case "scom-governance-voting":
-                    if (sideMenu && !properties?.chainId && !properties?.votingAddress)
+                case "scom-voting":
+                    if (sideMenu && !properties?.title)
                         sideMenu.openConfig(block, this);
                     break;
             }
@@ -3874,12 +3874,12 @@ define("@scom/scom-editor/blocks/addVotingBlock.ts", ["require", "exports", "@ij
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addVotingBlock = void 0;
-    const votingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-governance-voting\/\S+/g;
+    const votingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-voting\/\S+/g;
     function getData(href) {
         const widgetData = (0, utils_19.parseUrl)(href);
         if (widgetData) {
             const { module, properties } = widgetData;
-            if (module.localPath === 'scom-governance-voting')
+            if (module.localPath === 'scom-voting')
                 return { ...properties };
         }
         return false;
@@ -3889,10 +3889,9 @@ define("@scom/scom-editor/blocks/addVotingBlock.ts", ["require", "exports", "@ij
             type: 'voting',
             propSchema: {
                 ...blocknote.defaultProps,
-                chainId: { default: 0 },
-                votingAddress: { default: '' },
-                wallets: { default: [] },
-                networks: { default: [] },
+                title: { default: '' },
+                backgroundImage: { default: '' },
+                buttons: { default: [] },
             },
             content: 'none'
         }, {
@@ -3900,10 +3899,11 @@ define("@scom/scom-editor/blocks/addVotingBlock.ts", ["require", "exports", "@ij
                 const wrapper = new components_29.Panel();
                 const props = JSON.parse(JSON.stringify(block.props));
                 const data = {
-                    module: 'scom-governance-voting',
+                    module: 'scom-voting',
                     properties: { ...props },
                     block: { ...block }
                 };
+                wrapper.maxWidth = 780;
                 const customElm = new index_16.ScomEditorCustomBlock(wrapper, { data });
                 wrapper.appendChild(customElm);
                 return {
@@ -3986,20 +3986,19 @@ define("@scom/scom-editor/blocks/addVotingBlock.ts", ["require", "exports", "@ij
                 const block = {
                     type: "voting",
                     props: {
-                        "chainId": 97,
-                        "defaultChainId": 97,
-                        "votingAddress": "0x6C5EB51b95497A0B8801fEACFEe8634C925A42F0",
-                        "networks": [
+                        title: 'Do you schedule casts?',
+                        buttons: [
                             {
-                                "chainId": 43113
+                                value: 'yes',
+                                label: 'Yes'
                             },
                             {
-                                "chainId": 97
-                            }
-                        ],
-                        "wallets": [
+                                value: 'no',
+                                label: 'No'
+                            },
                             {
-                                "name": "metamask"
+                                value: 'sometimes',
+                                label: 'Sometimes'
                             }
                         ]
                     }

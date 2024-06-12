@@ -3,12 +3,12 @@ import { Block, BlockNoteEditor } from "../global/index";
 import { getWidgetEmbedUrl, ScomEditorCustomBlock } from "../components/index";
 import { execCustomBLock, parseUrl } from "./utils";
 
-const votingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-governance-voting\/\S+/g;
+const votingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-voting\/\S+/g;
 function getData(href: string) {
     const widgetData = parseUrl(href);
     if (widgetData) {
         const { module, properties } = widgetData;
-        if (module.localPath === 'scom-governance-voting') return { ...properties };
+        if (module.localPath === 'scom-voting') return { ...properties };
     }
     return false;
 }
@@ -19,10 +19,9 @@ export const addVotingBlock = (blocknote: any) => {
             type: 'voting',
             propSchema: {
                 ...blocknote.defaultProps,
-                chainId: { default: 0 },
-                votingAddress: { default: '' },
-                wallets: { default: [] },
-                networks: { default: [] },
+                title: { default: '' },
+                backgroundImage: { default: '' },
+                buttons: { default: [] },
             },
             content: 'none'
         },
@@ -31,10 +30,11 @@ export const addVotingBlock = (blocknote: any) => {
                 const wrapper = new Panel();
                 const props = JSON.parse(JSON.stringify(block.props));
                 const data = {
-                    module: 'scom-governance-voting',
+                    module: 'scom-voting',
                     properties: { ...props },
                     block: { ...block }
                 }
+                wrapper.maxWidth = 780;
                 const customElm = new ScomEditorCustomBlock(wrapper, { data });
                 wrapper.appendChild(customElm);
                 return {
@@ -116,20 +116,19 @@ export const addVotingBlock = (blocknote: any) => {
             const block: any = {
                 type: "voting",
                 props: {
-                    "chainId": 97,
-                    "defaultChainId": 97,
-                    "votingAddress": "0x6C5EB51b95497A0B8801fEACFEe8634C925A42F0",
-                    "networks": [
+                    title: 'Do you schedule casts?',
+                    buttons: [
                         {
-                            "chainId": 43113
+                            value: 'yes',
+                            label: 'Yes'
                         },
                         {
-                            "chainId": 97
-                        }
-                    ],
-                    "wallets": [
+                            value: 'no',
+                            label: 'No'
+                        },
                         {
-                            "name": "metamask"
+                            value: 'sometimes',
+                            label: 'Sometimes'
                         }
                     ]
                 }

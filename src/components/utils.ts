@@ -373,8 +373,8 @@ export const WidgetMapping: {[key: string]: any} = {
     localPath: 'scom-xchain-widget'
   },
   voting: {
-    name: '@scom/scom-governance-voting',
-    localPath: 'scom-governance-voting'
+    name: '@scom/scom-voting',
+    localPath: 'scom-voting'
   }
 }
 
