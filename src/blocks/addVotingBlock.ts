@@ -22,6 +22,7 @@ export const addVotingBlock = (blocknote: any) => {
                 title: { default: '' },
                 backgroundImage: { default: '' },
                 buttons: { default: [] },
+                fontColor: { default: '' }
             },
             content: 'none'
         },

@@ -1455,8 +1455,8 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                         this.updateBlock(block, { chainId, name, desc, logo, getTokenURL, showContractLink, staking });
                     }
                     else if (block.type === 'voting') {
-                        const { title, backgroundImage, buttons } = newProps;
-                        this.updateBlock(block, { title, backgroundImage, buttons });
+                        const { title, backgroundImage, buttons, fontColor } = newProps;
+                        this.updateBlock(block, { title, backgroundImage, buttons, fontColor });
                     }
                     this.actionForm.closeModal();
                 }
@@ -3257,7 +3257,7 @@ define("@scom/scom-editor/blocks/addChartBlock.ts", ["require", "exports", "@ijs
         const widgetData = (0, utils_14.parseUrl)(href);
         if (widgetData) {
             const { module, properties } = widgetData;
-            if (module.localPath !== 'scom-swap')
+            if (index_11.ChartTypes.includes(module.localPath))
                 return { ...properties };
         }
         return false;
@@ -3892,6 +3892,7 @@ define("@scom/scom-editor/blocks/addVotingBlock.ts", ["require", "exports", "@ij
                 title: { default: '' },
                 backgroundImage: { default: '' },
                 buttons: { default: [] },
+                fontColor: { default: '' }
             },
             content: 'none'
         }, {
