@@ -211,6 +211,11 @@ export function getExtraFields () {
       group: "Widget",
       icon: { name: 'vote-yea' },
       hint: "Insert a voting widget"
+    },
+    "NFT Minter": {
+      group: "Widget",
+      icon: { name: 'gavel' },
+      hint: "Insert a NFT minter widget"
     }
   };
   return extraFields;
@@ -349,7 +354,7 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting', 'nftMinter'];
 export const MediaBlockTypes = ['image', ...CustomBlockTypes];
 export const WidgetMapping: {[key: string]: any} = {
   video: {
@@ -375,6 +380,10 @@ export const WidgetMapping: {[key: string]: any} = {
   voting: {
     name: '@scom/scom-voting',
     localPath: 'scom-voting'
+  },
+  nftMinter: {
+    name: '@scom/scom-nft-minter',
+    localPath: 'scom-nft-minter'
   }
 }
 

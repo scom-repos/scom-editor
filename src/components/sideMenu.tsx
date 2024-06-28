@@ -166,6 +166,7 @@ export class ScomEditorSideMenu extends Module {
       case 'tweet':
       case 'staking':
       case 'voting':
+      case 'nftMinter':
         module = blockEl.querySelector('i-scom-editor-custom-block');
         editAction = module.getActions()[0];
         break;
@@ -209,6 +210,9 @@ export class ScomEditorSideMenu extends Module {
         } else if (block.type === 'voting') {
           const { title, backgroundImage, buttons, fontColor } = newProps;
           this.updateBlock(block, { title, backgroundImage, buttons, fontColor });
+        } else if (block.type === 'nftMinter') {
+          const { title, description, logoUrl, productId, link } = newProps;
+          this.updateBlock(block, { title, description, logoUrl, productId, link });
         }
         this.actionForm.closeModal();
       }

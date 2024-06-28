@@ -309,6 +309,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        "NFT Minter": {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -1226,6 +1233,18 @@ declare module "@scom/scom-editor/blocks/addVotingBlock.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-editor/blocks/addNftMinterBlock.ts" />
+declare module "@scom/scom-editor/blocks/addNftMinterBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addNftMinterBlock: (blocknote: any) => {
+        NftMinterBlock: any;
+        NftMinterSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFormattingToolbar } from "@scom/scom-editor/blocks/addFormattingToolbar.ts";
@@ -1241,6 +1260,7 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addStakingBlock } from "@scom/scom-editor/blocks/addStakingBlock.ts";
     export { addXchainBlock } from "@scom/scom-editor/blocks/addXchainBlock.ts";
     export { addVotingBlock } from "@scom/scom-editor/blocks/addVotingBlock.ts";
+    export { addNftMinterBlock } from "@scom/scom-editor/blocks/addNftMinterBlock.ts";
     export * from "@scom/scom-editor/blocks/utils.ts";
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />

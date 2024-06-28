@@ -26,7 +26,8 @@ import {
   addStakingBlock,
   addXchainBlock,
   getBlockFromExtension,
-  addVotingBlock
+  addVotingBlock,
+  addNftMinterBlock,
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
 import { getModalContainer, getToolbar, getToolbars, removeContainer } from './components/index';
@@ -125,6 +126,7 @@ export class ScomEditor extends Module {
     const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
     const { StakingBlock, StakingSlashItem } = addStakingBlock(this._blocknoteObj);
     const { VotingBlock, VotingSlashItem } = addVotingBlock(this._blocknoteObj);
+    const { NftMinterBlock, NftMinterSlashItem } = addNftMinterBlock(this._blocknoteObj);
     const { FileSlashItem } = addFileBlock();
 
     const blockSpecs = {
@@ -137,6 +139,7 @@ export class ScomEditor extends Module {
       chart: ChartBlock,
       tweet: TweetBlock,
       voting: VotingBlock,
+      nftMinter: NftMinterBlock,
     };
 
     const editorConfig: BlockNoteEditorOptions = {
@@ -153,7 +156,8 @@ export class ScomEditor extends Module {
         XchainSlashItem,
         ChartSlashItem,
         TweetSlashItem,
-        VotingSlashItem
+        VotingSlashItem,
+        NftMinterSlashItem,
       ],
       onEditorContentChange: (editor: BlockNoteEditor) => {
         if (this.timer) clearTimeout(this.timer);
@@ -192,7 +196,7 @@ export class ScomEditor extends Module {
     const blocks = editor.topLevelBlocks;
     blocks.pop();
     value = await editor.blocksToMarkdownLossy(blocks);
-    this.value = value.replace(/\[(swap|xchain|staking|chart|voting)\]\((.*)\)/g, "$2");
+    this.value = value.replace(/\[(swap|xchain|staking|chart|voting|nftMinter)\]\((.*)\)/g, "$2");
     console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
     const sideMenu = getToolbar('sideMenu');

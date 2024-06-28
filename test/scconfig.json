@@ -33,7 +33,9 @@
     "@scom/scom-xchain-widget",
     "@scom/scom-voting",
     "@scom/scom-twitter-post",
-    "@scom/scom-storage"
+    "@scom/scom-storage",
+    "@scom/scom-nft-minter",
+    "@scom/scom-product-contract"
   ],
   "menus": [
     {
