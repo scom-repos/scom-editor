@@ -28,6 +28,8 @@
         "@scom/scom-video": "latest",
         "@scom/scom-line-chart": "^0.1.10",
         "@scom/scom-mixed-chart": "^0.1.10",
+        "@scom/scom-nft-minter": "git@github.com:scom-repos/scom-nft-minter.git",
+        "@scom/scom-product-contract": "^0.1.2",
         "@scom/scom-pie-chart": "^0.1.12",
         "@scom/scom-scatter-chart": "^0.1.11",
         "@scom/scom-staking": "^0.1.16",

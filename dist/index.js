@@ -329,6 +329,11 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
                 group: "Widget",
                 icon: { name: 'vote-yea' },
                 hint: "Insert a voting widget"
+            },
+            "NFT Minter": {
+                group: "Widget",
+                icon: { name: 'gavel' },
+                hint: "Insert a NFT minter widget"
             }
         };
         return extraFields;
@@ -457,7 +462,7 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
         return placement;
     };
     exports.getPlacement = getPlacement;
-    exports.CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting'];
+    exports.CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting', 'nftMinter'];
     exports.MediaBlockTypes = ['image', ...exports.CustomBlockTypes];
     exports.WidgetMapping = {
         video: {
@@ -483,6 +488,10 @@ define("@scom/scom-editor/components/utils.ts", ["require", "exports", "@ijstech
         voting: {
             name: '@scom/scom-voting',
             localPath: 'scom-voting'
+        },
+        nftMinter: {
+            name: '@scom/scom-nft-minter',
+            localPath: 'scom-nft-minter'
         }
     };
     const WIDGET_URL = 'https://widget.noto.fan';
@@ -1408,6 +1417,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                 case 'tweet':
                 case 'staking':
                 case 'voting':
+                case 'nftMinter':
                     module = blockEl.querySelector('i-scom-editor-custom-block');
                     editAction = module.getActions()[0];
                     break;
@@ -1457,6 +1467,10 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                     else if (block.type === 'voting') {
                         const { title, backgroundImage, buttons, fontColor } = newProps;
                         this.updateBlock(block, { title, backgroundImage, buttons, fontColor });
+                    }
+                    else if (block.type === 'nftMinter') {
+                        const { title, description, logoUrl, productId, link } = newProps;
+                        this.updateBlock(block, { title, description, logoUrl, productId, link });
                     }
                     this.actionForm.closeModal();
                 }
@@ -2455,6 +2469,10 @@ define("@scom/scom-editor/components/customBlock.tsx", ["require", "exports", "@
                     break;
                 case "scom-staking":
                     if (sideMenu && !properties?.chainId)
+                        sideMenu.openConfig(block, this);
+                    break;
+                case "scom-nft-minter":
+                    if (sideMenu && !properties?.productType)
                         sideMenu.openConfig(block, this);
                     break;
                 case "scom-voting":
@@ -4015,10 +4033,162 @@ define("@scom/scom-editor/blocks/addVotingBlock.ts", ["require", "exports", "@ij
     };
     exports.addVotingBlock = addVotingBlock;
 });
-define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-editor/blocks/addFormattingToolbar.ts", "@scom/scom-editor/blocks/addSideMenu.ts", "@scom/scom-editor/blocks/addSlashMenu.ts", "@scom/scom-editor/blocks/addHyperlinkToolbar.ts", "@scom/scom-editor/blocks/addVideoBlock.ts", "@scom/scom-editor/blocks/addImageBlock.ts", "@scom/scom-editor/blocks/addTableToolbar.ts", "@scom/scom-editor/blocks/addChartBlock.ts", "@scom/scom-editor/blocks/addTweetBlock.ts", "@scom/scom-editor/blocks/addFileBlock.ts", "@scom/scom-editor/blocks/addStakingBlock.ts", "@scom/scom-editor/blocks/addXchainBlock.ts", "@scom/scom-editor/blocks/addVotingBlock.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, addFormattingToolbar_1, addSideMenu_1, addSlashMenu_1, addHyperlinkToolbar_1, addVideoBlock_1, addImageBlock_1, addTableToolbar_1, addChartBlock_1, addTweetBlock_1, addFileBlock_1, addStakingBlock_1, addXchainBlock_1, addVotingBlock_1, utils_20) {
+define("@scom/scom-editor/blocks/addNftMinterBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_30, index_17, utils_20) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addVotingBlock = exports.addXchainBlock = exports.addStakingBlock = exports.addFileBlock = exports.addTweetBlock = exports.addChartBlock = exports.addTableToolbar = exports.addImageBlock = exports.addVideoBlock = exports.addHyperlinkToolbar = exports.addSlashMenu = exports.addSideMenu = exports.addFormattingToolbar = void 0;
+    exports.addNftMinterBlock = void 0;
+    const nftMinterRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-nft-minter\/\S+/g;
+    function getData(href) {
+        const widgetData = (0, utils_20.parseUrl)(href);
+        if (widgetData) {
+            const { module, properties } = widgetData;
+            if (module.localPath === 'scom-nft-minter')
+                return { ...properties };
+        }
+        return false;
+    }
+    const addNftMinterBlock = (blocknote) => {
+        const NftMinterBlock = blocknote.createBlockSpec({
+            type: "nftMinter",
+            propSchema: {
+                ...blocknote.defaultProps,
+                name: { default: '' },
+                title: { default: '' },
+                productType: { default: 'Buy' },
+                productId: { default: 0 },
+                donateTo: { default: '' },
+                logoUrl: { default: '' },
+                description: { default: '' },
+                link: { default: '' },
+                commissions: { default: [] },
+                chainSpecificProperties: { default: {} },
+                defaultChainId: { default: 0 },
+                wallets: { default: [] },
+                networks: { default: [] },
+            },
+            content: "none"
+        }, {
+            render: (block) => {
+                const wrapper = new components_30.Panel();
+                const props = JSON.parse(JSON.stringify(block.props));
+                const data = {
+                    module: 'scom-nft-minter',
+                    properties: { ...props },
+                    block: { ...block }
+                };
+                const customElm = new index_17.ScomEditorCustomBlock(wrapper, { data });
+                wrapper.appendChild(customElm);
+                return {
+                    dom: wrapper
+                };
+            },
+            parseFn: () => {
+                return [
+                    {
+                        tag: "div[data-content-type=nftMinter]",
+                        node: "nftMinter"
+                    },
+                    {
+                        tag: "a",
+                        getAttrs: (element) => {
+                            if (typeof element === "string") {
+                                return false;
+                            }
+                            const href = element.getAttribute('href');
+                            if (href)
+                                return getData(href);
+                            return false;
+                        },
+                        priority: 408,
+                        node: "nftMinter"
+                    },
+                    {
+                        tag: "p",
+                        getAttrs: (element) => {
+                            if (typeof element === "string") {
+                                return false;
+                            }
+                            const child = element.firstChild;
+                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
+                                const href = child.getAttribute('href');
+                                return getData(href);
+                            }
+                            return false;
+                        },
+                        priority: 409,
+                        node: "nftMinter"
+                    }
+                ];
+            },
+            toExternalHTML: (block, editor) => {
+                const link = document.createElement("a");
+                const url = (0, index_17.getWidgetEmbedUrl)({
+                    type: "nftMinter",
+                    props: { ...(block.props || {}) }
+                });
+                link.setAttribute("href", url);
+                link.textContent = "nftMinter";
+                const wrapper = document.createElement("p");
+                wrapper.appendChild(link);
+                return { dom: wrapper };
+            },
+            pasteRules: [
+                {
+                    find: nftMinterRegex,
+                    handler(props) {
+                        const { state, chain, range } = props;
+                        const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+                        const widgetData = (0, utils_20.parseUrl)(textContent);
+                        if (!widgetData)
+                            return null;
+                        const { properties } = widgetData;
+                        chain().BNUpdateBlock(state.selection.from, {
+                            type: 'nftMinter',
+                            props: {
+                                ...properties
+                            },
+                        }).setTextSelection(range.from + 1);
+                    }
+                }
+            ]
+        });
+        const NftMinterSlashItem = {
+            name: "NFT Minter",
+            execute: (editor) => {
+                const block = {
+                    type: "nftMinter",
+                    props: {
+                        networks: [
+                            {
+                                chainId: 43113
+                            },
+                            {
+                                chainId: 97
+                            }
+                        ],
+                        wallets: [
+                            {
+                                name: "metamask"
+                            }
+                        ],
+                        defaultChainId: 43113
+                    }
+                };
+                (0, utils_20.execCustomBLock)(editor, block);
+            },
+            aliases: ["nftMinter", "widget"]
+        };
+        return {
+            NftMinterBlock,
+            NftMinterSlashItem
+        };
+    };
+    exports.addNftMinterBlock = addNftMinterBlock;
+});
+define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-editor/blocks/addFormattingToolbar.ts", "@scom/scom-editor/blocks/addSideMenu.ts", "@scom/scom-editor/blocks/addSlashMenu.ts", "@scom/scom-editor/blocks/addHyperlinkToolbar.ts", "@scom/scom-editor/blocks/addVideoBlock.ts", "@scom/scom-editor/blocks/addImageBlock.ts", "@scom/scom-editor/blocks/addTableToolbar.ts", "@scom/scom-editor/blocks/addChartBlock.ts", "@scom/scom-editor/blocks/addTweetBlock.ts", "@scom/scom-editor/blocks/addFileBlock.ts", "@scom/scom-editor/blocks/addStakingBlock.ts", "@scom/scom-editor/blocks/addXchainBlock.ts", "@scom/scom-editor/blocks/addVotingBlock.ts", "@scom/scom-editor/blocks/addNftMinterBlock.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, addFormattingToolbar_1, addSideMenu_1, addSlashMenu_1, addHyperlinkToolbar_1, addVideoBlock_1, addImageBlock_1, addTableToolbar_1, addChartBlock_1, addTweetBlock_1, addFileBlock_1, addStakingBlock_1, addXchainBlock_1, addVotingBlock_1, addNftMinterBlock_1, utils_21) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.addNftMinterBlock = exports.addVotingBlock = exports.addXchainBlock = exports.addStakingBlock = exports.addFileBlock = exports.addTweetBlock = exports.addChartBlock = exports.addTableToolbar = exports.addImageBlock = exports.addVideoBlock = exports.addHyperlinkToolbar = exports.addSlashMenu = exports.addSideMenu = exports.addFormattingToolbar = void 0;
     Object.defineProperty(exports, "addFormattingToolbar", { enumerable: true, get: function () { return addFormattingToolbar_1.addFormattingToolbar; } });
     Object.defineProperty(exports, "addSideMenu", { enumerable: true, get: function () { return addSideMenu_1.addSideMenu; } });
     Object.defineProperty(exports, "addSlashMenu", { enumerable: true, get: function () { return addSlashMenu_1.addSlashMenu; } });
@@ -4032,15 +4202,16 @@ define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-e
     Object.defineProperty(exports, "addStakingBlock", { enumerable: true, get: function () { return addStakingBlock_1.addStakingBlock; } });
     Object.defineProperty(exports, "addXchainBlock", { enumerable: true, get: function () { return addXchainBlock_1.addXchainBlock; } });
     Object.defineProperty(exports, "addVotingBlock", { enumerable: true, get: function () { return addVotingBlock_1.addVotingBlock; } });
-    __exportStar(utils_20, exports);
+    Object.defineProperty(exports, "addNftMinterBlock", { enumerable: true, get: function () { return addNftMinterBlock_1.addNftMinterBlock; } });
+    __exportStar(utils_21, exports);
 });
-define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_30, index_17, utils_21) {
+define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/utils.ts"], function (require, exports, components_31, index_18, utils_22) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addSwapBlock = void 0;
     const swapRegex = /https:\/\/ipfs\.scom\.dev\/ipfs\/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4\?data\=.*/g;
     function getData(href) {
-        const widgetData = (0, utils_21.parseUrl)(href);
+        const widgetData = (0, utils_22.parseUrl)(href);
         if (widgetData) {
             const { module, properties } = widgetData;
             if (module.localPath === 'scom-swap')
@@ -4072,14 +4243,14 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
             content: "none"
         }, {
             render: (block) => {
-                const wrapper = new components_30.Panel();
+                const wrapper = new components_31.Panel();
                 const props = JSON.parse(JSON.stringify(block.props));
                 const data = {
                     module: 'scom-swap',
                     properties: { ...props },
                     block: { ...block }
                 };
-                const customElm = new index_17.ScomEditorCustomBlock(wrapper, { data });
+                const customElm = new index_18.ScomEditorCustomBlock(wrapper, { data });
                 wrapper.appendChild(customElm);
                 return {
                     dom: wrapper
@@ -4125,7 +4296,7 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
             },
             toExternalHTML: (block, editor) => {
                 const link = document.createElement("a");
-                const url = (0, index_17.getWidgetEmbedUrl)({
+                const url = (0, index_18.getWidgetEmbedUrl)({
                     type: 'swap',
                     props: { ...(block.props || {}) }
                 });
@@ -4141,7 +4312,7 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                     handler(props) {
                         const { state, chain, range } = props;
                         const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
-                        const widgetData = (0, utils_21.parseUrl)(textContent);
+                        const widgetData = (0, utils_22.parseUrl)(textContent);
                         if (!widgetData)
                             return null;
                         const { module, properties } = widgetData;
@@ -4209,7 +4380,7 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
                         "showFooter": true
                     }
                 };
-                (0, utils_21.execCustomBLock)(editor, block);
+                (0, utils_22.execCustomBLock)(editor, block);
             },
             aliases: ["swap", "widget"]
         };
@@ -4220,12 +4391,12 @@ define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijst
     };
     exports.addSwapBlock = addSwapBlock;
 });
-define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_31) {
+define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_32) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.customEditorStyle = void 0;
-    const Theme = components_31.Styles.Theme.ThemeVars;
-    exports.customEditorStyle = components_31.Styles.style({
+    const Theme = components_32.Styles.Theme.ThemeVars;
+    exports.customEditorStyle = components_32.Styles.style({
         $nest: {
             '.tableWrapper': {
                 maxWidth: '100%',
@@ -4292,17 +4463,17 @@ define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/compon
         }
     });
 });
-define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts"], function (require, exports, components_32, index_18, index_19, addSwapBlock_1, index_css_8) {
+define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/blocks/addSwapBlock.ts", "@scom/scom-editor/index.css.ts"], function (require, exports, components_33, index_19, index_20, addSwapBlock_1, index_css_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditor = void 0;
-    const Theme = components_32.Styles.Theme.ThemeVars;
-    const path = components_32.application.currentModuleDir;
+    const Theme = components_33.Styles.Theme.ThemeVars;
+    const path = components_33.application.currentModuleDir;
     const libPlugins = [
         'blocknote'
     ];
     const cssPath = `${path}/lib/@blocknote/style.css`;
-    let ScomEditor = class ScomEditor extends components_32.Module {
+    let ScomEditor = class ScomEditor extends components_33.Module {
         constructor(parent, options) {
             super(parent, options);
             this.tag = {};
@@ -4341,16 +4512,17 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._blocknoteObj)
                 return;
             this.pnlEditor.clearInnerHTML();
-            (0, index_19.removeContainer)();
-            const { VideoSlashItem, VideoBlock } = (0, index_18.addVideoBlock)(this._blocknoteObj);
-            const { ImageSlashItem, ImageBlock } = (0, index_18.addImageBlock)(this._blocknoteObj);
+            (0, index_20.removeContainer)();
+            const { VideoSlashItem, VideoBlock } = (0, index_19.addVideoBlock)(this._blocknoteObj);
+            const { ImageSlashItem, ImageBlock } = (0, index_19.addImageBlock)(this._blocknoteObj);
             const { SwapSlashItem, SwapBlock } = (0, addSwapBlock_1.addSwapBlock)(this._blocknoteObj);
-            const { XchainSlashItem, XchainBlock } = (0, index_18.addXchainBlock)(this._blocknoteObj);
-            const { ChartSlashItem, ChartBlock } = (0, index_18.addChartBlock)(this._blocknoteObj);
-            const { TweetBlock, TweetSlashItem } = (0, index_18.addTweetBlock)(this._blocknoteObj);
-            const { StakingBlock, StakingSlashItem } = (0, index_18.addStakingBlock)(this._blocknoteObj);
-            const { VotingBlock, VotingSlashItem } = (0, index_18.addVotingBlock)(this._blocknoteObj);
-            const { FileSlashItem } = (0, index_18.addFileBlock)();
+            const { XchainSlashItem, XchainBlock } = (0, index_19.addXchainBlock)(this._blocknoteObj);
+            const { ChartSlashItem, ChartBlock } = (0, index_19.addChartBlock)(this._blocknoteObj);
+            const { TweetBlock, TweetSlashItem } = (0, index_19.addTweetBlock)(this._blocknoteObj);
+            const { StakingBlock, StakingSlashItem } = (0, index_19.addStakingBlock)(this._blocknoteObj);
+            const { VotingBlock, VotingSlashItem } = (0, index_19.addVotingBlock)(this._blocknoteObj);
+            const { NftMinterBlock, NftMinterSlashItem } = (0, index_19.addNftMinterBlock)(this._blocknoteObj);
+            const { FileSlashItem } = (0, index_19.addFileBlock)();
             const blockSpecs = {
                 ...this._blocknoteObj.defaultBlockSpecs,
                 video: VideoBlock,
@@ -4361,6 +4533,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 chart: ChartBlock,
                 tweet: TweetBlock,
                 voting: VotingBlock,
+                nftMinter: NftMinterBlock,
             };
             const editorConfig = {
                 parentElement: this.pnlEditor,
@@ -4376,7 +4549,8 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                     XchainSlashItem,
                     ChartSlashItem,
                     TweetSlashItem,
-                    VotingSlashItem
+                    VotingSlashItem,
+                    NftMinterSlashItem,
                 ],
                 onEditorContentChange: (editor) => {
                     if (this.timer)
@@ -4394,18 +4568,18 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (initialContent)
                 editorConfig.initialContent = initialContent;
             this._editor = new this._blocknoteObj.BlockNoteEditor(editorConfig);
-            (0, index_18.addSideMenu)(this._editor);
-            (0, index_18.addFormattingToolbar)(this._editor);
-            (0, index_18.addSlashMenu)(this._editor);
-            (0, index_18.addHyperlinkToolbar)(this._editor);
-            (0, index_18.addTableToolbar)(this._editor);
+            (0, index_19.addSideMenu)(this._editor);
+            (0, index_19.addFormattingToolbar)(this._editor);
+            (0, index_19.addSlashMenu)(this._editor);
+            (0, index_19.addHyperlinkToolbar)(this._editor);
+            (0, index_19.addTableToolbar)(this._editor);
             this._editor.domElement.addEventListener('focus', () => {
-                const sideMenu = (0, index_19.getToolbar)('sideMenu');
+                const sideMenu = (0, index_20.getToolbar)('sideMenu');
                 if (sideMenu)
                     sideMenu.opacity = 1;
             });
             this._editor.domElement.addEventListener("blur", (event) => {
-                const sideMenus = (0, index_19.getModalContainer)().querySelectorAll('i-scom-editor-side-menu');
+                const sideMenus = (0, index_20.getModalContainer)().querySelectorAll('i-scom-editor-side-menu');
                 for (let menu of sideMenus) {
                     menu.opacity = 0;
                 }
@@ -4416,11 +4590,11 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             const blocks = editor.topLevelBlocks;
             blocks.pop();
             value = await editor.blocksToMarkdownLossy(blocks);
-            this.value = value.replace(/\[(swap|xchain|staking|chart|voting)\]\((.*)\)/g, "$2");
+            this.value = value.replace(/\[(swap|xchain|staking|chart|voting|nftMinter)\]\((.*)\)/g, "$2");
             console.log(JSON.stringify({ value: this.value }));
             if (this.onChanged)
                 this.onChanged(this.value);
-            const sideMenu = (0, index_19.getToolbar)('sideMenu');
+            const sideMenu = (0, index_20.getToolbar)('sideMenu');
             if (sideMenu)
                 sideMenu.opacity = 0;
         }
@@ -4438,12 +4612,12 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         loadPlugin() {
             return new Promise((resolve, reject) => {
-                components_32.RequireJS.config({
+                components_33.RequireJS.config({
                     paths: {
                         'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
                     }
                 });
-                components_32.RequireJS.require(libPlugins, (blocknote) => {
+                components_33.RequireJS.require(libPlugins, (blocknote) => {
                     resolve(blocknote);
                 });
             });
@@ -4469,9 +4643,9 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         async insertFile(url) {
             try {
-                const block = await (0, index_18.getBlockFromExtension)(url);
+                const block = await (0, index_19.getBlockFromExtension)(url);
                 if (block)
-                    (0, index_18.execCustomBLock)(this._editor, block);
+                    (0, index_19.execCustomBLock)(this._editor, block);
             }
             catch (error) { }
         }
@@ -4627,8 +4801,8 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         onHide() {
             if (this.timer)
                 clearTimeout(this.timer);
-            (0, index_19.removeContainer)();
-            (0, index_19.getToolbars)().clear();
+            (0, index_20.removeContainer)();
+            (0, index_20.getToolbars)().clear();
         }
         focus() {
             if (!this._editor)
@@ -4637,7 +4811,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         async init() {
             super.init();
-            (0, index_19.removeContainer)();
+            (0, index_20.removeContainer)();
             this.onChanged = this.getAttribute('onChanged', true) || this.onChanged;
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {
@@ -4651,7 +4825,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
     };
     ScomEditor = __decorate([
-        (0, components_32.customElements)('i-scom-editor')
+        (0, components_33.customElements)('i-scom-editor')
     ], ScomEditor);
     exports.ScomEditor = ScomEditor;
 });

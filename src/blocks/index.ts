@@ -11,4 +11,5 @@ export { addFileBlock } from './addFileBlock';
 export { addStakingBlock } from './addStakingBlock';
 export { addXchainBlock } from './addXchainBlock';
 export { addVotingBlock } from './addVotingBlock';
+export { addNftMinterBlock } from './addNftMinterBlock';
 export * from './utils';
