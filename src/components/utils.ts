@@ -216,6 +216,11 @@ export function getExtraFields () {
       group: "Widget",
       icon: { name: 'gavel' },
       hint: "Insert a NFT minter widget"
+    },
+    'Oswap NFT': {
+      group: "Widget",
+      icon: { name: 'campground' },
+      hint: "Insert an Oswap NFT widget"
     }
   };
   return extraFields;
@@ -354,7 +359,7 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting', 'nftMinter'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting', 'nftMinter', 'oswapNft'];
 export const MediaBlockTypes = ['image', ...CustomBlockTypes];
 export const WidgetMapping: {[key: string]: any} = {
   video: {
@@ -384,6 +389,10 @@ export const WidgetMapping: {[key: string]: any} = {
   nftMinter: {
     name: '@scom/scom-nft-minter',
     localPath: 'scom-nft-minter'
+  },
+  oswapNft: {
+    name: '@scom/oswap-nft-widget',
+    localPath: 'oswap-nft-widget'
   }
 }
 

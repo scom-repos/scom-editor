@@ -12,4 +12,5 @@ export { addStakingBlock } from './addStakingBlock';
 export { addXchainBlock } from './addXchainBlock';
 export { addVotingBlock } from './addVotingBlock';
 export { addNftMinterBlock } from './addNftMinterBlock';
+export { addOswapNftBlock } from './addOswapNftBlock';
 export * from './utils';

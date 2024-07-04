@@ -34,7 +34,8 @@
     "@scom/scom-twitter-post",
     "@scom/scom-storage",
     "@scom/scom-nft-minter",
-    "@scom/scom-product-contract"
+    "@scom/scom-product-contract",
+    "@scom/oswap-nft-widget"
   ],
   "menus": [
     {
