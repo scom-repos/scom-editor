@@ -99,6 +99,9 @@ export class ScomEditorCustomBlock extends Module {
       case "scom-voting":
         if (sideMenu && !properties?.title) sideMenu.openConfig(block, this);
         break;
+      case "oswap-nft-widget":
+        if (sideMenu && !properties?.networks?.length) sideMenu.openConfig(block, this);
+        break;
     }
     if (this.blockEl.ready) await this.blockEl.ready();
     await this.blockEl.setData(JSON.parse(JSON.stringify(properties)));

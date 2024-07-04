@@ -167,6 +167,7 @@ export class ScomEditorSideMenu extends Module {
       case 'staking':
       case 'voting':
       case 'nftMinter':
+      case 'oswapNft':
         module = blockEl.querySelector('i-scom-editor-custom-block');
         editAction = module.getActions()[0];
         break;
@@ -213,6 +214,10 @@ export class ScomEditorSideMenu extends Module {
         } else if (block.type === 'nftMinter') {
           const { title, description, logoUrl, productId, link } = newProps;
           this.updateBlock(block, { title, description, logoUrl, productId, link });
+        } else if (block.type === 'oswapNft') {
+          const { networks, defaultChainId } = newProps;
+          const _defaultChainId = defaultChainId || networks[0]?.chainId;
+          this.updateBlock(block, { networks, defaultChainId: _defaultChainId });
         }
         this.actionForm.closeModal();
       }

@@ -25,6 +25,7 @@ import {
   execCustomBLock,
   addStakingBlock,
   addXchainBlock,
+  addOswapNftBlock,
   getBlockFromExtension,
   addVotingBlock,
   addNftMinterBlock,
@@ -127,6 +128,7 @@ export class ScomEditor extends Module {
     const { StakingBlock, StakingSlashItem } = addStakingBlock(this._blocknoteObj);
     const { VotingBlock, VotingSlashItem } = addVotingBlock(this._blocknoteObj);
     const { NftMinterBlock, NftMinterSlashItem } = addNftMinterBlock(this._blocknoteObj);
+    const { OswapNftBlock, OswapNftSlashItem } = addOswapNftBlock(this._blocknoteObj);
     const { FileSlashItem } = addFileBlock();
 
     const blockSpecs = {
@@ -140,6 +142,7 @@ export class ScomEditor extends Module {
       tweet: TweetBlock,
       voting: VotingBlock,
       nftMinter: NftMinterBlock,
+      oswapNft: OswapNftBlock,
     };
 
     const editorConfig: BlockNoteEditorOptions = {
@@ -158,6 +161,7 @@ export class ScomEditor extends Module {
         TweetSlashItem,
         VotingSlashItem,
         NftMinterSlashItem,
+        OswapNftSlashItem,
       ],
       onEditorContentChange: (editor: BlockNoteEditor) => {
         if (this.timer) clearTimeout(this.timer);
@@ -196,7 +200,7 @@ export class ScomEditor extends Module {
     const blocks = editor.topLevelBlocks;
     blocks.pop();
     value = await editor.blocksToMarkdownLossy(blocks);
-    this.value = value.replace(/\[(swap|xchain|staking|chart|voting|nftMinter)\]\((.*)\)/g, "$2");
+    this.value = value.replace(/\[(swap|xchain|staking|chart|voting|nftMinter|oswapNft)\]\((.*)\)/g, "$2");
     console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
     const sideMenu = getToolbar('sideMenu');
