@@ -32,6 +32,7 @@ export const addNftMinterBlock = (blocknote: any) => {
                 defaultChainId: { default: 0 },
                 wallets: { default: [] },
                 networks: { default: [] },
+                requiredQuantity: { default: 0 }
             },
             content: "none"
         },
@@ -125,6 +126,9 @@ export const addNftMinterBlock = (blocknote: any) => {
             const block: any = {
                 type: "nftMinter",
                 props: {
+                    title: "Title",
+                    description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                    logoUrl: "https://placehold.co/600x400?text=No+Image",
                     networks: [
                         {
                             chainId: 43113

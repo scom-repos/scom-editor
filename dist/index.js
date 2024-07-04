@@ -1479,8 +1479,8 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                         this.updateBlock(block, { title, backgroundImage, buttons, fontColor });
                     }
                     else if (block.type === 'nftMinter') {
-                        const { title, description, logoUrl, productId, link } = newProps;
-                        this.updateBlock(block, { title, description, logoUrl, productId, link });
+                        const { title, description, logoUrl, productId, link, requiredQuantity } = newProps;
+                        this.updateBlock(block, { title, description, logoUrl, productId, link, requiredQuantity });
                     }
                     else if (block.type === 'oswapNft') {
                         const { networks, defaultChainId } = newProps;
@@ -4084,6 +4084,7 @@ define("@scom/scom-editor/blocks/addNftMinterBlock.ts", ["require", "exports", "
                 defaultChainId: { default: 0 },
                 wallets: { default: [] },
                 networks: { default: [] },
+                requiredQuantity: { default: 0 }
             },
             content: "none"
         }, {
@@ -4177,6 +4178,9 @@ define("@scom/scom-editor/blocks/addNftMinterBlock.ts", ["require", "exports", "
                 const block = {
                     type: "nftMinter",
                     props: {
+                        title: "Title",
+                        description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                        logoUrl: "https://placehold.co/600x400?text=No+Image",
                         networks: [
                             {
                                 chainId: 43113
