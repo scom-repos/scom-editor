@@ -17,6 +17,7 @@ export const addOswapNftBlock = (blocknote: any) => {
     type: "oswapNft",
     propSchema: {
       ...blocknote.defaultProps,
+      tier: { default: 'hungry' },
       defaultChainId: { default: 0 },
       networks: { default: [] },
       wallets: { default: [] },
@@ -97,13 +98,14 @@ export const addOswapNftBlock = (blocknote: any) => {
       const block: any = {
         type: "oswapNft",
         props: {
+          "tier": "hungry",
           "defaultChainId": 97,
           "networks": [
             {
-              "chainId": 56
+              "chainId": 97
             },
             {
-              "chainId": 97
+              "chainId": 56
             }
           ],
           "wallets": [

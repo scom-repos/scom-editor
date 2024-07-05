@@ -215,9 +215,9 @@ export class ScomEditorSideMenu extends Module {
           const { title, description, logoUrl, productId, link, requiredQuantity } = newProps;
           this.updateBlock(block, { title, description, logoUrl, productId, link, requiredQuantity });
         } else if (block.type === 'oswapNft') {
-          const { networks, defaultChainId } = newProps;
+          const { tier, networks, defaultChainId } = newProps;
           const _defaultChainId = defaultChainId || networks[0]?.chainId;
-          this.updateBlock(block, { networks, defaultChainId: _defaultChainId });
+          this.updateBlock(block, { tier, networks, defaultChainId: _defaultChainId });
         }
         this.actionForm.closeModal();
       }
