@@ -1483,9 +1483,9 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                         this.updateBlock(block, { title, description, logoUrl, productId, link, requiredQuantity });
                     }
                     else if (block.type === 'oswapNft') {
-                        const { networks, defaultChainId } = newProps;
+                        const { tier, networks, defaultChainId } = newProps;
                         const _defaultChainId = defaultChainId || networks[0]?.chainId;
-                        this.updateBlock(block, { networks, defaultChainId: _defaultChainId });
+                        this.updateBlock(block, { tier, networks, defaultChainId: _defaultChainId });
                     }
                     this.actionForm.closeModal();
                 }
@@ -4226,6 +4226,7 @@ define("@scom/scom-editor/blocks/addOswapNftBlock.ts", ["require", "exports", "@
             type: "oswapNft",
             propSchema: {
                 ...blocknote.defaultProps,
+                tier: { default: 'hungry' },
                 defaultChainId: { default: 0 },
                 networks: { default: [] },
                 wallets: { default: [] },
@@ -4304,6 +4305,7 @@ define("@scom/scom-editor/blocks/addOswapNftBlock.ts", ["require", "exports", "@
                 const block = {
                     type: "oswapNft",
                     props: {
+                        "tier": "hungry",
                         "defaultChainId": 97,
                         "networks": [
                             {
