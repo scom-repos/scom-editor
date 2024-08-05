@@ -21,6 +21,11 @@ export function addFileBlock() {
     execute: async (editor: BlockNoteEditor) => {
       if (!storageEl) {
         storageEl = ScomStorage.getInstance();
+        storageEl.uploadMultiple = false;
+        storageEl.onUploadedFile = async (path: string) => {
+          storageEl.closeModal();
+          await renderBlock(editor, path);
+        }
         storageEl.onOpen = async (path: string) => {
           storageEl.closeModal();
           await renderBlock(editor, path);
