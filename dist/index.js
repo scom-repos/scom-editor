@@ -3578,6 +3578,11 @@ define("@scom/scom-editor/blocks/addFileBlock.ts", ["require", "exports", "@scom
             execute: async (editor) => {
                 if (!storageEl) {
                     storageEl = scom_storage_1.ScomStorage.getInstance();
+                    storageEl.uploadMultiple = false;
+                    storageEl.onUploadedFile = async (path) => {
+                        storageEl.closeModal();
+                        await renderBlock(editor, path);
+                    };
                     storageEl.onOpen = async (path) => {
                         storageEl.closeModal();
                         await renderBlock(editor, path);
@@ -4309,10 +4314,10 @@ define("@scom/scom-editor/blocks/addOswapNftBlock.ts", ["require", "exports", "@
                         "defaultChainId": 97,
                         "networks": [
                             {
-                                "chainId": 56
+                                "chainId": 97
                             },
                             {
-                                "chainId": 97
+                                "chainId": 56
                             }
                         ],
                         "wallets": [
