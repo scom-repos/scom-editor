@@ -1,6 +1,6 @@
 {
     "name": "@scom/scom-editor",
-    "version": "0.1.8",
+    "version": "0.1.9",
     "main": "dist/index.js",
     "plugin": "dist",
     "pluginTypes": "pluginTypes/index.d.ts",
@@ -16,7 +16,7 @@
     },
     "dependencies": {
         "@ijstech/components": "^0.1.29",
-        "@scom/scom-storage": "https://github.com/scom-repos/scom-storage"
+        "@scom/scom-storage": "^0.1.5"
     },
     "devDependencies": {
         "@ijstech/cli": "^0.1.26",
