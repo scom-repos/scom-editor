@@ -4716,6 +4716,8 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                         clearTimeout(this.timer);
                     this.timer = setTimeout(() => {
                         this.onEditorChanged(editor);
+                        if (this.timer)
+                            clearTimeout(this.timer);
                     }, 500);
                 },
                 domAttributes: {
@@ -4785,6 +4787,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             return this._data;
         }
         async setData(data) {
+            console.log('set data', data);
             this._data = data;
             if (!this._editor)
                 await this.initEditor();
@@ -4980,7 +4983,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             }
         }
         render() {
-            return (this.$render("i-panel", { id: "pnlEditor", height: "100%", background: { color: Theme.background.main }, font: { color: Theme.text.primary }, border: { radius: 'inherit' } }));
+            return (this.$render("i-panel", { id: "pnlEditor", height: "100%", background: { color: 'inherit' }, font: { color: Theme.text.primary }, border: { radius: 'inherit' } }));
         }
     };
     ScomEditor = __decorate([

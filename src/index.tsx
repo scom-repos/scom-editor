@@ -167,6 +167,7 @@ export class ScomEditor extends Module {
         if (this.timer) clearTimeout(this.timer);
         this.timer = setTimeout(() => {
           this.onEditorChanged(editor);
+          if (this.timer) clearTimeout(this.timer);
         }, 500);
       },
       domAttributes: {
@@ -237,6 +238,7 @@ export class ScomEditor extends Module {
   }
 
   private async setData(data: IEditor) {
+    console.log('set data', data)
     this._data = data;
     if (!this._editor) await this.initEditor();
     if (data.value) {
@@ -445,7 +447,7 @@ export class ScomEditor extends Module {
       <i-panel
         id="pnlEditor"
         height="100%"
-        background={{ color: Theme.background.main }}
+        background={{ color: 'inherit' }}
         font={{ color: Theme.text.primary }}
         border={{ radius: 'inherit' }}
       ></i-panel>
