@@ -4798,7 +4798,6 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 await this.initEditor();
             if (data.value) {
                 const blocks = await this._editor.tryParseMarkdownToBlocks(data.value);
-                console.log('blocks ', blocks);
                 this.renderEditor(JSON.parse(JSON.stringify(blocks)));
             }
         }
