@@ -180,7 +180,6 @@ export class ScomEditorSlashMenu extends Module {
       <i-panel id="pnlWrap" minWidth={300} maxWidth={'100%'} height="auto">
         <i-vstack id="pnlSlash"
           width={'100%'} overflow={{y: 'auto'}}
-          border={{radius: '0.375rem', width: '1px', style: 'solid', color: Theme.colors.secondary.light}}
         />
       </i-panel>
     )

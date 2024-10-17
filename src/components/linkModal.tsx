@@ -149,8 +149,8 @@ export class ScomEditorMdLink extends Module {
               width={'100%'} height={'2rem'}
               border={{style: 'none'}}
               background={{color: Theme.background.modal}}
+              font={{size: '0.75rem', color: Theme.text.primary}}
               placeholder='Edit URL'
-              font={{size: '0.75rem'}}
               onKeyUp={this.handleInput}
             ></i-input>
           </i-hstack>
@@ -170,8 +170,8 @@ export class ScomEditorMdLink extends Module {
               width={'100%'} height={'2rem'}
               border={{style: 'none'}}
               background={{color: Theme.background.modal}}
+              font={{size: '0.75rem', color: Theme.text.primary}}
               placeholder='Edit Title'
-              font={{size: '0.75rem'}}
               onKeyUp={this.handleInput}
             ></i-input>
           </i-hstack>

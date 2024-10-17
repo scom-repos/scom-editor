@@ -9,7 +9,7 @@ const getToolbarButtons = (editor: any, hyperlinkToolbarState: CustomHyperlinkTo
   return [
     {
       customControl: () => {
-        let link = new ScomEditorLink(undefined, {
+        const link = new ScomEditorLink(undefined, {
           display: 'inline-flex',
           grid: {verticalAlignment: 'center'},
           height: '100%',
@@ -49,6 +49,7 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
   let modal: Modal;
   let element: Panel;
   let buttonList = [];
+  let linkBtn: ScomEditorLink;
 
   editor.hyperlinkToolbar.onUpdate(async (hyperlinkToolbarState: CustomHyperlinkToolbarState) => {
     const selectedBlocks = editor.getSelection()?.blocks || [editor.getTextCursorPosition().block];
@@ -58,7 +59,7 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
       modal = await createModal({
         popupPlacement: 'top',
         minWidth: 0,
-        zIndex: 2000
+        zIndex: 9999
       })
       modal.id = 'mdHyperlink';
     }
@@ -73,21 +74,28 @@ export const addHyperlinkToolbar = async (editor: BlockNoteEditor) => {
         if (props.customControl) {
           const elm = props.customControl(element);
           element.appendChild(elm);
+          linkBtn = elm as ScomEditorLink;
         } else {
           const btn = createButton(props, element);
           element.appendChild(btn);
         }
       }
       modal.item = element;
+    } else if (linkBtn) {
+      linkBtn.text = hyperlinkToolbarState.text;
+      linkBtn.url = hyperlinkToolbarState.url;
     }
 
     if (hyperlinkToolbarState.show) {
       if (blockID) {
         const blockEl = editor.domElement.querySelector(`[data-id="${blockID}"]`);
-        if (blockEl) modal.linkTo = blockEl;
-        modal.position = 'fixed';
-        if (modal.visible) modal.refresh();
-        else modal.visible = true;
+        if (blockEl) {
+          modal.linkTo = blockEl;
+          modal.showBackdrop = false;
+          modal.position = 'absolute';
+          if (modal.visible) modal.refresh();
+          else modal.visible = true;
+        }
       } else {
         modal.visible = false;
       }

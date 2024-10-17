@@ -167,7 +167,6 @@ export class ScomEditor extends Module {
         if (this.timer) clearTimeout(this.timer);
         this.timer = setTimeout(() => {
           this.onEditorChanged(editor);
-          if (this.timer) clearTimeout(this.timer);
         }, 500);
       },
       domAttributes: {
@@ -238,7 +237,6 @@ export class ScomEditor extends Module {
   }
 
   private async setData(data: IEditor) {
-    console.log('set data', data)
     this._data = data;
     if (!this._editor) await this.initEditor();
     if (data.value) {
@@ -293,9 +291,11 @@ export class ScomEditor extends Module {
   }
 
   private updateTheme() {
-    const themeVar = document.body.style.getPropertyValue('--theme') ?? 'dark';
+    const themeVar = document.body.style.getPropertyValue('--theme') || 'dark';
     this.updateStyle('--text-primary', this.tag[themeVar]?.fontColor);
     this.updateStyle('--background-main', this.tag[themeVar]?.backgroundColor);
+    this.updateStyle('--input-background', this.tag[themeVar]?.inputBackgroundColor);
+    this.updateStyle('--input-font_color', this.tag[themeVar]?.inputFontColor);
   }
 
   private getTag() {
@@ -447,7 +447,7 @@ export class ScomEditor extends Module {
       <i-panel
         id="pnlEditor"
         height="100%"
-        background={{ color: 'inherit' }}
+        background={{ color: Theme.background.main }}
         font={{ color: Theme.text.primary }}
         border={{ radius: 'inherit' }}
       ></i-panel>
