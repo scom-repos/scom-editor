@@ -99,6 +99,8 @@ export class ScomEditorSettingsForm extends Module {
               width={'100%'}
               height={'2.625rem'}
               placeholder='Enter Title'
+              background={{color: Theme.background.modal}}
+              font={{size: '0.75rem', color: Theme.text.primary}}
               value={block.props?.title || ''}
             ></i-input>
           </i-vstack>

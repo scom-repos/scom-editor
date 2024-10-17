@@ -207,7 +207,6 @@ export class ScomEditorTableMenu extends Module {
         id="menuElm"
         padding={{top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem'}}
         font={{color: Theme.text.primary, size: '0.75rem'}}
-        boxShadow={Theme.shadows[1]}
         width={'100%'}
         mode="vertical"
         data={this._menuData}

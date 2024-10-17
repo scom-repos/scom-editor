@@ -165,6 +165,7 @@ export class ScomEditorDragHandle extends Module {
         visible={false}
         position="absolute"
         zIndex={9999}
+        boxShadow={Theme.shadows[1]}
         class={customModalStyle}
         onOpen={this.onModalOpen}
         onClose={this.onModalClose}
@@ -174,7 +175,6 @@ export class ScomEditorDragHandle extends Module {
             id="menuElm"
             padding={{top: '0rem', bottom: '0rem', left: '0.675rem', right: '0.675rem'}}
             font={{color: Theme.text.primary, size: '0.75rem'}}
-            boxShadow={Theme.shadows[1]}
             width={'100%'}
             mode="vertical"
             data={this._menuData}

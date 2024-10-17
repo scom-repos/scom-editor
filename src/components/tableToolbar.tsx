@@ -123,6 +123,7 @@ export class ScomEditorTableToolbar extends Module {
       position: 'absolute',
       minWidth: '9.375rem',
       maxWidth: '10rem',
+      boxShadow: Theme.shadows[1],
       linkTo: this,
       zIndex: 9999,
       onClose: () => {

@@ -291,9 +291,11 @@ export class ScomEditor extends Module {
   }
 
   private updateTheme() {
-    const themeVar = document.body.style.getPropertyValue('--theme') ?? 'dark';
+    const themeVar = document.body.style.getPropertyValue('--theme') || 'dark';
     this.updateStyle('--text-primary', this.tag[themeVar]?.fontColor);
     this.updateStyle('--background-main', this.tag[themeVar]?.backgroundColor);
+    this.updateStyle('--input-background', this.tag[themeVar]?.inputBackgroundColor);
+    this.updateStyle('--input-font_color', this.tag[themeVar]?.inputFontColor);
   }
 
   private getTag() {
