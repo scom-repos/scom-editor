@@ -430,3 +430,19 @@ export const ChartTypes = ['scom-pie-chart', 'scom-line-chart', 'scom-bar-chart'
 export const getChartTypeOptions = () => {
   return [...ChartTypes].map(type => ({ value: type, label: type.split('-')[1]}))
 }
+
+export const escapeHTML = (str: string) => {
+  return (str || '').replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
+export const revertHtmlTags = (str: string) => {
+  return (str || '').replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'");
+};

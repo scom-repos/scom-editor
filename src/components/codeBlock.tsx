@@ -11,6 +11,7 @@ import {
   application,
   Panel
 } from '@ijstech/components';
+import { escapeHTML, revertHtmlTags } from './utils';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ICodeBlock {
@@ -19,6 +20,8 @@ interface ICodeBlock {
 }
 
 const DEFAULT_LANGUAGE = 'javascript';
+const startRegex = /^`{3,}[^`\n]*\n|^`{3,}[^`\s]*\s?/gm;
+const endRegex = /`{3,}$/g;
 
 interface ScomEditorCodeBlockElement extends ControlElement {
   code?: string;
@@ -53,14 +56,14 @@ export class ScomEditorCodeBlock extends Module {
   }
 
   get code() {
-    return (this._data.code || '').replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#039;/g, "'");
+    return revertHtmlTags(this._data.code || '');
   }
   set code(value: string) {
     this._data.code = value || '';
+  }
+
+  get mainContent() {
+    return this.code.replace(startRegex, '').replace(endRegex, '');
   }
 
   get language() {
@@ -85,17 +88,13 @@ export class ScomEditorCodeBlock extends Module {
     // this.codeEditor.width = '100%';
     // this.codeEditor.maxHeight = 200;
     // await this.codeEditor.loadContent(this.code, this.language as any);
-    const innerHTML = `<pre><code>${this.escapeHTML(this.code)}</code></pre>`;
-    this.blockWrapper.innerHTML = innerHTML;
-  }
 
-  private escapeHTML(str: string) {
-    return str.replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  };
+    const preElm = document.createElement('pre');
+    const codeElm = document.createElement('code');
+    codeElm.textContent = `${this.mainContent}`;
+    preElm.appendChild(codeElm);
+    this.blockWrapper.appendChild(preElm);
+  }
 
   getActions() {
     const editAction = {
@@ -139,10 +138,14 @@ export class ScomEditorCodeBlock extends Module {
           hstack.append(button);
           vstack.append(config);
           await config.ready();
-          await config.loadContent(this._data?.code || '')
+          await config.loadContent(this.code|| '')
           vstack.append(hstack);
           button.onClick = async () => {
-            if (onConfirm) onConfirm(true, {...this._data, code: config.value});
+            let newCode = escapeHTML(config.value || '');
+            if (!newCode.startsWith('```') && !newCode.endsWith('```')) {
+              newCode = `\`\`\`${this.language}\n${newCode}\n\`\`\``;
+            }
+            if (onConfirm) onConfirm(true, {...this._data, code: newCode});
           }
           return vstack;
         }
@@ -152,7 +155,8 @@ export class ScomEditorCodeBlock extends Module {
   }
 
   private async onCopy() {
-    await application.copyToClipboard(this.code);
+    const content = this.mainContent;
+    await application.copyToClipboard(content);
   }
 
   async init() {

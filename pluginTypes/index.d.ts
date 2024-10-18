@@ -361,6 +361,8 @@ declare module "@scom/scom-editor/components/utils.ts" {
         value: string;
         label: string;
     }[];
+    export const escapeHTML: (str: string) => string;
+    export const revertHtmlTags: (str: string) => string;
 }
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
@@ -1127,12 +1129,12 @@ declare module "@scom/scom-editor/components/codeBlock.tsx" {
         constructor(parent?: Container, options?: any);
         get code(): string;
         set code(value: string);
+        get mainContent(): string;
         get language(): string;
         set language(value: string);
         getData(): ICodeBlock;
         setData(data: ICodeBlock): Promise<void>;
         private renderUI;
-        private escapeHTML;
         getActions(): {
             name: string;
             icon: string;
