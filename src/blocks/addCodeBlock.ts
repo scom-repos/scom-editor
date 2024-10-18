@@ -4,11 +4,13 @@ import { execCustomBLock } from "./utils";
 import { ScomEditorCodeBlock } from "../components/index";
 
 const DEFAULT_LANGUAGE = 'javascript';
+const startRegex = /^`{3,}[^`\n]*\n|^`{3,}[^`\s]*\s?/gm;
+const endRegex = /`{3,}$/g;
 
 function getData(element: HTMLElement) {
   if (element?.nodeName === 'CODE') {
     let code = element.innerHTML;
-    code = code.replace(/^`{3,}[^`\n]*\n|^`{3,}[^`\s]*\s?/gm, '').replace(/`{3,}$/g, '');
+    code = code.replace(startRegex, '').replace(endRegex, '');
     return {
       code,
       language: DEFAULT_LANGUAGE
@@ -85,15 +87,15 @@ export function addCodeBlock(blocknote: any) {
     },
     pasteRules: [
       {
-        find: /`{3,}\s?([\s\S]*?)\s?`{3,}/g,
+        find: /^(`{3,}[^`\n]*\n|^`{3,}[^`\s]*)([\s\S]*?)([\s|\n]?`{3,})/gm,
         handler(props: any) {
           const { state, chain, range } = props;
-          let textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
-
+          const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+          console.log(textContent);
           chain().BNUpdateBlock(state.selection.from, {
             type: "codeBlock",
             props: {
-              code: textContent.replace(/^`{3,}[^`\n]*\n|^`{3,}[^`\s]*\s?/gm, '').replace(/`{3,}$/g, '')
+              code: textContent.replace(startRegex, '').replace(endRegex, '')
             },
           }).setTextSelection(range.from + 1);
         }
