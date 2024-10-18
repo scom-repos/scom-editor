@@ -323,6 +323,13 @@ declare module "@scom/scom-editor/components/utils.ts" {
             };
             hint: string;
         };
+        'Code Block': {
+            group: string;
+            icon: {
+                name: string;
+            };
+            hint: string;
+        };
     };
     interface IButtonProps {
         caption?: string;
@@ -1094,6 +1101,55 @@ declare module "@scom/scom-editor/components/customBlock.tsx" {
         render(): void;
     }
 }
+/// <amd-module name="@scom/scom-editor/components/codeBlock.tsx" />
+declare module "@scom/scom-editor/components/codeBlock.tsx" {
+    import { ControlElement, Module, Container, VStack } from '@ijstech/components';
+    interface ICodeBlock {
+        code: string;
+        language?: string;
+    }
+    interface ScomEditorCodeBlockElement extends ControlElement {
+        code?: string;
+        language?: string;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor-code-block']: ScomEditorCodeBlockElement;
+            }
+        }
+    }
+    export class ScomEditorCodeBlock extends Module {
+        private codeEditor;
+        private blockWrapper;
+        private _data;
+        static create(options?: ScomEditorCodeBlockElement, parent?: Container): Promise<ScomEditorCodeBlock>;
+        constructor(parent?: Container, options?: any);
+        get code(): string;
+        set code(value: string);
+        get language(): string;
+        set language(value: string);
+        getData(): ICodeBlock;
+        setData(data: ICodeBlock): Promise<void>;
+        private renderUI;
+        private escapeHTML;
+        getActions(): {
+            name: string;
+            icon: string;
+            command: (builder: any, userInputData: any) => {
+                execute: () => void;
+                undo: () => void;
+                redo: () => void;
+            };
+            customUI: {
+                render: (data?: any, onConfirm?: (result: boolean, data: any) => void) => Promise<VStack>;
+            };
+        };
+        private onCopy;
+        init(): Promise<void>;
+        render(): void;
+    }
+}
 /// <amd-module name="@scom/scom-editor/components/index.ts" />
 declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorColor } from "@scom/scom-editor/components/colorButton.tsx";
@@ -1108,6 +1164,7 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorTableToolbar } from "@scom/scom-editor/components/tableToolbar.tsx";
     export { ScomEditorChart } from "@scom/scom-editor/components/chart.tsx";
     export { ScomEditorCustomBlock } from "@scom/scom-editor/components/customBlock.tsx";
+    export { ScomEditorCodeBlock } from "@scom/scom-editor/components/codeBlock.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
     export { buttonHoverStyle, customModalStyle, modalStyle } from "@scom/scom-editor/components/index.css.ts";
 }
@@ -1264,6 +1321,30 @@ declare module "@scom/scom-editor/blocks/addOswapNftBlock.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-editor/blocks/addCodeBlock.ts" />
+declare module "@scom/scom-editor/blocks/addCodeBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export function addCodeBlock(blocknote: any): {
+        CodeBlock: any;
+        CodeSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
+/// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
+declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
+    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    export const addSwapBlock: (blocknote: any) => {
+        SwapBlock: any;
+        SwapSlashItem: {
+            name: string;
+            execute: (editor: BlockNoteEditor) => void;
+            aliases: string[];
+        };
+    };
+}
 /// <amd-module name="@scom/scom-editor/blocks/index.ts" />
 declare module "@scom/scom-editor/blocks/index.ts" {
     export { addFormattingToolbar } from "@scom/scom-editor/blocks/addFormattingToolbar.ts";
@@ -1281,19 +1362,9 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addVotingBlock } from "@scom/scom-editor/blocks/addVotingBlock.ts";
     export { addNftMinterBlock } from "@scom/scom-editor/blocks/addNftMinterBlock.ts";
     export { addOswapNftBlock } from "@scom/scom-editor/blocks/addOswapNftBlock.ts";
+    export { addCodeBlock } from "@scom/scom-editor/blocks/addCodeBlock.ts";
+    export { addSwapBlock } from "@scom/scom-editor/blocks/addSwapBlock.ts";
     export * from "@scom/scom-editor/blocks/utils.ts";
-}
-/// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
-declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
-    export const addSwapBlock: (blocknote: any) => {
-        SwapBlock: any;
-        SwapSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
 }
 /// <amd-module name="@scom/scom-editor/index.css.ts" />
 declare module "@scom/scom-editor/index.css.ts" {

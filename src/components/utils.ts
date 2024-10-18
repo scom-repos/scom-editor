@@ -221,6 +221,11 @@ export function getExtraFields () {
       group: "Widget",
       icon: { name: 'campground' },
       hint: "Insert an Oswap NFT widget"
+    },
+    'Code Block': {
+      group: "Basic blocks",
+      icon: { name: 'code' },
+      hint: "Insert a code block"
     }
   };
   return extraFields;
@@ -359,7 +364,7 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting', 'nftMinter', 'oswapNft'];
+export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting', 'nftMinter', 'oswapNft', 'codeBlock'];
 export const MediaBlockTypes = ['image', ...CustomBlockTypes];
 export const WidgetMapping: {[key: string]: any} = {
   video: {
