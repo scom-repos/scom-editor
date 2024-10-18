@@ -175,6 +175,10 @@ export class ScomEditorSideMenu extends Module {
         module = blockEl.querySelector('i-scom-editor-chart');
         editAction = this.getActions(module)[0];
         break;
+      case 'codeBlock':
+        module = blockEl.querySelector('i-scom-editor-code-block');
+        editAction = module.getActions();
+        break;
     }
     this.currentModule = module;
     this.showConfigModal(this.block, editAction);
@@ -218,6 +222,9 @@ export class ScomEditorSideMenu extends Module {
           const { tier, networks, defaultChainId } = newProps;
           const _defaultChainId = defaultChainId || networks[0]?.chainId;
           this.updateBlock(block, { tier, networks, defaultChainId: _defaultChainId });
+        } else if (block.type === 'codeBlock') {
+          const { code, language } = newProps;
+          this.updateBlock(block, { code, language });
         }
         this.actionForm.closeModal();
       }

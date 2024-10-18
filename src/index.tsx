@@ -29,10 +29,11 @@ import {
   getBlockFromExtension,
   addVotingBlock,
   addNftMinterBlock,
+  addCodeBlock,
+  addSwapBlock
 } from './blocks/index';
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
 import { getModalContainer, getToolbar, getToolbars, removeContainer } from './components/index';
-import { addSwapBlock } from './blocks/addSwapBlock';
 import { customEditorStyle } from './index.css';
 const Theme = Styles.Theme.ThemeVars;
 
@@ -119,6 +120,7 @@ export class ScomEditor extends Module {
     if (!this._blocknoteObj) return;
     this.pnlEditor.clearInnerHTML();
     removeContainer();
+    const { CodeBlock, CodeSlashItem } = addCodeBlock(this._blocknoteObj);
     const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
     const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
     const { SwapSlashItem, SwapBlock } = addSwapBlock(this._blocknoteObj);
@@ -133,6 +135,7 @@ export class ScomEditor extends Module {
 
     const blockSpecs = {
       ...this._blocknoteObj.defaultBlockSpecs,
+      codeBlock: CodeBlock,
       video: VideoBlock,
       imageWidget: ImageBlock,
       swap: SwapBlock,
@@ -151,6 +154,7 @@ export class ScomEditor extends Module {
       editable: !this.viewer,
       slashMenuItems: [
         ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
+        CodeSlashItem,
         VideoSlashItem,
         ImageSlashItem,
         FileSlashItem,
