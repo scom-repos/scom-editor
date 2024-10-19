@@ -9653,7 +9653,7 @@ var __publicField = (obj, key, value) => {
       autoFocus: boolean,
       autoPlay: boolean,
       blocking: spaceSeparated,
-      capture: boolean,
+      capture: null,
       charSet: null,
       checked: boolean,
       cite: null,
@@ -12478,7 +12478,7 @@ var __publicField = (obj, key, value) => {
         return done(exception);
       }
       if (!fnExpectsCallback) {
-        if (result instanceof Promise) {
+        if (result && result.then && typeof result.then === "function") {
           result.then(then, done);
         } else if (result instanceof Error) {
           done(result);
@@ -16105,6 +16105,9 @@ var __publicField = (obj, key, value) => {
     range.setStart(node2, from2 || 0);
     return range;
   };
+  const clearReusedRange = function() {
+    reusedRange = null;
+  };
   const isEquivalentPosition = function(node2, off, targetNode, targetOff) {
     return targetNode && (scanFor(node2, off, targetNode, targetOff, -1) || scanFor(node2, off, targetNode, targetOff, 1));
   };
@@ -16131,6 +16134,40 @@ var __publicField = (obj, key, value) => {
   }
   function nodeSize(node2) {
     return node2.nodeType == 3 ? node2.nodeValue.length : node2.childNodes.length;
+  }
+  function textNodeBefore$1(node2, offset) {
+    for (; ; ) {
+      if (node2.nodeType == 3 && offset)
+        return node2;
+      if (node2.nodeType == 1 && offset > 0) {
+        if (node2.contentEditable == "false")
+          return null;
+        node2 = node2.childNodes[offset - 1];
+        offset = nodeSize(node2);
+      } else if (node2.parentNode && !hasBlockDesc(node2)) {
+        offset = domIndex(node2);
+        node2 = node2.parentNode;
+      } else {
+        return null;
+      }
+    }
+  }
+  function textNodeAfter$1(node2, offset) {
+    for (; ; ) {
+      if (node2.nodeType == 3 && offset < node2.nodeValue.length)
+        return node2;
+      if (node2.nodeType == 1 && offset < node2.childNodes.length) {
+        if (node2.contentEditable == "false")
+          return null;
+        node2 = node2.childNodes[offset];
+        offset = 0;
+      } else if (node2.parentNode && !hasBlockDesc(node2)) {
+        offset = domIndex(node2) + 1;
+        node2 = node2.parentNode;
+      } else {
+        return null;
+      }
+    }
   }
   function isOnEdge(node2, offset, parent) {
     for (let atStart = offset == 0, atEnd = offset == nodeSize(node2); atStart || atEnd; ) {
@@ -16203,6 +16240,14 @@ var __publicField = (obj, key, value) => {
   const webkit = !!doc$2 && "webkitFontSmoothing" in doc$2.documentElement.style;
   const webkit_version = webkit ? +(/\bAppleWebKit\/(\d+)/.exec(navigator.userAgent) || [0, 0])[1] : 0;
   function windowRect(doc2) {
+    let vp = doc2.defaultView && doc2.defaultView.visualViewport;
+    if (vp)
+      return {
+        left: 0,
+        right: vp.width,
+        top: 0,
+        bottom: vp.height
+      };
     return {
       left: 0,
       right: doc2.documentElement.clientWidth,
@@ -17026,6 +17071,9 @@ var __publicField = (obj, key, value) => {
     get ignoreForCoords() {
       return false;
     }
+    isText(text2) {
+      return false;
+    }
   }
   class WidgetViewDesc extends ViewDesc {
     constructor(parent, widget, view, pos) {
@@ -17267,8 +17315,7 @@ var __publicField = (obj, key, value) => {
       let { from: from2, to } = view.state.selection;
       if (!(view.state.selection instanceof TextSelection) || from2 < pos || to > pos + this.node.content.size)
         return null;
-      let sel = view.domSelectionRange();
-      let textNode = nearbyTextNode(sel.focusNode, sel.focusOffset);
+      let textNode = view.input.compositionNode;
       if (!textNode || !this.dom.contains(textNode.parentNode))
         return null;
       if (this.node.inlineContent) {
@@ -17402,6 +17449,9 @@ var __publicField = (obj, key, value) => {
     }
     get domAtom() {
       return false;
+    }
+    isText(text2) {
+      return this.node.text == text2;
     }
   }
   class TrailingHackViewDesc extends ViewDesc {
@@ -17917,23 +17967,6 @@ var __publicField = (obj, key, value) => {
       dom.style.cssText = oldCSS + "; list-style: square !important";
       window.getComputedStyle(dom).listStyle;
       dom.style.cssText = oldCSS;
-    }
-  }
-  function nearbyTextNode(node2, offset) {
-    for (; ; ) {
-      if (node2.nodeType == 3)
-        return node2;
-      if (node2.nodeType == 1 && offset > 0) {
-        if (node2.childNodes.length > offset && node2.childNodes[offset].nodeType == 3)
-          return node2.childNodes[offset];
-        node2 = node2.childNodes[offset - 1];
-        offset = nodeSize(node2);
-      } else if (node2.nodeType == 1 && offset < node2.childNodes.length) {
-        node2 = node2.childNodes[offset];
-        offset = 0;
-      } else {
-        return null;
-      }
     }
   }
   function findTextInFragment(frag, text2, from2, to) {
@@ -18730,6 +18763,7 @@ var __publicField = (obj, key, value) => {
       this.lastTouch = 0;
       this.lastAndroidDelete = 0;
       this.composing = false;
+      this.compositionNode = null;
       this.composingTimeout = -1;
       this.compositionNodes = [];
       this.compositionEndedAt = -2e8;
@@ -19111,6 +19145,7 @@ var __publicField = (obj, key, value) => {
       view.input.composing = false;
       view.input.compositionEndedAt = event.timeStamp;
       view.input.compositionPendingChanges = view.domObserver.pendingRecords().length ? view.input.compositionID : 0;
+      view.input.compositionNode = null;
       if (view.input.compositionPendingChanges)
         Promise.resolve().then(() => view.domObserver.flush());
       view.input.compositionID++;
@@ -19129,6 +19164,24 @@ var __publicField = (obj, key, value) => {
     }
     while (view.input.compositionNodes.length > 0)
       view.input.compositionNodes.pop().markParentsDirty();
+  }
+  function findCompositionNode(view) {
+    let sel = view.domSelectionRange();
+    if (!sel.focusNode)
+      return null;
+    let textBefore = textNodeBefore$1(sel.focusNode, sel.focusOffset);
+    let textAfter = textNodeAfter$1(sel.focusNode, sel.focusOffset);
+    if (textBefore && textAfter && textBefore != textAfter) {
+      let descAfter = textAfter.pmViewDesc;
+      if (!descAfter || !descAfter.isText(textAfter.nodeValue)) {
+        return textAfter;
+      } else if (view.input.compositionNode == textAfter) {
+        let descBefore = textBefore.pmViewDesc;
+        if (!(!descBefore || !descBefore.isText(textBefore.nodeValue)))
+          return textAfter;
+      }
+    }
+    return textBefore;
   }
   function timestampFromCustomEvent() {
     let event = document.createEvent("Event");
@@ -19685,9 +19738,6 @@ var __publicField = (obj, key, value) => {
         return this;
       return local.length || children.length ? new DecorationSet(local, children) : empty;
     }
-    /**
-    @internal
-    */
     forChild(offset, node2) {
       if (this == empty)
         return this;
@@ -20388,10 +20438,6 @@ var __publicField = (obj, key, value) => {
         return;
       }
     }
-    if (chrome && view.cursorWrapper && parse2.sel && parse2.sel.anchor == view.cursorWrapper.deco.from && parse2.sel.head == parse2.sel.anchor) {
-      let size = change.endB - change.start;
-      parse2.sel = { anchor: parse2.sel.anchor + size, head: parse2.sel.anchor + size };
-    }
     view.input.domChangeCount++;
     if (view.state.selection.from < view.state.selection.to && change.start == change.endB && view.state.selection instanceof TextSelection) {
       if (change.start > view.state.selection.from && change.start <= view.state.selection.from + 2 && view.state.selection.from >= parse2.from) {
@@ -20415,7 +20461,7 @@ var __publicField = (obj, key, value) => {
       view.input.lastIOSEnter = 0;
       return;
     }
-    if (view.state.selection.anchor > change.start && looksLikeJoin(doc2, change.start, change.endA, $from, $to) && view.someProp("handleKeyDown", (f) => f(view, keyEvent(8, "Backspace")))) {
+    if (view.state.selection.anchor > change.start && looksLikeBackspace(doc2, change.start, change.endA, $from, $to) && view.someProp("handleKeyDown", (f) => f(view, keyEvent(8, "Backspace")))) {
       if (android && chrome)
         view.domObserver.suppressSelectionUpdates();
       return;
@@ -20499,12 +20545,18 @@ var __publicField = (obj, key, value) => {
     if (Fragment.from(updated).eq(cur))
       return { mark: mark2, type };
   }
-  function looksLikeJoin(old, start, end, $newStart, $newEnd) {
-    if (!$newStart.parent.isTextblock || // The content must have shrunk
-    end - start <= $newEnd.pos - $newStart.pos || // newEnd must point directly at or after the end of the block that newStart points into
-    skipClosingAndOpening($newStart, true, false) < $newEnd.pos)
+  function looksLikeBackspace(old, start, end, $newStart, $newEnd) {
+    if (
+      // The content must have shrunk
+      end - start <= $newEnd.pos - $newStart.pos || // newEnd must point directly at or after the end of the block that newStart points into
+      skipClosingAndOpening($newStart, true, false) < $newEnd.pos
+    )
       return false;
     let $start = old.resolve(start);
+    if (!$newStart.parent.isTextblock) {
+      let after = $start.nodeAfter;
+      return after != null && end == start + after.nodeSize;
+    }
     if ($start.parentOffset < $start.parent.content.size || !$start.parent.isTextblock)
       return false;
     let $next = old.resolve(skipClosingAndOpening($start, true, true));
@@ -20693,8 +20745,10 @@ var __publicField = (obj, key, value) => {
         let forceSelUpdate = updateDoc && (ie$1 || chrome) && !this.composing && !prev.selection.empty && !state.selection.empty && selectionContextChanged(prev.selection, state.selection);
         if (updateDoc) {
           let chromeKludge = chrome ? this.trackWrites = this.domSelectionRange().focusNode : null;
+          if (this.composing)
+            this.input.compositionNode = findCompositionNode(this);
           if (redraw || !this.docView.update(state.doc, outerDeco, innerDeco, this)) {
-            this.docView.updateOuterDeco([]);
+            this.docView.updateOuterDeco(outerDeco);
             this.docView.destroy();
             this.docView = docViewDesc(state.doc, outerDeco, innerDeco, this.dom, this);
           }
@@ -20954,6 +21008,7 @@ var __publicField = (obj, key, value) => {
       }
       this.docView.destroy();
       this.docView = null;
+      clearReusedRange();
     }
     /**
     This is true when the view has been
@@ -21295,6 +21350,49 @@ var __publicField = (obj, key, value) => {
     }
     return false;
   };
+  const joinTextblockBackward$1 = (state, dispatch, view) => {
+    let $cursor = atBlockStart(state, view);
+    if (!$cursor)
+      return false;
+    let $cut = findCutBefore($cursor);
+    return $cut ? joinTextblocksAround(state, $cut, dispatch) : false;
+  };
+  const joinTextblockForward$1 = (state, dispatch, view) => {
+    let $cursor = atBlockEnd(state, view);
+    if (!$cursor)
+      return false;
+    let $cut = findCutAfter($cursor);
+    return $cut ? joinTextblocksAround(state, $cut, dispatch) : false;
+  };
+  function joinTextblocksAround(state, $cut, dispatch) {
+    let before = $cut.nodeBefore, beforeText = before, beforePos = $cut.pos - 1;
+    for (; !beforeText.isTextblock; beforePos--) {
+      if (beforeText.type.spec.isolating)
+        return false;
+      let child = beforeText.lastChild;
+      if (!child)
+        return false;
+      beforeText = child;
+    }
+    let after = $cut.nodeAfter, afterText = after, afterPos = $cut.pos + 1;
+    for (; !afterText.isTextblock; afterPos++) {
+      if (afterText.type.spec.isolating)
+        return false;
+      let child = afterText.firstChild;
+      if (!child)
+        return false;
+      afterText = child;
+    }
+    let step = replaceStep(state.doc, beforePos, afterPos, Slice.empty);
+    if (!step || step.from != beforePos || step instanceof ReplaceStep && step.slice.size >= afterPos - beforePos)
+      return false;
+    if (dispatch) {
+      let tr2 = state.tr.step(step);
+      tr2.setSelection(TextSelection.create(tr2.doc, beforePos));
+      dispatch(tr2.scrollIntoView());
+    }
+    return true;
+  }
   function textblockAt(node2, side, only = false) {
     for (let scan = node2; scan; scan = side == "start" ? scan.firstChild : scan.lastChild) {
       if (scan.isTextblock)
@@ -21758,7 +21856,6 @@ var __publicField = (obj, key, value) => {
       ...state,
       apply: state.apply.bind(state),
       applyTransaction: state.applyTransaction.bind(state),
-      filterTransaction: state.filterTransaction,
       plugins: state.plugins,
       schema: state.schema,
       reconfigure: state.reconfigure.bind(state),
@@ -22402,11 +22499,11 @@ var __publicField = (obj, key, value) => {
       this.handler = config.handler;
     }
   }
-  const pasteRuleMatcherHandler = (text2, find2) => {
+  const pasteRuleMatcherHandler = (text2, find2, event) => {
     if (isRegExp(find2)) {
       return [...text2.matchAll(find2)];
     }
-    const matches2 = find2(text2);
+    const matches2 = find2(text2, event);
     if (!matches2) {
       return [];
     }
@@ -22438,7 +22535,7 @@ var __publicField = (obj, key, value) => {
       const resolvedFrom = Math.max(from2, pos);
       const resolvedTo = Math.min(to, pos + node2.content.size);
       const textToMatch = node2.textBetween(resolvedFrom - pos, resolvedTo - pos, void 0, "￼");
-      const matches2 = pasteRuleMatcherHandler(textToMatch, rule.find);
+      const matches2 = pasteRuleMatcherHandler(textToMatch, rule.find, pasteEvent);
       matches2.forEach((match) => {
         if (match.index === void 0) {
           return;
@@ -22470,8 +22567,8 @@ var __publicField = (obj, key, value) => {
     let dragSourceElement = null;
     let isPastedFromProseMirror = false;
     let isDroppedFromProseMirror = false;
-    let pasteEvent = new ClipboardEvent("paste");
-    let dropEvent = new DragEvent("drop");
+    let pasteEvent = typeof ClipboardEvent !== "undefined" ? new ClipboardEvent("paste") : null;
+    let dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
     const plugins = rules.map((rule) => {
       return new Plugin({
         // we register a global drag handler to track the current drag source element
@@ -22532,8 +22629,8 @@ var __publicField = (obj, key, value) => {
           if (!handler || !tr2.steps.length) {
             return;
           }
-          dropEvent = new DragEvent("drop");
-          pasteEvent = new ClipboardEvent("paste");
+          dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
+          pasteEvent = typeof ClipboardEvent !== "undefined" ? new ClipboardEvent("paste") : null;
           return tr2;
         }
       });
@@ -22784,7 +22881,7 @@ var __publicField = (obj, key, value) => {
         ...config
       };
       this.name = this.config.name;
-      if (config.defaultOptions) {
+      if (config.defaultOptions && Object.keys(config.defaultOptions).length > 0) {
         console.warn(`[tiptap warn]: BREAKING CHANGE: "defaultOptions" is deprecated. Please use "addOptions" instead. Found in extension: "${this.name}".`);
       }
       this.options = this.config.defaultOptions;
@@ -22811,7 +22908,7 @@ var __publicField = (obj, key, value) => {
       return extension2;
     }
     extend(extendedConfig = {}) {
-      const extension2 = new Extension(extendedConfig);
+      const extension2 = new Extension({ ...this.config, ...extendedConfig });
       extension2.parent = this;
       this.child = extension2;
       extension2.name = extendedConfig.name ? extendedConfig.name : extension2.parent.name;
@@ -23164,9 +23261,22 @@ var __publicField = (obj, key, value) => {
   const insertContent = (value, options) => ({ tr: tr2, commands: commands2 }) => {
     return commands2.insertContentAt({ from: tr2.selection.from, to: tr2.selection.to }, value, options);
   };
+  const removeWhitespaces = (node2) => {
+    const children = node2.childNodes;
+    for (let i2 = children.length - 1; i2 >= 0; i2 -= 1) {
+      const child = children[i2];
+      if (child.nodeType === 3 && child.nodeValue && /^(\n\s\s|\n)$/.test(child.nodeValue)) {
+        node2.removeChild(child);
+      } else if (child.nodeType === 1) {
+        removeWhitespaces(child);
+      }
+    }
+    return node2;
+  };
   function elementFromString(value) {
     const wrappedValue = `<body>${value}</body>`;
-    return new window.DOMParser().parseFromString(wrappedValue, "text/html").body;
+    const html2 = new window.DOMParser().parseFromString(wrappedValue, "text/html").body;
+    return removeWhitespaces(html2);
   }
   function createNodeFromContent(content2, schema, options) {
     options = {
@@ -23303,6 +23413,12 @@ var __publicField = (obj, key, value) => {
     } catch (e) {
       return false;
     }
+  };
+  const joinTextblockBackward = () => ({ state, dispatch }) => {
+    return joinTextblockBackward$1(state, dispatch);
+  };
+  const joinTextblockForward = () => ({ state, dispatch }) => {
+    return joinTextblockForward$1(state, dispatch);
   };
   function isMacOS() {
     return typeof navigator !== "undefined" ? /Mac/.test(navigator.platform) : false;
@@ -23690,6 +23806,9 @@ var __publicField = (obj, key, value) => {
       });
     } else {
       doc2.nodesBetween(from2, to, (node2, pos) => {
+        if (!node2 || (node2 === null || node2 === void 0 ? void 0 : node2.nodeSize) === void 0) {
+          return;
+        }
         marks.push(...node2.marks.map((mark2) => ({
           from: pos,
           to: pos + node2.nodeSize,
@@ -24314,6 +24433,8 @@ var __publicField = (obj, key, value) => {
     joinForward,
     joinItemBackward,
     joinItemForward,
+    joinTextblockBackward,
+    joinTextblockForward,
     keyboardShortcut,
     lift,
     liftEmptyBlock,
@@ -24525,6 +24646,176 @@ var __publicField = (obj, key, value) => {
     Keymap,
     Tabindex
   });
+  class NodePos {
+    constructor(pos, editor2, isBlock = false, node2 = null) {
+      this.currentNode = null;
+      this.actualDepth = null;
+      this.isBlock = isBlock;
+      this.resolvedPos = pos;
+      this.editor = editor2;
+      this.currentNode = node2;
+    }
+    get name() {
+      return this.node.type.name;
+    }
+    get node() {
+      return this.currentNode || this.resolvedPos.node();
+    }
+    get element() {
+      return this.editor.view.domAtPos(this.pos).node;
+    }
+    get depth() {
+      var _a;
+      return (_a = this.actualDepth) !== null && _a !== void 0 ? _a : this.resolvedPos.depth;
+    }
+    get pos() {
+      return this.resolvedPos.pos;
+    }
+    get content() {
+      return this.node.content;
+    }
+    set content(content2) {
+      let from2 = this.from;
+      let to = this.to;
+      if (this.isBlock) {
+        if (this.content.size === 0) {
+          console.error(`You can’t set content on a block node. Tried to set content on ${this.name} at ${this.pos}`);
+          return;
+        }
+        from2 = this.from + 1;
+        to = this.to - 1;
+      }
+      this.editor.commands.insertContentAt({ from: from2, to }, content2);
+    }
+    get attributes() {
+      return this.node.attrs;
+    }
+    get textContent() {
+      return this.node.textContent;
+    }
+    get size() {
+      return this.node.nodeSize;
+    }
+    get from() {
+      if (this.isBlock) {
+        return this.pos;
+      }
+      return this.resolvedPos.start(this.resolvedPos.depth);
+    }
+    get range() {
+      return {
+        from: this.from,
+        to: this.to
+      };
+    }
+    get to() {
+      if (this.isBlock) {
+        return this.pos + this.size;
+      }
+      return this.resolvedPos.end(this.resolvedPos.depth) + (this.node.isText ? 0 : 1);
+    }
+    get parent() {
+      if (this.depth === 0) {
+        return null;
+      }
+      const parentPos = this.resolvedPos.start(this.resolvedPos.depth - 1);
+      const $pos = this.resolvedPos.doc.resolve(parentPos);
+      return new NodePos($pos, this.editor);
+    }
+    get before() {
+      let $pos = this.resolvedPos.doc.resolve(this.from - (this.isBlock ? 1 : 2));
+      if ($pos.depth !== this.depth) {
+        $pos = this.resolvedPos.doc.resolve(this.from - 3);
+      }
+      return new NodePos($pos, this.editor);
+    }
+    get after() {
+      let $pos = this.resolvedPos.doc.resolve(this.to + (this.isBlock ? 2 : 1));
+      if ($pos.depth !== this.depth) {
+        $pos = this.resolvedPos.doc.resolve(this.to + 3);
+      }
+      return new NodePos($pos, this.editor);
+    }
+    get children() {
+      const children = [];
+      this.node.content.forEach((node2, offset) => {
+        const isBlock = node2.isBlock && !node2.isTextblock;
+        const targetPos = this.pos + offset + (isBlock ? 0 : 1);
+        const $pos = this.resolvedPos.doc.resolve(targetPos);
+        if (!isBlock && $pos.depth <= this.depth) {
+          return;
+        }
+        const childNodePos = new NodePos($pos, this.editor, isBlock, isBlock ? node2 : null);
+        if (isBlock) {
+          childNodePos.actualDepth = this.depth + 1;
+        }
+        children.push(new NodePos($pos, this.editor, isBlock, isBlock ? node2 : null));
+      });
+      return children;
+    }
+    get firstChild() {
+      return this.children[0] || null;
+    }
+    get lastChild() {
+      const children = this.children;
+      return children[children.length - 1] || null;
+    }
+    closest(selector, attributes = {}) {
+      let node2 = null;
+      let currentNode = this.parent;
+      while (currentNode && !node2) {
+        if (currentNode.node.type.name === selector) {
+          if (Object.keys(attributes).length > 0) {
+            const nodeAttributes2 = currentNode.node.attrs;
+            const attrKeys = Object.keys(attributes);
+            for (let index2 = 0; index2 < attrKeys.length; index2 += 1) {
+              const key2 = attrKeys[index2];
+              if (nodeAttributes2[key2] !== attributes[key2]) {
+                break;
+              }
+            }
+          } else {
+            node2 = currentNode;
+          }
+        }
+        currentNode = currentNode.parent;
+      }
+      return node2;
+    }
+    querySelector(selector, attributes = {}) {
+      return this.querySelectorAll(selector, attributes, true)[0] || null;
+    }
+    querySelectorAll(selector, attributes = {}, firstItemOnly = false) {
+      let nodes = [];
+      if (this.isBlock || !this.children || this.children.length === 0) {
+        return nodes;
+      }
+      this.children.forEach((childPos) => {
+        if (childPos.node.type.name === selector) {
+          if (Object.keys(attributes).length > 0) {
+            const nodeAttributes2 = childPos.node.attrs;
+            const attrKeys = Object.keys(attributes);
+            for (let index2 = 0; index2 < attrKeys.length; index2 += 1) {
+              const key2 = attrKeys[index2];
+              if (nodeAttributes2[key2] !== attributes[key2]) {
+                return;
+              }
+            }
+          }
+          nodes.push(childPos);
+          if (firstItemOnly) {
+            return;
+          }
+        }
+        nodes = nodes.concat(childPos.querySelectorAll(selector));
+      });
+      return nodes;
+    }
+    setAttribute(attributes) {
+      const oldSelection = this.editor.state.selection;
+      this.editor.chain().setTextSelection(this.from).updateAttributes(this.node.type.name, attributes).setTextSelection(oldSelection.from).run();
+    }
+  }
   const style = `.ProseMirror {
   position: relative;
 }
@@ -24958,6 +25249,21 @@ img.ProseMirror-separator {
       var _a;
       return !((_a = this.view) === null || _a === void 0 ? void 0 : _a.docView);
     }
+    $node(selector, attributes) {
+      var _a;
+      return ((_a = this.$doc) === null || _a === void 0 ? void 0 : _a.querySelector(selector, attributes)) || null;
+    }
+    $nodes(selector, attributes) {
+      var _a;
+      return ((_a = this.$doc) === null || _a === void 0 ? void 0 : _a.querySelectorAll(selector, attributes)) || null;
+    }
+    $pos(pos) {
+      const $pos = this.state.doc.resolve(pos);
+      return new NodePos($pos, this);
+    }
+    get $doc() {
+      return this.$pos(0);
+    }
   }
   function markInputRule(config) {
     return new InputRule({
@@ -24994,6 +25300,33 @@ img.ProseMirror-separator {
       }
     });
   }
+  function nodeInputRule(config) {
+    return new InputRule({
+      find: config.find,
+      handler: ({ state, range, match }) => {
+        const attributes = callOrReturn(config.getAttributes, void 0, match) || {};
+        const { tr: tr2 } = state;
+        const start = range.from;
+        let end = range.to;
+        const newNode = config.type.create(attributes);
+        if (match[1]) {
+          const offset = match[0].lastIndexOf(match[1]);
+          let matchStart = start + offset;
+          if (matchStart > end) {
+            matchStart = end;
+          } else {
+            end = matchStart + match[1].length;
+          }
+          const lastChar = match[0][match[0].length - 1];
+          tr2.insertText(lastChar, start + match[0].length - 1);
+          tr2.replaceWith(matchStart, end, newNode);
+        } else if (match[0]) {
+          tr2.insert(start - 1, config.type.create(attributes)).delete(tr2.mapping.map(start), tr2.mapping.map(end));
+        }
+        tr2.scrollIntoView();
+      }
+    });
+  }
   class Mark {
     constructor(config = {}) {
       this.type = "mark";
@@ -25009,7 +25342,7 @@ img.ProseMirror-separator {
         ...config
       };
       this.name = this.config.name;
-      if (config.defaultOptions) {
+      if (config.defaultOptions && Object.keys(config.defaultOptions).length > 0) {
         console.warn(`[tiptap warn]: BREAKING CHANGE: "defaultOptions" is deprecated. Please use "addOptions" instead. Found in extension: "${this.name}".`);
       }
       this.options = this.config.defaultOptions;
@@ -25036,7 +25369,7 @@ img.ProseMirror-separator {
       return extension2;
     }
     extend(extendedConfig = {}) {
-      const extension2 = new Mark(extendedConfig);
+      const extension2 = new Mark({ ...this.config, ...extendedConfig });
       extension2.parent = this;
       this.child = extension2;
       extension2.name = extendedConfig.name ? extendedConfig.name : extension2.parent.name;
@@ -25088,7 +25421,7 @@ img.ProseMirror-separator {
         ...config
       };
       this.name = this.config.name;
-      if (config.defaultOptions) {
+      if (config.defaultOptions && Object.keys(config.defaultOptions).length > 0) {
         console.warn(`[tiptap warn]: BREAKING CHANGE: "defaultOptions" is deprecated. Please use "addOptions" instead. Found in extension: "${this.name}".`);
       }
       this.options = this.config.defaultOptions;
@@ -25115,7 +25448,7 @@ img.ProseMirror-separator {
       return extension2;
     }
     extend(extendedConfig = {}) {
-      const extension2 = new Node(extendedConfig);
+      const extension2 = new Node({ ...this.config, ...extendedConfig });
       extension2.parent = this;
       this.child = extension2;
       extension2.name = extendedConfig.name ? extendedConfig.name : extension2.parent.name;
@@ -25595,6 +25928,7 @@ img.ProseMirror-separator {
       const columnNodes = [];
       for (const cell2 of row2.cells) {
         let pNode;
+        let cellAttrs = {};
         if (!cell2) {
           const contentNode = schema.nodes["paragraph"].create({});
           const containerNode = schema.nodes["blockContainer"].create(
@@ -25618,13 +25952,16 @@ img.ProseMirror-separator {
             const node2 = blockToNode(content2, schema, styleSchema);
             nodes.push(node2);
           }
-          pNode = schema.nodes["tableParagraph"].create({}, nodes);
+          const firstItem = cell2[0];
+          const { colspan, rowspan, colwidth } = (firstItem == null ? void 0 : firstItem.props) ?? {};
+          cellAttrs = { colspan, rowspan, colwidth };
+          pNode = schema.nodes["tableParagraph"].create(cellAttrs, nodes);
         }
         let cellNode;
         if (i2 === 0) {
-          cellNode = schema.nodes["tableHeader"].create({}, pNode);
+          cellNode = schema.nodes["tableHeader"].create(cellAttrs, pNode);
         } else {
-          cellNode = schema.nodes["tableCell"].create({}, pNode);
+          cellNode = schema.nodes["tableCell"].create(cellAttrs, pNode);
         }
         columnNodes.push(cellNode);
       }
@@ -25697,6 +26034,7 @@ img.ProseMirror-separator {
       rowNode.content.forEach((cellNode) => {
         if (cellNode == null ? void 0 : cellNode.content) {
           const contentBlocks = [];
+          const cellAttrs = cellNode.attrs;
           cellNode.content.forEach((node2) => {
             node2.content.forEach((childNode) => {
               const block2 = nodeToBlock(
@@ -25706,6 +26044,7 @@ img.ProseMirror-separator {
                 styleSchema,
                 blockCache
               );
+              block2.props = { ...block2.props, ...cellAttrs };
               contentBlocks.push(block2);
             });
           });
@@ -26681,6 +27020,7 @@ img.ProseMirror-separator {
     return block2;
   }
   function wrapInBlockStructure(element2, blockType, blockProps, propSchema, domAttributes) {
+    var _a;
     const blockContent = document.createElement("div");
     if (domAttributes !== void 0) {
       for (const [attr, value] of Object.entries(domAttributes)) {
@@ -26695,7 +27035,7 @@ img.ProseMirror-separator {
     );
     blockContent.setAttribute("data-content-type", blockType);
     for (const [prop, value] of Object.entries(blockProps)) {
-      if (!inheritedProps.includes(prop) && value !== propSchema[prop].default) {
+      if (!inheritedProps.includes(prop) && ((_a = propSchema[prop]) == null ? void 0 : _a.default) && value !== propSchema[prop].default) {
         blockContent.setAttribute(camelToDataKebab(prop), value);
       }
     }
@@ -26816,6 +27156,19 @@ img.ProseMirror-separator {
             handler(props) {
               rule.handler(props);
             }
+          });
+        });
+      },
+      addInputRules() {
+        var _a;
+        if (!blockImplementation.inputRules) {
+          return [];
+        }
+        return (_a = blockImplementation.inputRules) == null ? void 0 : _a.map((rule) => {
+          return nodeInputRule({
+            find: rule.find,
+            type: this.type,
+            getAttributes: rule.getAttributes
           });
         });
       }
@@ -35781,7 +36134,7 @@ img.ProseMirror-separator {
               state.doc,
               state.selection.from
             );
-            const text2 = ((_a = pasteEvent.clipboardData) == null ? void 0 : _a.getData("text")) || "";
+            const text2 = ((_a = pasteEvent == null ? void 0 : pasteEvent.clipboardData) == null ? void 0 : _a.getData("text")) || "";
             if (text2) {
               parseMardown(text2, this.editor, {
                 state,
@@ -38137,6 +38490,8 @@ img.ProseMirror-separator {
       updateHandle(view, -1);
   }
   function handleMouseDown2(view, event, cellMinWidth) {
+    var _a;
+    const win = (_a = view.dom.ownerDocument.defaultView) != null ? _a : window;
     const pluginState = columnResizingPluginKey.getState(view.state);
     if (!pluginState || pluginState.activeHandle == -1 || pluginState.dragging)
       return false;
@@ -38148,8 +38503,8 @@ img.ProseMirror-separator {
       })
     );
     function finish(event2) {
-      window.removeEventListener("mouseup", finish);
-      window.removeEventListener("mousemove", move);
+      win.removeEventListener("mouseup", finish);
+      win.removeEventListener("mousemove", move);
       const pluginState2 = columnResizingPluginKey.getState(view.state);
       if (pluginState2 == null ? void 0 : pluginState2.dragging) {
         updateColumnWidth(
@@ -38173,8 +38528,8 @@ img.ProseMirror-separator {
         displayColumnWidth(view, pluginState2.activeHandle, dragged, cellMinWidth);
       }
     }
-    window.addEventListener("mouseup", finish);
-    window.addEventListener("mousemove", move);
+    win.addEventListener("mouseup", finish);
+    win.addEventListener("mousemove", move);
     event.preventDefault();
     return true;
   }
@@ -43296,6 +43651,8 @@ img.ProseMirror-separator {
     let contentType = editor2.blockSchema[block2.type].content;
     while (contentType === "none") {
       block2 = editor2.getTextCursorPosition().nextBlock;
+      if (!block2)
+        break;
       contentType = editor2.blockSchema[block2.type].content;
       editor2.setTextCursorPosition(block2, "end");
     }
@@ -43983,31 +44340,48 @@ img.ProseMirror-separator {
     return false;
   };
   const isArray = Array.isArray;
-  class Observable {
+  class ObservableV2 {
     constructor() {
       this._observers = create$5();
     }
     /**
-     * @param {N} name
-     * @param {function} f
+     * @template {keyof EVENTS & string} NAME
+     * @param {NAME} name
+     * @param {EVENTS[NAME]} f
      */
     on(name, f) {
-      setIfUndefined(this._observers, name, create$4).add(f);
+      setIfUndefined(
+        this._observers,
+        /** @type {string} */
+        name,
+        create$4
+      ).add(f);
+      return f;
     }
     /**
-     * @param {N} name
-     * @param {function} f
+     * @template {keyof EVENTS & string} NAME
+     * @param {NAME} name
+     * @param {EVENTS[NAME]} f
      */
     once(name, f) {
       const _f = (...args) => {
-        this.off(name, _f);
+        this.off(
+          name,
+          /** @type {any} */
+          _f
+        );
         f(...args);
       };
-      this.on(name, _f);
+      this.on(
+        name,
+        /** @type {any} */
+        _f
+      );
     }
     /**
-     * @param {N} name
-     * @param {function} f
+     * @template {keyof EVENTS & string} NAME
+     * @param {NAME} name
+     * @param {EVENTS[NAME]} f
      */
     off(name, f) {
       const observers = this._observers.get(name);
@@ -44024,8 +44398,9 @@ img.ProseMirror-separator {
      *
      * @todo This should catch exceptions
      *
-     * @param {N} name The event name.
-     * @param {Array<any>} args The arguments that are applied to the event listener.
+     * @template {keyof EVENTS & string} NAME
+     * @param {NAME} name The event name.
+     * @param {Parameters<EVENTS[NAME]>} args The arguments that are applied to the event listener.
      */
     emit(name, args) {
       return from((this._observers.get(name) || create$5()).values()).forEach((f) => f(...args));
@@ -44511,7 +44886,7 @@ img.ProseMirror-separator {
     return params;
   };
   const hasParam = (name) => computeParams().has(name);
-  const getVariable = (name) => isNode ? undefinedToNull(process.env[name.toUpperCase()]) : undefinedToNull(varStorage.getItem(name));
+  const getVariable = (name) => isNode ? undefinedToNull(process.env[name.toUpperCase().replaceAll("-", "_")]) : undefinedToNull(varStorage.getItem(name));
   const hasConf = (name) => hasParam("--" + name) || getVariable(name) !== null;
   hasConf("production");
   const forceColor = isNode && isOneOf(process.env.FORCE_COLOR, ["true", "1", "2"]);
@@ -44557,11 +44932,19 @@ img.ProseMirror-separator {
   const ORANGE = create();
   const UNCOLOR = create();
   const computeNoColorLoggingArgs = (args) => {
+    var _a;
+    if (args.length === 1 && ((_a = args[0]) == null ? void 0 : _a.constructor) === Function) {
+      args = /** @type {Array<string|Symbol|Object|number>} */
+      /** @type {[function]} */
+      args[0]();
+    }
     const logArgs = [];
     let i2 = 0;
     for (; i2 < args.length; i2++) {
       const arg = args[i2];
-      if (arg.constructor === String || arg.constructor === Number)
+      if (arg === void 0)
+        ;
+      else if (arg.constructor === String || arg.constructor === Number)
         ;
       else if (arg.constructor === Object) {
         logArgs.push(JSON.stringify(arg));
@@ -44582,6 +44965,12 @@ img.ProseMirror-separator {
     [UNCOLOR]: create$1("color", "black")
   };
   const computeBrowserLoggingArgs = (args) => {
+    var _a;
+    if (args.length === 1 && ((_a = args[0]) == null ? void 0 : _a.constructor) === Function) {
+      args = /** @type {Array<string|Symbol|Object|number>} */
+      /** @type {[function]} */
+      args[0]();
+    }
     const strBuilder = [];
     const styles = [];
     const currentStyle = create$5();
@@ -44593,6 +44982,9 @@ img.ProseMirror-separator {
       if (style2 !== void 0) {
         currentStyle.set(style2.left, style2.right);
       } else {
+        if (arg === void 0) {
+          break;
+        }
         if (arg.constructor === String || arg.constructor === Number) {
           const style3 = mapToStyleString(currentStyle);
           if (i2 > 0 || style3.length > 0) {
@@ -44777,7 +45169,7 @@ img.ProseMirror-separator {
     });
   };
   const generateNewClientId = uint32;
-  let Doc$1 = class Doc2 extends Observable {
+  let Doc$1 = class Doc2 extends ObservableV2 {
     /**
      * @param {DocOpts} opts configuration
      */
@@ -44820,7 +45212,7 @@ img.ProseMirror-separator {
         }
         this.isSynced = isSynced === void 0 || isSynced === true;
         if (this.isSynced && !this.isLoaded) {
-          this.emit("load", []);
+          this.emit("load", [this]);
         }
       });
       this.whenSynced = provideSyncedPromise();
@@ -44882,6 +45274,7 @@ img.ProseMirror-separator {
      * Define all types right after the Yjs instance is created and store them in a separate object.
      * Also use the typed methods `getText(name)`, `getArray(name)`, ..
      *
+     * @template {typeof AbstractType<any>} Type
      * @example
      *   const y = new Y(..)
      *   const appState = {
@@ -44890,12 +45283,15 @@ img.ProseMirror-separator {
      *   }
      *
      * @param {string} name
-     * @param {Function} TypeConstructor The constructor of the type definition. E.g. Y.Text, Y.Array, Y.Map, ...
-     * @return {AbstractType<any>} The created type. Constructed with TypeConstructor
+     * @param {Type} TypeConstructor The constructor of the type definition. E.g. Y.Text, Y.Array, Y.Map, ...
+     * @return {InstanceType<Type>} The created type. Constructed with TypeConstructor
      *
      * @public
      */
-    get(name, TypeConstructor = AbstractType) {
+    get(name, TypeConstructor = (
+      /** @type {any} */
+      AbstractType
+    )) {
       const type = setIfUndefined(this.share, name, () => {
         const t = new TypeConstructor();
         t._integrate(this, null);
@@ -44921,12 +45317,18 @@ img.ProseMirror-separator {
           t._length = type._length;
           this.share.set(name, t);
           t._integrate(this, null);
-          return t;
+          return (
+            /** @type {InstanceType<Type>} */
+            t
+          );
         } else {
           throw new Error(`Type with the name ${name} has already been defined with a different constructor`);
         }
       }
-      return type;
+      return (
+        /** @type {InstanceType<Type>} */
+        type
+      );
     }
     /**
      * @template T
@@ -44936,7 +45338,10 @@ img.ProseMirror-separator {
      * @public
      */
     getArray(name = "") {
-      return this.get(name, YArray);
+      return (
+        /** @type {YArray<T>} */
+        this.get(name, YArray)
+      );
     }
     /**
      * @param {string} [name]
@@ -44955,7 +45360,22 @@ img.ProseMirror-separator {
      * @public
      */
     getMap(name = "") {
-      return this.get(name, YMap);
+      return (
+        /** @type {YMap<T>} */
+        this.get(name, YMap)
+      );
+    }
+    /**
+     * @param {string} [name]
+     * @return {YXmlElement}
+     *
+     * @public
+     */
+    getXmlElement(name = "") {
+      return (
+        /** @type {YXmlElement<{[key:string]:string}>} */
+        this.get(name, YXmlElement)
+      );
     }
     /**
      * @param {string} [name]
@@ -45012,20 +45432,6 @@ img.ProseMirror-separator {
       this.emit("destroyed", [true]);
       this.emit("destroy", [this]);
       super.destroy();
-    }
-    /**
-     * @param {string} eventName
-     * @param {function(...any):any} f
-     */
-    on(eventName, f) {
-      super.on(eventName, f);
-    }
-    /**
-     * @param {string} eventName
-     * @param {function} f
-     */
-    off(eventName, f) {
-      super.off(eventName, f);
     }
   };
   class DSEncoderV1 {
@@ -45879,12 +46285,11 @@ img.ProseMirror-separator {
     });
   };
   const popStackItem = (undoManager, stack, eventType) => {
-    let result = null;
     let _tr = null;
     const doc2 = undoManager.doc;
     const scope = undoManager.scope;
     transact(doc2, (transaction) => {
-      while (stack.length > 0 && result === null) {
+      while (stack.length > 0 && undoManager.currStackItem === null) {
         const store = doc2.store;
         const stackItem = (
           /** @type {StackItem} */
@@ -45927,7 +46332,7 @@ img.ProseMirror-separator {
             performedChange = true;
           }
         }
-        result = performedChange ? stackItem : null;
+        undoManager.currStackItem = performedChange ? stackItem : null;
       }
       transaction.changed.forEach((subProps, type) => {
         if (subProps.has(null) && type._searchMarker) {
@@ -45936,13 +46341,14 @@ img.ProseMirror-separator {
       });
       _tr = transaction;
     }, undoManager);
-    if (result != null) {
+    if (undoManager.currStackItem != null) {
       const changedParentTypes = _tr.changedParentTypes;
-      undoManager.emit("stack-item-popped", [{ stackItem: result, type: eventType, changedParentTypes }, undoManager]);
+      undoManager.emit("stack-item-popped", [{ stackItem: undoManager.currStackItem, type: eventType, changedParentTypes, origin: undoManager }, undoManager]);
+      undoManager.currStackItem = null;
     }
-    return result;
+    return undoManager.currStackItem;
   };
-  class UndoManager extends Observable {
+  class UndoManager extends ObservableV2 {
     /**
      * @param {AbstractType<any>|Array<AbstractType<any>>} typeScope Accepts either a single type, or an array of types
      * @param {UndoManagerOptions} options
@@ -45970,6 +46376,7 @@ img.ProseMirror-separator {
       this.redoStack = [];
       this.undoing = false;
       this.redoing = false;
+      this.currStackItem = null;
       this.lastChange = 0;
       this.ignoreRemoteMapChanges = ignoreRemoteMapChanges;
       this.captureTimeout = captureTimeout;
@@ -47467,9 +47874,9 @@ img.ProseMirror-separator {
     }
     return pos;
   };
-  const findPosition = (transaction, parent, index2) => {
+  const findPosition = (transaction, parent, index2, useSearchMarker) => {
     const currentAttributes = /* @__PURE__ */ new Map();
-    const marker = findMarker(parent, index2);
+    const marker = useSearchMarker ? findMarker(parent, index2) : null;
     if (marker) {
       const pos = new ItemTextListPosition(marker.p.left, marker.p, marker.index, currentAttributes);
       return findNextPosition(transaction, pos, index2 - marker.index);
@@ -47522,7 +47929,7 @@ img.ProseMirror-separator {
         attributes[
           /** @type {ContentFormat} */
           currPos.right.content.key
-        ] || null,
+        ] ?? null,
         /** @type {ContentFormat} */
         currPos.right.content.value
       ))
@@ -47539,7 +47946,7 @@ img.ProseMirror-separator {
     const negatedAttributes = /* @__PURE__ */ new Map();
     for (const key2 in attributes) {
       const val = attributes[key2];
-      const currentVal = currPos.currentAttributes.get(key2) || null;
+      const currentVal = currPos.currentAttributes.get(key2) ?? null;
       if (!equalAttrs$1(currentVal, val)) {
         negatedAttributes.set(key2, currentVal);
         const { left, right } = currPos;
@@ -47653,11 +48060,11 @@ img.ProseMirror-separator {
               /** @type {ContentFormat} */
               content2
             );
-            const startAttrValue = startAttributes.get(key2) || null;
+            const startAttrValue = startAttributes.get(key2) ?? null;
             if (endFormats.get(key2) !== content2 || startAttrValue === value) {
               start.delete(transaction);
               cleanups++;
-              if (!reachedCurr && (currAttributes.get(key2) || null) === value && startAttrValue !== value) {
+              if (!reachedCurr && (currAttributes.get(key2) ?? null) === value && startAttrValue !== value) {
                 if (startAttrValue === null) {
                   currAttributes.delete(key2);
                 } else {
@@ -47974,12 +48381,12 @@ img.ProseMirror-separator {
                 );
                 if (this.adds(item)) {
                   if (!this.deletes(item)) {
-                    const curVal = currentAttributes.get(key2) || null;
+                    const curVal = currentAttributes.get(key2) ?? null;
                     if (!equalAttrs$1(curVal, value)) {
                       if (action === "retain") {
                         addOp();
                       }
-                      if (equalAttrs$1(value, oldAttributes.get(key2) || null)) {
+                      if (equalAttrs$1(value, oldAttributes.get(key2) ?? null)) {
                         delete attributes[key2];
                       } else {
                         attributes[key2] = value;
@@ -47990,7 +48397,7 @@ img.ProseMirror-separator {
                   }
                 } else if (this.deletes(item)) {
                   oldAttributes.set(key2, value);
-                  const curVal = currentAttributes.get(key2) || null;
+                  const curVal = currentAttributes.get(key2) ?? null;
                   if (!equalAttrs$1(curVal, value)) {
                     if (action === "retain") {
                       addOp();
@@ -48288,7 +48695,7 @@ img.ProseMirror-separator {
       const y = this.doc;
       if (y !== null) {
         transact(y, (transaction) => {
-          const pos = findPosition(transaction, this, index2);
+          const pos = findPosition(transaction, this, index2, !attributes);
           if (!attributes) {
             attributes = {};
             pos.currentAttributes.forEach((v, k) => {
@@ -48306,20 +48713,20 @@ img.ProseMirror-separator {
      *
      * @param {number} index The index to insert the embed at.
      * @param {Object | AbstractType<any>} embed The Object that represents the embed.
-     * @param {TextAttributes} attributes Attribute information to apply on the
+     * @param {TextAttributes} [attributes] Attribute information to apply on the
      *                                    embed
      *
      * @public
      */
-    insertEmbed(index2, embed, attributes = {}) {
+    insertEmbed(index2, embed, attributes) {
       const y = this.doc;
       if (y !== null) {
         transact(y, (transaction) => {
-          const pos = findPosition(transaction, this, index2);
-          insertText(transaction, this, pos, embed, attributes);
+          const pos = findPosition(transaction, this, index2, !attributes);
+          insertText(transaction, this, pos, embed, attributes || {});
         });
       } else {
-        this._pending.push(() => this.insertEmbed(index2, embed, attributes));
+        this._pending.push(() => this.insertEmbed(index2, embed, attributes || {}));
       }
     }
     /**
@@ -48337,7 +48744,7 @@ img.ProseMirror-separator {
       const y = this.doc;
       if (y !== null) {
         transact(y, (transaction) => {
-          deleteText(transaction, findPosition(transaction, this, index2), length2);
+          deleteText(transaction, findPosition(transaction, this, index2, true), length2);
         });
       } else {
         this._pending.push(() => this.delete(index2, length2));
@@ -48360,7 +48767,7 @@ img.ProseMirror-separator {
       const y = this.doc;
       if (y !== null) {
         transact(y, (transaction) => {
-          const pos = findPosition(transaction, this, index2);
+          const pos = findPosition(transaction, this, index2, false);
           if (pos.right === null) {
             return;
           }
@@ -50491,7 +50898,7 @@ img.ProseMirror-separator {
     }
   } = {}) => {
     let changedInitialContent = false;
-    let rerenderTimeoutId;
+    let rerenderTimeout;
     const plugin = new Plugin({
       props: {
         editable: (state) => {
@@ -50501,7 +50908,10 @@ img.ProseMirror-separator {
       },
       key: ySyncPluginKey,
       state: {
-        init: (initargs, state) => {
+        /**
+         * @returns {any}
+         */
+        init: (_initargs, _state) => {
           return {
             type: yXmlFragment,
             doc: yXmlFragment.doc,
@@ -50509,6 +50919,8 @@ img.ProseMirror-separator {
             snapshot: null,
             prevSnapshot: null,
             isChangeOrigin: false,
+            isUndoRedoOperation: false,
+            addToHistory: true,
             colors,
             colorMapping,
             permanentUserData
@@ -50522,7 +50934,9 @@ img.ProseMirror-separator {
               pluginState[key2] = change[key2];
             }
           }
+          pluginState.addToHistory = tr2.getMeta("addToHistory") !== false;
           pluginState.isChangeOrigin = change !== void 0 && !!change.isChangeOrigin;
+          pluginState.isUndoRedoOperation = change !== void 0 && !!change.isChangeOrigin && !!change.isUndoRedoOperation;
           if (pluginState.binding !== null) {
             if (change !== void 0 && (change.snapshot != null || change.prevSnapshot != null)) {
               timeout(0, () => {
@@ -50530,13 +50944,25 @@ img.ProseMirror-separator {
                   return;
                 }
                 if (change.restore == null) {
-                  pluginState.binding._renderSnapshot(change.snapshot, change.prevSnapshot, pluginState);
+                  pluginState.binding._renderSnapshot(
+                    change.snapshot,
+                    change.prevSnapshot,
+                    pluginState
+                  );
                 } else {
-                  pluginState.binding._renderSnapshot(change.snapshot, change.snapshot, pluginState);
+                  pluginState.binding._renderSnapshot(
+                    change.snapshot,
+                    change.snapshot,
+                    pluginState
+                  );
                   delete pluginState.restore;
                   delete pluginState.snapshot;
                   delete pluginState.prevSnapshot;
-                  pluginState.binding._prosemirrorChanged(pluginState.binding.prosemirrorView.state.doc);
+                  pluginState.binding.mux(() => {
+                    pluginState.binding._prosemirrorChanged(
+                      pluginState.binding.prosemirrorView.state.doc
+                    );
+                  });
                 }
               });
             }
@@ -50546,10 +50972,10 @@ img.ProseMirror-separator {
       },
       view: (view) => {
         const binding = new ProsemirrorBinding(yXmlFragment, view);
-        if (rerenderTimeoutId != null) {
-          clearTimeout(rerenderTimeoutId);
+        if (rerenderTimeout != null) {
+          rerenderTimeout.destroy();
         }
-        rerenderTimeoutId = timeout(0, () => {
+        rerenderTimeout = timeout(0, () => {
           binding._forceRerender();
           view.dispatch(view.state.tr.setMeta(ySyncPluginKey, { binding }));
           onFirstRender();
@@ -50558,14 +50984,28 @@ img.ProseMirror-separator {
           update: () => {
             const pluginState = plugin.getState(view.state);
             if (pluginState.snapshot == null && pluginState.prevSnapshot == null) {
-              if (changedInitialContent || view.state.doc.content.findDiffStart(view.state.doc.type.createAndFill().content) !== null) {
+              if (changedInitialContent || view.state.doc.content.findDiffStart(
+                view.state.doc.type.createAndFill().content
+              ) !== null) {
                 changedInitialContent = true;
-                binding._prosemirrorChanged(view.state.doc);
+                if (pluginState.addToHistory === false && !pluginState.isChangeOrigin) {
+                  const yUndoPluginState = yUndoPluginKey.getState(view.state);
+                  const um = yUndoPluginState && yUndoPluginState.undoManager;
+                  if (um) {
+                    um.stopCapturing();
+                  }
+                }
+                binding.mux(() => {
+                  pluginState.doc.transact((tr2) => {
+                    tr2.meta.set("addToHistory", pluginState.addToHistory);
+                    binding._prosemirrorChanged(view.state.doc);
+                  }, ySyncPluginKey);
+                });
               }
             }
           },
           destroy: () => {
-            clearTimeout(rerenderTimeoutId);
+            rerenderTimeout.destroy();
             binding.destroy();
           }
         };
@@ -50575,16 +51015,34 @@ img.ProseMirror-separator {
   };
   const restoreRelativeSelection = (tr2, relSel, binding) => {
     if (relSel !== null && relSel.anchor !== null && relSel.head !== null) {
-      const anchor = relativePositionToAbsolutePosition(binding.doc, binding.type, relSel.anchor, binding.mapping);
-      const head2 = relativePositionToAbsolutePosition(binding.doc, binding.type, relSel.head, binding.mapping);
+      const anchor = relativePositionToAbsolutePosition(
+        binding.doc,
+        binding.type,
+        relSel.anchor,
+        binding.mapping
+      );
+      const head2 = relativePositionToAbsolutePosition(
+        binding.doc,
+        binding.type,
+        relSel.head,
+        binding.mapping
+      );
       if (anchor !== null && head2 !== null) {
         tr2 = tr2.setSelection(TextSelection.create(tr2.doc, anchor, head2));
       }
     }
   };
   const getRelativeSelection = (pmbinding, state) => ({
-    anchor: absolutePositionToRelativePosition(state.selection.anchor, pmbinding.type, pmbinding.mapping),
-    head: absolutePositionToRelativePosition(state.selection.head, pmbinding.type, pmbinding.mapping)
+    anchor: absolutePositionToRelativePosition(
+      state.selection.anchor,
+      pmbinding.type,
+      pmbinding.mapping
+    ),
+    head: absolutePositionToRelativePosition(
+      state.selection.head,
+      pmbinding.type,
+      pmbinding.mapping
+    )
   });
   class ProsemirrorBinding {
     /**
@@ -50602,7 +51060,10 @@ img.ProseMirror-separator {
       this.beforeTransactionSelection = null;
       this.beforeAllTransactions = () => {
         if (this.beforeTransactionSelection === null) {
-          this.beforeTransactionSelection = getRelativeSelection(this, prosemirrorView.state);
+          this.beforeTransactionSelection = getRelativeSelection(
+            this,
+            prosemirrorView.state
+          );
         }
       };
       this.afterAllTransactions = () => {
@@ -50647,22 +51108,34 @@ img.ProseMirror-separator {
       const documentElement = doc.documentElement;
       return bounding.bottom >= 0 && bounding.right >= 0 && bounding.left <= (window.innerWidth || documentElement.clientWidth || 0) && bounding.top <= (window.innerHeight || documentElement.clientHeight || 0);
     }
+    /**
+     * @param {Y.Snapshot} snapshot
+     * @param {Y.Snapshot} prevSnapshot
+     */
     renderSnapshot(snapshot2, prevSnapshot) {
       if (!prevSnapshot) {
         prevSnapshot = createSnapshot(createDeleteSet(), /* @__PURE__ */ new Map());
       }
-      this.prosemirrorView.dispatch(this._tr.setMeta(ySyncPluginKey, { snapshot: snapshot2, prevSnapshot }));
+      this.prosemirrorView.dispatch(
+        this._tr.setMeta(ySyncPluginKey, { snapshot: snapshot2, prevSnapshot })
+      );
     }
     unrenderSnapshot() {
       this.mapping = /* @__PURE__ */ new Map();
       this.mux(() => {
-        const fragmentContent = this.type.toArray().map((t) => createNodeFromYElement(
-          /** @type {Y.XmlElement} */
-          t,
-          this.prosemirrorView.state.schema,
-          this.mapping
-        )).filter((n) => n !== null);
-        const tr2 = this._tr.replace(0, this.prosemirrorView.state.doc.content.size, new Slice(new Fragment(fragmentContent), 0, 0));
+        const fragmentContent = this.type.toArray().map(
+          (t) => createNodeFromYElement(
+            /** @type {Y.XmlElement} */
+            t,
+            this.prosemirrorView.state.schema,
+            this.mapping
+          )
+        ).filter((n) => n !== null);
+        const tr2 = this._tr.replace(
+          0,
+          this.prosemirrorView.state.doc.content.size,
+          new Slice(Fragment.from(fragmentContent), 0, 0)
+        );
         tr2.setMeta(ySyncPluginKey, { snapshot: null, prevSnapshot: null });
         this.prosemirrorView.dispatch(tr2);
       });
@@ -50670,14 +51143,22 @@ img.ProseMirror-separator {
     _forceRerender() {
       this.mapping = /* @__PURE__ */ new Map();
       this.mux(() => {
-        const fragmentContent = this.type.toArray().map((t) => createNodeFromYElement(
-          /** @type {Y.XmlElement} */
-          t,
-          this.prosemirrorView.state.schema,
-          this.mapping
-        )).filter((n) => n !== null);
-        const tr2 = this._tr.replace(0, this.prosemirrorView.state.doc.content.size, new Slice(new Fragment(fragmentContent), 0, 0));
-        this.prosemirrorView.dispatch(tr2.setMeta(ySyncPluginKey, { isChangeOrigin: true }));
+        const fragmentContent = this.type.toArray().map(
+          (t) => createNodeFromYElement(
+            /** @type {Y.XmlElement} */
+            t,
+            this.prosemirrorView.state.schema,
+            this.mapping
+          )
+        ).filter((n) => n !== null);
+        const tr2 = this._tr.replace(
+          0,
+          this.prosemirrorView.state.doc.content.size,
+          new Slice(Fragment.from(fragmentContent), 0, 0)
+        );
+        this.prosemirrorView.dispatch(
+          tr2.setMeta(ySyncPluginKey, { isChangeOrigin: true })
+        );
       });
     }
     /**
@@ -50695,7 +51176,7 @@ img.ProseMirror-separator {
           const pud = pluginState.permanentUserData;
           if (pud) {
             pud.dss.forEach((ds) => {
-              iterateDeletedStructs(transaction, ds, (item) => {
+              iterateDeletedStructs(transaction, ds, (_item) => {
               });
             });
           }
@@ -50704,18 +51185,38 @@ img.ProseMirror-separator {
             return {
               user,
               type,
-              color: getUserColor(pluginState.colorMapping, pluginState.colors, user)
+              color: getUserColor(
+                pluginState.colorMapping,
+                pluginState.colors,
+                user
+              )
             };
           };
-          const fragmentContent = typeListToArraySnapshot(this.type, new Snapshot(prevSnapshot.ds, snapshot$1.sv)).map((t) => {
+          const fragmentContent = typeListToArraySnapshot(
+            this.type,
+            new Snapshot(prevSnapshot.ds, snapshot$1.sv)
+          ).map((t) => {
             if (!t._item.deleted || isVisible(t._item, snapshot$1) || isVisible(t._item, prevSnapshot)) {
-              return createNodeFromYElement(t, this.prosemirrorView.state.schema, /* @__PURE__ */ new Map(), snapshot$1, prevSnapshot, computeYChange);
+              return createNodeFromYElement(
+                t,
+                this.prosemirrorView.state.schema,
+                /* @__PURE__ */ new Map(),
+                snapshot$1,
+                prevSnapshot,
+                computeYChange
+              );
             } else {
               return null;
             }
           }).filter((n) => n !== null);
-          const tr2 = this._tr.replace(0, this.prosemirrorView.state.doc.content.size, new Slice(new Fragment(fragmentContent), 0, 0));
-          this.prosemirrorView.dispatch(tr2.setMeta(ySyncPluginKey, { isChangeOrigin: true }));
+          const tr2 = this._tr.replace(
+            0,
+            this.prosemirrorView.state.doc.content.size,
+            new Slice(Fragment.from(fragmentContent), 0, 0)
+          );
+          this.prosemirrorView.dispatch(
+            tr2.setMeta(ySyncPluginKey, { isChangeOrigin: true })
+          );
         }, ySyncPluginKey);
       });
     }
@@ -50731,22 +51232,37 @@ img.ProseMirror-separator {
       }
       this.mux(() => {
         const delType = (_, type) => this.mapping.delete(type);
-        iterateDeletedStructs(transaction, transaction.deleteSet, (struct) => struct.constructor === Item$1 && this.mapping.delete(
-          /** @type {Y.ContentType} */
-          /** @type {Y.Item} */
-          struct.content.type
-        ));
+        iterateDeletedStructs(
+          transaction,
+          transaction.deleteSet,
+          (struct) => {
+            if (struct.constructor === Item$1) {
+              const type = (
+                /** @type {Y.ContentType} */
+                /** @type {Y.Item} */
+                struct.content.type
+              );
+              type && this.mapping.delete(type);
+            }
+          }
+        );
         transaction.changed.forEach(delType);
         transaction.changedParentTypes.forEach(delType);
-        const fragmentContent = this.type.toArray().map((t) => createNodeIfNotExists(
-          /** @type {Y.XmlElement | Y.XmlHook} */
-          t,
-          this.prosemirrorView.state.schema,
-          this.mapping
-        )).filter((n) => n !== null);
-        let tr2 = this._tr.replace(0, this.prosemirrorView.state.doc.content.size, new Slice(new Fragment(fragmentContent), 0, 0));
+        const fragmentContent = this.type.toArray().map(
+          (t) => createNodeIfNotExists(
+            /** @type {Y.XmlElement | Y.XmlHook} */
+            t,
+            this.prosemirrorView.state.schema,
+            this.mapping
+          )
+        ).filter((n) => n !== null);
+        let tr2 = this._tr.replace(
+          0,
+          this.prosemirrorView.state.doc.content.size,
+          new Slice(Fragment.from(fragmentContent), 0, 0)
+        );
         restoreRelativeSelection(tr2, this.beforeTransactionSelection, this);
-        tr2 = tr2.setMeta(ySyncPluginKey, { isChangeOrigin: true });
+        tr2 = tr2.setMeta(ySyncPluginKey, { isChangeOrigin: true, isUndoRedoOperation: transaction.origin instanceof UndoManager });
         if (this.beforeTransactionSelection !== null && this._isLocalCursorInView()) {
           tr2.scrollIntoView();
         }
@@ -50754,12 +51270,13 @@ img.ProseMirror-separator {
       });
     }
     _prosemirrorChanged(doc2) {
-      this.mux(() => {
-        this.doc.transact(() => {
-          updateYFragment(this.doc, this.type, doc2, this.mapping);
-          this.beforeTransactionSelection = getRelativeSelection(this, this.prosemirrorView.state);
-        }, ySyncPluginKey);
-      });
+      this.doc.transact(() => {
+        updateYFragment(this.doc, this.type, doc2, this.mapping);
+        this.beforeTransactionSelection = getRelativeSelection(
+          this,
+          this.prosemirrorView.state
+        );
+      }, ySyncPluginKey);
     }
     destroy() {
       this.isDestroyed = true;
@@ -50775,7 +51292,14 @@ img.ProseMirror-separator {
     );
     if (node2 === void 0) {
       if (el instanceof YXmlElement) {
-        return createNodeFromYElement(el, schema, mapping, snapshot2, prevSnapshot, computeYChange);
+        return createNodeFromYElement(
+          el,
+          schema,
+          mapping,
+          snapshot2,
+          prevSnapshot,
+          computeYChange
+        );
       } else {
         throw methodUnimplemented();
       }
@@ -50786,12 +51310,26 @@ img.ProseMirror-separator {
     const children = [];
     const createChildren = (type) => {
       if (type.constructor === YXmlElement) {
-        const n = createNodeIfNotExists(type, schema, mapping, snapshot2, prevSnapshot, computeYChange);
+        const n = createNodeIfNotExists(
+          type,
+          schema,
+          mapping,
+          snapshot2,
+          prevSnapshot,
+          computeYChange
+        );
         if (n !== null) {
           children.push(n);
         }
       } else {
-        const ns = createTextNodesFromYText(type, schema, mapping, snapshot2, prevSnapshot, computeYChange);
+        const ns = createTextNodesFromYText(
+          type,
+          schema,
+          mapping,
+          snapshot2,
+          prevSnapshot,
+          computeYChange
+        );
         if (ns !== null) {
           ns.forEach((textchild) => {
             if (textchild !== null) {
@@ -50842,7 +51380,7 @@ img.ProseMirror-separator {
       return null;
     }
   };
-  const createTextNodesFromYText = (text2, schema, mapping, snapshot2, prevSnapshot, computeYChange) => {
+  const createTextNodesFromYText = (text2, schema, _mapping, snapshot2, prevSnapshot, computeYChange) => {
     const nodes = [];
     const deltas = text2.toDelta(snapshot2, prevSnapshot, computeYChange);
     try {
@@ -50881,7 +51419,12 @@ img.ProseMirror-separator {
         type.setAttribute(key2, val);
       }
     }
-    type.insert(0, normalizePNodeContent(node2).map((n) => createTypeFromTextOrElementNode(n, mapping)));
+    type.insert(
+      0,
+      normalizePNodeContent(node2).map(
+        (n) => createTypeFromTextOrElementNode(n, mapping)
+      )
+    );
     mapping.set(type, node2);
     return type;
   };
@@ -50918,17 +51461,25 @@ img.ProseMirror-separator {
   };
   const equalYTextPText = (ytext, ptexts) => {
     const delta = ytext.toDelta();
-    return delta.length === ptexts.length && delta.every((d, i2) => d.insert === /** @type {any} */
-    ptexts[i2].text && keys(d.attributes || {}).length === ptexts[i2].marks.length && ptexts[i2].marks.every((mark2) => equalAttrs(d.attributes[mark2.type.name] || {}, mark2.attrs)));
+    return delta.length === ptexts.length && delta.every(
+      (d, i2) => d.insert === /** @type {any} */
+      ptexts[i2].text && keys(d.attributes || {}).length === ptexts[i2].marks.length && ptexts[i2].marks.every(
+        (mark2) => equalAttrs(d.attributes[mark2.type.name] || {}, mark2.attrs)
+      )
+    );
   };
   const equalYTypePNode = (ytype, pnode) => {
     if (ytype instanceof YXmlElement && !(pnode instanceof Array) && matchNodeName(ytype, pnode)) {
       const normalizedContent = normalizePNodeContent(pnode);
-      return ytype._length === normalizedContent.length && equalAttrs(ytype.getAttributes(), pnode.attrs) && ytype.toArray().every((ychild, i2) => equalYTypePNode(ychild, normalizedContent[i2]));
+      return ytype._length === normalizedContent.length && equalAttrs(ytype.getAttributes(), pnode.attrs) && ytype.toArray().every(
+        (ychild, i2) => equalYTypePNode(ychild, normalizedContent[i2])
+      );
     }
     return ytype instanceof YXmlText && pnode instanceof Array && equalYTextPText(ytype, pnode);
   };
-  const mappedIdentity = (mapped, pcontent) => mapped === pcontent || mapped instanceof Array && pcontent instanceof Array && mapped.length === pcontent.length && mapped.every((a2, i2) => pcontent[i2] === a2);
+  const mappedIdentity = (mapped, pcontent) => mapped === pcontent || mapped instanceof Array && pcontent instanceof Array && mapped.length === pcontent.length && mapped.every(
+    (a2, i2) => pcontent[i2] === a2
+  );
   const computeChildEqualityFactor = (ytype, pnode, mapping) => {
     const yChildren = ytype.toArray();
     const pChildren = normalizePNodeContent(pnode);
@@ -50983,14 +51534,22 @@ img.ProseMirror-separator {
   const updateYText = (ytext, ptexts, mapping) => {
     mapping.set(ytext, ptexts);
     const { nAttrs, str } = ytextTrans(ytext);
-    const content2 = ptexts.map((p2) => ({ insert: (
-      /** @type {any} */
-      p2.text
-    ), attributes: Object.assign({}, nAttrs, marksToAttributes(p2.marks)) }));
-    const { insert, remove, index: index2 } = simpleDiff(str, content2.map((c) => c.insert).join(""));
+    const content2 = ptexts.map((p2) => ({
+      insert: (
+        /** @type {any} */
+        p2.text
+      ),
+      attributes: Object.assign({}, nAttrs, marksToAttributes(p2.marks))
+    }));
+    const { insert, remove, index: index2 } = simpleDiff(
+      str,
+      content2.map((c) => c.insert).join("")
+    );
     ytext.delete(index2, remove);
     ytext.insert(index2, insert);
-    ytext.applyDelta(content2.map((c) => ({ retain: c.insert.length, attributes: c.attributes })));
+    ytext.applyDelta(
+      content2.map((c) => ({ retain: c.insert.length, attributes: c.attributes }))
+    );
   };
   const marksToAttributes = (marks) => {
     const pattrs = {};
@@ -51113,16 +51672,21 @@ img.ProseMirror-separator {
             );
             right += 1;
           } else {
+            mapping.delete(yDomFragment.get(left));
             yDomFragment.delete(left, 1);
-            yDomFragment.insert(left, [createTypeFromTextOrElementNode(leftP, mapping)]);
+            yDomFragment.insert(left, [
+              createTypeFromTextOrElementNode(leftP, mapping)
+            ]);
             left += 1;
           }
         }
       }
       const yDelLen = yChildCnt - left - right;
       if (yChildCnt === 1 && pChildCnt === 0 && yChildren[0] instanceof YXmlText) {
+        mapping.delete(yChildren[0]);
         yChildren[0].delete(0, yChildren[0].length);
       } else if (yDelLen > 0) {
+        yDomFragment.slice(left, left + yDelLen).forEach((type) => mapping.delete(type));
         yDomFragment.delete(left, yDelLen);
       }
       if (left + right < pChildCnt) {
@@ -51327,7 +51891,7 @@ img.ProseMirror-separator {
   const defaultSelectionBuilder = (user) => {
     return {
       style: `background-color: ${user.color}70`,
-      class: `ProseMirror-yjs-selection`
+      class: "ProseMirror-yjs-selection"
     };
   };
   const rxValidColor = /^#[0-9a-fA-F]{6}$/;
@@ -51352,32 +51916,66 @@ img.ProseMirror-separator {
         if (user.name == null) {
           user.name = `User: ${clientId}`;
         }
-        let anchor = relativePositionToAbsolutePosition(y, ystate.type, createRelativePositionFromJSON(aw.cursor.anchor), ystate.binding.mapping);
-        let head2 = relativePositionToAbsolutePosition(y, ystate.type, createRelativePositionFromJSON(aw.cursor.head), ystate.binding.mapping);
+        let anchor = relativePositionToAbsolutePosition(
+          y,
+          ystate.type,
+          createRelativePositionFromJSON(aw.cursor.anchor),
+          ystate.binding.mapping
+        );
+        let head2 = relativePositionToAbsolutePosition(
+          y,
+          ystate.type,
+          createRelativePositionFromJSON(aw.cursor.head),
+          ystate.binding.mapping
+        );
         if (anchor !== null && head2 !== null) {
           const maxsize = max(state.doc.content.size - 1, 0);
           anchor = min(anchor, maxsize);
           head2 = min(head2, maxsize);
-          decorations.push(Decoration.widget(head2, () => createCursor(user), { key: clientId + "", side: 10 }));
+          decorations.push(
+            Decoration.widget(head2, () => createCursor(user), {
+              key: clientId + "",
+              side: 10
+            })
+          );
           const from2 = min(anchor, head2);
           const to = max(anchor, head2);
-          decorations.push(Decoration.inline(from2, to, createSelection(user), { inclusiveEnd: true, inclusiveStart: false }));
+          decorations.push(
+            Decoration.inline(from2, to, createSelection(user), {
+              inclusiveEnd: true,
+              inclusiveStart: false
+            })
+          );
         }
       }
     });
     return DecorationSet.create(state.doc, decorations);
   };
-  const yCursorPlugin = (awareness, { cursorBuilder = defaultCursorBuilder, selectionBuilder = defaultSelectionBuilder, getSelection: getSelection2 = (state) => state.selection } = {}, cursorStateField = "cursor") => new Plugin({
+  const yCursorPlugin = (awareness, {
+    cursorBuilder = defaultCursorBuilder,
+    selectionBuilder = defaultSelectionBuilder,
+    getSelection: getSelection2 = (state) => state.selection
+  } = {}, cursorStateField = "cursor") => new Plugin({
     key: yCursorPluginKey,
     state: {
       init(_, state) {
-        return createDecorations(state, awareness, cursorBuilder, selectionBuilder);
+        return createDecorations(
+          state,
+          awareness,
+          cursorBuilder,
+          selectionBuilder
+        );
       },
-      apply(tr2, prevState, oldState, newState) {
+      apply(tr2, prevState, _oldState, newState) {
         const ystate = ySyncPluginKey.getState(newState);
         const yCursorState = tr2.getMeta(yCursorPluginKey);
         if (ystate && ystate.isChangeOrigin || yCursorState && yCursorState.awarenessUpdated) {
-          return createDecorations(newState, awareness, cursorBuilder, selectionBuilder);
+          return createDecorations(
+            newState,
+            awareness,
+            cursorBuilder,
+            selectionBuilder
+          );
         }
         return prevState.map(tr2.mapping, tr2.doc);
       }
@@ -51401,15 +51999,34 @@ img.ProseMirror-separator {
         }
         if (view.hasFocus()) {
           const selection = getSelection2(view.state);
-          const anchor = absolutePositionToRelativePosition(selection.anchor, ystate.type, ystate.binding.mapping);
-          const head2 = absolutePositionToRelativePosition(selection.head, ystate.type, ystate.binding.mapping);
-          if (current.cursor == null || !compareRelativePositions(createRelativePositionFromJSON(current.cursor.anchor), anchor) || !compareRelativePositions(createRelativePositionFromJSON(current.cursor.head), head2)) {
+          const anchor = absolutePositionToRelativePosition(
+            selection.anchor,
+            ystate.type,
+            ystate.binding.mapping
+          );
+          const head2 = absolutePositionToRelativePosition(
+            selection.head,
+            ystate.type,
+            ystate.binding.mapping
+          );
+          if (current.cursor == null || !compareRelativePositions(
+            createRelativePositionFromJSON(current.cursor.anchor),
+            anchor
+          ) || !compareRelativePositions(
+            createRelativePositionFromJSON(current.cursor.head),
+            head2
+          )) {
             awareness.setLocalStateField(cursorStateField, {
               anchor,
               head: head2
             });
           }
-        } else if (current.cursor != null && relativePositionToAbsolutePosition(ystate.doc, ystate.type, createRelativePositionFromJSON(current.cursor.anchor), ystate.binding.mapping) !== null) {
+        } else if (current.cursor != null && relativePositionToAbsolutePosition(
+          ystate.doc,
+          ystate.type,
+          createRelativePositionFromJSON(current.cursor.anchor),
+          ystate.binding.mapping
+        ) !== null) {
           awareness.setLocalStateField(cursorStateField, null);
         }
       };
@@ -51450,7 +52067,8 @@ img.ProseMirror-separator {
         const ystate = ySyncPluginKey.getState(state);
         const _undoManager = undoManager || new UndoManager(ystate.type, {
           trackedOrigins: new Set([ySyncPluginKey].concat(trackedOrigins)),
-          deleteFilter: (item) => defaultDeleteFilter(item, protectedNodes)
+          deleteFilter: (item) => defaultDeleteFilter(item, protectedNodes),
+          captureTransaction: (tr2) => tr2.meta.get("addToHistory") !== false
         });
         return {
           undoManager: _undoManager,
@@ -51459,6 +52077,9 @@ img.ProseMirror-separator {
           hasRedoOps: _undoManager.redoStack.length > 0
         };
       },
+      /**
+       * @returns {any}
+       */
       apply: (tr2, val, oldState, state) => {
         const binding = ySyncPluginKey.getState(state).binding;
         const undoManager2 = val.undoManager;
@@ -51564,7 +52185,7 @@ img.ProseMirror-separator {
           undoManager.restore = () => {
           };
         }
-        const viewRet = originalUndoPluginView(view);
+        const viewRet = originalUndoPluginView ? originalUndoPluginView(view) : void 0;
         return {
           destroy: () => {
             const hasUndoManSelf = undoManager.trackedOrigins.has(undoManager);
@@ -51576,11 +52197,16 @@ img.ProseMirror-separator {
               undoManager.doc.on("afterTransaction", undoManager.afterTransactionHandler);
               undoManager._observers = observers;
             };
-            viewRet.destroy();
+            if (viewRet === null || viewRet === void 0 ? void 0 : viewRet.destroy) {
+              viewRet.destroy();
+            }
           }
         };
       };
-      return [ySyncPlugin(fragment), yUndoPluginInstance];
+      const onFirstRender = this.options.onFirstRender;
+      const ySyncPluginOptions = onFirstRender ? { onFirstRender } : {};
+      const ySyncPluginInstance = ySyncPlugin(fragment, ySyncPluginOptions);
+      return [ySyncPluginInstance, yUndoPluginInstance];
     }
   });
   const awarenessStatesToArray = (states) => {
@@ -52546,16 +53172,16 @@ img.ProseMirror-separator {
     }
     return result;
   }
-  function histTransaction(history2, state, dispatch, redo2) {
+  function histTransaction(history2, state, redo2) {
     let preserveItems = mustPreserveItems(state);
     let histOptions = historyKey.get(state).spec.config;
     let pop = (redo2 ? history2.undone : history2.done).popEvent(state, preserveItems);
     if (!pop)
-      return;
+      return null;
     let selection = pop.selection.resolve(pop.transform.doc);
     let added = (redo2 ? history2.done : history2.undone).addTransform(pop.transform, state.selection.getBookmark(), histOptions, preserveItems);
     let newHist = new HistoryState(redo2 ? added : pop.remaining, redo2 ? pop.remaining : added, null, 0, -1);
-    dispatch(pop.transform.setSelection(selection).setMeta(historyKey, { redo: redo2, historyState: newHist }).scrollIntoView());
+    return pop.transform.setSelection(selection).setMeta(historyKey, { redo: redo2, historyState: newHist });
   }
   let cachedPreserveItems = false, cachedPreserveItemsPlugins = null;
   function mustPreserveItems(state) {
@@ -52603,22 +53229,21 @@ img.ProseMirror-separator {
       }
     });
   }
-  const undo = (state, dispatch) => {
-    let hist = historyKey.getState(state);
-    if (!hist || hist.done.eventCount == 0)
-      return false;
-    if (dispatch)
-      histTransaction(hist, state, dispatch, false);
-    return true;
-  };
-  const redo = (state, dispatch) => {
-    let hist = historyKey.getState(state);
-    if (!hist || hist.undone.eventCount == 0)
-      return false;
-    if (dispatch)
-      histTransaction(hist, state, dispatch, true);
-    return true;
-  };
+  function buildCommand(redo2, scroll) {
+    return (state, dispatch) => {
+      let hist = historyKey.getState(state);
+      if (!hist || (redo2 ? hist.undone : hist.done).eventCount == 0)
+        return false;
+      if (dispatch) {
+        let tr2 = histTransaction(hist, state, redo2);
+        if (tr2)
+          dispatch(scroll ? tr2.scrollIntoView() : tr2);
+      }
+      return true;
+    };
+  }
+  const undo = buildCommand(false, true);
+  const redo = buildCommand(true, true);
   const History = Extension.create({
     name: "history",
     addOptions() {
@@ -52645,11 +53270,8 @@ img.ProseMirror-separator {
     addKeyboardShortcuts() {
       return {
         "Mod-z": () => this.editor.commands.undo(),
-        "Mod-Z": () => this.editor.commands.undo(),
-        "Mod-y": () => this.editor.commands.redo(),
-        "Mod-Y": () => this.editor.commands.redo(),
         "Shift-Mod-z": () => this.editor.commands.redo(),
-        "Shift-Mod-Z": () => this.editor.commands.redo(),
+        "Mod-y": () => this.editor.commands.redo(),
         // Russian keyboard layouts
         "Mod-я": () => this.editor.commands.undo(),
         "Shift-Mod-я": () => this.editor.commands.redo()
@@ -53870,8 +54492,13 @@ img.ProseMirror-separator {
           if (event.button !== 0) {
             return false;
           }
-          const eventTarget = event.target;
-          if (eventTarget.nodeName !== "A") {
+          let a2 = event.target;
+          const els = [];
+          while (a2.nodeName !== "DIV") {
+            els.push(a2);
+            a2 = a2.parentNode;
+          }
+          if (!els.find((value) => value.nodeName === "A")) {
             return false;
           }
           const attrs = getAttributes(view.state, options.type.name);
@@ -53879,9 +54506,7 @@ img.ProseMirror-separator {
           const href = (_a = link2 === null || link2 === void 0 ? void 0 : link2.href) !== null && _a !== void 0 ? _a : attrs.href;
           const target = (_b = link2 === null || link2 === void 0 ? void 0 : link2.target) !== null && _b !== void 0 ? _b : attrs.target;
           if (link2 && href) {
-            if (view.editable) {
-              window.open(href, target);
-            }
+            window.open(href, target);
             return true;
           }
           return false;
@@ -53894,7 +54519,6 @@ img.ProseMirror-separator {
       key: new PluginKey("handlePasteLink"),
       props: {
         handlePaste: (view, event, slice) => {
-          var _a;
           const { state } = view;
           const { selection } = state;
           const { empty: empty2 } = selection;
@@ -53909,12 +54533,8 @@ img.ProseMirror-separator {
           if (!textContent || !link2) {
             return false;
           }
-          const html2 = (_a = event.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/html");
-          const hrefRegex = /href="([^"]*)"/;
-          const existingLink = html2 === null || html2 === void 0 ? void 0 : html2.match(hrefRegex);
-          const url = existingLink ? existingLink[1] : link2.href;
           options.editor.commands.setMark(options.type, {
-            href: url
+            href: link2.href
           });
           return true;
         }
@@ -53996,29 +54616,27 @@ img.ProseMirror-separator {
     addPasteRules() {
       return [
         markPasteRule({
-          find: (text2) => find(text2).filter((link2) => {
-            if (this.options.validate) {
-              return this.options.validate(link2.value);
+          find: (text2) => {
+            const foundLinks = [];
+            if (text2) {
+              const links = find(text2).filter((item) => item.isLink);
+              if (links.length) {
+                links.forEach((link2) => foundLinks.push({
+                  text: link2.value,
+                  data: {
+                    href: link2.href
+                  },
+                  index: link2.start
+                }));
+              }
             }
-            return true;
-          }).filter((link2) => link2.isLink).map((link2) => ({
-            text: link2.value,
-            index: link2.start,
-            data: link2
-          })),
+            return foundLinks;
+          },
           type: this.type,
-          getAttributes: (match, pasteEvent) => {
-            var _a, _b;
-            const html2 = (_a = pasteEvent === null || pasteEvent === void 0 ? void 0 : pasteEvent.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/html");
-            const hrefRegex = /href="([^"]*)"/;
-            const existingLink = html2 === null || html2 === void 0 ? void 0 : html2.match(hrefRegex);
-            if (existingLink) {
-              return {
-                href: existingLink[1]
-              };
-            }
+          getAttributes: (match) => {
+            var _a;
             return {
-              href: (_b = match.data) === null || _b === void 0 ? void 0 : _b.href
+              href: (_a = match.data) === null || _a === void 0 ? void 0 : _a.href
             };
           }
         })
@@ -55427,7 +56045,7 @@ img.ProseMirror-separator {
      * @param placement Whether the text cursor should be placed at the start or end of the block.
      */
     setTextCursorPosition(targetBlock, placement = "start") {
-      const id = typeof targetBlock === "string" ? targetBlock : targetBlock.id;
+      const id = typeof targetBlock === "string" ? targetBlock : targetBlock == null ? void 0 : targetBlock.id;
       const { posBeforeNode } = getNodeById(id, this._tiptapEditor.state.doc);
       const { startPos, contentNode } = getBlockInfoFromPos(
         this._tiptapEditor.state.doc,

@@ -1,19 +1,12 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor } from "../global/index";
 import { execCustomBLock } from "./utils";
-import { ScomEditorCodeBlock } from "../components/index";
-
-const DEFAULT_LANGUAGE = 'javascript';
-const startRegex = /^`{3,}[^`\n]*\n|^`{3,}[^`\s]*\s?/gm;
-const endRegex = /`{3,}$/g;
+import { ScomEditorCodeBlock, escapeHTML } from "../components/index";
 
 function getData(element: HTMLElement) {
   if (element?.nodeName === 'CODE') {
-    let code = element.innerHTML;
-    code = code.replace(startRegex, '').replace(endRegex, '');
     return {
-      code,
-      language: DEFAULT_LANGUAGE
+      code: escapeHTML(element.innerHTML)
     };
   }
   return false;
@@ -24,7 +17,7 @@ export function addCodeBlock(blocknote: any) {
     type: "codeBlock",
     propSchema: {
       ...blocknote.defaultProps,
-      language: {default: DEFAULT_LANGUAGE},
+      language: {default: ''},
       code: {default: ''},
       width: {default: 512},
       height: {default: 'auto'}
@@ -91,21 +84,25 @@ export function addCodeBlock(blocknote: any) {
         handler(props: any) {
           const { state, chain, range } = props;
           const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
-          console.log(textContent);
           chain().BNUpdateBlock(state.selection.from, {
             type: "codeBlock",
             props: {
-              code: textContent.replace(startRegex, '').replace(endRegex, '')
+              code: textContent
             },
           }).setTextSelection(range.from + 1);
         }
+      }
+    ],
+    inputRules: [
+      {
+        find: new RegExp(`^(\`{3,})\\s$`),
       }
     ]
   });
   const CodeSlashItem = {
     name: "Code Block",
     execute: (editor: BlockNoteEditor) => {
-      const block = { type: "codeBlock", props: { code: "", language: DEFAULT_LANGUAGE }};
+      const block = { type: "codeBlock", props: { code: "" }};
       execCustomBLock(editor, block);
     },
     aliases: ["codeBlock", "Basic blocks"]
