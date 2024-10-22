@@ -9,19 +9,17 @@ import {
   Styles,
   HStack,
   application,
-  Panel
+  Panel,
+  Modal
 } from '@ijstech/components';
-import { escapeHTML, revertHtmlTags } from './utils';
+import { DEFAULT_LANGUAGE, escapeHTML, revertHtmlTags } from './utils';
+import { customPreStyle } from './index.css';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ICodeBlock {
   code: string;
   language?: string;
 }
-
-const DEFAULT_LANGUAGE = 'javascript';
-const startRegex = /^`{3,}[^`\n]*\n|^`{3,}[^`\s]*\s?/gm;
-const endRegex = /`{3,}$/g;
 
 interface ScomEditorCodeBlockElement extends ControlElement {
   code?: string;
@@ -38,11 +36,11 @@ declare global {
 
 @customElements('i-scom-editor-code-block')
 export class ScomEditorCodeBlock extends Module {
-  private codeEditor: CodeEditor;
   private blockWrapper: Panel;
 
   private _data: ICodeBlock = {
-    code: ''
+    code: '',
+    language: ''
   };
 
   static async create(options?: ScomEditorCodeBlockElement, parent?: Container) {
@@ -62,15 +60,19 @@ export class ScomEditorCodeBlock extends Module {
     this._data.code = value || '';
   }
 
-  get mainContent() {
-    return this.code.replace(startRegex, '').replace(endRegex, '');
-  }
-
   get language() {
     return this._data.language || DEFAULT_LANGUAGE;
   }
   set language(value: string) {
     this._data.language = value || DEFAULT_LANGUAGE;
+  }
+
+  get fullCode() {
+    let code = this.code;
+    if (!code.startsWith('`') && !code.endsWith('`')) {
+      code = `\`\`\`${this.language}\n${code}\n\`\`\``;
+    }
+    return code;
   }
 
   getData() {
@@ -83,17 +85,15 @@ export class ScomEditorCodeBlock extends Module {
   }
 
   private async renderUI() {
-    // this.codeEditor.display = 'block';
-    // this.codeEditor.height = 'fit-content';
-    // this.codeEditor.width = '100%';
-    // this.codeEditor.maxHeight = 200;
-    // await this.codeEditor.loadContent(this.code, this.language as any);
-
-    const preElm = document.createElement('pre');
-    const codeElm = document.createElement('code');
-    codeElm.textContent = `${this.mainContent}`;
-    preElm.appendChild(codeElm);
-    this.blockWrapper.appendChild(preElm);
+    this.blockWrapper.clearInnerHTML();
+    const codeBlock = document.createElement('i-scom-code-viewer') as any;
+    this.blockWrapper.appendChild(codeBlock);
+    const rootDir = application.rootDir;
+    await codeBlock.setData({
+      code: this.fullCode,
+      entryPoint: rootDir.endsWith('/') ? rootDir.slice(0, -1) : rootDir,
+      isButtonsShown: false
+    });
   }
 
   getActions() {
@@ -117,35 +117,66 @@ export class ScomEditorCodeBlock extends Module {
       },
       customUI: {
         render: async (data?: any, onConfirm?: (result: boolean, data: any) => void) => {
-          const vstack = new VStack(null, {gap: '1rem', height: '200px', width: '100%'});
+          const vstack = new VStack(null, {gap: '1rem', height: 300, width: '100%', overflow: 'hidden'});
+          new Button(vstack, {
+            icon: {name: 'expand', width: '0.75rem', height: '0.75rem', fill: Theme.colors.primary.main},
+            background: {color: 'transparent'},
+            boxShadow: 'none',
+            padding: {left: '0px', right: '0px', top: '0px', bottom: '0px'},
+            stack: {shrink: '0'},
+            position: 'absolute',
+            right: 30,
+            top: -16,
+            cursor: 'pointer',
+            onClick: (target: Button, event: MouseEvent) => {
+              event.stopPropagation();
+              if (target.icon.name === 'expand') target.icon.name = 'compress';
+              else target.icon.name = 'expand';
+              const isExpand = target.icon.name === 'compress';
+
+              const modal = config.closest('i-modal') as Modal;
+              if (modal) {
+                modal.width = isExpand ? '100dvw' : '100%';
+                modal.height = isExpand ? '100dvh' : 'auto';
+                modal.border = isExpand ? {radius: 0 } : {radius: '0.375rem' };
+                modal.popupPlacement = 'center';
+                vstack.height = isExpand ? '80vh' : '300px';
+                modal.refresh();
+              }
+            }
+          });
           const config = new CodeEditor(vstack, {
             width: '100%',
-            height: '100%',
+            maxHeight: 'calc(100% - 60px)',
+            stack: {grow: '1'},
             display: 'block',
-            language: DEFAULT_LANGUAGE,
-            stack: { grow: '1'}
           });
-          const hstack = new HStack(null, {
+          const hstack = new HStack(vstack, {
             verticalAlignment: 'center',
-            horizontalAlignment: 'end'
+            horizontalAlignment: 'end',
+            height: 50,
+            stack: {shrink: '0'}
           });
-          const button = new Button(null, {
+          const button = new Button(hstack, {
             caption: 'Confirm',
             width: '100%',
             height: 40,
             font: {color: Theme.colors.primary.contrastText}
           });
-          hstack.append(button);
-          vstack.append(config);
           await config.ready();
-          await config.loadContent(this.code|| '')
-          vstack.append(hstack);
+          await config.loadContent(this.fullCode || '');
+
           button.onClick = async () => {
-            let newCode = escapeHTML(config.value || '');
-            if (!newCode.startsWith('```') && !newCode.endsWith('```')) {
-              newCode = `\`\`\`${this.language}\n${newCode}\n\`\`\``;
+            const fullCode = escapeHTML(config.value || '');
+            const regex = /```(\w+)\((.+?)\)\n([\s\S]+)```/g;
+            const matches = regex.exec(fullCode);
+            const path = matches?.[2] || '';
+            let language = matches?.[1] || DEFAULT_LANGUAGE;
+            if (language) {
+              language = `${language}${path ? `(${path})` : ''}`
             }
-            if (onConfirm) onConfirm(true, {...this._data, code: newCode});
+            const code = matches?.[3] || '';
+            if (onConfirm) onConfirm(true, {...this._data, code, language });
           }
           return vstack;
         }
@@ -154,50 +185,16 @@ export class ScomEditorCodeBlock extends Module {
     return editAction;
   }
 
-  private async onCopy() {
-    const content = this.mainContent;
-    await application.copyToClipboard(content);
-  }
-
   async init() {
     super.init();
     const code = this.getAttribute('code', true);
-    const language = this.getAttribute('language', true, DEFAULT_LANGUAGE);
-    const content = await application.getContent(`${application.rootDir}libs/@ijstech/components/index.d.ts`);
-    CodeEditor.addLib('@ijstech/components', content);
+    const language = this.getAttribute('language', true);
     if (code) await this.setData({ code, language });
   }
 
   render(): void {
     return (
-      <i-panel
-        background={{color: '#3c3c3c'}}
-        padding={{left: '1rem', right: '1rem'}}
-        border={{color: Theme.divider, width: '1px', style: 'solid', radius: '0.5rem'}}
-      >
-        <i-hstack horizontalAlignment='end' margin={{bottom: '0.5rem', top: '1rem'}}>
-          <i-icon
-            name="copy"
-            width={'1rem'} height={'1rem'}
-            fill={Theme.text.primary}
-            cursor='pointer'
-            stack={{shrink: '0'}}
-            tooltip={{content: 'Copy Code', placement: 'bottom', trigger: 'click'}}
-            onClick={this.onCopy}
-          ></i-icon>
-        </i-hstack>
-        <i-panel
-          id="blockWrapper"
-        >
-          {/* <i-code-editor
-            id="codeEditor"
-            width={'100%'}
-            display='block'
-            language={DEFAULT_LANGUAGE}
-            designMode={true}
-          ></i-code-editor> */}
-        </i-panel>
-      </i-panel>
+      <i-panel id="blockWrapper" width={'100%'} class={customPreStyle} />
     )
   }
 }

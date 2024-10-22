@@ -446,3 +446,5 @@ export const revertHtmlTags = (str: string) => {
     .replace(/&quot;/g, '"')
     .replace(/&#039;/g, "'");
 };
+
+export const DEFAULT_LANGUAGE = 'javascript';

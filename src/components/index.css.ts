@@ -68,3 +68,12 @@ export const modalStyle = Styles.style({
     }
   }
 })
+
+export const customPreStyle = Styles.style({
+  $nest: {
+    'pre': {
+      margin: 0,
+      padding: 0,
+    }
+  }
+});

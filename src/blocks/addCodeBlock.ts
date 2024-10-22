@@ -1,12 +1,18 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor } from "../global/index";
 import { execCustomBLock } from "./utils";
-import { ScomEditorCodeBlock, escapeHTML } from "../components/index";
+import { DEFAULT_LANGUAGE, ScomEditorCodeBlock, revertHtmlTags } from "../components/index";
 
 function getData(element: HTMLElement) {
   if (element?.nodeName === 'CODE') {
+    const props: any = { type: 'inline' };
+    if (element.parentElement?.nodeName === 'PRE') {
+      props.type = 'block';
+    }
     return {
-      code: escapeHTML(element.innerHTML)
+      ...props,
+      code: element.textContent,
+      language: element.getAttribute('data-language') || ''
     };
   }
   return false;
@@ -19,6 +25,7 @@ export function addCodeBlock(blocknote: any) {
       ...blocknote.defaultProps,
       language: {default: ''},
       code: {default: ''},
+      type: {default: 'block'},
       width: {default: 512},
       height: {default: 'auto'}
     },
@@ -27,7 +34,15 @@ export function addCodeBlock(blocknote: any) {
   {
     render: (block: Block) => {
       const wrapper = new Panel();
-      const { code, language } = JSON.parse(JSON.stringify(block.props));
+      let { code, language, type } = JSON.parse(JSON.stringify(block.props));
+      if (type === 'inline') {
+        const codeElm = document.createElement('code');
+        codeElm.textContent = code;
+        wrapper.appendChild(codeElm);
+        return {
+          dom: wrapper
+        };
+      }
       const elTag = new ScomEditorCodeBlock(wrapper, {
         code,
         language,
@@ -69,11 +84,25 @@ export function addCodeBlock(blocknote: any) {
       ]
     },
     toExternalHTML: (block: any, editor: any) => {
-      const wrapper = document.createElement('pre');
-      const codeElm = document.createElement('code');
-      const code = block.props.code || '';
-      codeElm.innerHTML = code;
-      wrapper.appendChild(codeElm);
+      const blockType = block.props.type;
+      let wrapper = null;
+      if (blockType === 'block') {
+        wrapper = document.createElement('pre');
+        const codeElm = document.createElement('code');
+        const code = revertHtmlTags(block.props.code || '');
+        codeElm.textContent = code;
+        wrapper.appendChild(codeElm);
+        const language = block.props.language;
+        codeElm.setAttribute('data-language', language);
+        if (language) {
+          const customClass = `language-${language}`;
+          codeElm.classList.add(customClass);
+        }
+      } else {
+        wrapper = document.createElement('code');
+        const code = revertHtmlTags(block.props.code || '');
+        wrapper.textContent = code;
+      }
       return {
         dom: wrapper
       }
@@ -87,7 +116,8 @@ export function addCodeBlock(blocknote: any) {
           chain().BNUpdateBlock(state.selection.from, {
             type: "codeBlock",
             props: {
-              code: textContent
+              code: textContent,
+              language: DEFAULT_LANGUAGE
             },
           }).setTextSelection(range.from + 1);
         }
@@ -102,7 +132,7 @@ export function addCodeBlock(blocknote: any) {
   const CodeSlashItem = {
     name: "Code Block",
     execute: (editor: BlockNoteEditor) => {
-      const block = { type: "codeBlock", props: { code: "" }};
+      const block = { type: "codeBlock", props: { code: '', language: '' }};
       execCustomBLock(editor, block);
     },
     aliases: ["codeBlock", "Basic blocks"]
