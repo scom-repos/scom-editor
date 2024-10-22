@@ -245,6 +245,7 @@ export class ScomEditor extends Module {
     if (!this._editor) await this.initEditor();
     if (data.value) {
       const blocks: Block[] = await this._editor.tryParseMarkdownToBlocks(data.value);
+      // Fix render paragraph with code tag
       this.renderEditor(JSON.parse(JSON.stringify(blocks)));
     }
   }

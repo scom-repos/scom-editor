@@ -122,6 +122,7 @@ declare module "@scom/scom-editor/components/index.css.ts" {
     export const formStyle: string;
     export const customModalStyle: string;
     export const modalStyle: string;
+    export const customPreStyle: string;
 }
 /// <amd-module name="@scom/scom-editor/assets.ts" />
 declare module "@scom/scom-editor/assets.ts" {
@@ -363,6 +364,7 @@ declare module "@scom/scom-editor/components/utils.ts" {
     }[];
     export const escapeHTML: (str: string) => string;
     export const revertHtmlTags: (str: string) => string;
+    export const DEFAULT_LANGUAGE = "javascript";
 }
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
@@ -1122,16 +1124,15 @@ declare module "@scom/scom-editor/components/codeBlock.tsx" {
         }
     }
     export class ScomEditorCodeBlock extends Module {
-        private codeEditor;
         private blockWrapper;
         private _data;
         static create(options?: ScomEditorCodeBlockElement, parent?: Container): Promise<ScomEditorCodeBlock>;
         constructor(parent?: Container, options?: any);
         get code(): string;
         set code(value: string);
-        get mainContent(): string;
         get language(): string;
         set language(value: string);
+        get fullCode(): string;
         getData(): ICodeBlock;
         setData(data: ICodeBlock): Promise<void>;
         private renderUI;
@@ -1147,7 +1148,6 @@ declare module "@scom/scom-editor/components/codeBlock.tsx" {
                 render: (data?: any, onConfirm?: (result: boolean, data: any) => void) => Promise<VStack>;
             };
         };
-        private onCopy;
         init(): Promise<void>;
         render(): void;
     }
