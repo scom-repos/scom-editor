@@ -25327,6 +25327,19 @@ img.ProseMirror-separator {
       }
     });
   }
+  function textblockTypeInputRule(config) {
+    return new InputRule({
+      find: config.find,
+      handler: ({ state, range, match }) => {
+        const $start = state.doc.resolve(range.from);
+        const attributes = callOrReturn(config.getAttributes, void 0, match) || {};
+        if (!$start.node(-1).canReplaceWith($start.index(-1), $start.indexAfter(-1), config.type)) {
+          return null;
+        }
+        state.tr.delete(range.from, range.to).setBlockType(range.from, range.from, config.type, attributes);
+      }
+    });
+  }
   class Mark {
     constructor(config = {}) {
       this.type = "mark";
@@ -27160,12 +27173,18 @@ img.ProseMirror-separator {
         });
       },
       addInputRules() {
-        var _a;
         if (!blockImplementation.inputRules) {
           return [];
         }
-        return (_a = blockImplementation.inputRules) == null ? void 0 : _a.map((rule) => {
-          return nodeInputRule({
+        return blockImplementation.inputRules.map((rule) => {
+          if (this.type.isBlock) {
+            return nodeInputRule({
+              find: rule.find,
+              type: this.type,
+              getAttributes: rule.getAttributes
+            });
+          }
+          return textblockTypeInputRule({
             find: rule.find,
             type: this.type,
             getAttributes: rule.getAttributes

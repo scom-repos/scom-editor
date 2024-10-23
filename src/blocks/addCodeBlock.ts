@@ -4,19 +4,20 @@ import { execCustomBLock } from "./utils";
 import { DEFAULT_LANGUAGE, ScomEditorCodeBlock, revertHtmlTags } from "../components/index";
 
 function getData(element: HTMLElement) {
-  if (element?.nodeName === 'CODE') {
-    const props: any = { type: 'inline' };
-    if (element.parentElement?.nodeName === 'PRE') {
-      props.type = 'block';
+  if (element?.nodeName === 'PRE') {
+    const codeElm = element.querySelector('code');
+    if (codeElm) {
+      return {
+        code: codeElm.textContent,
+        language: codeElm.getAttribute('data-language') || ''
+      };
     }
-    return {
-      ...props,
-      code: element.textContent,
-      language: element.getAttribute('data-language') || ''
-    };
   }
   return false;
 }
+
+const backtickInputRegex = /^```([a-z]+)?[\s\n]$/
+const tildeInputRegex = /^~~~([a-z]+)?[\s\n]$/
 
 export function addCodeBlock(blocknote: any) {
   const CodeBlock = blocknote.createBlockSpec({
@@ -25,24 +26,23 @@ export function addCodeBlock(blocknote: any) {
       ...blocknote.defaultProps,
       language: {default: ''},
       code: {default: ''},
-      type: {default: 'block'},
       width: {default: 512},
       height: {default: 'auto'}
     },
-    content: "none"
+
+    content: 'none',
+
+    marks: '',
+
+    code: true,
+
+    defining: true,
+
   },
   {
     render: (block: Block) => {
       const wrapper = new Panel();
-      let { code, language, type } = JSON.parse(JSON.stringify(block.props));
-      if (type === 'inline') {
-        const codeElm = document.createElement('code');
-        codeElm.textContent = code;
-        wrapper.appendChild(codeElm);
-        return {
-          dom: wrapper
-        };
-      }
+      const { code, language } = JSON.parse(JSON.stringify(block.props));
       const elTag = new ScomEditorCodeBlock(wrapper, {
         code,
         language,
@@ -73,7 +73,7 @@ export function addCodeBlock(blocknote: any) {
           node: 'codeBlock'
         },
         {
-          tag: "code",
+          tag: "pre",
           getAttrs: (element: string | HTMLElement) => {
             if (typeof element === "string") return false;
             return getData(element);
@@ -84,27 +84,20 @@ export function addCodeBlock(blocknote: any) {
       ]
     },
     toExternalHTML: (block: any, editor: any) => {
-      const blockType = block.props.type;
-      let wrapper = null;
-      if (blockType === 'block') {
-        wrapper = document.createElement('pre');
-        const codeElm = document.createElement('code');
-        const code = revertHtmlTags(block.props.code || '');
-        codeElm.textContent = code;
-        wrapper.appendChild(codeElm);
-        const language = block.props.language;
-        codeElm.setAttribute('data-language', language);
-        if (language) {
-          const customClass = `language-${language}`;
-          codeElm.classList.add(customClass);
-        }
-      } else {
-        wrapper = document.createElement('code');
-        const code = revertHtmlTags(block.props.code || '');
-        wrapper.textContent = code;
+      const preEl = document.createElement('pre');
+      const codeElm = document.createElement('code');
+      const code = revertHtmlTags(block.props.code || '');
+      codeElm.textContent = code;
+      preEl.appendChild(codeElm);
+      const language = block.props.language;
+      codeElm.setAttribute('data-language', language);
+      if (language) {
+        const customClass = `language-${language}`;
+        codeElm.classList.add(customClass);
       }
+
       return {
-        dom: wrapper
+        dom: preEl
       }
     },
     pasteRules: [
@@ -125,7 +118,16 @@ export function addCodeBlock(blocknote: any) {
     ],
     inputRules: [
       {
-        find: new RegExp(`^(\`{3,})\\s$`),
+        find: backtickInputRegex,
+        getAttributes: match => ({
+          language: match[1],
+        })
+      },
+      {
+        find: tildeInputRegex,
+        getAttributes: match => ({
+          language: match[1],
+        })
       }
     ]
   });

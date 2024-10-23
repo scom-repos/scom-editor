@@ -89,11 +89,13 @@ export class ScomEditorCodeBlock extends Module {
     const codeBlock = document.createElement('i-scom-code-viewer') as any;
     this.blockWrapper.appendChild(codeBlock);
     const rootDir = application.rootDir;
+    await codeBlock.ready();
     await codeBlock.setData({
       code: this.fullCode,
       entryPoint: rootDir.endsWith('/') ? rootDir.slice(0, -1) : rootDir,
       isButtonsShown: false
     });
+    this.blockWrapper.border = {radius: '0.375rem', width: !!this.code ? '0px' : '1px', style: 'solid', color: Theme.divider};
   }
 
   getActions() {
@@ -140,7 +142,7 @@ export class ScomEditorCodeBlock extends Module {
                 modal.height = isExpand ? '100dvh' : 'auto';
                 modal.border = isExpand ? {radius: 0 } : {radius: '0.375rem' };
                 modal.popupPlacement = 'center';
-                vstack.height = isExpand ? '80vh' : '300px';
+                vstack.height = isExpand ? 'calc(100vh - 70px)' : '300px';
                 modal.refresh();
               }
             }
@@ -168,14 +170,14 @@ export class ScomEditorCodeBlock extends Module {
 
           button.onClick = async () => {
             const fullCode = escapeHTML(config.value || '');
-            const regex = /```(\w+)\((.+?)\)\n([\s\S]+)```/g;
+            const regex = /```(\w+)?(\((.+?)\))?[\s\n]([\s\S]+)[\s\n]```/g;
             const matches = regex.exec(fullCode);
-            const path = matches?.[2] || '';
+            const path = matches?.[3] || '';
             let language = matches?.[1] || DEFAULT_LANGUAGE;
             if (language) {
               language = `${language}${path ? `(${path})` : ''}`
             }
-            const code = matches?.[3] || '';
+            const code = matches?.[4] || '';
             if (onConfirm) onConfirm(true, {...this._data, code, language });
           }
           return vstack;
@@ -194,7 +196,13 @@ export class ScomEditorCodeBlock extends Module {
 
   render(): void {
     return (
-      <i-panel id="blockWrapper" width={'100%'} class={customPreStyle} />
+      <i-panel
+        id="blockWrapper"
+        width={'100%'}
+        class={customPreStyle}
+        minHeight={30}
+        border={{radius: '0.375rem', width: '1px', style: 'solid', color: Theme.divider}}
+      />
     )
   }
 }
