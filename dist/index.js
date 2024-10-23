@@ -2615,11 +2615,13 @@ define("@scom/scom-editor/components/codeBlock.tsx", ["require", "exports", "@ij
             const codeBlock = document.createElement('i-scom-code-viewer');
             this.blockWrapper.appendChild(codeBlock);
             const rootDir = components_20.application.rootDir;
+            await codeBlock.ready();
             await codeBlock.setData({
                 code: this.fullCode,
                 entryPoint: rootDir.endsWith('/') ? rootDir.slice(0, -1) : rootDir,
                 isButtonsShown: false
             });
+            this.blockWrapper.border = { radius: '0.375rem', width: !!this.code ? '0px' : '1px', style: 'solid', color: Theme.divider };
         }
         getActions() {
             const editAction = {
@@ -2668,7 +2670,7 @@ define("@scom/scom-editor/components/codeBlock.tsx", ["require", "exports", "@ij
                                     modal.height = isExpand ? '100dvh' : 'auto';
                                     modal.border = isExpand ? { radius: 0 } : { radius: '0.375rem' };
                                     modal.popupPlacement = 'center';
-                                    vstack.height = isExpand ? '80vh' : '300px';
+                                    vstack.height = isExpand ? 'calc(100vh - 70px)' : '300px';
                                     modal.refresh();
                                 }
                             }
@@ -2695,14 +2697,14 @@ define("@scom/scom-editor/components/codeBlock.tsx", ["require", "exports", "@ij
                         await config.loadContent(this.fullCode || '');
                         button.onClick = async () => {
                             const fullCode = (0, utils_11.escapeHTML)(config.value || '');
-                            const regex = /```(\w+)\((.+?)\)\n([\s\S]+)```/g;
+                            const regex = /```(\w+)?(\((.+?)\))?[\s\n]([\s\S]+)[\s\n]```/g;
                             const matches = regex.exec(fullCode);
-                            const path = matches?.[2] || '';
+                            const path = matches?.[3] || '';
                             let language = matches?.[1] || utils_11.DEFAULT_LANGUAGE;
                             if (language) {
                                 language = `${language}${path ? `(${path})` : ''}`;
                             }
-                            const code = matches?.[3] || '';
+                            const code = matches?.[4] || '';
                             if (onConfirm)
                                 onConfirm(true, { ...this._data, code, language });
                         };
@@ -2720,7 +2722,7 @@ define("@scom/scom-editor/components/codeBlock.tsx", ["require", "exports", "@ij
                 await this.setData({ code, language });
         }
         render() {
-            return (this.$render("i-panel", { id: "blockWrapper", width: '100%', class: index_css_7.customPreStyle }));
+            return (this.$render("i-panel", { id: "blockWrapper", width: '100%', class: index_css_7.customPreStyle, minHeight: 30, border: { radius: '0.375rem', width: '1px', style: 'solid', color: Theme.divider } }));
         }
     };
     ScomEditorCodeBlock = __decorate([
@@ -4554,19 +4556,19 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addCodeBlock = void 0;
     function getData(element) {
-        if (element?.nodeName === 'CODE') {
-            const props = { type: 'inline' };
-            if (element.parentElement?.nodeName === 'PRE') {
-                props.type = 'block';
+        if (element?.nodeName === 'PRE') {
+            const codeElm = element.querySelector('code');
+            if (codeElm) {
+                return {
+                    code: codeElm.textContent,
+                    language: codeElm.getAttribute('data-language') || ''
+                };
             }
-            return {
-                ...props,
-                code: element.textContent,
-                language: element.getAttribute('data-language') || ''
-            };
         }
         return false;
     }
+    const backtickInputRegex = /^```([a-z]+)?[\s\n]$/;
+    const tildeInputRegex = /^~~~([a-z]+)?[\s\n]$/;
     function addCodeBlock(blocknote) {
         const CodeBlock = blocknote.createBlockSpec({
             type: "codeBlock",
@@ -4574,23 +4576,17 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
                 ...blocknote.defaultProps,
                 language: { default: '' },
                 code: { default: '' },
-                type: { default: 'block' },
                 width: { default: 512 },
                 height: { default: 'auto' }
             },
-            content: "none"
+            content: 'none',
+            marks: '',
+            code: true,
+            defining: true,
         }, {
             render: (block) => {
                 const wrapper = new components_34.Panel();
-                let { code, language, type } = JSON.parse(JSON.stringify(block.props));
-                if (type === 'inline') {
-                    const codeElm = document.createElement('code');
-                    codeElm.textContent = code;
-                    wrapper.appendChild(codeElm);
-                    return {
-                        dom: wrapper
-                    };
-                }
+                const { code, language } = JSON.parse(JSON.stringify(block.props));
                 const elTag = new index_19.ScomEditorCodeBlock(wrapper, {
                     code,
                     language,
@@ -4623,7 +4619,7 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
                         node: 'codeBlock'
                     },
                     {
-                        tag: "code",
+                        tag: "pre",
                         getAttrs: (element) => {
                             if (typeof element === "string")
                                 return false;
@@ -4635,28 +4631,19 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
                 ];
             },
             toExternalHTML: (block, editor) => {
-                const blockType = block.props.type;
-                let wrapper = null;
-                if (blockType === 'block') {
-                    wrapper = document.createElement('pre');
-                    const codeElm = document.createElement('code');
-                    const code = (0, index_19.revertHtmlTags)(block.props.code || '');
-                    codeElm.textContent = code;
-                    wrapper.appendChild(codeElm);
-                    const language = block.props.language;
-                    codeElm.setAttribute('data-language', language);
-                    if (language) {
-                        const customClass = `language-${language}`;
-                        codeElm.classList.add(customClass);
-                    }
-                }
-                else {
-                    wrapper = document.createElement('code');
-                    const code = (0, index_19.revertHtmlTags)(block.props.code || '');
-                    wrapper.textContent = code;
+                const preEl = document.createElement('pre');
+                const codeElm = document.createElement('code');
+                const code = (0, index_19.revertHtmlTags)(block.props.code || '');
+                codeElm.textContent = code;
+                preEl.appendChild(codeElm);
+                const language = block.props.language;
+                codeElm.setAttribute('data-language', language);
+                if (language) {
+                    const customClass = `language-${language}`;
+                    codeElm.classList.add(customClass);
                 }
                 return {
-                    dom: wrapper
+                    dom: preEl
                 };
             },
             pasteRules: [
@@ -4677,7 +4664,16 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
             ],
             inputRules: [
                 {
-                    find: new RegExp(`^(\`{3,})\\s$`),
+                    find: backtickInputRegex,
+                    getAttributes: match => ({
+                        language: match[1],
+                    })
+                },
+                {
+                    find: tildeInputRegex,
+                    getAttributes: match => ({
+                        language: match[1],
+                    })
                 }
             ]
         });
