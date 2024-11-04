@@ -3,7 +3,6 @@ import {
   ControlElement,
   Module,
   Container,
-  CodeEditor,
   VStack,
   Button,
   Styles,
@@ -86,10 +85,9 @@ export class ScomEditorCodeBlock extends Module {
 
   private async renderUI() {
     this.blockWrapper.clearInnerHTML();
-    const codeBlock = document.createElement('i-scom-code-viewer') as any;
-    this.blockWrapper.appendChild(codeBlock);
+    const codeBlock = this.createElement('i-scom-code-viewer', this.blockWrapper) as any;
+    codeBlock.parent = this.blockWrapper;
     const rootDir = application.rootDir;
-    await codeBlock.ready();
     await codeBlock.setData({
       code: this.fullCode,
       entryPoint: rootDir.endsWith('/') ? rootDir.slice(0, -1) : rootDir,
@@ -147,12 +145,12 @@ export class ScomEditorCodeBlock extends Module {
               }
             }
           });
-          const config = new CodeEditor(vstack, {
-            width: '100%',
-            maxHeight: 'calc(100% - 60px)',
-            stack: {grow: '1'},
-            display: 'block',
-          });
+          const config = this.createElement('i-scom-code-editor', vstack) as any;
+          config.parent = vstack;
+          config.display = 'block';
+          config.width = '100%';
+          config.maxHeight = 'calc(100% - 60px)';
+          config.stack = {grow: '1'};
           const hstack = new HStack(vstack, {
             verticalAlignment: 'center',
             horizontalAlignment: 'end',

@@ -13,6 +13,7 @@
         "@ijstech/cli": "^0.1.28",
         "@ijstech/compiler": "^0.1.22",
         "@scom/dapp": "^0.1.11",
+        "@scom/scom-charts": "https://github.com/scom-repos/scom-charts",
         "@scom/oswap-troll-nft-contract": "0.1.0",
         "@scom/oswap-bakery-swap-contract": "^0.1.2",
         "@scom/oswap-chainlink-contract": "^0.1.1",
@@ -54,6 +55,8 @@
         "@scom/scom-xchain-widget": "https://github.com/scom-repos/scom-xchain-widget",
         "@scom/scom-voting": "https://github.com/scom-repos/scom-voting",
         "@scom/oswap-nft-widget": "git@github.com:scom-repos/oswap-nft-widget.git",
+        "@scom/scom-code-editor": "^0.1.0",
+        "@scom/scom-code-viewer": "^0.1.2",
         "@scom/scom-editor": "file:./ref"
     },
     "scripts": {
