@@ -2612,10 +2612,9 @@ define("@scom/scom-editor/components/codeBlock.tsx", ["require", "exports", "@ij
         }
         async renderUI() {
             this.blockWrapper.clearInnerHTML();
-            const codeBlock = document.createElement('i-scom-code-viewer');
-            this.blockWrapper.appendChild(codeBlock);
+            const codeBlock = this.createElement('i-scom-code-viewer', this.blockWrapper);
+            codeBlock.parent = this.blockWrapper;
             const rootDir = components_20.application.rootDir;
-            await codeBlock.ready();
             await codeBlock.setData({
                 code: this.fullCode,
                 entryPoint: rootDir.endsWith('/') ? rootDir.slice(0, -1) : rootDir,
@@ -2675,12 +2674,12 @@ define("@scom/scom-editor/components/codeBlock.tsx", ["require", "exports", "@ij
                                 }
                             }
                         });
-                        const config = new components_20.CodeEditor(vstack, {
-                            width: '100%',
-                            maxHeight: 'calc(100% - 60px)',
-                            stack: { grow: '1' },
-                            display: 'block',
-                        });
+                        const config = this.createElement('i-scom-code-editor', vstack);
+                        config.parent = vstack;
+                        config.display = 'block';
+                        config.width = '100%';
+                        config.maxHeight = 'calc(100% - 60px)';
+                        config.stack = { grow: '1' };
                         const hstack = new components_20.HStack(vstack, {
                             verticalAlignment: 'center',
                             horizontalAlignment: 'end',

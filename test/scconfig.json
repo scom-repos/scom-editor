@@ -13,12 +13,16 @@
   },
   "dependencies": {
     "@scom/dapp": "*",
+    "@scom/scom-code-editor": "*",
+    "@scom/scom-designer": "*",
+    "@scom/scom-code-viewer": "*",
     "@scom/scom-editor": "*",
     "@ijstech/eth-contract": "*",
     "@ijstech/eth-wallet": "*"
   },
   "packages": [
     "@scom/scom-chart-data-source-setup",
+    "@scom/scom-charts",
     "@scom/scom-bar-chart",
     "@scom/scom-area-chart",
     "@scom/scom-line-chart",
