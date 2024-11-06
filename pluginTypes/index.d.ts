@@ -1381,6 +1381,7 @@ declare module "@scom/scom-editor" {
         value?: string;
         viewer?: boolean;
         lazyLoad?: boolean;
+        widgets?: string[];
         onChanged?: onChangedCallback;
     }
     global {
@@ -1395,6 +1396,7 @@ declare module "@scom/scom-editor" {
         private _blocknoteObj;
         private _editor;
         private _data;
+        private _widgets;
         tag: any;
         private timer;
         onChanged: onChangedCallback;
@@ -1403,15 +1405,19 @@ declare module "@scom/scom-editor" {
         set value(data: string);
         get viewer(): boolean;
         set viewer(data: boolean);
+        get widgets(): string[];
+        set widgets(data: string[]);
         getEditor(): any;
         static create(options?: ScomEditorElement, parent?: Container): Promise<ScomEditor>;
         private initEditor;
         private renderEditor;
+        private defineWidgets;
         private onEditorChanged;
         private addCSS;
         private loadPlugin;
         private getData;
         private setData;
+        private renderData;
         setValue(value: string): Promise<void>;
         insertFile(url: string): Promise<void>;
         insertBlock(block: Block): void;

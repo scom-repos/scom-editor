@@ -4983,6 +4983,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         'blocknote'
     ];
     const cssPath = `${path}/lib/@blocknote/style.css`;
+    const DEFAUT_WIDGETS = ['video', 'imageWidget', 'codeBlock', 'swap', 'staking', 'xchain', 'chart', 'tweet', 'voting', 'nftMinter', 'oswapNft'];
     let ScomEditor = class ScomEditor extends components_37.Module {
         constructor(parent, options) {
             super(parent, options);
@@ -4999,6 +5000,14 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         set viewer(data) {
             this._data.viewer = data ?? false;
+        }
+        get widgets() {
+            return this._widgets || DEFAUT_WIDGETS;
+        }
+        set widgets(data) {
+            this._widgets = data || DEFAUT_WIDGETS;
+            if (this._editor)
+                this.renderData();
         }
         getEditor() {
             return this._editor;
@@ -5023,31 +5032,11 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 return;
             this.pnlEditor.clearInnerHTML();
             (0, index_22.removeContainer)();
-            const { CodeBlock, CodeSlashItem } = (0, index_21.addCodeBlock)(this._blocknoteObj);
-            const { VideoSlashItem, VideoBlock } = (0, index_21.addVideoBlock)(this._blocknoteObj);
-            const { ImageSlashItem, ImageBlock } = (0, index_21.addImageBlock)(this._blocknoteObj);
-            const { SwapSlashItem, SwapBlock } = (0, index_21.addSwapBlock)(this._blocknoteObj);
-            const { XchainSlashItem, XchainBlock } = (0, index_21.addXchainBlock)(this._blocknoteObj);
-            const { ChartSlashItem, ChartBlock } = (0, index_21.addChartBlock)(this._blocknoteObj);
-            const { TweetBlock, TweetSlashItem } = (0, index_21.addTweetBlock)(this._blocknoteObj);
-            const { StakingBlock, StakingSlashItem } = (0, index_21.addStakingBlock)(this._blocknoteObj);
-            const { VotingBlock, VotingSlashItem } = (0, index_21.addVotingBlock)(this._blocknoteObj);
-            const { NftMinterBlock, NftMinterSlashItem } = (0, index_21.addNftMinterBlock)(this._blocknoteObj);
-            const { OswapNftBlock, OswapNftSlashItem } = (0, index_21.addOswapNftBlock)(this._blocknoteObj);
+            const { blockSpecs: customBlockSpecs, slashMenuItems: customSlashMenuItems } = this.defineWidgets(this.widgets);
             const { FileSlashItem } = (0, index_21.addFileBlock)();
             const blockSpecs = {
                 ...this._blocknoteObj.defaultBlockSpecs,
-                codeBlock: CodeBlock,
-                video: VideoBlock,
-                imageWidget: ImageBlock,
-                swap: SwapBlock,
-                staking: StakingBlock,
-                xchain: XchainBlock,
-                chart: ChartBlock,
-                tweet: TweetBlock,
-                voting: VotingBlock,
-                nftMinter: NftMinterBlock,
-                oswapNft: OswapNftBlock,
+                ...customBlockSpecs,
             };
             const editorConfig = {
                 parentElement: this.pnlEditor,
@@ -5055,18 +5044,8 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 editable: !this.viewer,
                 slashMenuItems: [
                     ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
-                    CodeSlashItem,
-                    VideoSlashItem,
-                    ImageSlashItem,
                     FileSlashItem,
-                    SwapSlashItem,
-                    StakingSlashItem,
-                    XchainSlashItem,
-                    ChartSlashItem,
-                    TweetSlashItem,
-                    VotingSlashItem,
-                    NftMinterSlashItem,
-                    OswapNftSlashItem,
+                    ...customSlashMenuItems
                 ],
                 onEditorContentChange: (editor) => {
                     if (this.timer)
@@ -5100,6 +5079,68 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                     menu.opacity = 0;
                 }
             });
+        }
+        defineWidgets(widgets) {
+            const blockSpecs = {};
+            const slashMenuItems = [];
+            for (let widget of widgets) {
+                if (widget === 'video') {
+                    const { VideoSlashItem, VideoBlock } = (0, index_21.addVideoBlock)(this._blocknoteObj);
+                    slashMenuItems.push(VideoSlashItem);
+                    blockSpecs.video = VideoBlock;
+                }
+                else if (widget === 'codeBlock') {
+                    const { CodeSlashItem, CodeBlock } = (0, index_21.addCodeBlock)(this._blocknoteObj);
+                    slashMenuItems.push(CodeSlashItem);
+                    blockSpecs.codeBlock = CodeBlock;
+                }
+                else if (widget === 'imageWidget') {
+                    const { ImageSlashItem, ImageBlock } = (0, index_21.addImageBlock)(this._blocknoteObj);
+                    slashMenuItems.push(ImageSlashItem);
+                    blockSpecs.imageWidget = ImageBlock;
+                }
+                else if (widget === 'swap') {
+                    const { SwapSlashItem, SwapBlock } = (0, index_21.addSwapBlock)(this._blocknoteObj);
+                    slashMenuItems.push(SwapSlashItem);
+                    blockSpecs.swap = SwapBlock;
+                }
+                else if (widget === 'staking') {
+                    const { StakingSlashItem, StakingBlock } = (0, index_21.addStakingBlock)(this._blocknoteObj);
+                    slashMenuItems.push(StakingSlashItem);
+                    blockSpecs.staking = StakingBlock;
+                }
+                else if (widget === 'xchain') {
+                    const { XchainSlashItem, XchainBlock } = (0, index_21.addXchainBlock)(this._blocknoteObj);
+                    slashMenuItems.push(XchainSlashItem);
+                    blockSpecs.xchain = XchainBlock;
+                }
+                else if (widget === 'chart') {
+                    const { ChartSlashItem, ChartBlock } = (0, index_21.addChartBlock)(this._blocknoteObj);
+                    slashMenuItems.push(ChartSlashItem);
+                    blockSpecs.chart = ChartBlock;
+                }
+                else if (widget === 'tweet') {
+                    const { TweetBlock, TweetSlashItem } = (0, index_21.addTweetBlock)(this._blocknoteObj);
+                    slashMenuItems.push(TweetSlashItem);
+                    blockSpecs.tweet = TweetBlock;
+                }
+                else if (widget === 'voting') {
+                    const { VotingBlock, VotingSlashItem } = (0, index_21.addVotingBlock)(this._blocknoteObj);
+                    slashMenuItems.push(VotingSlashItem);
+                    blockSpecs.voting = VotingBlock;
+                }
+                else if (widget === 'nftMinter') {
+                    const { NftMinterBlock, NftMinterSlashItem } = (0, index_21.addNftMinterBlock)(this._blocknoteObj);
+                    slashMenuItems.push(NftMinterSlashItem);
+                    blockSpecs.nftMinter = NftMinterBlock;
+                }
+                else if (widget === 'oswapNft') {
+                    const { OswapNftBlock, OswapNftSlashItem } = (0, index_21.addOswapNftBlock)(this._blocknoteObj);
+                    slashMenuItems.push(OswapNftSlashItem);
+                    blockSpecs.oswapNft = OswapNftBlock;
+                }
+            }
+            return { blockSpecs, slashMenuItems };
         }
         async onEditorChanged(editor) {
             let value = '';
@@ -5146,10 +5187,12 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._editor)
                 await this.initEditor();
             if (data.value) {
-                const blocks = await this._editor.tryParseMarkdownToBlocks(data.value);
-                // Fix render paragraph with code tag
-                this.renderEditor(JSON.parse(JSON.stringify(blocks)));
+                await this.renderData();
             }
+        }
+        async renderData() {
+            const blocks = await this._editor.tryParseMarkdownToBlocks(this.value);
+            this.renderEditor(JSON.parse(JSON.stringify(blocks)));
         }
         async setValue(value) {
             this.value = value;
@@ -5336,6 +5379,16 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!lazyLoad) {
                 const value = this.getAttribute('value', true);
                 const viewer = this.getAttribute('viewer', true);
+                const scconfig = components_37.application.store.scconfig;
+                let customWidgets = null;
+                if (scconfig) {
+                    try {
+                        customWidgets = JSON.parse(scconfig)?.editorWidgets;
+                    }
+                    catch (error) {
+                    }
+                }
+                this.widgets = customWidgets || this.getAttribute('widgets', true);
                 await this.setData({ value, viewer });
             }
         }

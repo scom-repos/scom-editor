@@ -59,6 +59,9 @@
       "module": "@modules/module1"
     }
   ],
+  "editorWidgets": [
+		"video", "codeBlock", "imageWidget"
+	],
   "themes": {
     "default": "dark",
     "light": {
