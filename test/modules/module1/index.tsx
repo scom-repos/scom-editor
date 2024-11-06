@@ -474,6 +474,9 @@ export default class Module1 extends Module {
   init() {
     super.init();
     this.renderMobilePostComposer();
+    if (this.options.editorWidgets) {
+      this.postEditor.widgets = this.options.editorWidgets;
+    }
   }
 
   render() {

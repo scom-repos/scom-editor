@@ -43,6 +43,7 @@ interface ScomEditorElement extends ControlElement {
   value?: string;
   viewer?: boolean;
   lazyLoad?: boolean;
+  widgets?: string[];
   onChanged?: onChangedCallback;
 }
 
@@ -64,6 +65,7 @@ const libPlugins = [
   'blocknote'
 ];
 const cssPath = `${path}/lib/@blocknote/style.css`;
+const DEFAUT_WIDGETS = ['video', 'imageWidget', 'codeBlock', 'swap', 'staking', 'xchain', 'chart', 'tweet', 'voting', 'nftMinter', 'oswapNft'];
 
 @customElements('i-scom-editor')
 export class ScomEditor extends Module {
@@ -72,6 +74,7 @@ export class ScomEditor extends Module {
   private _blocknoteObj: any;
   private _editor: any;
   private _data: IEditor;
+  private _widgets: string[];
 
   tag: any = {};
 
@@ -97,6 +100,14 @@ export class ScomEditor extends Module {
     this._data.viewer = data ?? false;
   }
 
+  get widgets() {
+    return this._widgets || DEFAUT_WIDGETS;
+  }
+  set widgets(data: string[]) {
+    this._widgets = data || DEFAUT_WIDGETS;
+    if (this._editor) this.renderData();
+  }
+
   getEditor() {
     return this._editor;
   }
@@ -120,32 +131,17 @@ export class ScomEditor extends Module {
     if (!this._blocknoteObj) return;
     this.pnlEditor.clearInnerHTML();
     removeContainer();
-    const { CodeBlock, CodeSlashItem } = addCodeBlock(this._blocknoteObj);
-    const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
-    const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
-    const { SwapSlashItem, SwapBlock } = addSwapBlock(this._blocknoteObj);
-    const { XchainSlashItem, XchainBlock } = addXchainBlock(this._blocknoteObj);
-    const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
-    const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
-    const { StakingBlock, StakingSlashItem } = addStakingBlock(this._blocknoteObj);
-    const { VotingBlock, VotingSlashItem } = addVotingBlock(this._blocknoteObj);
-    const { NftMinterBlock, NftMinterSlashItem } = addNftMinterBlock(this._blocknoteObj);
-    const { OswapNftBlock, OswapNftSlashItem } = addOswapNftBlock(this._blocknoteObj);
+
+    const {
+      blockSpecs: customBlockSpecs,
+      slashMenuItems: customSlashMenuItems
+    } = this.defineWidgets(this.widgets);
+
     const { FileSlashItem } = addFileBlock();
 
     const blockSpecs = {
       ...this._blocknoteObj.defaultBlockSpecs,
-      codeBlock: CodeBlock,
-      video: VideoBlock,
-      imageWidget: ImageBlock,
-      swap: SwapBlock,
-      staking: StakingBlock,
-      xchain: XchainBlock,
-      chart: ChartBlock,
-      tweet: TweetBlock,
-      voting: VotingBlock,
-      nftMinter: NftMinterBlock,
-      oswapNft: OswapNftBlock,
+      ...customBlockSpecs,
     };
 
     const editorConfig: BlockNoteEditorOptions = {
@@ -154,18 +150,8 @@ export class ScomEditor extends Module {
       editable: !this.viewer,
       slashMenuItems: [
         ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
-        CodeSlashItem,
-        VideoSlashItem,
-        ImageSlashItem,
         FileSlashItem,
-        SwapSlashItem,
-        StakingSlashItem,
-        XchainSlashItem,
-        ChartSlashItem,
-        TweetSlashItem,
-        VotingSlashItem,
-        NftMinterSlashItem,
-        OswapNftSlashItem,
+        ...customSlashMenuItems
       ],
       onEditorContentChange: (editor: BlockNoteEditor) => {
         if (this.timer) clearTimeout(this.timer);
@@ -197,6 +183,59 @@ export class ScomEditor extends Module {
         (menu as Control).opacity = 0;
       }
     })
+  }
+
+  private defineWidgets(widgets: string[]) {
+    const blockSpecs: { [key: string]: any } = {};
+    const slashMenuItems: any[] = [];
+    for (let widget of widgets) {
+      if (widget === 'video') {
+        const { VideoSlashItem, VideoBlock } = addVideoBlock(this._blocknoteObj);
+        slashMenuItems.push(VideoSlashItem);
+        blockSpecs.video = VideoBlock;
+      } else if (widget === 'codeBlock') {
+        const { CodeSlashItem, CodeBlock } = addCodeBlock(this._blocknoteObj);
+        slashMenuItems.push(CodeSlashItem);
+        blockSpecs.codeBlock = CodeBlock;
+      } else if (widget === 'imageWidget') {
+        const { ImageSlashItem, ImageBlock } = addImageBlock(this._blocknoteObj);
+        slashMenuItems.push(ImageSlashItem);
+        blockSpecs.imageWidget = ImageBlock;
+      } else if (widget === 'swap') {
+        const { SwapSlashItem, SwapBlock } = addSwapBlock(this._blocknoteObj);
+        slashMenuItems.push(SwapSlashItem);
+        blockSpecs.swap = SwapBlock;
+      } else if (widget === 'staking') {
+        const { StakingSlashItem, StakingBlock } = addStakingBlock(this._blocknoteObj);
+        slashMenuItems.push(StakingSlashItem);
+        blockSpecs.staking = StakingBlock;
+      } else if (widget === 'xchain') {
+        const { XchainSlashItem, XchainBlock } = addXchainBlock(this._blocknoteObj);
+        slashMenuItems.push(XchainSlashItem);
+        blockSpecs.xchain = XchainBlock;
+      } else if (widget === 'chart') {
+        const { ChartSlashItem, ChartBlock } = addChartBlock(this._blocknoteObj);
+        slashMenuItems.push(ChartSlashItem);
+        blockSpecs.chart = ChartBlock;
+      } else if (widget === 'tweet') {
+        const { TweetBlock, TweetSlashItem } = addTweetBlock(this._blocknoteObj);
+        slashMenuItems.push(TweetSlashItem);
+        blockSpecs.tweet = TweetBlock;
+      } else if (widget === 'voting') {
+        const { VotingBlock, VotingSlashItem } = addVotingBlock(this._blocknoteObj);
+        slashMenuItems.push(VotingSlashItem);
+        blockSpecs.voting = VotingBlock;
+      } else if (widget === 'nftMinter') {
+        const { NftMinterBlock, NftMinterSlashItem } = addNftMinterBlock(this._blocknoteObj);
+        slashMenuItems.push(NftMinterSlashItem);
+        blockSpecs.nftMinter = NftMinterBlock;
+      } else if (widget === 'oswapNft') {
+        const { OswapNftBlock, OswapNftSlashItem } = addOswapNftBlock(this._blocknoteObj);
+        slashMenuItems.push(OswapNftSlashItem);
+        blockSpecs.oswapNft = OswapNftBlock;
+      }
+    }
+    return { blockSpecs, slashMenuItems };
   }
 
   private async onEditorChanged(editor: BlockNoteEditor) {
@@ -244,10 +283,13 @@ export class ScomEditor extends Module {
     this._data = data;
     if (!this._editor) await this.initEditor();
     if (data.value) {
-      const blocks: Block[] = await this._editor.tryParseMarkdownToBlocks(data.value);
-      // Fix render paragraph with code tag
-      this.renderEditor(JSON.parse(JSON.stringify(blocks)));
+      await this.renderData();
     }
+  }
+
+  private async renderData() {
+    const blocks: Block[] = await this._editor.tryParseMarkdownToBlocks(this.value);
+    this.renderEditor(JSON.parse(JSON.stringify(blocks)));
   }
 
   async setValue(value: string) {
@@ -443,6 +485,15 @@ export class ScomEditor extends Module {
     if (!lazyLoad) {
       const value = this.getAttribute('value', true);
       const viewer = this.getAttribute('viewer', true);
+      const scconfig = application.store.scconfig;
+      let customWidgets = null;
+      if (scconfig) {
+        try {
+          customWidgets = JSON.parse(scconfig)?.editorWidgets;
+        } catch (error) {
+        }
+      }
+      this.widgets = customWidgets || this.getAttribute('widgets', true);
       await this.setData({ value, viewer });
     }
   }
