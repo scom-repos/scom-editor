@@ -1,6 +1,5 @@
 import { Panel } from "@ijstech/components";
-import { Block, BlockNoteEditor } from "../global/index";
-import { execCustomBLock } from "./utils";
+import { Block, BlockNoteEditor, execCustomBLock } from '@scom/scom-blocknote-sdk';
 import { DEFAULT_LANGUAGE, ScomEditorCodeBlock, revertHtmlTags } from "../components/index";
 
 function getData(element: HTMLElement) {

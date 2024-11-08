@@ -57,6 +57,7 @@
         "@scom/oswap-nft-widget": "^0.1.0",
         "@scom/scom-code-editor": "^0.1.0",
         "@scom/scom-code-viewer": "^0.1.2",
+        "@scom/scom-blocknote-sdk": "https://github.com/scom-repos/scom-blocknote-sdk",
         "@scom/scom-editor": "file:./ref"
     },
     "scripts": {

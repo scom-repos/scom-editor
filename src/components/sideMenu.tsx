@@ -9,10 +9,9 @@ import {
 } from '@ijstech/components';
 import { ScomEditorDragHandle } from './dragHandle';
 import { ColorType } from './colorPicker';
-import { Block, BlockNoteEditor } from '../global/index';
 import { ScomEditorSettingsForm, ISettingsForm } from './settingsForm';
-import { CustomBlockTypes, WidgetMapping } from './utils';
 import { buttonHoverStyle } from './index.css';
+import { Block, BlockNoteEditor, CustomBlockTypes, WidgetMapping } from '@scom/scom-blocknote-sdk';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSideMenuElement extends ControlElement {

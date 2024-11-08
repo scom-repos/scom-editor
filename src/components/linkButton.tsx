@@ -8,7 +8,7 @@ import {
   Button
 } from '@ijstech/components';
 import { ScomEditorMdLink } from './linkModal';
-import { BlockNoteEditor } from '../global/index';
+import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
 const Theme = Styles.Theme.ThemeVars;
 
 export type setLinkCallback = (text: string, url: string) => void;

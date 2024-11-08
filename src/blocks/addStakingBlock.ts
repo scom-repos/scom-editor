@@ -1,7 +1,6 @@
 import { Panel } from "@ijstech/components";
-import { Block, BlockNoteEditor } from "../global/index";
-import { getWidgetEmbedUrl, ScomEditorCustomBlock } from "../components/index";
-import { execCustomBLock, parseUrl } from "./utils";
+import { Block, BlockNoteEditor, execCustomBLock, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
+import { ScomEditorCustomBlock } from "../components/index";
 
 const stakingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-staking\/\S+/g;
 function getData(href: string) {

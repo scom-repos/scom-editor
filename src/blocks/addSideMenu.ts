@@ -1,5 +1,5 @@
-import { BlockNoteEditor, CustomSideMenuState } from "../global/index";
 import { ScomEditorSideMenu, getModalContainer, setToolbar, customModalStyle } from "../components/index";
+import { BlockNoteEditor, CustomSideMenuState } from "@scom/scom-blocknote-sdk";
 
 export const addSideMenu = (editor: BlockNoteEditor) => {
   let sideMenu: ScomEditorSideMenu;

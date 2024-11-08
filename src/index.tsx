@@ -18,11 +18,9 @@ import {
   addHyperlinkToolbar,
   addTableToolbar,
   addFileBlock,
-  execCustomBLock,
-  getBlockFromExtension,
   addCodeBlock
 } from './blocks/index';
-import { Block, BlockNoteEditor, BlockNoteEditorOptions, PartialBlock } from './global/index';
+import { Block, BlockNoteEditor, BlockNoteEditorOptions, execCustomBLock, getBlockFromExtension, PartialBlock } from "@scom/scom-blocknote-sdk";
 import { getModalContainer, getToolbar, getToolbars, removeContainer, ScomEditorSideMenu } from './components/index';
 import { customEditorStyle } from './index.css';
 const Theme = Styles.Theme.ThemeVars;

@@ -6,7 +6,7 @@ import {
   Container,
   Button
 } from '@ijstech/components';
-import { BlockNoteEditor } from '../global/index';
+import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
 import { ScomEditorTableMenu } from './tableMenu';
 import { buttonHoverStyle } from './index.css';
 

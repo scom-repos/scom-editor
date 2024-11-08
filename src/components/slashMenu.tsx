@@ -9,7 +9,8 @@ import {
   Control,
   Icon
 } from '@ijstech/components';
-import { getExtraFields, getModalContainer, getToolbar } from './utils';
+import { getToolbar } from './utils';
+import { getExtraFields } from '@scom/scom-blocknote-sdk';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSlashMenuElement extends ControlElement {

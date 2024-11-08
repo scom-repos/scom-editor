@@ -6,9 +6,9 @@ import {
   Panel,
   application
 } from '@ijstech/components';
-import { getModalContainer, getToolbar } from './utils';
+import { getToolbar } from './utils';
 import { ScomEditorSideMenu } from './sideMenu';
-import { Block } from '../global/index';
+import { Block } from '@scom/scom-blocknote-sdk';
 
 interface ICustomBlockConfig {
   module: string;

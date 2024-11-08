@@ -11,7 +11,8 @@ import {
   VStack,
   Upload
 } from '@ijstech/components';
-import { Block, BlockNoteEditor } from '../global/index';
+import { Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
+
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorImageToolbarElement extends ControlElement {

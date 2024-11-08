@@ -1,7 +1,6 @@
 import { Panel } from "@ijstech/components";
-import { Block, BlockNoteEditor } from "../global/index";
-import { ScomEditorCustomBlock, getWidgetEmbedUrl } from "../components/index";
-import { execCustomBLock, parseUrl } from "./utils";
+import { Block, BlockNoteEditor, execCustomBLock, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
+import { ScomEditorCustomBlock } from "../components/index";
 
 const swapRegex = /https:\/\/ipfs\.scom\.dev\/ipfs\/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4\?data\=.*/g;
 function getData(href: string) {

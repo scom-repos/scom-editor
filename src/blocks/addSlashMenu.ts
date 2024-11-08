@@ -1,6 +1,6 @@
 import { Control, Modal, Styles } from "@ijstech/components";
 import { ScomEditorSlashMenu, createModal, getModalContainer, getToolbar, setToolbar } from "../components/index";
-import { BlockNoteEditor, CustomSlashMenuState } from "../global/index";
+import { BlockNoteEditor, CustomSlashMenuState } from "@scom/scom-blocknote-sdk";
 const Theme = Styles.Theme.ThemeVars;
 
 const closeSideMenu = () => {

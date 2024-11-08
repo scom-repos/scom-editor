@@ -1,6 +1,6 @@
 import { Control, Modal, Panel, Styles } from "@ijstech/components";
-import { BlockNoteEditor, CustomHyperlinkToolbarState } from "../global/index";
 import { ScomEditorLink, buttonHoverStyle, createButton, createModal, getModalContainer } from "../components/index";
+import { BlockNoteEditor, CustomHyperlinkToolbarState } from "@scom/scom-blocknote-sdk";
 const Theme = Styles.Theme.ThemeVars;
 
 const getToolbarButtons = (editor: any, hyperlinkToolbarState: CustomHyperlinkToolbarState, modal: Control) => {

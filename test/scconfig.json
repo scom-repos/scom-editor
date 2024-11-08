@@ -16,6 +16,7 @@
     "@scom/scom-code-editor": "*",
     "@scom/scom-designer": "*",
     "@scom/scom-code-viewer": "*",
+    "@scom/scom-blocknote-sdk": "*",
     "@scom/scom-editor": "*",
     "@ijstech/eth-contract": "*",
     "@ijstech/eth-wallet": "*"

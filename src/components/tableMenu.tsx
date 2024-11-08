@@ -7,7 +7,7 @@ import {
   Menu,
   IMenuItem
 } from '@ijstech/components';
-import { BlockNoteEditor } from '../global/index';
+import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
 const Theme = Styles.Theme.ThemeVars;
 
 
