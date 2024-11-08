@@ -1410,7 +1410,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         openConfig(block, module) {
             const isCustomBlock = block?.type && utils_7.CustomBlockTypes.includes(block.type);
             if (isCustomBlock && !this.initedMap.has(block.id)) {
-                const editAction = module.getActions()[0];
+                const editAction = this.getActions(module)[0];
                 this.currentModule = module;
                 this.showConfigModal(block, editAction);
                 this.initedMap.set(block.id, true);
@@ -1448,27 +1448,21 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                 return;
             let module;
             let editAction;
-            switch (this.block.type) {
-                case 'video':
-                case 'imageWidget':
-                case 'swap':
-                case 'xchain':
-                case 'tweet':
-                case 'staking':
-                case 'voting':
-                case 'nftMinter':
-                case 'oswapNft':
-                    module = blockEl.querySelector('i-scom-editor-custom-block');
-                    editAction = module.getActions()[0];
-                    break;
-                case 'chart':
-                    module = blockEl.querySelector('i-scom-editor-chart');
+            const blockType = this.block.type;
+            if (blockType === 'codeBlock') {
+                module = blockEl.querySelector('i-scom-editor--code-block');
+                editAction = module.getActions();
+            }
+            else if (blockType === 'chart') {
+                module = blockEl.querySelector('i-scom-charts--block');
+                editAction = this.getActions(module)[0];
+            }
+            else if (blockType) {
+                const moduleName = utils_7.WidgetMapping[blockType]?.localPath;
+                if (moduleName) {
+                    module = blockEl.querySelector(`i-${moduleName}`);
                     editAction = this.getActions(module)[0];
-                    break;
-                case 'codeBlock':
-                    module = blockEl.querySelector('i-scom-editor-code-block');
-                    editAction = module.getActions();
-                    break;
+                }
             }
             this.currentModule = module;
             this.showConfigModal(this.block, editAction);
@@ -2725,7 +2719,7 @@ define("@scom/scom-editor/components/codeBlock.tsx", ["require", "exports", "@ij
         }
     };
     ScomEditorCodeBlock = __decorate([
-        (0, components_20.customElements)('i-scom-editor-code-block')
+        (0, components_20.customElements)('i-scom-editor--code-block')
     ], ScomEditorCodeBlock);
     exports.ScomEditorCodeBlock = ScomEditorCodeBlock;
 });
@@ -4983,7 +4977,17 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         'blocknote'
     ];
     const cssPath = `${path}/lib/@blocknote/style.css`;
-    const DEFAUT_WIDGETS = ['video', 'imageWidget', 'codeBlock', 'swap', 'staking', 'xchain', 'chart', 'tweet', 'voting', 'nftMinter', 'oswapNft'];
+    const DEFAUT_WIDGETS = [
+        'scom-video',
+        'scom-image',
+        'scom-charts',
+        'scom-twitter-post',
+        'scom-voting',
+        'scom-nft-minter',
+        'oswap-nft-widget',
+        'scom-xchain-widget',
+        'scom-staking',
+    ];
     let ScomEditor = class ScomEditor extends components_37.Module {
         constructor(parent, options) {
             super(parent, options);
@@ -5032,10 +5036,12 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 return;
             this.pnlEditor.clearInnerHTML();
             (0, index_22.removeContainer)();
-            const { blockSpecs: customBlockSpecs, slashMenuItems: customSlashMenuItems } = this.defineWidgets(this.widgets);
+            const { blockSpecs: customBlockSpecs, slashMenuItems: customSlashMenuItems } = await this.addCustomWidgets(this._blocknoteObj, index_21.execCustomBLock, this.addBlockCallback.bind(this));
             const { FileSlashItem } = (0, index_21.addFileBlock)();
+            const { CodeSlashItem, CodeBlock } = (0, index_21.addCodeBlock)(this._blocknoteObj);
             const blockSpecs = {
                 ...this._blocknoteObj.defaultBlockSpecs,
+                codeBlock: CodeBlock,
                 ...customBlockSpecs,
             };
             const editorConfig = {
@@ -5045,6 +5051,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 slashMenuItems: [
                     ...this._blocknoteObj.getDefaultSlashMenuItems().filter((item) => item.name !== 'Image'),
                     FileSlashItem,
+                    CodeSlashItem,
                     ...customSlashMenuItems
                 ],
                 onEditorContentChange: (editor) => {
@@ -5080,67 +5087,67 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
                 }
             });
         }
-        defineWidgets(widgets) {
+        async addCustomWidgets(blocknote, executeFn, callbackFn) {
             const blockSpecs = {};
             const slashMenuItems = [];
-            for (let widget of widgets) {
-                if (widget === 'video') {
-                    const { VideoSlashItem, VideoBlock } = (0, index_21.addVideoBlock)(this._blocknoteObj);
-                    slashMenuItems.push(VideoSlashItem);
-                    blockSpecs.video = VideoBlock;
-                }
-                else if (widget === 'codeBlock') {
-                    const { CodeSlashItem, CodeBlock } = (0, index_21.addCodeBlock)(this._blocknoteObj);
-                    slashMenuItems.push(CodeSlashItem);
-                    blockSpecs.codeBlock = CodeBlock;
-                }
-                else if (widget === 'imageWidget') {
-                    const { ImageSlashItem, ImageBlock } = (0, index_21.addImageBlock)(this._blocknoteObj);
-                    slashMenuItems.push(ImageSlashItem);
-                    blockSpecs.imageWidget = ImageBlock;
-                }
-                else if (widget === 'swap') {
-                    const { SwapSlashItem, SwapBlock } = (0, index_21.addSwapBlock)(this._blocknoteObj);
-                    slashMenuItems.push(SwapSlashItem);
-                    blockSpecs.swap = SwapBlock;
-                }
-                else if (widget === 'staking') {
-                    const { StakingSlashItem, StakingBlock } = (0, index_21.addStakingBlock)(this._blocknoteObj);
-                    slashMenuItems.push(StakingSlashItem);
-                    blockSpecs.staking = StakingBlock;
-                }
-                else if (widget === 'xchain') {
-                    const { XchainSlashItem, XchainBlock } = (0, index_21.addXchainBlock)(this._blocknoteObj);
-                    slashMenuItems.push(XchainSlashItem);
-                    blockSpecs.xchain = XchainBlock;
-                }
-                else if (widget === 'chart') {
-                    const { ChartSlashItem, ChartBlock } = (0, index_21.addChartBlock)(this._blocknoteObj);
-                    slashMenuItems.push(ChartSlashItem);
-                    blockSpecs.chart = ChartBlock;
-                }
-                else if (widget === 'tweet') {
-                    const { TweetBlock, TweetSlashItem } = (0, index_21.addTweetBlock)(this._blocknoteObj);
-                    slashMenuItems.push(TweetSlashItem);
-                    blockSpecs.tweet = TweetBlock;
-                }
-                else if (widget === 'voting') {
-                    const { VotingBlock, VotingSlashItem } = (0, index_21.addVotingBlock)(this._blocknoteObj);
-                    slashMenuItems.push(VotingSlashItem);
-                    blockSpecs.voting = VotingBlock;
-                }
-                else if (widget === 'nftMinter') {
-                    const { NftMinterBlock, NftMinterSlashItem } = (0, index_21.addNftMinterBlock)(this._blocknoteObj);
-                    slashMenuItems.push(NftMinterSlashItem);
-                    blockSpecs.nftMinter = NftMinterBlock;
-                }
-                else if (widget === 'oswapNft') {
-                    const { OswapNftBlock, OswapNftSlashItem } = (0, index_21.addOswapNftBlock)(this._blocknoteObj);
-                    slashMenuItems.push(OswapNftSlashItem);
-                    blockSpecs.oswapNft = OswapNftBlock;
-                }
+            const promises = [];
+            for (let widget of this.widgets) {
+                promises.push(this.createWidget(widget, blocknote, executeFn, callbackFn));
+            }
+            const results = await Promise.all(promises);
+            for (let result of results) {
+                if (!result || !result?.block?.config?.type)
+                    continue;
+                blockSpecs[result.block.config.type] = result.block;
+                slashMenuItems.push(result.slashItem);
             }
             return { blockSpecs, slashMenuItems };
+        }
+        async createWidget(name, blocknote, executeFn, callbackFn) {
+            components_37.application.currentModuleDir = components_37.application.rootDir + 'libs/' + `@scom/${name}`;
+            try {
+                const module = await components_37.application.createElement(name);
+                if (module && 'addBlock' in module) {
+                    const { block, slashItem } = module.addBlock(blocknote, executeFn, callbackFn);
+                    return { block, slashItem };
+                }
+            }
+            catch { }
+        }
+        addBlockCallback(module, block) {
+            if (!block || !block.type || !module)
+                return;
+            const sideMenu = (0, index_22.getToolbar)('sideMenu');
+            const properties = block.props;
+            const openConfigIfMissingProp = (condition) => {
+                if (sideMenu && condition)
+                    sideMenu.openConfig(block, module);
+            };
+            switch (block.type) {
+                case "imageWidget":
+                case "video":
+                case "tweet":
+                    openConfigIfMissingProp(!properties?.url);
+                    break;
+                case "swap":
+                    openConfigIfMissingProp(!properties?.providers?.length);
+                    break;
+                case "xchain":
+                    openConfigIfMissingProp(!properties?.tokens?.length);
+                    break;
+                case "staking":
+                    openConfigIfMissingProp(!properties?.chainId);
+                    break;
+                case "nftMinter":
+                    openConfigIfMissingProp(!properties?.productType);
+                    break;
+                case "voting":
+                    openConfigIfMissingProp(!properties?.title);
+                    break;
+                case "oswapNft":
+                    openConfigIfMissingProp(!properties?.networks?.length);
+                    break;
+            }
         }
         async onEditorChanged(editor) {
             let value = '';

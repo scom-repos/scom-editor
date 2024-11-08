@@ -60,7 +60,10 @@
     }
   ],
   "editorWidgets": [
-		"video", "codeBlock", "imageWidget"
+		"scom-image",
+    "scom-video",
+    "scom-charts",
+    "scom-twitter-post"
 	],
   "themes": {
     "default": "dark",

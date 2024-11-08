@@ -366,7 +366,7 @@ export const getPlacement = (block: any) => {
 
 export const CustomBlockTypes = ['video', 'imageWidget', 'swap', 'chart', 'xchain', 'tweet', 'staking', 'voting', 'nftMinter', 'oswapNft', 'codeBlock'];
 export const MediaBlockTypes = ['image', ...CustomBlockTypes];
-export const WidgetMapping: {[key: string]: any} = {
+export const WidgetMapping: {[key: string]: {name: string, localPath: string}} = {
   video: {
     name: '@scom/scom-video',
     localPath: 'scom-video'

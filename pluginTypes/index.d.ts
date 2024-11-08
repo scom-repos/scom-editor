@@ -354,7 +354,10 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const CustomBlockTypes: string[];
     export const MediaBlockTypes: string[];
     export const WidgetMapping: {
-        [key: string]: any;
+        [key: string]: {
+            name: string;
+            localPath: string;
+        };
     };
     export const getWidgetEmbedUrl: (block: PartialBlock) => string;
     export const ChartTypes: string[];
@@ -1119,7 +1122,7 @@ declare module "@scom/scom-editor/components/codeBlock.tsx" {
     global {
         namespace JSX {
             interface IntrinsicElements {
-                ['i-scom-editor-code-block']: ScomEditorCodeBlockElement;
+                ['i-scom-editor--code-block']: ScomEditorCodeBlockElement;
             }
         }
     }
@@ -1411,7 +1414,9 @@ declare module "@scom/scom-editor" {
         static create(options?: ScomEditorElement, parent?: Container): Promise<ScomEditor>;
         private initEditor;
         private renderEditor;
-        private defineWidgets;
+        private addCustomWidgets;
+        private createWidget;
+        private addBlockCallback;
         private onEditorChanged;
         private addCSS;
         private loadPlugin;
