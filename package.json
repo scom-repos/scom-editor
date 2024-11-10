@@ -1,6 +1,6 @@
 {
     "name": "@scom/scom-editor",
-    "version": "0.1.15",
+    "version": "0.1.16",
     "main": "dist/index.js",
     "plugin": "dist",
     "pluginTypes": "pluginTypes/index.d.ts",
@@ -17,7 +17,7 @@
     "dependencies": {
         "@ijstech/components": "^0.1.115",
         "@scom/scom-storage": "^0.1.5",
-        "@scom/scom-blocknote-sdk": "https://github.com/scom-repos/scom-blocknote-sdk"
+        "@scom/scom-blocknote-sdk": "^0.1.1"
     },
     "devDependencies": {
         "@ijstech/cli": "^0.1.26",
