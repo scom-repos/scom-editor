@@ -10,9 +10,9 @@ import {
   Input,
   IComboItem
 } from '@ijstech/components';
-import { Block } from '../global/index';
 import { formStyle, settingStyle } from './index.css';
 import { getChartTypeOptions } from './utils';
+import { Block } from '@scom/scom-blocknote-sdk';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSettingsFormElement extends ControlElement {

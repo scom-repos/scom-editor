@@ -1,6 +1,6 @@
 import { Control, Modal } from "@ijstech/components";
-import { BlockNoteEditor, CustomFormattingToolbarState } from '../global/index';
-import { MediaBlockTypes, ScomEditorFormattingToolbar, createModal, getModalContainer, getPlacement } from '../components/index';
+import { ScomEditorFormattingToolbar, createModal, getModalContainer, getPlacement } from '../components/index';
+import { BlockNoteEditor, CustomFormattingToolbarState, MediaBlockTypes } from "@scom/scom-blocknote-sdk";
 
 export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
   let modal: Modal;

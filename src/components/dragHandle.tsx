@@ -8,8 +8,8 @@ import {
   Modal,
   Control
 } from '@ijstech/components';
+import { Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
 import { ColorType, ScomEditorColorPicker } from './colorPicker';
-import { Block, BlockNoteEditor } from '../global/index';
 import { getModalContainer } from './utils';
 import { customModalStyle } from './index.css';
 const Theme = Styles.Theme.ThemeVars;

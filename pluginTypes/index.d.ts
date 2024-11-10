@@ -1,120 +1,3 @@
-/// <amd-module name="@scom/scom-editor/global/helper.ts" />
-declare module "@scom/scom-editor/global/helper.ts" {
-    export const isAppleOS: () => boolean;
-    export function formatKeyboardShortcut(shortcut: string): string;
-    export const parseStringToObject: (value: string) => any;
-}
-/// <amd-module name="@scom/scom-editor/global/coreType.ts" />
-declare module "@scom/scom-editor/global/coreType.ts" {
-    import { Control } from "@ijstech/components";
-    export type Styles = {
-        bold?: true;
-        italic?: true;
-        underline?: true;
-        strike?: true;
-        code?: true;
-        textColor?: string;
-        backgroundColor?: string;
-    };
-    export type ToggledStyle = {
-        [K in keyof Styles]-?: Required<Styles>[K] extends true ? K : never;
-    }[keyof Styles];
-    export type ColorStyle = {
-        [K in keyof Styles]-?: Required<Styles>[K] extends string ? K : never;
-    }[keyof Styles];
-    export type StyledText = {
-        type: "text";
-        text: string;
-        styles: Styles;
-    };
-    export type Link = {
-        type: "link";
-        href: string;
-        content: StyledText[];
-    };
-    export type PartialLink = Omit<Link, "content"> & {
-        content: string | Link["content"];
-    };
-    export type InlineContent = Link | StyledText;
-    export type PartialInlineContent = StyledText | PartialLink;
-    export type PartialBlock = {
-        id?: string;
-        type?: string;
-        props?: Partial<Record<string, string>>;
-        content?: string | InlineContent[];
-        children?: any[];
-    };
-    export type Block = {
-        id: string;
-        type: boolean | number | string;
-        props: Record<string, string>;
-        content: InlineContent[];
-        children: Block[];
-    };
-    export type BlockIdentifier = string | Block;
-    export type SlashMenuItem = {
-        name: string;
-        execute: (editor: any) => void;
-        aliases?: string[];
-        group: string;
-        icon: any;
-        hint?: string;
-        shortcut?: string;
-    };
-    export type BlockNoteEditor = any;
-    export type BlockNoteDOMElement = "editor" | "blockContainer" | "blockGroup" | "blockContent" | "inlineContent";
-    export type BlockNoteDOMAttributes = Partial<{
-        [DOMElement in BlockNoteDOMElement]: Record<string, string>;
-    }>;
-    export type BlockNoteEditorOptions = Partial<{
-        parentElement: Control;
-        editable: boolean;
-        initialContent: PartialBlock[];
-        blockSpecs: any;
-        editorDOMAttributes: Record<string, string>;
-        onEditorReady: (editor: BlockNoteEditor) => void;
-        onEditorContentChange: (editor: BlockNoteEditor) => void;
-        onTextCursorPositionChange: (editor: BlockNoteEditor) => void;
-        slashMenuItems: SlashMenuItem[];
-        defaultStyles: boolean;
-        uploadFile: (file: File) => Promise<string>;
-        domAttributes: Partial<BlockNoteDOMAttributes>;
-    }>;
-}
-/// <amd-module name="@scom/scom-editor/global/index.ts" />
-declare module "@scom/scom-editor/global/index.ts" {
-    export type TextAlignmentType = "left" | "center" | "right" | "justify";
-    export type CustomFormattingToolbarState = {
-        bold: boolean;
-        italic: boolean;
-        underline: boolean;
-        textAlignment: TextAlignmentType;
-        textColor: string;
-        backgroundColor: string;
-        referencePos: any;
-        show: boolean;
-    };
-    export type CustomHyperlinkToolbarState = {
-        text: string;
-        url: string;
-        referencePos: any;
-        show: boolean;
-    };
-    export type CustomSideMenuState = {
-        referencePos: any;
-        show: boolean;
-        block: any;
-    };
-    export type CustomSlashMenuState = {
-        referencePos: any;
-        show: boolean;
-        filteredItems: any[];
-        itemCallback: any;
-        keyboardHoveredItemIndex: number;
-    };
-    export * from "@scom/scom-editor/global/helper.ts";
-    export * from "@scom/scom-editor/global/coreType.ts";
-}
 /// <amd-module name="@scom/scom-editor/components/index.css.ts" />
 declare module "@scom/scom-editor/components/index.css.ts" {
     export const buttonHoverStyle: string;
@@ -124,18 +7,9 @@ declare module "@scom/scom-editor/components/index.css.ts" {
     export const modalStyle: string;
     export const customPreStyle: string;
 }
-/// <amd-module name="@scom/scom-editor/assets.ts" />
-declare module "@scom/scom-editor/assets.ts" {
-    function fullPath(path: string): string;
-    const _default: {
-        fullPath: typeof fullPath;
-    };
-    export default _default;
-}
 /// <amd-module name="@scom/scom-editor/components/utils.ts" />
 declare module "@scom/scom-editor/components/utils.ts" {
     import { Button, Control, HStack, IconName, Modal } from "@ijstech/components";
-    import { PartialBlock } from "@scom/scom-editor/global/index.ts";
     export type IToolbarDropdownItem = {
         text: string;
         icon?: {
@@ -144,193 +18,6 @@ declare module "@scom/scom-editor/components/utils.ts" {
         onClick?: (target: Control, event: MouseEvent) => void;
         isSelected?: boolean;
         isDisabled?: boolean;
-    };
-    export type IBlockTypeItem = {
-        name: string;
-        type: string;
-        props?: Record<string, boolean | number | string>;
-        icon?: {
-            name: IconName;
-        };
-        isSelected: (block: any) => boolean;
-    };
-    export const defaultBlockTypeItems: IBlockTypeItem[];
-    export function getExtraFields(): {
-        Heading: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        "Heading 2": {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        "Heading 3": {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        "Heading 4": {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        "Heading 5": {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        "Heading 6": {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        "Numbered List": {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        "Bullet List": {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        Paragraph: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-            shortcut: string;
-        };
-        Image: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        'Image Widget': {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        Video: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        Swap: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        Xchain: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        Table: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        Chart: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        Tweet: {
-            group: string;
-            icon: {
-                image: {
-                    url: string;
-                    width: string;
-                    height: string;
-                    display: string;
-                };
-            };
-            hint: string;
-        };
-        File: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        Staking: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        Voting: {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        "NFT Minter": {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        'Oswap NFT': {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
-        'Code Block': {
-            group: string;
-            icon: {
-                name: string;
-            };
-            hint: string;
-        };
     };
     interface IButtonProps {
         caption?: string;
@@ -351,12 +38,6 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const getModalContainer: () => HTMLElement;
     export const removeContainer: () => void;
     export const getPlacement: (block: any) => string;
-    export const CustomBlockTypes: string[];
-    export const MediaBlockTypes: string[];
-    export const WidgetMapping: {
-        [key: string]: any;
-    };
-    export const getWidgetEmbedUrl: (block: PartialBlock) => string;
     export const ChartTypes: string[];
     export const getChartTypeOptions: () => {
         value: string;
@@ -500,7 +181,7 @@ declare module "@scom/scom-editor/components/toolbarDropdown.tsx" {
 /// <amd-module name="@scom/scom-editor/components/blockTypeButton.tsx" />
 declare module "@scom/scom-editor/components/blockTypeButton.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { IBlockTypeItem } from "@scom/scom-editor/components/utils.ts";
+    import { IBlockTypeItem } from '@scom/scom-blocknote-sdk';
     type callbackType = (item: IBlockTypeItem) => void;
     type validateCallback = (item: IBlockTypeItem) => boolean;
     interface ScomEditorBlockTypeElement extends ControlElement {
@@ -584,7 +265,7 @@ declare module "@scom/scom-editor/components/linkModal.tsx" {
 /// <amd-module name="@scom/scom-editor/components/linkButton.tsx" />
 declare module "@scom/scom-editor/components/linkButton.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export type setLinkCallback = (text: string, url: string) => void;
     interface ScomEditorLinkElement extends ControlElement {
         editor?: BlockNoteEditor;
@@ -633,8 +314,8 @@ declare module "@scom/scom-editor/components/linkButton.tsx" {
 /// <amd-module name="@scom/scom-editor/components/dragHandle.tsx" />
 declare module "@scom/scom-editor/components/dragHandle.tsx" {
     import { ControlElement, Module, Container, Control } from '@ijstech/components';
+    import { Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     import { ColorType } from "@scom/scom-editor/components/colorPicker.tsx";
-    import { Block, BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
     type deletedCallback = () => void;
     type setColorCallback = (type: ColorType, color: string) => void;
     interface ScomEditorDragHandleElement extends ControlElement {
@@ -687,7 +368,7 @@ declare module "@scom/scom-editor/components/dragHandle.tsx" {
 /// <amd-module name="@scom/scom-editor/components/settingsForm.tsx" />
 declare module "@scom/scom-editor/components/settingsForm.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { Block } from "@scom/scom-editor/global/index.ts";
+    import { Block } from '@scom/scom-blocknote-sdk';
     interface ScomEditorSettingsFormElement extends ControlElement {
         data?: ISettingsForm;
     }
@@ -727,7 +408,7 @@ declare module "@scom/scom-editor/components/settingsForm.tsx" {
 /// <amd-module name="@scom/scom-editor/components/sideMenu.tsx" />
 declare module "@scom/scom-editor/components/sideMenu.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { Block, BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     interface ScomEditorSideMenuElement extends ControlElement {
         block?: Block;
         editor?: BlockNoteEditor;
@@ -825,7 +506,7 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
 /// <amd-module name="@scom/scom-editor/components/imageToolbar.tsx" />
 declare module "@scom/scom-editor/components/imageToolbar.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { Block, BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     interface ScomEditorImageToolbarElement extends ControlElement {
         editor?: BlockNoteEditor;
         block?: Block;
@@ -870,7 +551,7 @@ declare module "@scom/scom-editor/components/imageToolbar.tsx" {
 /// <amd-module name="@scom/scom-editor/components/formattingToolbar.tsx" />
 declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     interface ScomEditorFormattingToolbarElement extends ControlElement {
         editor?: BlockNoteEditor;
     }
@@ -915,7 +596,7 @@ declare module "@scom/scom-editor/components/formattingToolbar.tsx" {
 /// <amd-module name="@scom/scom-editor/components/tableMenu.tsx" />
 declare module "@scom/scom-editor/components/tableMenu.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     interface ScomEditorTableMenuElement extends ControlElement {
         orientation: "row" | "column";
         editor: BlockNoteEditor;
@@ -962,7 +643,7 @@ declare module "@scom/scom-editor/components/tableMenu.tsx" {
 /// <amd-module name="@scom/scom-editor/components/tableToolbar.tsx" />
 declare module "@scom/scom-editor/components/tableToolbar.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     interface ScomEditorTableToolbarElement extends ControlElement {
         editor: BlockNoteEditor;
         block: any;
@@ -1015,66 +696,10 @@ declare module "@scom/scom-editor/components/tableToolbar.tsx" {
         render(): any;
     }
 }
-/// <amd-module name="@scom/scom-editor/components/chart.tsx" />
-declare module "@scom/scom-editor/components/chart.tsx" {
-    import { ControlElement, Module, Container } from '@ijstech/components';
-    enum ModeType {
-        LIVE = "Live",
-        SNAPSHOT = "Snapshot"
-    }
-    interface IChartConfig {
-        name?: string;
-        dataSource: string;
-        queryId?: string;
-        apiEndpoint?: string;
-        title: string;
-        description?: string;
-        options: any;
-        file?: {
-            cid: string;
-            name: string;
-        };
-        mode: ModeType;
-    }
-    interface ScomEditorChartElement extends ControlElement {
-        data: IChartConfig;
-    }
-    global {
-        namespace JSX {
-            interface IntrinsicElements {
-                ['i-scom-editor-chart']: ScomEditorChartElement;
-            }
-        }
-    }
-    export class ScomEditorChart extends Module {
-        private chartWrapper;
-        private chartEl;
-        private tempChart;
-        private _data;
-        private currentType;
-        static create(options?: ScomEditorChartElement, parent?: Container): Promise<ScomEditorChart>;
-        constructor(parent?: Container, options?: any);
-        getData(): IChartConfig;
-        setData(data: IChartConfig): Promise<void>;
-        getChartElm(): any;
-        private renderChart;
-        getConfigurators(): {
-            name: string;
-            target: string;
-            getActions: () => any[];
-            getData: any;
-            setData: any;
-        }[];
-        updateType(type: string): Promise<any[]>;
-        private getActions;
-        init(): Promise<void>;
-        render(): void;
-    }
-}
 /// <amd-module name="@scom/scom-editor/components/customBlock.tsx" />
 declare module "@scom/scom-editor/components/customBlock.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { Block } from "@scom/scom-editor/global/index.ts";
+    import { Block } from '@scom/scom-blocknote-sdk';
     interface ICustomBlockConfig {
         module: string;
         properties: any;
@@ -1119,7 +744,7 @@ declare module "@scom/scom-editor/components/codeBlock.tsx" {
     global {
         namespace JSX {
             interface IntrinsicElements {
-                ['i-scom-editor-code-block']: ScomEditorCodeBlockElement;
+                ['i-scom-editor--code-block']: ScomEditorCodeBlockElement;
             }
         }
     }
@@ -1164,7 +789,6 @@ declare module "@scom/scom-editor/components/index.ts" {
     export { ScomEditorFormattingToolbar } from "@scom/scom-editor/components/formattingToolbar.tsx";
     export { ScomEditorImageToolbar } from "@scom/scom-editor/components/imageToolbar.tsx";
     export { ScomEditorTableToolbar } from "@scom/scom-editor/components/tableToolbar.tsx";
-    export { ScomEditorChart } from "@scom/scom-editor/components/chart.tsx";
     export { ScomEditorCustomBlock } from "@scom/scom-editor/components/customBlock.tsx";
     export { ScomEditorCodeBlock } from "@scom/scom-editor/components/codeBlock.tsx";
     export * from "@scom/scom-editor/components/utils.ts";
@@ -1172,89 +796,32 @@ declare module "@scom/scom-editor/components/index.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addFormattingToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addFormattingToolbar.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from "@scom/scom-blocknote-sdk";
     export const addFormattingToolbar: (editor: BlockNoteEditor) => Promise<void>;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSideMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSideMenu.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from "@scom/scom-blocknote-sdk";
     export const addSideMenu: (editor: BlockNoteEditor) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSlashMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSlashMenu.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from "@scom/scom-blocknote-sdk";
     export const addSlashMenu: (editor: BlockNoteEditor) => void;
 }
 /// <amd-module name="@scom/scom-editor/blocks/addHyperlinkToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addHyperlinkToolbar.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from "@scom/scom-blocknote-sdk";
     export const addHyperlinkToolbar: (editor: BlockNoteEditor) => Promise<void>;
-}
-/// <amd-module name="@scom/scom-editor/blocks/utils.ts" />
-declare module "@scom/scom-editor/blocks/utils.ts" {
-    import { BlockNoteEditor, PartialBlock } from "@scom/scom-editor/global/index.ts";
-    export const execCustomBLock: (editor: BlockNoteEditor, block: PartialBlock) => void;
-    export function parseUrl(href: string): any;
-    export const getFileContent: (url: string) => Promise<string>;
-    export function getFileType(ext: string): string;
-    export function getBlockFromExtension(url: string): Promise<any>;
-}
-/// <amd-module name="@scom/scom-editor/blocks/addVideoBlock.ts" />
-declare module "@scom/scom-editor/blocks/addVideoBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
-    export const addVideoBlock: (blocknote: any) => {
-        VideoBlock: any;
-        VideoSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
-}
-/// <amd-module name="@scom/scom-editor/blocks/addImageBlock.ts" />
-declare module "@scom/scom-editor/blocks/addImageBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
-    export function addImageBlock(blocknote: any): {
-        ImageBlock: any;
-        ImageSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
 }
 /// <amd-module name="@scom/scom-editor/blocks/addTableToolbar.ts" />
 declare module "@scom/scom-editor/blocks/addTableToolbar.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export const addTableToolbar: (editor: BlockNoteEditor) => Promise<void>;
-}
-/// <amd-module name="@scom/scom-editor/blocks/addChartBlock.ts" />
-declare module "@scom/scom-editor/blocks/addChartBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
-    export const addChartBlock: (blocknote: any) => {
-        ChartBlock: any;
-        ChartSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
-}
-/// <amd-module name="@scom/scom-editor/blocks/addTweetBlock.ts" />
-declare module "@scom/scom-editor/blocks/addTweetBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
-    export const addTweetBlock: (blocknote: any) => {
-        TweetBlock: any;
-        TweetSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
 }
 /// <amd-module name="@scom/scom-editor/blocks/addFileBlock.ts" />
 declare module "@scom/scom-editor/blocks/addFileBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export function addFileBlock(): {
         FileSlashItem: {
             name: string;
@@ -1265,7 +832,7 @@ declare module "@scom/scom-editor/blocks/addFileBlock.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addStakingBlock.ts" />
 declare module "@scom/scom-editor/blocks/addStakingBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export const addStakingBlock: (blocknote: any) => {
         StakingBlock: any;
         StakingSlashItem: {
@@ -1277,7 +844,7 @@ declare module "@scom/scom-editor/blocks/addStakingBlock.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addXchainBlock.ts" />
 declare module "@scom/scom-editor/blocks/addXchainBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export const addXchainBlock: (blocknote: any) => {
         XchainBlock: any;
         XchainSlashItem: {
@@ -1289,7 +856,7 @@ declare module "@scom/scom-editor/blocks/addXchainBlock.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addVotingBlock.ts" />
 declare module "@scom/scom-editor/blocks/addVotingBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export const addVotingBlock: (blocknote: any) => {
         VotingBlock: any;
         VotingSlashItem: {
@@ -1301,7 +868,7 @@ declare module "@scom/scom-editor/blocks/addVotingBlock.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addNftMinterBlock.ts" />
 declare module "@scom/scom-editor/blocks/addNftMinterBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export const addNftMinterBlock: (blocknote: any) => {
         NftMinterBlock: any;
         NftMinterSlashItem: {
@@ -1313,7 +880,7 @@ declare module "@scom/scom-editor/blocks/addNftMinterBlock.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addOswapNftBlock.ts" />
 declare module "@scom/scom-editor/blocks/addOswapNftBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export const addOswapNftBlock: (blocknote: any) => {
         OswapNftBlock: any;
         OswapNftSlashItem: {
@@ -1325,7 +892,7 @@ declare module "@scom/scom-editor/blocks/addOswapNftBlock.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addCodeBlock.ts" />
 declare module "@scom/scom-editor/blocks/addCodeBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export function addCodeBlock(blocknote: any): {
         CodeBlock: any;
         CodeSlashItem: {
@@ -1337,7 +904,7 @@ declare module "@scom/scom-editor/blocks/addCodeBlock.ts" {
 }
 /// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
 declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
-    import { BlockNoteEditor } from "@scom/scom-editor/global/index.ts";
+    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export const addSwapBlock: (blocknote: any) => {
         SwapBlock: any;
         SwapSlashItem: {
@@ -1353,11 +920,7 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addSideMenu } from "@scom/scom-editor/blocks/addSideMenu.ts";
     export { addSlashMenu } from "@scom/scom-editor/blocks/addSlashMenu.ts";
     export { addHyperlinkToolbar } from "@scom/scom-editor/blocks/addHyperlinkToolbar.ts";
-    export { addVideoBlock } from "@scom/scom-editor/blocks/addVideoBlock.ts";
-    export { addImageBlock } from "@scom/scom-editor/blocks/addImageBlock.ts";
     export { addTableToolbar } from "@scom/scom-editor/blocks/addTableToolbar.ts";
-    export { addChartBlock } from "@scom/scom-editor/blocks/addChartBlock.ts";
-    export { addTweetBlock } from "@scom/scom-editor/blocks/addTweetBlock.ts";
     export { addFileBlock } from "@scom/scom-editor/blocks/addFileBlock.ts";
     export { addStakingBlock } from "@scom/scom-editor/blocks/addStakingBlock.ts";
     export { addXchainBlock } from "@scom/scom-editor/blocks/addXchainBlock.ts";
@@ -1366,7 +929,6 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addOswapNftBlock } from "@scom/scom-editor/blocks/addOswapNftBlock.ts";
     export { addCodeBlock } from "@scom/scom-editor/blocks/addCodeBlock.ts";
     export { addSwapBlock } from "@scom/scom-editor/blocks/addSwapBlock.ts";
-    export * from "@scom/scom-editor/blocks/utils.ts";
 }
 /// <amd-module name="@scom/scom-editor/index.css.ts" />
 declare module "@scom/scom-editor/index.css.ts" {
@@ -1375,7 +937,7 @@ declare module "@scom/scom-editor/index.css.ts" {
 /// <amd-module name="@scom/scom-editor" />
 declare module "@scom/scom-editor" {
     import { Module, ControlElement, Container } from '@ijstech/components';
-    import { Block } from "@scom/scom-editor/global/index.ts";
+    import { Block } from "@scom/scom-blocknote-sdk";
     type onChangedCallback = (value: string) => void;
     interface ScomEditorElement extends ControlElement {
         value?: string;
@@ -1411,7 +973,9 @@ declare module "@scom/scom-editor" {
         static create(options?: ScomEditorElement, parent?: Container): Promise<ScomEditor>;
         private initEditor;
         private renderEditor;
-        private defineWidgets;
+        private addCustomWidgets;
+        private createWidget;
+        private addBlockCallback;
         private onEditorChanged;
         private addCSS;
         private loadPlugin;

@@ -28,12 +28,12 @@ interface ScomEditorCodeBlockElement extends ControlElement {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      ['i-scom-editor-code-block']: ScomEditorCodeBlockElement;
+      ['i-scom-editor--code-block']: ScomEditorCodeBlockElement;
     }
   }
 }
 
-@customElements('i-scom-editor-code-block')
+@customElements('i-scom-editor--code-block')
 export class ScomEditorCodeBlock extends Module {
   private blockWrapper: Panel;
 

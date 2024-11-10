@@ -4,8 +4,8 @@ import {
   Module,
   Container
 } from '@ijstech/components';
-import { IBlockTypeItem, defaultBlockTypeItems } from './utils';
 import { ScomEditorToolbarDropdown } from './toolbarDropdown';
+import { defaultBlockTypeItems, IBlockTypeItem } from '@scom/scom-blocknote-sdk';
 
 type callbackType = (item: IBlockTypeItem) => void;
 type validateCallback = (item: IBlockTypeItem) => boolean;

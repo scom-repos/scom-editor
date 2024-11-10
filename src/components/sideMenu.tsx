@@ -9,10 +9,9 @@ import {
 } from '@ijstech/components';
 import { ScomEditorDragHandle } from './dragHandle';
 import { ColorType } from './colorPicker';
-import { Block, BlockNoteEditor } from '../global/index';
 import { ScomEditorSettingsForm, ISettingsForm } from './settingsForm';
-import { CustomBlockTypes } from './utils';
 import { buttonHoverStyle } from './index.css';
+import { Block, BlockNoteEditor, CustomBlockTypes, WidgetMapping } from '@scom/scom-blocknote-sdk';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSideMenuElement extends ControlElement {
@@ -115,7 +114,7 @@ export class ScomEditorSideMenu extends Module {
   openConfig(block: Block, module: any) {
     const isCustomBlock = block?.type && CustomBlockTypes.includes(block.type as string)
     if (isCustomBlock && !this.initedMap.has(block.id)) {
-      const editAction = module.getActions()[0];
+      const editAction = this.getActions(module)[0];
       this.currentModule = module;
       this.showConfigModal(block, editAction);
       this.initedMap.set(block.id, true);
@@ -158,28 +157,21 @@ export class ScomEditorSideMenu extends Module {
     if (!blockEl) return;
     let module: any;
     let editAction: any;
-    switch(this.block.type) {
-      case 'video':
-      case 'imageWidget':
-      case 'swap':
-      case 'xchain':
-      case 'tweet':
-      case 'staking':
-      case 'voting':
-      case 'nftMinter':
-      case 'oswapNft':
-        module = blockEl.querySelector('i-scom-editor-custom-block');
-        editAction = module.getActions()[0];
-        break;
-      case 'chart':
-        module = blockEl.querySelector('i-scom-editor-chart');
+    const blockType = this.block.type;
+    if (blockType === 'codeBlock') {
+      module = blockEl.querySelector('i-scom-editor--code-block');
+      editAction = module.getActions();
+    } else if (blockType === 'chart') {
+      module = blockEl.querySelector('i-scom-charts--block')
+      editAction = this.getActions(module)[0];
+    } else if (blockType) {
+      const moduleName = WidgetMapping[blockType as string]?.localPath;
+      if (moduleName) {
+        module = blockEl.querySelector(`i-${moduleName}`);
         editAction = this.getActions(module)[0];
-        break;
-      case 'codeBlock':
-        module = blockEl.querySelector('i-scom-editor-code-block');
-        editAction = module.getActions();
-        break;
+      }
     }
+
     this.currentModule = module;
     this.showConfigModal(this.block, editAction);
   }

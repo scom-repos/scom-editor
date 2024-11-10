@@ -7,8 +7,8 @@ import {
   HStack,
   Modal
 } from '@ijstech/components';
-import { Block, BlockNoteEditor, TextAlignmentType, formatKeyboardShortcut } from '../global/index';
-import { IBlockTypeItem, MediaBlockTypes, createButton, getModalContainer } from './utils';
+import { createButton, getModalContainer } from './utils';
+import { Block, BlockNoteEditor, formatKeyboardShortcut, IBlockTypeItem, MediaBlockTypes, TextAlignmentType } from '@scom/scom-blocknote-sdk';
 import { ScomEditorColor } from './colorButton';
 import { ColorType } from './colorPicker';
 import { buttonHoverStyle } from './index.css';

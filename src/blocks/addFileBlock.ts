@@ -1,6 +1,5 @@
 import { ScomStorage } from '@scom/scom-storage';
-import { BlockNoteEditor } from "../global/index";
-import { execCustomBLock, getBlockFromExtension } from './utils';
+import { BlockNoteEditor, execCustomBLock, getBlockFromExtension } from '@scom/scom-blocknote-sdk';
 import { modalStyle } from '../components/index';
 import { Styles } from '@ijstech/components';
 

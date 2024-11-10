@@ -1,4 +1,4 @@
-import { BlockNoteEditor } from '../global/index';
+import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
 import { ScomEditorTableToolbar, getModalContainer } from '../components/index';
 import { Styles } from '@ijstech/components';
 const Theme = Styles.Theme.ThemeVars;
