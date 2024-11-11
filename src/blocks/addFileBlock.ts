@@ -1,7 +1,8 @@
 import { ScomStorage } from '@scom/scom-storage';
-import { BlockNoteEditor, execCustomBLock, getBlockFromExtension } from '@scom/scom-blocknote-sdk';
+import { BlockNoteEditor, execCustomBLock } from '@scom/scom-blocknote-sdk';
 import { modalStyle } from '../components/index';
 import { Styles } from '@ijstech/components';
+import { getBlockFromExtension } from '../global/index';
 
 const Theme = Styles.Theme.ThemeVars;
 

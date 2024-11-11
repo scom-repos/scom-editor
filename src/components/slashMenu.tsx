@@ -10,7 +10,7 @@ import {
   Icon
 } from '@ijstech/components';
 import { getToolbar } from './utils';
-import { getExtraFields } from '@scom/scom-blocknote-sdk';
+import { getExtraFields, SlashMenuItem } from '@scom/scom-blocknote-sdk';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSlashMenuElement extends ControlElement {
@@ -19,14 +19,8 @@ interface ScomEditorSlashMenuElement extends ControlElement {
   onItemClicked?: (item: any) => void,
 }
 
-interface ISlashMenuItem {
-  name: string;
-  execute: any;
-  aliases: string[];
-}
-
 interface ISlashMenu {
-  items?: ISlashMenuItem[];
+  items?: SlashMenuItem[];
   selectedIndex?: number;
 }
 
@@ -60,7 +54,7 @@ export class ScomEditorSlashMenu extends Module {
   get items() {
     return this._data.items || [];
   }
-  set items(value: ISlashMenuItem[]) {
+  set items(value: SlashMenuItem[]) {
     this._data.items = value || [];
   }
 
@@ -82,7 +76,7 @@ export class ScomEditorSlashMenu extends Module {
         editor.focus();
         executeFn(editor);
       }
-      const field = fieldData[item.name] || {};
+      const field = fieldData[item.name] || item;
       if (result[field.group]) {
         result[field.group].push({...field, ...item});
       } else {

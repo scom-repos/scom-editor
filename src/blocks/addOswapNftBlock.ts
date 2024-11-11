@@ -1,6 +1,7 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor, execCustomBLock, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
 import { ScomEditorCustomBlock } from "../components/index";
+import { getConfigs } from "../global/index";
 
 function getData(href: string) {
   const widgetData = parseUrl(href);
@@ -82,7 +83,8 @@ export const addOswapNftBlock = (blocknote: any) => {
           {
             type: 'oswapNft',
             props: { ...(block.props || {}) }
-          }
+          },
+          getConfigs()?.['oswapNft']
         );
         link.setAttribute("href", url);
         link.textContent = 'oswapNft';

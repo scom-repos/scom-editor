@@ -1,6 +1,7 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor, execCustomBLock, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
 import { ScomEditorCustomBlock } from "../components/index";
+import { getConfigs } from "../global/index";
 
 const nftMinterRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-nft-minter\/\S+/g;
 function getData(href: string) {
@@ -92,7 +93,7 @@ export const addNftMinterBlock = (blocknote: any) => {
                 const url = getWidgetEmbedUrl({
                     type: "nftMinter",
                     props: { ...(block.props || {}) }
-                });
+                }, getConfigs()?.['nftMinter']);
                 link.setAttribute("href", url);
                 link.textContent = "nftMinter";
                 const wrapper = document.createElement("p");

@@ -8,7 +8,7 @@ import {
   Modal
 } from '@ijstech/components';
 import { createButton, getModalContainer } from './utils';
-import { Block, BlockNoteEditor, formatKeyboardShortcut, IBlockTypeItem, MediaBlockTypes, TextAlignmentType } from '@scom/scom-blocknote-sdk';
+import { BasicBlockTypes, Block, BlockNoteEditor, formatKeyboardShortcut, IBlockTypeItem, TextAlignmentType } from '@scom/scom-blocknote-sdk';
 import { ScomEditorColor } from './colorButton';
 import { ColorType } from './colorPicker';
 import { buttonHoverStyle } from './index.css';
@@ -260,7 +260,7 @@ export class ScomEditorFormattingToolbar extends Module {
     const selectedBlocks = this.editor.getSelection()?.blocks || [this.editor.getTextCursorPosition().block];
     const show =
       selectedBlocks.length === 1 &&
-      MediaBlockTypes.includes(selectedBlocks[0].type);
+      !BasicBlockTypes.includes(selectedBlocks[0].type);
     return show;
   }
 

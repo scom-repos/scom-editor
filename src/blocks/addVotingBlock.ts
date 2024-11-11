@@ -1,6 +1,7 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor, execCustomBLock, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
 import { ScomEditorCustomBlock } from "../components/index";
+import { getConfigs } from "../global/index";
 
 const votingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-voting\/\S+/g;
 function getData(href: string) {
@@ -83,7 +84,7 @@ export const addVotingBlock = (blocknote: any) => {
                 const url = getWidgetEmbedUrl({
                     type: "voting",
                     props: { ...(block.props || {}) }
-                });
+                }, getConfigs()?.['voting']);
                 link.setAttribute("href", url);
                 link.textContent = "voting";
                 const wrapper = document.createElement("p");

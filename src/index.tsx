@@ -20,9 +20,10 @@ import {
   addFileBlock,
   addCodeBlock
 } from './blocks/index';
-import { Block, BlockNoteEditor, BlockNoteEditorOptions, execCustomBLock, getBlockFromExtension, PartialBlock } from "@scom/scom-blocknote-sdk";
+import { Block, BlockNoteEditor, BlockNoteEditorOptions, execCustomBLock, PartialBlock } from "@scom/scom-blocknote-sdk";
 import { getModalContainer, getToolbar, getToolbars, removeContainer, ScomEditorSideMenu } from './components/index';
 import { customEditorStyle } from './index.css';
+import { addConfig, getBlockFromExtension } from './global/index';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
@@ -121,7 +122,7 @@ export class ScomEditor extends Module {
     try {
       this.addCSS(cssPath, 'blocknote');
       this._blocknoteObj = await this.loadPlugin();
-      this.renderEditor();
+      await this.renderEditor();
     } catch { }
   }
 
@@ -203,11 +204,14 @@ export class ScomEditor extends Module {
   }
 
   private async createWidget(name: string, blocknote: any, executeFn: any, callbackFn?: any) {
-    application.currentModuleDir = application.rootDir + 'libs/' + `@scom/${name}`;
     try {
       const module = await application.createElement(name) as any;
+      if('ready' in module && name === 'scom-twitter-post') {
+        await module.ready();
+      }
       if (module && 'addBlock' in module) {
-        const { block, slashItem } = module.addBlock(blocknote, executeFn, callbackFn);
+        const { block, slashItem, moduleData } = module.addBlock(blocknote, executeFn, callbackFn);
+        block?.config?.type && addConfig(block?.config?.type, moduleData);
         return { block, slashItem };
       }
     } catch {}
@@ -299,6 +303,7 @@ export class ScomEditor extends Module {
   }
 
   private async renderData() {
+    if (!this._editor) return;
     const blocks: Block[] = await this._editor.tryParseMarkdownToBlocks(this.value);
     this.renderEditor(JSON.parse(JSON.stringify(blocks)));
   }
@@ -500,11 +505,11 @@ export class ScomEditor extends Module {
       let customWidgets = null;
       if (scconfig) {
         try {
-          customWidgets = JSON.parse(scconfig)?.editorWidgets;
+          customWidgets = typeof scconfig === 'string' ? JSON.parse(scconfig)?.editorWidgets : scconfig.editorWidgets;
         } catch (error) {
         }
       }
-      this.widgets = customWidgets || this.getAttribute('widgets', true);
+      this._widgets = customWidgets || this.getAttribute('widgets', true);
       await this.setData({ value, viewer });
     }
   }

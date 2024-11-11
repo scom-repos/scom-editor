@@ -405,6 +405,54 @@ declare module "@scom/scom-editor/components/settingsForm.tsx" {
         render(): any;
     }
 }
+/// <amd-module name="@scom/scom-editor/global/helper.ts" />
+declare module "@scom/scom-editor/global/helper.ts" {
+    export const getFileContent: (url: string) => Promise<string>;
+    export function getFileType(ext: string): string;
+    export function getBlockFromExtension(url: string): Promise<any>;
+    interface IConfig {
+        name: string;
+        localPath: string;
+    }
+    export const addConfig: (key: string, value: IConfig) => void;
+    export const getConfig: (key: string) => IConfig;
+    export const getConfigs: () => {
+        [key: string]: IConfig;
+    };
+}
+/// <amd-module name="@scom/scom-editor/global/index.ts" />
+declare module "@scom/scom-editor/global/index.ts" {
+    export type TextAlignmentType = "left" | "center" | "right" | "justify";
+    export type CustomFormattingToolbarState = {
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
+        textAlignment: TextAlignmentType;
+        textColor: string;
+        backgroundColor: string;
+        referencePos: any;
+        show: boolean;
+    };
+    export type CustomHyperlinkToolbarState = {
+        text: string;
+        url: string;
+        referencePos: any;
+        show: boolean;
+    };
+    export type CustomSideMenuState = {
+        referencePos: any;
+        show: boolean;
+        block: any;
+    };
+    export type CustomSlashMenuState = {
+        referencePos: any;
+        show: boolean;
+        filteredItems: any[];
+        itemCallback: any;
+        keyboardHoveredItemIndex: number;
+    };
+    export * from "@scom/scom-editor/global/helper.ts";
+}
 /// <amd-module name="@scom/scom-editor/components/sideMenu.tsx" />
 declare module "@scom/scom-editor/components/sideMenu.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
@@ -461,18 +509,14 @@ declare module "@scom/scom-editor/components/sideMenu.tsx" {
 /// <amd-module name="@scom/scom-editor/components/slashMenu.tsx" />
 declare module "@scom/scom-editor/components/slashMenu.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
+    import { SlashMenuItem } from '@scom/scom-blocknote-sdk';
     interface ScomEditorSlashMenuElement extends ControlElement {
         items?: any;
         selectedIndex?: number;
         onItemClicked?: (item: any) => void;
     }
-    interface ISlashMenuItem {
-        name: string;
-        execute: any;
-        aliases: string[];
-    }
     interface ISlashMenu {
-        items?: ISlashMenuItem[];
+        items?: SlashMenuItem[];
         selectedIndex?: number;
     }
     global {
@@ -489,8 +533,8 @@ declare module "@scom/scom-editor/components/slashMenu.tsx" {
         onItemClicked: (item: any) => void;
         static create(options?: ScomEditorSlashMenuElement, parent?: Container): Promise<ScomEditorSlashMenu>;
         constructor(parent?: Container, options?: any);
-        get items(): ISlashMenuItem[];
-        set items(value: ISlashMenuItem[]);
+        get items(): SlashMenuItem[];
+        set items(value: SlashMenuItem[]);
         get selectedIndex(): number;
         set selectedIndex(value: number);
         get groupData(): {
