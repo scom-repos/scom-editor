@@ -11,7 +11,8 @@ import { ScomEditorDragHandle } from './dragHandle';
 import { ColorType } from './colorPicker';
 import { ScomEditorSettingsForm, ISettingsForm } from './settingsForm';
 import { buttonHoverStyle } from './index.css';
-import { Block, BlockNoteEditor, CustomBlockTypes, WidgetMapping } from '@scom/scom-blocknote-sdk';
+import { BasicBlockTypes, Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
+import { getConfigs } from '../global/index';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSideMenuElement extends ControlElement {
@@ -91,7 +92,7 @@ export class ScomEditorSideMenu extends Module {
   }
 
   get isEditShown() {
-    return this.block?.type && CustomBlockTypes.includes(this.block.type as string)
+    return this.block?.type && !BasicBlockTypes.includes(this.block.type as string)
   }
 
   setData(value: ISideMenu) {
@@ -112,7 +113,7 @@ export class ScomEditorSideMenu extends Module {
   }
 
   openConfig(block: Block, module: any) {
-    const isCustomBlock = block?.type && CustomBlockTypes.includes(block.type as string)
+    const isCustomBlock = block?.type && !BasicBlockTypes.includes(block.type as string)
     if (isCustomBlock && !this.initedMap.has(block.id)) {
       const editAction = this.getActions(module)[0];
       this.currentModule = module;
@@ -165,7 +166,8 @@ export class ScomEditorSideMenu extends Module {
       module = blockEl.querySelector('i-scom-charts--block')
       editAction = this.getActions(module)[0];
     } else if (blockType) {
-      const moduleName = WidgetMapping[blockType as string]?.localPath;
+      const configs = getConfigs();
+      const moduleName = configs[blockType as string]?.localPath;
       if (moduleName) {
         module = blockEl.querySelector(`i-${moduleName}`);
         editAction = this.getActions(module)[0];

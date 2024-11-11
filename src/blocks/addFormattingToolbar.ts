@@ -1,6 +1,6 @@
 import { Control, Modal } from "@ijstech/components";
 import { ScomEditorFormattingToolbar, createModal, getModalContainer, getPlacement } from '../components/index';
-import { BlockNoteEditor, CustomFormattingToolbarState, MediaBlockTypes } from "@scom/scom-blocknote-sdk";
+import { BasicBlockTypes, BlockNoteEditor, CustomFormattingToolbarState } from "@scom/scom-blocknote-sdk";
 
 export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
   let modal: Modal;
@@ -34,7 +34,7 @@ export const addFormattingToolbar = async (editor: BlockNoteEditor) => {
 
     const isMediaBlock =
       selectedBlocks.length === 1 &&
-      MediaBlockTypes.includes(selectedBlocks[0].type);
+      !BasicBlockTypes.includes(selectedBlocks[0].type);
     modal.popupPlacement = isMediaBlock ? 'top' : getPlacement(block) as any;
 
     if (formattingToolbarState.show) {

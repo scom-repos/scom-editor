@@ -1,6 +1,7 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor, execCustomBLock, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
 import { ScomEditorCustomBlock } from "../components/index";
+import { getConfigs } from "../global/index";
 
 function getData(href: string) {
   const widgetData = parseUrl(href);
@@ -83,7 +84,8 @@ export const addXchainBlock = (blocknote: any) => {
           {
             type: 'xchain',
             props: { ...(block.props || {}) }
-          }
+          },
+          getConfigs()?.['xchain']
         );
         link.setAttribute("href", url);
         link.textContent = 'xchain';

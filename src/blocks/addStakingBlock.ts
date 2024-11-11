@@ -1,6 +1,7 @@
 import { Panel } from "@ijstech/components";
 import { Block, BlockNoteEditor, execCustomBLock, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
 import { ScomEditorCustomBlock } from "../components/index";
+import { getConfigs } from "../global/index";
 
 const stakingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-staking\/\S+/g;
 function getData(href: string) {
@@ -89,7 +90,7 @@ export const addStakingBlock = (blocknote: any) => {
                 const url = getWidgetEmbedUrl({
                     type: "staking",
                     props: { ...(block.props || {}) }
-                });
+                }, getConfigs()?.['staking']);
                 link.setAttribute("href", url);
                 link.textContent = "staking";
                 const wrapper = document.createElement("p");

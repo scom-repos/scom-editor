@@ -84,7 +84,7 @@ export class ScomEditorSettingsForm extends Module {
             <i-combo-box
               id="cbName"
               items={types}
-              selectedItem={selectedValue}
+              value={block.props?.name}
               width={'100%'}
               height={'2.625rem'}
               onChanged={this.onChartNameChanged}
