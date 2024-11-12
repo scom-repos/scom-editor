@@ -874,84 +874,12 @@ declare module "@scom/scom-editor/blocks/addFileBlock.ts" {
         };
     };
 }
-/// <amd-module name="@scom/scom-editor/blocks/addStakingBlock.ts" />
-declare module "@scom/scom-editor/blocks/addStakingBlock.ts" {
-    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
-    export const addStakingBlock: (blocknote: any) => {
-        StakingBlock: any;
-        StakingSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
-}
-/// <amd-module name="@scom/scom-editor/blocks/addXchainBlock.ts" />
-declare module "@scom/scom-editor/blocks/addXchainBlock.ts" {
-    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
-    export const addXchainBlock: (blocknote: any) => {
-        XchainBlock: any;
-        XchainSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
-}
-/// <amd-module name="@scom/scom-editor/blocks/addVotingBlock.ts" />
-declare module "@scom/scom-editor/blocks/addVotingBlock.ts" {
-    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
-    export const addVotingBlock: (blocknote: any) => {
-        VotingBlock: any;
-        VotingSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
-}
-/// <amd-module name="@scom/scom-editor/blocks/addNftMinterBlock.ts" />
-declare module "@scom/scom-editor/blocks/addNftMinterBlock.ts" {
-    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
-    export const addNftMinterBlock: (blocknote: any) => {
-        NftMinterBlock: any;
-        NftMinterSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
-}
-/// <amd-module name="@scom/scom-editor/blocks/addOswapNftBlock.ts" />
-declare module "@scom/scom-editor/blocks/addOswapNftBlock.ts" {
-    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
-    export const addOswapNftBlock: (blocknote: any) => {
-        OswapNftBlock: any;
-        OswapNftSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
-}
 /// <amd-module name="@scom/scom-editor/blocks/addCodeBlock.ts" />
 declare module "@scom/scom-editor/blocks/addCodeBlock.ts" {
     import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
     export function addCodeBlock(blocknote: any): {
         CodeBlock: any;
         CodeSlashItem: {
-            name: string;
-            execute: (editor: BlockNoteEditor) => void;
-            aliases: string[];
-        };
-    };
-}
-/// <amd-module name="@scom/scom-editor/blocks/addSwapBlock.ts" />
-declare module "@scom/scom-editor/blocks/addSwapBlock.ts" {
-    import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
-    export const addSwapBlock: (blocknote: any) => {
-        SwapBlock: any;
-        SwapSlashItem: {
             name: string;
             execute: (editor: BlockNoteEditor) => void;
             aliases: string[];
@@ -966,13 +894,7 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addHyperlinkToolbar } from "@scom/scom-editor/blocks/addHyperlinkToolbar.ts";
     export { addTableToolbar } from "@scom/scom-editor/blocks/addTableToolbar.ts";
     export { addFileBlock } from "@scom/scom-editor/blocks/addFileBlock.ts";
-    export { addStakingBlock } from "@scom/scom-editor/blocks/addStakingBlock.ts";
-    export { addXchainBlock } from "@scom/scom-editor/blocks/addXchainBlock.ts";
-    export { addVotingBlock } from "@scom/scom-editor/blocks/addVotingBlock.ts";
-    export { addNftMinterBlock } from "@scom/scom-editor/blocks/addNftMinterBlock.ts";
-    export { addOswapNftBlock } from "@scom/scom-editor/blocks/addOswapNftBlock.ts";
     export { addCodeBlock } from "@scom/scom-editor/blocks/addCodeBlock.ts";
-    export { addSwapBlock } from "@scom/scom-editor/blocks/addSwapBlock.ts";
 }
 /// <amd-module name="@scom/scom-editor/index.css.ts" />
 declare module "@scom/scom-editor/index.css.ts" {

@@ -77,10 +77,11 @@ export class ScomEditorSlashMenu extends Module {
         executeFn(editor);
       }
       const field = fieldData[item.name] || item;
-      if (result[field.group]) {
-        result[field.group].push({...field, ...item});
+      const groupName = field.group || 'Widget';
+      if (result[groupName]) {
+        result[groupName].push({...field, ...item});
       } else {
-        result[field.group] = [{...field, ...item}];
+        result[groupName] = [{...field, ...item}];
       }
     }
     return result;
@@ -138,7 +139,7 @@ export class ScomEditorSlashMenu extends Module {
             {icon}
             <i-vstack gap={'0.25rem'}>
               <i-label caption={item.name} font={{size: '0.875rem', weight: 500}}></i-label>
-              <i-label caption={item.hint} font={{size: '0.625rem', weight: 400}}></i-label>
+              <i-label caption={item.hint || ''} font={{size: '0.625rem', weight: 400}}></i-label>
             </i-vstack>
           </i-hstack>
           <i-label

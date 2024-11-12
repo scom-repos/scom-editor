@@ -64,6 +64,7 @@ const DEFAUT_WIDGETS = [
   'oswap-nft-widget',
   'scom-xchain-widget',
   'scom-staking',
+  "scom-swap"
 ];
 
 @customElements('i-scom-editor')
@@ -191,7 +192,7 @@ export class ScomEditor extends Module {
     const blockSpecs: { [key: string]: any } = {};
     const slashMenuItems: any[] = [];
     const promises: Promise<any>[] = [];
-    for (let widget of this.widgets) {
+    for (const widget of this.widgets) {
       promises.push(this.createWidget(widget, blocknote, executeFn, callbackFn));
     }
     const results = await Promise.all(promises);
@@ -206,9 +207,11 @@ export class ScomEditor extends Module {
   private async createWidget(name: string, blocknote: any, executeFn: any, callbackFn?: any) {
     try {
       const module = await application.createElement(name) as any;
-      if('ready' in module && name === 'scom-twitter-post') {
+      const names = ['scom-twitter-post'];
+      if ('ready' in module && names.includes(name)) {
         await module.ready();
       }
+      // TODO: fix image links of widgets
       if (module && 'addBlock' in module) {
         const { block, slashItem, moduleData } = module.addBlock(blocknote, executeFn, callbackFn);
         block?.config?.type && addConfig(block?.config?.type, moduleData);
