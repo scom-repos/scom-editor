@@ -1282,8 +1282,7 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
                         this.updateBlock(block, { title, backgroundImage, buttons, fontColor });
                     }
                     else if (block.type === 'nftMinter') {
-                        const { title, description, logoUrl, productId, link, requiredQuantity } = newProps;
-                        this.updateBlock(block, { title, description, logoUrl, productId, link, requiredQuantity });
+                        this.updateBlock(block, { ...newProps });
                     }
                     else if (block.type === 'oswapNft') {
                         const { tier, networks, defaultChainId } = newProps;
@@ -1393,11 +1392,12 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
                     executeFn(editor);
                 };
                 const field = fieldData[item.name] || item;
-                if (result[field.group]) {
-                    result[field.group].push({ ...field, ...item });
+                const groupName = field.group || 'Widget';
+                if (result[groupName]) {
+                    result[groupName].push({ ...field, ...item });
                 }
                 else {
-                    result[field.group] = [{ ...field, ...item }];
+                    result[groupName] = [{ ...field, ...item }];
                 }
             }
             return result;
@@ -1439,7 +1439,7 @@ define("@scom/scom-editor/components/slashMenu.tsx", ["require", "exports", "@ij
                             icon,
                             this.$render("i-vstack", { gap: '0.25rem' },
                                 this.$render("i-label", { caption: item.name, font: { size: '0.875rem', weight: 500 } }),
-                                this.$render("i-label", { caption: item.hint, font: { size: '0.625rem', weight: 400 } }))),
+                                this.$render("i-label", { caption: item.hint || '', font: { size: '0.625rem', weight: 400 } }))),
                         this.$render("i-label", { caption: item.shortcut || '', font: { size: '0.625rem', weight: 600 }, border: { radius: '0.25rem' }, background: { color: item.shortcut ? Theme.action.activeBackground : 'transparent' }, visible: item.shortcut, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.25rem', right: '0.25rem' }, stack: { shrink: '0' } }));
                     if (isSelected)
                         selectedItem = hstack;
@@ -2885,738 +2885,7 @@ define("@scom/scom-editor/blocks/addFileBlock.ts", ["require", "exports", "@scom
     exports.addFileBlock = addFileBlock;
     ;
 });
-define("@scom/scom-editor/blocks/addStakingBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/global/index.ts"], function (require, exports, components_23, scom_blocknote_sdk_7, index_9, index_10) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addStakingBlock = void 0;
-    const stakingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-staking\/\S+/g;
-    function getData(href) {
-        const widgetData = (0, scom_blocknote_sdk_7.parseUrl)(href);
-        if (widgetData) {
-            const { module, properties } = widgetData;
-            if (module.localPath === 'scom-staking')
-                return { ...properties };
-        }
-        return false;
-    }
-    const addStakingBlock = (blocknote) => {
-        const StakingBlock = blocknote.createBlockSpec({
-            type: "staking",
-            propSchema: {
-                ...blocknote.defaultProps,
-                chainId: { default: 0 },
-                name: { default: '' },
-                desc: { default: '' },
-                logo: { default: '' },
-                getTokenURL: { default: '' },
-                showContractLink: { default: false },
-                staking: { default: null },
-                stakeInputValue: { default: '' },
-                commissions: { default: [] },
-                wallets: { default: [] },
-                networks: { default: [] },
-            },
-            content: "none"
-        }, {
-            render: (block) => {
-                const wrapper = new components_23.Panel();
-                const props = JSON.parse(JSON.stringify(block.props));
-                const data = {
-                    module: 'scom-staking',
-                    properties: { ...props },
-                    block: { ...block }
-                };
-                const customElm = new index_9.ScomEditorCustomBlock(wrapper, { data });
-                wrapper.appendChild(customElm);
-                return {
-                    dom: wrapper
-                };
-            },
-            parseFn: () => {
-                return [
-                    {
-                        tag: "div[data-content-type=staking]",
-                        node: "staking"
-                    },
-                    {
-                        tag: "a",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const href = element.getAttribute('href');
-                            if (href)
-                                return getData(href);
-                            return false;
-                        },
-                        priority: 408,
-                        node: "staking"
-                    },
-                    {
-                        tag: "p",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const child = element.firstChild;
-                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
-                                const href = child.getAttribute('href');
-                                return getData(href);
-                            }
-                            return false;
-                        },
-                        priority: 409,
-                        node: "staking"
-                    }
-                ];
-            },
-            toExternalHTML: (block, editor) => {
-                const link = document.createElement("a");
-                const url = (0, scom_blocknote_sdk_7.getWidgetEmbedUrl)({
-                    type: "staking",
-                    props: { ...(block.props || {}) }
-                }, (0, index_10.getConfigs)()?.['staking']);
-                link.setAttribute("href", url);
-                link.textContent = "staking";
-                const wrapper = document.createElement("p");
-                wrapper.appendChild(link);
-                return { dom: wrapper };
-            },
-            pasteRules: [
-                {
-                    find: stakingRegex,
-                    handler(props) {
-                        const { state, chain, range } = props;
-                        const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
-                        const widgetData = (0, scom_blocknote_sdk_7.parseUrl)(textContent);
-                        if (!widgetData)
-                            return null;
-                        const { properties } = widgetData;
-                        chain().BNUpdateBlock(state.selection.from, {
-                            type: 'staking',
-                            props: {
-                                ...properties
-                            },
-                        }).setTextSelection(range.from + 1);
-                    }
-                }
-            ]
-        });
-        const StakingSlashItem = {
-            name: "Staking",
-            execute: (editor) => {
-                const block = {
-                    type: "staking",
-                    props: {
-                        "chainId": 43113,
-                        "name": "Staking",
-                        "desc": "Earn OSWAP",
-                        "showContractLink": true,
-                        "staking": {
-                            "address": "0x03C22D12eb6E5ea3a06F46Fc0e1857438BB7DCae",
-                            "lockTokenType": 0,
-                            "rewards": {
-                                "address": "0x10B846B7A1807B3610ee94c1b120D9c5E87C148d",
-                                "isCommonStartDate": false
-                            }
-                        },
-                        "networks": [
-                            {
-                                "chainId": 43113
-                            }
-                        ],
-                        "wallets": [
-                            {
-                                "name": "metamask"
-                            }
-                        ]
-                    }
-                };
-                (0, scom_blocknote_sdk_7.execCustomBLock)(editor, block);
-            },
-            aliases: ["staking", "widget"]
-        };
-        return {
-            StakingBlock,
-            StakingSlashItem
-        };
-    };
-    exports.addStakingBlock = addStakingBlock;
-});
-define("@scom/scom-editor/blocks/addXchainBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/global/index.ts"], function (require, exports, components_24, scom_blocknote_sdk_8, index_11, index_12) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addXchainBlock = void 0;
-    function getData(href) {
-        const widgetData = (0, scom_blocknote_sdk_8.parseUrl)(href);
-        if (widgetData) {
-            const { module, properties } = widgetData;
-            if (module.localPath === 'scom-xchain-widget')
-                return { ...properties };
-        }
-        return false;
-    }
-    const addXchainBlock = (blocknote) => {
-        const XchainBlock = blocknote.createBlockSpec({
-            type: "xchain",
-            propSchema: {
-                ...blocknote.defaultProps,
-                tokens: { default: [] },
-                defaultChainId: { default: 0 },
-                networks: { default: [] },
-                wallets: { default: [] },
-                commissions: { default: [] },
-                defaultInputToken: { default: null },
-            },
-            content: "none"
-        }, {
-            render: (block) => {
-                const wrapper = new components_24.Panel();
-                const props = JSON.parse(JSON.stringify(block.props));
-                const data = {
-                    module: 'scom-xchain-widget',
-                    properties: { ...props },
-                    block: { ...block }
-                };
-                const customElm = new index_11.ScomEditorCustomBlock(wrapper, { data });
-                wrapper.appendChild(customElm);
-                return {
-                    dom: wrapper
-                };
-            },
-            parseFn: () => {
-                return [
-                    {
-                        tag: "div[data-content-type=xchain]",
-                        node: 'xchain'
-                    },
-                    {
-                        tag: "a",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const href = element.getAttribute('href');
-                            if (href)
-                                return getData(href);
-                            return false;
-                        },
-                        priority: 402,
-                        node: 'xchain'
-                    },
-                    {
-                        tag: "p",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const child = element.firstChild;
-                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
-                                const href = child.getAttribute('href');
-                                return getData(href);
-                            }
-                            return false;
-                        },
-                        priority: 403,
-                        node: 'xchain'
-                    },
-                ];
-            },
-            toExternalHTML: (block, editor) => {
-                const link = document.createElement("a");
-                const url = (0, scom_blocknote_sdk_8.getWidgetEmbedUrl)({
-                    type: 'xchain',
-                    props: { ...(block.props || {}) }
-                }, (0, index_12.getConfigs)()?.['xchain']);
-                link.setAttribute("href", url);
-                link.textContent = 'xchain';
-                const wrapper = document.createElement("p");
-                wrapper.appendChild(link);
-                return { dom: wrapper };
-            }
-        });
-        const XchainSlashItem = {
-            name: "Xchain",
-            execute: (editor) => {
-                const block = {
-                    type: "xchain",
-                    props: {
-                        "tokens": [
-                            {
-                                "address": "0x29386B60e0A9A1a30e1488ADA47256577ca2C385",
-                                "chainId": 97
-                            },
-                            {
-                                "address": "0x45eee762aaeA4e5ce317471BDa8782724972Ee19",
-                                "chainId": 97
-                            },
-                            {
-                                "address": "0xb9C31Ea1D475c25E58a1bE1a46221db55E5A7C6e",
-                                "chainId": 43113
-                            },
-                            {
-                                "address": "0x78d9D80E67bC80A11efbf84B7c8A65Da51a8EF3C",
-                                "chainId": 43113
-                            }
-                        ],
-                        "defaultChainId": 43113,
-                        "networks": [
-                            {
-                                "chainId": 43113
-                            },
-                            {
-                                "chainId": 97
-                            }
-                        ],
-                        "wallets": [
-                            {
-                                "name": "metamask"
-                            }
-                        ],
-                        "showHeader": true,
-                        "showFooter": true
-                    }
-                };
-                (0, scom_blocknote_sdk_8.execCustomBLock)(editor, block);
-            },
-            aliases: ["xchain", "widget"]
-        };
-        return {
-            XchainBlock,
-            XchainSlashItem
-        };
-    };
-    exports.addXchainBlock = addXchainBlock;
-});
-define("@scom/scom-editor/blocks/addVotingBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/global/index.ts"], function (require, exports, components_25, scom_blocknote_sdk_9, index_13, index_14) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addVotingBlock = void 0;
-    const votingRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-voting\/\S+/g;
-    function getData(href) {
-        const widgetData = (0, scom_blocknote_sdk_9.parseUrl)(href);
-        if (widgetData) {
-            const { module, properties } = widgetData;
-            if (module.localPath === 'scom-voting')
-                return { ...properties };
-        }
-        return false;
-    }
-    const addVotingBlock = (blocknote) => {
-        const VotingBlock = blocknote.createBlockSpec({
-            type: 'voting',
-            propSchema: {
-                ...blocknote.defaultProps,
-                title: { default: '' },
-                backgroundImage: { default: '' },
-                buttons: { default: [] },
-                fontColor: { default: '' }
-            },
-            content: 'none'
-        }, {
-            render: (block) => {
-                const wrapper = new components_25.Panel();
-                const props = JSON.parse(JSON.stringify(block.props));
-                const data = {
-                    module: 'scom-voting',
-                    properties: { ...props },
-                    block: { ...block }
-                };
-                wrapper.maxWidth = 780;
-                const customElm = new index_13.ScomEditorCustomBlock(wrapper, { data });
-                wrapper.appendChild(customElm);
-                return {
-                    dom: wrapper
-                };
-            },
-            parseFn: () => {
-                return [
-                    {
-                        tag: "div[data-content-type=voting]",
-                        node: "voting"
-                    },
-                    {
-                        tag: "a",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const href = element.getAttribute('href');
-                            if (href)
-                                return getData(href);
-                            return false;
-                        },
-                        priority: 408,
-                        node: "voting"
-                    },
-                    {
-                        tag: "p",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const child = element.firstChild;
-                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
-                                const href = child.getAttribute('href');
-                                return getData(href);
-                            }
-                            return false;
-                        },
-                        priority: 409,
-                        node: "voting"
-                    }
-                ];
-            },
-            toExternalHTML: (block, editor) => {
-                const link = document.createElement("a");
-                const url = (0, scom_blocknote_sdk_9.getWidgetEmbedUrl)({
-                    type: "voting",
-                    props: { ...(block.props || {}) }
-                }, (0, index_14.getConfigs)()?.['voting']);
-                link.setAttribute("href", url);
-                link.textContent = "voting";
-                const wrapper = document.createElement("p");
-                wrapper.appendChild(link);
-                return { dom: wrapper };
-            },
-            pasteRules: [
-                {
-                    find: votingRegex,
-                    handler(props) {
-                        const { state, chain, range } = props;
-                        const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
-                        const widgetData = (0, scom_blocknote_sdk_9.parseUrl)(textContent);
-                        if (!widgetData)
-                            return null;
-                        const { properties } = widgetData;
-                        chain().BNUpdateBlock(state.selection.from, {
-                            type: 'voting',
-                            props: {
-                                ...properties
-                            },
-                        }).setTextSelection(range.from + 1);
-                    }
-                }
-            ]
-        });
-        const VotingSlashItem = {
-            name: "Voting",
-            execute: (editor) => {
-                const block = {
-                    type: "voting",
-                    props: {
-                        title: 'Do you schedule casts?',
-                        buttons: [
-                            {
-                                value: 'yes',
-                                label: 'Yes'
-                            },
-                            {
-                                value: 'no',
-                                label: 'No'
-                            },
-                            {
-                                value: 'sometimes',
-                                label: 'Sometimes'
-                            }
-                        ]
-                    }
-                };
-                (0, scom_blocknote_sdk_9.execCustomBLock)(editor, block);
-            },
-            aliases: ["voting", "widget"]
-        };
-        return {
-            VotingBlock,
-            VotingSlashItem
-        };
-    };
-    exports.addVotingBlock = addVotingBlock;
-});
-define("@scom/scom-editor/blocks/addNftMinterBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/global/index.ts"], function (require, exports, components_26, scom_blocknote_sdk_10, index_15, index_16) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addNftMinterBlock = void 0;
-    const nftMinterRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-nft-minter\/\S+/g;
-    function getData(href) {
-        const widgetData = (0, scom_blocknote_sdk_10.parseUrl)(href);
-        if (widgetData) {
-            const { module, properties } = widgetData;
-            if (module.localPath === 'scom-nft-minter')
-                return { ...properties };
-        }
-        return false;
-    }
-    const addNftMinterBlock = (blocknote) => {
-        const NftMinterBlock = blocknote.createBlockSpec({
-            type: "nftMinter",
-            propSchema: {
-                ...blocknote.defaultProps,
-                name: { default: '' },
-                title: { default: '' },
-                productType: { default: 'Buy' },
-                productId: { default: 0 },
-                donateTo: { default: '' },
-                logoUrl: { default: '' },
-                description: { default: '' },
-                link: { default: '' },
-                commissions: { default: [] },
-                chainSpecificProperties: { default: {} },
-                defaultChainId: { default: 0 },
-                wallets: { default: [] },
-                networks: { default: [] },
-                requiredQuantity: { default: 0 }
-            },
-            content: "none"
-        }, {
-            render: (block) => {
-                const wrapper = new components_26.Panel();
-                const props = JSON.parse(JSON.stringify(block.props));
-                const data = {
-                    module: 'scom-nft-minter',
-                    properties: { ...props },
-                    block: { ...block }
-                };
-                const customElm = new index_15.ScomEditorCustomBlock(wrapper, { data });
-                wrapper.appendChild(customElm);
-                return {
-                    dom: wrapper
-                };
-            },
-            parseFn: () => {
-                return [
-                    {
-                        tag: "div[data-content-type=nftMinter]",
-                        node: "nftMinter"
-                    },
-                    {
-                        tag: "a",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const href = element.getAttribute('href');
-                            if (href)
-                                return getData(href);
-                            return false;
-                        },
-                        priority: 408,
-                        node: "nftMinter"
-                    },
-                    {
-                        tag: "p",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const child = element.firstChild;
-                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
-                                const href = child.getAttribute('href');
-                                return getData(href);
-                            }
-                            return false;
-                        },
-                        priority: 409,
-                        node: "nftMinter"
-                    }
-                ];
-            },
-            toExternalHTML: (block, editor) => {
-                const link = document.createElement("a");
-                const url = (0, scom_blocknote_sdk_10.getWidgetEmbedUrl)({
-                    type: "nftMinter",
-                    props: { ...(block.props || {}) }
-                }, (0, index_16.getConfigs)()?.['nftMinter']);
-                link.setAttribute("href", url);
-                link.textContent = "nftMinter";
-                const wrapper = document.createElement("p");
-                wrapper.appendChild(link);
-                return { dom: wrapper };
-            },
-            pasteRules: [
-                {
-                    find: nftMinterRegex,
-                    handler(props) {
-                        const { state, chain, range } = props;
-                        const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
-                        const widgetData = (0, scom_blocknote_sdk_10.parseUrl)(textContent);
-                        if (!widgetData)
-                            return null;
-                        const { properties } = widgetData;
-                        chain().BNUpdateBlock(state.selection.from, {
-                            type: 'nftMinter',
-                            props: {
-                                ...properties
-                            },
-                        }).setTextSelection(range.from + 1);
-                    }
-                }
-            ]
-        });
-        const NftMinterSlashItem = {
-            name: "NFT Minter",
-            execute: (editor) => {
-                const block = {
-                    type: "nftMinter",
-                    props: {
-                        title: "Title",
-                        description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                        logoUrl: "https://placehold.co/600x400?text=No+Image",
-                        networks: [
-                            {
-                                chainId: 43113
-                            },
-                            {
-                                chainId: 97
-                            }
-                        ],
-                        wallets: [
-                            {
-                                name: "metamask"
-                            }
-                        ],
-                        defaultChainId: 43113
-                    }
-                };
-                (0, scom_blocknote_sdk_10.execCustomBLock)(editor, block);
-            },
-            aliases: ["nftMinter", "widget"]
-        };
-        return {
-            NftMinterBlock,
-            NftMinterSlashItem
-        };
-    };
-    exports.addNftMinterBlock = addNftMinterBlock;
-});
-define("@scom/scom-editor/blocks/addOswapNftBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/global/index.ts"], function (require, exports, components_27, scom_blocknote_sdk_11, index_17, index_18) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addOswapNftBlock = void 0;
-    function getData(href) {
-        const widgetData = (0, scom_blocknote_sdk_11.parseUrl)(href);
-        if (widgetData) {
-            const { module, properties } = widgetData;
-            if (module.localPath === 'oswap-nft-widget')
-                return { ...properties };
-        }
-        return false;
-    }
-    const addOswapNftBlock = (blocknote) => {
-        const OswapNftBlock = blocknote.createBlockSpec({
-            type: "oswapNft",
-            propSchema: {
-                ...blocknote.defaultProps,
-                tier: { default: 'hungry' },
-                defaultChainId: { default: 0 },
-                networks: { default: [] },
-                wallets: { default: [] },
-                commissions: { default: [] },
-            },
-            content: "none"
-        }, {
-            render: (block) => {
-                const wrapper = new components_27.Panel();
-                const props = JSON.parse(JSON.stringify(block.props));
-                const data = {
-                    module: 'oswap-nft-widget',
-                    properties: { ...props },
-                    block: { ...block }
-                };
-                const customElm = new index_17.ScomEditorCustomBlock(wrapper, { data });
-                wrapper.appendChild(customElm);
-                return {
-                    dom: wrapper
-                };
-            },
-            parseFn: () => {
-                return [
-                    {
-                        tag: "div[data-content-type=oswapNft]",
-                        node: 'oswapNft'
-                    },
-                    {
-                        tag: "a",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const href = element.getAttribute('href');
-                            if (href)
-                                return getData(href);
-                            return false;
-                        },
-                        priority: 402,
-                        node: 'oswapNft'
-                    },
-                    {
-                        tag: "p",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const child = element.firstChild;
-                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
-                                const href = child.getAttribute('href');
-                                return getData(href);
-                            }
-                            return false;
-                        },
-                        priority: 403,
-                        node: 'oswapNft'
-                    },
-                ];
-            },
-            toExternalHTML: (block, editor) => {
-                const link = document.createElement("a");
-                const url = (0, scom_blocknote_sdk_11.getWidgetEmbedUrl)({
-                    type: 'oswapNft',
-                    props: { ...(block.props || {}) }
-                }, (0, index_18.getConfigs)()?.['oswapNft']);
-                link.setAttribute("href", url);
-                link.textContent = 'oswapNft';
-                const wrapper = document.createElement("p");
-                wrapper.appendChild(link);
-                return { dom: wrapper };
-            }
-        });
-        const OswapNftSlashItem = {
-            name: "Oswap NFT",
-            execute: (editor) => {
-                const block = {
-                    type: "oswapNft",
-                    props: {
-                        "tier": "hungry",
-                        "defaultChainId": 97,
-                        "networks": [
-                            {
-                                "chainId": 97
-                            },
-                            {
-                                "chainId": 56
-                            }
-                        ],
-                        "wallets": [
-                            {
-                                "name": "metamask"
-                            }
-                        ],
-                        "showHeader": true,
-                        "showFooter": true
-                    }
-                };
-                (0, scom_blocknote_sdk_11.execCustomBLock)(editor, block);
-            },
-            aliases: ["oswapNft", "widget"]
-        };
-        return {
-            OswapNftBlock,
-            OswapNftSlashItem
-        };
-    };
-    exports.addOswapNftBlock = addOswapNftBlock;
-});
-define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts"], function (require, exports, components_28, scom_blocknote_sdk_12, index_19) {
+define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts"], function (require, exports, components_23, scom_blocknote_sdk_7, index_9) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.addCodeBlock = void 0;
@@ -3650,9 +2919,9 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
             defining: true,
         }, {
             render: (block) => {
-                const wrapper = new components_28.Panel();
+                const wrapper = new components_23.Panel();
                 const { code, language } = JSON.parse(JSON.stringify(block.props));
-                const elTag = new index_19.ScomEditorCodeBlock(wrapper, {
+                const elTag = new index_9.ScomEditorCodeBlock(wrapper, {
                     code,
                     language,
                     display: 'block',
@@ -3698,7 +2967,7 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
             toExternalHTML: (block, editor) => {
                 const preEl = document.createElement('pre');
                 const codeElm = document.createElement('code');
-                const code = (0, index_19.revertHtmlTags)(block.props.code || '');
+                const code = (0, index_9.revertHtmlTags)(block.props.code || '');
                 codeElm.textContent = code;
                 preEl.appendChild(codeElm);
                 const language = block.props.language;
@@ -3721,7 +2990,7 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
                             type: "codeBlock",
                             props: {
                                 code: textContent,
-                                language: index_19.DEFAULT_LANGUAGE
+                                language: index_9.DEFAULT_LANGUAGE
                             },
                         }).setTextSelection(range.from + 1);
                     }
@@ -3746,7 +3015,7 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
             name: "Code Block",
             execute: (editor) => {
                 const block = { type: "codeBlock", props: { code: '', language: '' } };
-                (0, scom_blocknote_sdk_12.execCustomBLock)(editor, block);
+                (0, scom_blocknote_sdk_7.execCustomBLock)(editor, block);
             },
             aliases: ["codeBlock", "Basic blocks"]
         };
@@ -3758,216 +3027,24 @@ define("@scom/scom-editor/blocks/addCodeBlock.ts", ["require", "exports", "@ijst
     exports.addCodeBlock = addCodeBlock;
     ;
 });
-define("@scom/scom-editor/blocks/addSwapBlock.ts", ["require", "exports", "@ijstech/components", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/global/index.ts"], function (require, exports, components_29, scom_blocknote_sdk_13, index_20, index_21) {
+define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-editor/blocks/addFormattingToolbar.ts", "@scom/scom-editor/blocks/addSideMenu.ts", "@scom/scom-editor/blocks/addSlashMenu.ts", "@scom/scom-editor/blocks/addHyperlinkToolbar.ts", "@scom/scom-editor/blocks/addTableToolbar.ts", "@scom/scom-editor/blocks/addFileBlock.ts", "@scom/scom-editor/blocks/addCodeBlock.ts"], function (require, exports, addFormattingToolbar_1, addSideMenu_1, addSlashMenu_1, addHyperlinkToolbar_1, addTableToolbar_1, addFileBlock_1, addCodeBlock_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addSwapBlock = void 0;
-    const swapRegex = /https:\/\/ipfs\.scom\.dev\/ipfs\/bafybeia442nl6djz7qipnfk5dxu26pgr2xgpar7znvt3aih2k6nxk7sib4\?data\=.*/g;
-    function getData(href) {
-        const widgetData = (0, scom_blocknote_sdk_13.parseUrl)(href);
-        if (widgetData) {
-            const { module, properties } = widgetData;
-            if (module.localPath === 'scom-swap')
-                return { ...properties };
-        }
-        return false;
-    }
-    const addSwapBlock = (blocknote) => {
-        const SwapBlock = blocknote.createBlockSpec({
-            type: "swap",
-            propSchema: {
-                ...blocknote.defaultProps,
-                category: { default: 'fixed-pair', values: ['fixed-pair', 'fixed-protocal', 'aggregator', 'cross-chain-swap'] },
-                providers: { default: [] },
-                tokens: { default: [] },
-                defaultChainId: { default: 0 },
-                networks: { default: [] },
-                logo: { default: '' },
-                title: { default: '' },
-                campaignId: { default: null },
-                wallets: { default: [] },
-                commissions: { default: [] },
-                defaultInputValue: { default: '' },
-                defaultOutputValue: { default: '' },
-                defaultInputToken: { default: null },
-                defaultOutputToken: { default: null },
-                apiEndpoints: { default: null }
-            },
-            content: "none"
-        }, {
-            render: (block) => {
-                const wrapper = new components_29.Panel();
-                const props = JSON.parse(JSON.stringify(block.props));
-                const data = {
-                    module: 'scom-swap',
-                    properties: { ...props },
-                    block: { ...block }
-                };
-                const customElm = new index_20.ScomEditorCustomBlock(wrapper, { data });
-                wrapper.appendChild(customElm);
-                return {
-                    dom: wrapper
-                };
-            },
-            parseFn: () => {
-                return [
-                    {
-                        tag: "div[data-content-type=swap]",
-                        node: 'swap'
-                    },
-                    {
-                        tag: "a",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const href = element.getAttribute('href');
-                            if (href)
-                                return getData(href);
-                            return false;
-                        },
-                        priority: 402,
-                        node: 'swap'
-                    },
-                    {
-                        tag: "p",
-                        getAttrs: (element) => {
-                            if (typeof element === "string") {
-                                return false;
-                            }
-                            const child = element.firstChild;
-                            if (child?.nodeName === 'A' && child.getAttribute('href')) {
-                                const href = child.getAttribute('href');
-                                return getData(href);
-                            }
-                            return false;
-                        },
-                        priority: 403,
-                        node: 'swap'
-                    },
-                ];
-            },
-            toExternalHTML: (block, editor) => {
-                const link = document.createElement("a");
-                const url = (0, scom_blocknote_sdk_13.getWidgetEmbedUrl)({
-                    type: 'swap',
-                    props: { ...(block.props || {}) }
-                }, (0, index_21.getConfigs)()?.['swap']);
-                link.setAttribute("href", url);
-                link.textContent = 'swap';
-                const wrapper = document.createElement("p");
-                wrapper.appendChild(link);
-                return { dom: wrapper };
-            },
-            pasteRules: [
-                {
-                    find: swapRegex,
-                    handler(props) {
-                        const { state, chain, range } = props;
-                        const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
-                        const widgetData = (0, scom_blocknote_sdk_13.parseUrl)(textContent);
-                        if (!widgetData)
-                            return null;
-                        const { module, properties } = widgetData;
-                        const type = module.localPath === 'scom-swap' ? 'swap' : 'chart';
-                        chain().BNUpdateBlock(state.selection.from, {
-                            type,
-                            props: {
-                                ...properties
-                            },
-                        }).setTextSelection(range.from + 1);
-                    }
-                }
-            ]
-        });
-        const SwapSlashItem = {
-            name: "Swap",
-            execute: (editor) => {
-                const block = {
-                    type: "swap",
-                    props: {
-                        "providers": [
-                            {
-                                "key": "OpenSwap",
-                                "chainId": 97
-                            },
-                            {
-                                "key": "OpenSwap",
-                                "chainId": 43113
-                            }
-                        ],
-                        "category": "fixed-pair",
-                        "tokens": [
-                            {
-                                "address": "0x29386B60e0A9A1a30e1488ADA47256577ca2C385",
-                                "chainId": 97
-                            },
-                            {
-                                "address": "0x45eee762aaeA4e5ce317471BDa8782724972Ee19",
-                                "chainId": 97
-                            },
-                            {
-                                "address": "0xb9C31Ea1D475c25E58a1bE1a46221db55E5A7C6e",
-                                "chainId": 43113
-                            },
-                            {
-                                "address": "0x78d9D80E67bC80A11efbf84B7c8A65Da51a8EF3C",
-                                "chainId": 43113
-                            }
-                        ],
-                        "defaultChainId": 43113,
-                        "networks": [
-                            {
-                                "chainId": 43113
-                            },
-                            {
-                                "chainId": 97
-                            }
-                        ],
-                        "wallets": [
-                            {
-                                "name": "metamask"
-                            }
-                        ],
-                        "showHeader": true,
-                        "showFooter": true
-                    }
-                };
-                (0, scom_blocknote_sdk_13.execCustomBLock)(editor, block);
-            },
-            aliases: ["swap", "widget"]
-        };
-        return {
-            SwapBlock,
-            SwapSlashItem
-        };
-    };
-    exports.addSwapBlock = addSwapBlock;
-});
-define("@scom/scom-editor/blocks/index.ts", ["require", "exports", "@scom/scom-editor/blocks/addFormattingToolbar.ts", "@scom/scom-editor/blocks/addSideMenu.ts", "@scom/scom-editor/blocks/addSlashMenu.ts", "@scom/scom-editor/blocks/addHyperlinkToolbar.ts", "@scom/scom-editor/blocks/addTableToolbar.ts", "@scom/scom-editor/blocks/addFileBlock.ts", "@scom/scom-editor/blocks/addStakingBlock.ts", "@scom/scom-editor/blocks/addXchainBlock.ts", "@scom/scom-editor/blocks/addVotingBlock.ts", "@scom/scom-editor/blocks/addNftMinterBlock.ts", "@scom/scom-editor/blocks/addOswapNftBlock.ts", "@scom/scom-editor/blocks/addCodeBlock.ts", "@scom/scom-editor/blocks/addSwapBlock.ts"], function (require, exports, addFormattingToolbar_1, addSideMenu_1, addSlashMenu_1, addHyperlinkToolbar_1, addTableToolbar_1, addFileBlock_1, addStakingBlock_1, addXchainBlock_1, addVotingBlock_1, addNftMinterBlock_1, addOswapNftBlock_1, addCodeBlock_1, addSwapBlock_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.addSwapBlock = exports.addCodeBlock = exports.addOswapNftBlock = exports.addNftMinterBlock = exports.addVotingBlock = exports.addXchainBlock = exports.addStakingBlock = exports.addFileBlock = exports.addTableToolbar = exports.addHyperlinkToolbar = exports.addSlashMenu = exports.addSideMenu = exports.addFormattingToolbar = void 0;
+    exports.addCodeBlock = exports.addFileBlock = exports.addTableToolbar = exports.addHyperlinkToolbar = exports.addSlashMenu = exports.addSideMenu = exports.addFormattingToolbar = void 0;
     Object.defineProperty(exports, "addFormattingToolbar", { enumerable: true, get: function () { return addFormattingToolbar_1.addFormattingToolbar; } });
     Object.defineProperty(exports, "addSideMenu", { enumerable: true, get: function () { return addSideMenu_1.addSideMenu; } });
     Object.defineProperty(exports, "addSlashMenu", { enumerable: true, get: function () { return addSlashMenu_1.addSlashMenu; } });
     Object.defineProperty(exports, "addHyperlinkToolbar", { enumerable: true, get: function () { return addHyperlinkToolbar_1.addHyperlinkToolbar; } });
     Object.defineProperty(exports, "addTableToolbar", { enumerable: true, get: function () { return addTableToolbar_1.addTableToolbar; } });
     Object.defineProperty(exports, "addFileBlock", { enumerable: true, get: function () { return addFileBlock_1.addFileBlock; } });
-    Object.defineProperty(exports, "addStakingBlock", { enumerable: true, get: function () { return addStakingBlock_1.addStakingBlock; } });
-    Object.defineProperty(exports, "addXchainBlock", { enumerable: true, get: function () { return addXchainBlock_1.addXchainBlock; } });
-    Object.defineProperty(exports, "addVotingBlock", { enumerable: true, get: function () { return addVotingBlock_1.addVotingBlock; } });
-    Object.defineProperty(exports, "addNftMinterBlock", { enumerable: true, get: function () { return addNftMinterBlock_1.addNftMinterBlock; } });
-    Object.defineProperty(exports, "addOswapNftBlock", { enumerable: true, get: function () { return addOswapNftBlock_1.addOswapNftBlock; } });
     Object.defineProperty(exports, "addCodeBlock", { enumerable: true, get: function () { return addCodeBlock_1.addCodeBlock; } });
-    Object.defineProperty(exports, "addSwapBlock", { enumerable: true, get: function () { return addSwapBlock_1.addSwapBlock; } });
 });
-define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_30) {
+define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_24) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.customEditorStyle = void 0;
-    const Theme = components_30.Styles.Theme.ThemeVars;
-    exports.customEditorStyle = components_30.Styles.style({
+    const Theme = components_24.Styles.Theme.ThemeVars;
+    exports.customEditorStyle = components_24.Styles.style({
         $nest: {
             '.tableWrapper': {
                 maxWidth: '100%',
@@ -4034,12 +3111,12 @@ define("@scom/scom-editor/index.css.ts", ["require", "exports", "@ijstech/compon
         }
     });
 });
-define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/index.css.ts", "@scom/scom-editor/global/index.ts"], function (require, exports, components_31, index_22, scom_blocknote_sdk_14, index_23, index_css_9, index_24) {
+define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom/scom-editor/blocks/index.ts", "@scom/scom-blocknote-sdk", "@scom/scom-editor/components/index.ts", "@scom/scom-editor/index.css.ts", "@scom/scom-editor/global/index.ts"], function (require, exports, components_25, index_10, scom_blocknote_sdk_8, index_11, index_css_9, index_12) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomEditor = void 0;
-    const Theme = components_31.Styles.Theme.ThemeVars;
-    const path = components_31.application.currentModuleDir;
+    const Theme = components_25.Styles.Theme.ThemeVars;
+    const path = components_25.application.currentModuleDir;
     const libPlugins = [
         'blocknote'
     ];
@@ -4054,8 +3131,9 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         'oswap-nft-widget',
         'scom-xchain-widget',
         'scom-staking',
+        "scom-swap"
     ];
-    let ScomEditor = class ScomEditor extends components_31.Module {
+    let ScomEditor = class ScomEditor extends components_25.Module {
         constructor(parent, options) {
             super(parent, options);
             this.tag = {};
@@ -4102,10 +3180,10 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (!this._blocknoteObj)
                 return;
             this.pnlEditor.clearInnerHTML();
-            (0, index_23.removeContainer)();
-            const { blockSpecs: customBlockSpecs, slashMenuItems: customSlashMenuItems } = await this.addCustomWidgets(this._blocknoteObj, scom_blocknote_sdk_14.execCustomBLock, this.addBlockCallback.bind(this));
-            const { FileSlashItem } = (0, index_22.addFileBlock)();
-            const { CodeSlashItem, CodeBlock } = (0, index_22.addCodeBlock)(this._blocknoteObj);
+            (0, index_11.removeContainer)();
+            const { blockSpecs: customBlockSpecs, slashMenuItems: customSlashMenuItems } = await this.addCustomWidgets(this._blocknoteObj, scom_blocknote_sdk_8.execCustomBLock, this.addBlockCallback.bind(this));
+            const { FileSlashItem } = (0, index_10.addFileBlock)();
+            const { CodeSlashItem, CodeBlock } = (0, index_10.addCodeBlock)(this._blocknoteObj);
             const blockSpecs = {
                 ...this._blocknoteObj.defaultBlockSpecs,
                 codeBlock: CodeBlock,
@@ -4137,18 +3215,18 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             if (initialContent)
                 editorConfig.initialContent = initialContent;
             this._editor = new this._blocknoteObj.BlockNoteEditor(editorConfig);
-            (0, index_22.addSideMenu)(this._editor);
-            (0, index_22.addFormattingToolbar)(this._editor);
-            (0, index_22.addSlashMenu)(this._editor);
-            (0, index_22.addHyperlinkToolbar)(this._editor);
-            (0, index_22.addTableToolbar)(this._editor);
+            (0, index_10.addSideMenu)(this._editor);
+            (0, index_10.addFormattingToolbar)(this._editor);
+            (0, index_10.addSlashMenu)(this._editor);
+            (0, index_10.addHyperlinkToolbar)(this._editor);
+            (0, index_10.addTableToolbar)(this._editor);
             this._editor.domElement.addEventListener('focus', () => {
-                const sideMenu = (0, index_23.getToolbar)('sideMenu');
+                const sideMenu = (0, index_11.getToolbar)('sideMenu');
                 if (sideMenu)
                     sideMenu.opacity = 1;
             });
             this._editor.domElement.addEventListener("blur", (event) => {
-                const sideMenus = (0, index_23.getModalContainer)().querySelectorAll('i-scom-editor-side-menu');
+                const sideMenus = (0, index_11.getModalContainer)().querySelectorAll('i-scom-editor-side-menu');
                 for (let menu of sideMenus) {
                     menu.opacity = 0;
                 }
@@ -4158,7 +3236,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             const blockSpecs = {};
             const slashMenuItems = [];
             const promises = [];
-            for (let widget of this.widgets) {
+            for (const widget of this.widgets) {
                 promises.push(this.createWidget(widget, blocknote, executeFn, callbackFn));
             }
             const results = await Promise.all(promises);
@@ -4172,13 +3250,15 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         async createWidget(name, blocknote, executeFn, callbackFn) {
             try {
-                const module = await components_31.application.createElement(name);
-                if ('ready' in module && name === 'scom-twitter-post') {
+                const module = await components_25.application.createElement(name);
+                const names = ['scom-twitter-post'];
+                if ('ready' in module && names.includes(name)) {
                     await module.ready();
                 }
+                // TODO: fix image links of widgets
                 if (module && 'addBlock' in module) {
                     const { block, slashItem, moduleData } = module.addBlock(blocknote, executeFn, callbackFn);
-                    block?.config?.type && (0, index_24.addConfig)(block?.config?.type, moduleData);
+                    block?.config?.type && (0, index_12.addConfig)(block?.config?.type, moduleData);
                     return { block, slashItem };
                 }
             }
@@ -4187,7 +3267,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         addBlockCallback(module, block) {
             if (!block || !block.type || !module)
                 return;
-            const sideMenu = (0, index_23.getToolbar)('sideMenu');
+            const sideMenu = (0, index_11.getToolbar)('sideMenu');
             const properties = block.props;
             const openConfigIfMissingProp = (condition) => {
                 if (sideMenu && condition)
@@ -4228,7 +3308,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
             console.log(JSON.stringify({ value: this.value }));
             if (this.onChanged)
                 this.onChanged(this.value);
-            const sideMenu = (0, index_23.getToolbar)('sideMenu');
+            const sideMenu = (0, index_11.getToolbar)('sideMenu');
             if (sideMenu)
                 sideMenu.opacity = 0;
         }
@@ -4246,12 +3326,12 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         loadPlugin() {
             return new Promise((resolve, reject) => {
-                components_31.RequireJS.config({
+                components_25.RequireJS.config({
                     paths: {
                         'blocknote': `${path}/lib/@blocknote/blocknote.bundled.umd.js`
                     }
                 });
-                components_31.RequireJS.require(libPlugins, (blocknote) => {
+                components_25.RequireJS.require(libPlugins, (blocknote) => {
                     resolve(blocknote);
                 });
             });
@@ -4282,9 +3362,9 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         async insertFile(url) {
             try {
-                const block = await (0, index_24.getBlockFromExtension)(url);
+                const block = await (0, index_12.getBlockFromExtension)(url);
                 if (block)
-                    (0, scom_blocknote_sdk_14.execCustomBLock)(this._editor, block);
+                    (0, scom_blocknote_sdk_8.execCustomBLock)(this._editor, block);
             }
             catch (error) { }
         }
@@ -4442,8 +3522,8 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         onHide() {
             if (this.timer)
                 clearTimeout(this.timer);
-            (0, index_23.removeContainer)();
-            (0, index_23.getToolbars)().clear();
+            (0, index_11.removeContainer)();
+            (0, index_11.getToolbars)().clear();
         }
         focus() {
             if (!this._editor)
@@ -4452,13 +3532,13 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
         async init() {
             super.init();
-            (0, index_23.removeContainer)();
+            (0, index_11.removeContainer)();
             this.onChanged = this.getAttribute('onChanged', true) || this.onChanged;
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {
                 const value = this.getAttribute('value', true);
                 const viewer = this.getAttribute('viewer', true);
-                const scconfig = components_31.application.store.scconfig;
+                const scconfig = components_25.application.store.scconfig;
                 let customWidgets = null;
                 if (scconfig) {
                     try {
@@ -4476,7 +3556,7 @@ define("@scom/scom-editor", ["require", "exports", "@ijstech/components", "@scom
         }
     };
     ScomEditor = __decorate([
-        (0, components_31.customElements)('i-scom-editor')
+        (0, components_25.customElements)('i-scom-editor')
     ], ScomEditor);
     exports.ScomEditor = ScomEditor;
 });

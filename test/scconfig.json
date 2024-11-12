@@ -23,6 +23,7 @@
   },
   "packages": [
     "@scom/scom-chart-data-source-setup",
+    "@scom/scom-token-list",
     "@scom/scom-charts",
     "@scom/scom-bar-chart",
     "@scom/scom-area-chart",
@@ -35,6 +36,7 @@
     "@scom/scom-video",
     "@scom/scom-swap",
     "@scom/scom-xchain-widget",
+    "@scom/scom-staking",
     "@scom/scom-voting",
     "@scom/scom-twitter-post",
     "@scom/scom-storage",
@@ -60,12 +62,6 @@
       "module": "@modules/module1"
     }
   ],
-  "editorWidgets": [
-		"scom-image",
-    "scom-video",
-    "scom-charts",
-    "scom-twitter-post"
-	],
   "themes": {
     "default": "dark",
     "light": {

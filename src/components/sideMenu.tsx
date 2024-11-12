@@ -213,8 +213,7 @@ export class ScomEditorSideMenu extends Module {
           const { title, backgroundImage, buttons, fontColor } = newProps;
           this.updateBlock(block, { title, backgroundImage, buttons, fontColor });
         } else if (block.type === 'nftMinter') {
-          const { title, description, logoUrl, productId, link, requiredQuantity } = newProps;
-          this.updateBlock(block, { title, description, logoUrl, productId, link, requiredQuantity });
+          this.updateBlock(block, {...newProps});
         } else if (block.type === 'oswapNft') {
           const { tier, networks, defaultChainId } = newProps;
           const _defaultChainId = defaultChainId || networks[0]?.chainId;
