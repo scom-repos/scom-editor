@@ -932,7 +932,6 @@ define("@scom/scom-editor/components/settingsForm.tsx", ["require", "exports", "
             if (action.customUI) {
                 if (block.type === 'chart') {
                     const types = (0, utils_5.getChartTypeOptions)();
-                    const selectedValue = types.find(item => block.props.name && item.value === block.props.name) || undefined;
                     this.chartActions.set(block.props.name, action);
                     this.pnlForm.append(this.$render("i-vstack", { gap: '0.625rem', width: '100%' },
                         this.$render("i-label", { caption: 'Chart Type' }),
@@ -1149,8 +1148,10 @@ define("@scom/scom-editor/components/sideMenu.tsx", ["require", "exports", "@ijs
         }
         set block(value) {
             if (value.id && value.id === this._data?.block?.id &&
-                value.type == this._data?.block?.type)
+                value.type == this._data?.block?.type) {
+                this._data.block = value;
                 return;
+            }
             this._data.block = value;
             this.dragHandle.block = value;
             // this.id = `side-${this.block.id}`;

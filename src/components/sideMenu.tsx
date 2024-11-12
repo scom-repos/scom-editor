@@ -77,7 +77,10 @@ export class ScomEditorSideMenu extends Module {
     if (
       value.id && value.id === this._data?.block?.id &&
       value.type == this._data?.block?.type
-    ) return;
+    ) {
+      this._data.block = value;
+      return;
+    }
     this._data.block = value;
     this.dragHandle.block = value;
     // this.id = `side-${this.block.id}`;

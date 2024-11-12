@@ -76,7 +76,6 @@ export class ScomEditorSettingsForm extends Module {
     if (action.customUI) {
       if (block.type === 'chart') {
         const types = getChartTypeOptions();
-        const selectedValue = types.find(item => block.props.name && item.value === block.props.name) || undefined;
         this.chartActions.set(block.props.name, action);
         this.pnlForm.append(
           <i-vstack gap={'0.625rem'} width={'100%'}>
@@ -162,7 +161,7 @@ export class ScomEditorSettingsForm extends Module {
     const { onConfirm, block } = this.data;
     if (block.type === 'chart') {
       data.title = this.inputTitle.value || '';
-      data.name = (this.cbName.selectedItem as IComboItem).value;
+      data.name = this.cbName.selectedItem.value;
     }
     if (onConfirm && result) onConfirm(block, {...data});
   }
