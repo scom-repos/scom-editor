@@ -37,7 +37,7 @@ Access the dev server via http://127.0.0.1:8025/
 
 ## Usage
 To use the Scom Editor Widget in your project, import it and include it in your component as follows:
-
+```tsx
 render() {
     return (
         <i-panel>           
@@ -49,3 +49,4 @@ render() {
         </i-panel>
     )
 }
+```
