@@ -23,7 +23,7 @@ import {
 import { Block, BlockNoteEditor, BlockNoteEditorOptions, execCustomBLock, PartialBlock } from "@scom/scom-blocknote-sdk";
 import { getModalContainer, getToolbar, getToolbars, removeContainer, ScomEditorSideMenu } from './components/index';
 import { customEditorStyle } from './index.css';
-import { addConfig, getBlockFromExtension } from './global/index';
+import { addConfig, getBlockFromExtension, setChartTypes } from './global/index';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
@@ -191,15 +191,12 @@ export class ScomEditor extends Module {
   private async addCustomWidgets(blocknote: any, executeFn: any, callbackFn?: any) {
     const blockSpecs: { [key: string]: any } = {};
     const slashMenuItems: any[] = [];
-    const promises: Promise<any>[] = [];
     for (const widget of this.widgets) {
-      promises.push(this.createWidget(widget, blocknote, executeFn, callbackFn));
-    }
-    const results = await Promise.all(promises);
-    for (let result of results) {
+      const result = await this.createWidget(widget, blocknote, executeFn, callbackFn);
       if (!result || !result?.block?.config?.type) continue;
-      blockSpecs[result.block.config.type] = result.block;
-      slashMenuItems.push(result.slashItem);
+      const { block, slashItem } = result;
+      blockSpecs[block.config.type] = block;
+      slashMenuItems.push(slashItem);
     }
     return { blockSpecs, slashMenuItems };
   }
@@ -207,14 +204,13 @@ export class ScomEditor extends Module {
   private async createWidget(name: string, blocknote: any, executeFn: any, callbackFn?: any) {
     try {
       const module = await application.createElement(name) as any;
-      const names = ['scom-twitter-post'];
-      if ('ready' in module && names.includes(name)) {
-        await module.ready();
-      }
-      // TODO: fix image links of widgets
       if (module && 'addBlock' in module) {
         const { block, slashItem, moduleData } = module.addBlock(blocknote, executeFn, callbackFn);
         block?.config?.type && addConfig(block?.config?.type, moduleData);
+        if (name === 'scom-charts') {
+          const charts = block?.config?.propSchema?.name?.values || [];
+          setChartTypes(charts);
+        }
         return { block, slashItem };
       }
     } catch {}
