@@ -10,7 +10,7 @@ import {
 import { ScomEditorDragHandle } from './dragHandle';
 import { ColorType } from './colorPicker';
 import { ScomEditorSettingsForm, ISettingsForm } from './settingsForm';
-import { buttonHoverStyle } from './index.css';
+import { buttonHoverStyle, customPaddingStyle } from './index.css';
 import { BasicBlockTypes, Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
 import { getConfigs } from '../global/index';
 const Theme = Styles.Theme.ThemeVars;
@@ -136,6 +136,7 @@ export class ScomEditorSideMenu extends Module {
 
   private handleDelete() {
     this.editor.focus();
+    if (this.actionForm) this.actionForm.closeModal();
     this.editor.removeBlocks([this.block]);
     this.hideDragMenu();
   }
@@ -254,7 +255,17 @@ export class ScomEditorSideMenu extends Module {
     }
     const modal = this.actionForm.openModal({
       title: 'Edit',
-      width: '40rem'
+      width: '40rem',
+      border: {radius: '0.375rem'},
+      onClose: () => {
+        modal.width = '40rem';
+        modal.height = 'auto';
+        modal.border = {radius: '0.375rem'};
+        const wrapper = modal.querySelector('.modal-wrapper');
+        if (wrapper) {
+          wrapper.classList.remove(customPaddingStyle);
+        }
+      }
     });
     await this.actionForm.setData(data);
     modal.refresh();

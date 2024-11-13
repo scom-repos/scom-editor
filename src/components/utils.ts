@@ -1,5 +1,6 @@
 import { Button, Control, HStack, Styles, IconName, Modal } from "@ijstech/components";
 import { buttonHoverStyle, customModalStyle } from "./index.css";
+import { getChartTypes } from "../global/index";
 const Theme = Styles.Theme.ThemeVars;
 
 export type IToolbarDropdownItem = {
@@ -143,10 +144,8 @@ export const getPlacement = (block: any) => {
   return placement;
 }
 
-export const ChartTypes = ['scom-pie-chart', 'scom-line-chart', 'scom-bar-chart', 'scom-area-chart', 'scom-mixed-chart', 'scom-scatter-chart', 'scom-counter'];
-
 export const getChartTypeOptions = () => {
-  return [...ChartTypes].map(type => ({ value: type, label: type.split('-')[1]}))
+  return [...getChartTypes()].map(type => ({ value: type, label: type.split('-')[1]}))
 }
 
 export const escapeHTML = (str: string) => {

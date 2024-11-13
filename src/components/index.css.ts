@@ -77,3 +77,8 @@ export const customPreStyle = Styles.style({
     }
   }
 });
+
+export const customPaddingStyle = Styles.style({
+  paddingLeft: '0px !important',
+  paddingRight: '0px !important'
+});

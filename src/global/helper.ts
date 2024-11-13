@@ -67,6 +67,7 @@ interface IConfig {
 
 const state = {
   configs: {} as { [key: string]: IConfig },
+  chartTypes: [] as string[],
   slashMenus: {}
 }
 
@@ -80,4 +81,12 @@ export const getConfig = (key: string) => {
 
 export const getConfigs = () => {
   return state.configs;
+}
+
+export const setChartTypes = (chartTypes: string[]) => {
+  state.chartTypes = chartTypes || [];
+}
+
+export const getChartTypes = () => {
+  return state.chartTypes || [];
 }

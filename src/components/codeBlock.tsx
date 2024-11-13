@@ -12,7 +12,7 @@ import {
   Modal
 } from '@ijstech/components';
 import { DEFAULT_LANGUAGE, escapeHTML, revertHtmlTags } from './utils';
-import { customPreStyle } from './index.css';
+import { customPaddingStyle, customPreStyle } from './index.css';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ICodeBlock {
@@ -136,7 +136,14 @@ export class ScomEditorCodeBlock extends Module {
 
               const modal = config.closest('i-modal') as Modal;
               if (modal) {
-                modal.width = isExpand ? '100dvw' : '100%';
+                const wrapper = modal.querySelector('.modal-wrapper') as Panel;
+                if (wrapper) {
+                  if (isExpand)
+                    wrapper.classList.add(customPaddingStyle);
+                  else
+                    wrapper.classList.remove(customPaddingStyle);
+                }
+                modal.width = isExpand ? '100dvw' : '40rem';
                 modal.height = isExpand ? '100dvh' : 'auto';
                 modal.border = isExpand ? {radius: 0 } : {radius: '0.375rem' };
                 modal.popupPlacement = 'center';

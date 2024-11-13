@@ -6,6 +6,57 @@ declare module "@scom/scom-editor/components/index.css.ts" {
     export const customModalStyle: string;
     export const modalStyle: string;
     export const customPreStyle: string;
+    export const customPaddingStyle: string;
+}
+/// <amd-module name="@scom/scom-editor/global/helper.ts" />
+declare module "@scom/scom-editor/global/helper.ts" {
+    export const getFileContent: (url: string) => Promise<string>;
+    export function getFileType(ext: string): string;
+    export function getBlockFromExtension(url: string): Promise<any>;
+    interface IConfig {
+        name: string;
+        localPath: string;
+    }
+    export const addConfig: (key: string, value: IConfig) => void;
+    export const getConfig: (key: string) => IConfig;
+    export const getConfigs: () => {
+        [key: string]: IConfig;
+    };
+    export const setChartTypes: (chartTypes: string[]) => void;
+    export const getChartTypes: () => string[];
+}
+/// <amd-module name="@scom/scom-editor/global/index.ts" />
+declare module "@scom/scom-editor/global/index.ts" {
+    export type TextAlignmentType = "left" | "center" | "right" | "justify";
+    export type CustomFormattingToolbarState = {
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
+        textAlignment: TextAlignmentType;
+        textColor: string;
+        backgroundColor: string;
+        referencePos: any;
+        show: boolean;
+    };
+    export type CustomHyperlinkToolbarState = {
+        text: string;
+        url: string;
+        referencePos: any;
+        show: boolean;
+    };
+    export type CustomSideMenuState = {
+        referencePos: any;
+        show: boolean;
+        block: any;
+    };
+    export type CustomSlashMenuState = {
+        referencePos: any;
+        show: boolean;
+        filteredItems: any[];
+        itemCallback: any;
+        keyboardHoveredItemIndex: number;
+    };
+    export * from "@scom/scom-editor/global/helper.ts";
 }
 /// <amd-module name="@scom/scom-editor/components/utils.ts" />
 declare module "@scom/scom-editor/components/utils.ts" {
@@ -38,7 +89,6 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const getModalContainer: () => HTMLElement;
     export const removeContainer: () => void;
     export const getPlacement: (block: any) => string;
-    export const ChartTypes: string[];
     export const getChartTypeOptions: () => {
         value: string;
         label: string;
@@ -404,54 +454,6 @@ declare module "@scom/scom-editor/components/settingsForm.tsx" {
         init(): void;
         render(): any;
     }
-}
-/// <amd-module name="@scom/scom-editor/global/helper.ts" />
-declare module "@scom/scom-editor/global/helper.ts" {
-    export const getFileContent: (url: string) => Promise<string>;
-    export function getFileType(ext: string): string;
-    export function getBlockFromExtension(url: string): Promise<any>;
-    interface IConfig {
-        name: string;
-        localPath: string;
-    }
-    export const addConfig: (key: string, value: IConfig) => void;
-    export const getConfig: (key: string) => IConfig;
-    export const getConfigs: () => {
-        [key: string]: IConfig;
-    };
-}
-/// <amd-module name="@scom/scom-editor/global/index.ts" />
-declare module "@scom/scom-editor/global/index.ts" {
-    export type TextAlignmentType = "left" | "center" | "right" | "justify";
-    export type CustomFormattingToolbarState = {
-        bold: boolean;
-        italic: boolean;
-        underline: boolean;
-        textAlignment: TextAlignmentType;
-        textColor: string;
-        backgroundColor: string;
-        referencePos: any;
-        show: boolean;
-    };
-    export type CustomHyperlinkToolbarState = {
-        text: string;
-        url: string;
-        referencePos: any;
-        show: boolean;
-    };
-    export type CustomSideMenuState = {
-        referencePos: any;
-        show: boolean;
-        block: any;
-    };
-    export type CustomSlashMenuState = {
-        referencePos: any;
-        show: boolean;
-        filteredItems: any[];
-        itemCallback: any;
-        keyboardHoveredItemIndex: number;
-    };
-    export * from "@scom/scom-editor/global/helper.ts";
 }
 /// <amd-module name="@scom/scom-editor/components/sideMenu.tsx" />
 declare module "@scom/scom-editor/components/sideMenu.tsx" {
