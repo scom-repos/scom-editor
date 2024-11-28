@@ -24,6 +24,7 @@ import { Block, BlockNoteEditor, BlockNoteEditorOptions, execCustomBLock, Partia
 import { getModalContainer, getToolbar, getToolbars, removeContainer, ScomEditorSideMenu } from './components/index';
 import { customEditorStyle } from './index.css';
 import { addConfig, getBlockFromExtension, setChartTypes } from './global/index';
+import { mainJson as translations } from './languages/index';
 const Theme = Styles.Theme.ThemeVars;
 
 type onChangedCallback = (value: string) => void;
@@ -493,6 +494,7 @@ export class ScomEditor extends Module {
   }
 
   async init() {
+    this.i18n.init({...translations});
     super.init();
     removeContainer();
     this.onChanged = this.getAttribute('onChanged', true) || this.onChanged;

@@ -5,3 +5,4 @@ export { addHyperlinkToolbar } from './addHyperlinkToolbar';
 export { addTableToolbar } from './addTableToolbar';
 export { addFileBlock } from './addFileBlock';
 export { addCodeBlock } from './addCodeBlock';
+export { convertedSlashItem } from './utils';

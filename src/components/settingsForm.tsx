@@ -13,6 +13,7 @@ import {
 import { formStyle, settingStyle } from './index.css';
 import { getChartTypeOptions } from './utils';
 import { Block } from '@scom/scom-blocknote-sdk';
+import { mainJson as translations } from '../languages/index';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSettingsFormElement extends ControlElement {
@@ -79,7 +80,7 @@ export class ScomEditorSettingsForm extends Module {
         this.chartActions.set(block.props.name, action);
         this.pnlForm.append(
           <i-vstack gap={'0.625rem'} width={'100%'}>
-            <i-label caption='Chart Type'></i-label>
+            <i-label caption='$chart_type'></i-label>
             <i-combo-box
               id="cbName"
               items={types}
@@ -92,12 +93,12 @@ export class ScomEditorSettingsForm extends Module {
         )
         this.pnlForm.append(
           <i-vstack gap={'0.625rem'} width={'100%'}>
-            <i-label caption='Chart Title'></i-label>
+            <i-label caption='$chart_title'></i-label>
             <i-input
               id='inputTitle'
               width={'100%'}
               height={'2.625rem'}
-              placeholder='Enter Title'
+              placeholder='$enter_title'
               background={{color: Theme.background.modal}}
               font={{size: '0.75rem', color: Theme.text.primary}}
               value={block.props?.title || ''}
@@ -115,7 +116,7 @@ export class ScomEditorSettingsForm extends Module {
         columnWidth: '100%',
         columnsPerRow: 1,
         confirmButtonOptions: {
-          caption: 'Confirm',
+          caption: '$confirm',
           backgroundColor: Theme.colors.primary.main,
           fontColor: Theme.colors.primary.contrastText,
           padding: {top: '0.5rem', bottom: '0.5rem', right: '1rem', left: '1rem'},
@@ -167,6 +168,7 @@ export class ScomEditorSettingsForm extends Module {
   }
 
   init() {
+    this.i18n.init({...translations});
     super.init();
     const data = this.getAttribute('data', true);
     if (data) this.setData(data);

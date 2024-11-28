@@ -11,6 +11,7 @@ import {
 } from '@ijstech/components';
 import { getToolbar } from './utils';
 import { getExtraFields, SlashMenuItem } from '@scom/scom-blocknote-sdk';
+import { slashMenuJson as translations } from '../languages/index';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSlashMenuElement extends ControlElement {
@@ -76,12 +77,13 @@ export class ScomEditorSlashMenu extends Module {
         editor.focus();
         executeFn(editor);
       }
-      const field = fieldData[item.name] || item;
-      const groupName = field.group || 'Widget';
+      let field = fieldData[item.name] || item;
+      const groupName = field.group || 'widget';
+      const hint = field.hint ? field.hint.replace(/\s/g, '_').toLowerCase() : '';
       if (result[groupName]) {
-        result[groupName].push({...field, ...item});
+        result[groupName].push({...field, ...item, hint});
       } else {
-        result[groupName] = [{...field, ...item}];
+        result[groupName] = [{...field, ...item, hint}];
       }
     }
     return result;
@@ -104,7 +106,7 @@ export class ScomEditorSlashMenu extends Module {
       const groupEl = (
         <i-vstack>
           <i-label
-            caption={group}
+            caption={`$${group.replace(/\s/g, '_').toLowerCase()}`}
             padding={{top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem'}}
             width={'100%'}
             background={{color: Theme.action.hoverBackground}}
@@ -138,8 +140,8 @@ export class ScomEditorSlashMenu extends Module {
           <i-hstack width={'100%'} gap={'1rem'} verticalAlignment="center">
             {icon}
             <i-vstack gap={'0.25rem'}>
-              <i-label caption={item.name} font={{size: '0.875rem', weight: 500}}></i-label>
-              <i-label caption={item.hint || ''} font={{size: '0.625rem', weight: 400}}></i-label>
+              <i-label caption={`$${item.id}`} font={{size: '0.875rem', weight: 500}}></i-label>
+              <i-label caption={item.hint ? `$${item.hint}` : ''} font={{size: '0.625rem', weight: 400}}></i-label>
             </i-vstack>
           </i-hstack>
           <i-label
@@ -164,6 +166,7 @@ export class ScomEditorSlashMenu extends Module {
   }
 
   init() {
+    this.i18n.init({...translations});
     super.init();
     this.onItemClicked = this.getAttribute('onItemClicked', true) || this.onItemClicked;
     const items = this.getAttribute('items', true);

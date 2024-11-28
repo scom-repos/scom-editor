@@ -15,6 +15,8 @@ import { buttonHoverStyle } from './index.css';
 import { ScomEditorBlockType } from './blockTypeButton';
 import { ScomEditorLink } from './linkButton';
 import { ScomEditorImageToolbar } from './imageToolbar';
+import { mainJson as translations } from '../languages/index';
+
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorFormattingToolbarElement extends ControlElement {
@@ -122,7 +124,7 @@ export class ScomEditorFormattingToolbar extends Module {
     return [
       {
         icon: {...iconProps, name: 'image'},
-        tooltip: {...toolTipProps, content: `Replace Image`},
+        tooltip: {...toolTipProps, content: "$replace_image"},
         isSelected: false,
         visible: this.isImageBlock,
         onClick: () => {
@@ -150,7 +152,7 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         icon: {...iconProps, name: 'bold'},
-        tooltip: {...toolTipProps, content: `Bold <br/> ${formatKeyboardShortcut("Mod+B")}`},
+        tooltip: {...toolTipProps, content: `${this.i18n.get('$bold')} <br/> ${formatKeyboardShortcut("Mod+B")}`},
         isSelected: editor.getActiveStyles().bold,
         visible: !this.isMediaBlock,
         onClick: () => {
@@ -160,7 +162,7 @@ export class ScomEditorFormattingToolbar extends Module {
       {
         icon: {...iconProps, name: 'italic'},
         visible: !this.isMediaBlock,
-        tooltip: {...toolTipProps, content: `Italicize <br/> ${formatKeyboardShortcut("Mod+I")}`},
+        tooltip: {...toolTipProps, content: `${this.i18n.get('$italicize')} <br/> ${formatKeyboardShortcut("Mod+I")}`},
         isSelected: editor.getActiveStyles().italic,
         onClick: () => {
           editor.toggleStyles({ italic: true });
@@ -169,7 +171,7 @@ export class ScomEditorFormattingToolbar extends Module {
       {
         icon: {...iconProps, name: 'underline'},
         visible: !this.isMediaBlock,
-        tooltip: {...toolTipProps, content: `Underline <br/> ${formatKeyboardShortcut("Mod+U")}`},
+        tooltip: {...toolTipProps, content: `${this.i18n.get('$underline')} <br/> ${formatKeyboardShortcut("Mod+U")}`},
         isSelected: editor.getActiveStyles().underline,
         onClick: () => {
           editor.toggleStyles({ underline: true });
@@ -178,7 +180,7 @@ export class ScomEditorFormattingToolbar extends Module {
       {
         icon: {...iconProps, name: 'strikethrough'},
         visible: !this.isMediaBlock,
-        tooltip: {...toolTipProps, content: `Strike-through <br/>  ${formatKeyboardShortcut("Mod+Shift+X")} or  ${formatKeyboardShortcut("Mod+Shift+Z")}`},
+        tooltip: {...toolTipProps, content: `${this.i18n.get('$strike_through')} <br/>  ${formatKeyboardShortcut("Mod+Shift+X")} or  ${formatKeyboardShortcut("Mod+Shift+Z")}`},
         isSelected: editor.getActiveStyles().strikethrough,
         onClick: () => {
           editor.toggleStyles({ strikethrough: true });
@@ -187,7 +189,7 @@ export class ScomEditorFormattingToolbar extends Module {
       {
         icon: {...iconProps, name: 'align-left'},
         visible: !hasTable,
-        tooltip: {...toolTipProps, content: 'Align Text Left'},
+        tooltip: {...toolTipProps, content: '$align_text_left'},
         isSelected: this._block.props?.textAlignment === 'left',
         onClick: () => {
           this.setAlignment(editor, 'left');
@@ -195,7 +197,7 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         icon: {...iconProps, name: 'align-center'},
-        tooltip: {...toolTipProps, content: 'Align Text Center'},
+        tooltip: {...toolTipProps, content: '$align_text_center'},
         visible: !hasTable,
         isSelected: this._block.props?.textAlignment === 'center',
         onClick: () => {
@@ -206,7 +208,7 @@ export class ScomEditorFormattingToolbar extends Module {
         icon: {...iconProps, name: 'align-right'},
         visible: !hasTable,
         isSelected: this._block.props?.textAlignment === 'right',
-        tooltip: {...toolTipProps, content: 'Align Text Right'},
+        tooltip: {...toolTipProps, content: '$align_text_right'},
         onClick: () => {
           this.setAlignment(editor, 'right');
         }
@@ -226,14 +228,14 @@ export class ScomEditorFormattingToolbar extends Module {
       },
       {
         icon: {...iconProps, name: 'indent'},
-        tooltip: {...toolTipProps, content: 'Indent'},
+        tooltip: {...toolTipProps, content: '$indent'},
         onClick: () => {
         },
         enabled: false
       },
       {
         icon: {...iconProps, name: 'outdent'},
-        tooltip: {...toolTipProps, content: 'Outdent'},
+        tooltip: {...toolTipProps, content: '$outdent'},
         onClick: () => {
         },
         enabled: false
@@ -242,7 +244,7 @@ export class ScomEditorFormattingToolbar extends Module {
         customControl: (element: Container) => {
           let link = new ScomEditorLink(undefined, {
             ...customProps,
-            tooltip: { content: `Create Link <br />  ${formatKeyboardShortcut("Mod+K")}`, placement: 'bottom' },
+            tooltip: { content: `${this.i18n.get('$create_link')} <br />  ${formatKeyboardShortcut("Mod+K")}`, placement: 'bottom' },
             editor: editor,
             visible: !this.isMediaBlock && this._block.type !== 'table',
             setLink: (text: string, url: string) => {
@@ -279,9 +281,6 @@ export class ScomEditorFormattingToolbar extends Module {
 
   onRefresh() {
     this.updateBlock();
-    // if (this._oldBlock?.id !== this._block?.id) {
-    //   this.renderList()
-    // }
     this.renderList()
   }
 
@@ -321,6 +320,7 @@ export class ScomEditorFormattingToolbar extends Module {
   }
 
   init() {
+    this.i18n.init({...translations});
     super.init();
     const editor = this.getAttribute('editor', true);
     if (editor) this.setData({editor});

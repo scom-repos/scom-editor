@@ -8,6 +8,7 @@ import {
   IMenuItem
 } from '@ijstech/components';
 import { BlockNoteEditor } from '@scom/scom-blocknote-sdk';
+import { mainJson as translations } from '../languages/index';
 const Theme = Styles.Theme.ThemeVars;
 
 
@@ -46,7 +47,7 @@ export class ScomEditorTableMenu extends Module {
   };
   private _menuData: IMenuItem[] = [
     {
-      title: `Delete ${this.orientation}`,
+      title: `${this.i18n.get('$delete')} ${this.orientation}`,
       id: 'delete'
     }
   ];
@@ -105,15 +106,15 @@ export class ScomEditorTableMenu extends Module {
     if (this.menuElm) {
       this._menuData = [
         {
-          title: `Delete ${this.orientation}`,
+          title: this.i18n.get('$delete_' + this.orientation),
           id: 'delete'
         },
         {
-          title: `Add ${this.orientation} ${this.orientation === 'column' ? 'left' : 'above'}`,
+          title: `${this.i18n.get('$add_' + this.orientation + '_' + (this.orientation === 'column' ? 'left' : 'above'))}`,
           id: 'addLeft'
         },
         {
-          title: `Add ${this.orientation} ${this.orientation === 'column' ? 'right' : 'below'}`,
+          title: `${this.i18n.get('$add_' + this.orientation + '_' + (this.orientation === 'column' ? 'right' : 'below'))}`,
           id: 'addRight'
         },
       ]
@@ -191,6 +192,7 @@ export class ScomEditorTableMenu extends Module {
   }
 
   async init() {
+    this.i18n.init({...translations});
     super.init();
     this.onClose = this.getAttribute('onClose', true) || this.onClose;
     const block = this.getAttribute('block', true);

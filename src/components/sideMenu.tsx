@@ -13,6 +13,7 @@ import { ScomEditorSettingsForm, ISettingsForm } from './settingsForm';
 import { buttonHoverStyle, customPaddingStyle } from './index.css';
 import { BasicBlockTypes, Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
 import { getConfigs } from '../global/index';
+import { mainJson as translations } from '../languages/index';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomEditorSideMenuElement extends ControlElement {
@@ -254,7 +255,7 @@ export class ScomEditorSideMenu extends Module {
       this.actionForm = new ScomEditorSettingsForm();
     }
     const modal = this.actionForm.openModal({
-      title: 'Edit',
+      title: '$edit',
       width: '40rem',
       border: {radius: '0.375rem'},
       onClose: () => {
@@ -276,6 +277,7 @@ export class ScomEditorSideMenu extends Module {
   }
 
   init() {
+    this.i18n.init({...translations});
     super.init();
     const block = this.getAttribute('block', true);
     const editor = this.getAttribute('editor', true);

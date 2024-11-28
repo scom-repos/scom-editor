@@ -8,8 +8,9 @@ import {
   Container,
   Modal
 } from '@ijstech/components';
-import { getModalContainer, getToolbar } from './utils';
+import { getModalContainer } from './utils';
 const Theme = Styles.Theme.ThemeVars;
+import { mainJson as translations } from '../languages/index';
 
 export type onSelectedCallback = (type: ColorType, color: string) => void;
 export type ColorType = 'text' | 'background';
@@ -118,7 +119,7 @@ export class ScomEditorColorPicker extends Module {
     const groupElm = (
       <i-panel width={'100%'}>
         <i-label
-          caption={type}
+          caption={`$${type}`}
           font={{size: '0.75rem', transform: 'capitalize', weight: 500}}
           lineHeight={1.55}
           padding={{top: '0.313rem', bottom: '0.313rem', left: '0.75rem', right: '0.75rem'}}
@@ -192,6 +193,7 @@ export class ScomEditorColorPicker extends Module {
   }
 
   init() {
+    this.i18n.init({...translations});
     super.init();
     this.onSelected = this.getAttribute('onSelected', true) || this.onSelected;
     this.onClosed = this.getAttribute('onClosed', true) || this.onClosed;

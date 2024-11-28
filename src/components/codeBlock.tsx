@@ -88,6 +88,7 @@ export class ScomEditorCodeBlock extends Module {
     const codeBlock = this.createElement('i-scom-code-viewer', this.blockWrapper) as any;
     codeBlock.parent = this.blockWrapper;
     const rootDir = application.rootDir;
+    await codeBlock.isReady();
     await codeBlock.setData({
       code: this.fullCode,
       entryPoint: rootDir.endsWith('/') ? rootDir.slice(0, -1) : rootDir,
@@ -165,7 +166,7 @@ export class ScomEditorCodeBlock extends Module {
             stack: {shrink: '0'}
           });
           const button = new Button(hstack, {
-            caption: 'Confirm',
+            caption: '$confirm',
             width: '100%',
             height: 40,
             font: {color: Theme.colors.primary.contrastText}
