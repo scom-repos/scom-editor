@@ -12,6 +12,7 @@ import {
   Upload
 } from '@ijstech/components';
 import { Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
+import { mainJson as translations } from '../languages/index';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -119,6 +120,7 @@ export class ScomEditorImageToolbar extends Module {
   }
 
   init() {
+    this.i18n.init({...translations});
     super.init();
     this.onUpdated = this.getAttribute('onUpdated', true) || this.onUpdated;
     const editor = this.getAttribute('editor', true);
@@ -131,7 +133,7 @@ export class ScomEditorImageToolbar extends Module {
       <i-panel width={'100%'}>
         <i-tabs id="imageTabs" width={'100%'}>
           <i-tab
-            caption="Upload"
+            caption="$upload"
             font={{ color: Theme.text.primary, size: '0.875rem' }}
             minHeight={'0px'}
           >
@@ -172,7 +174,7 @@ export class ScomEditorImageToolbar extends Module {
               >
                 <i-upload
                   id="btnUpload"
-                  caption='Upload Image'
+                  caption='$upload_image'
                   width={'100%'}
                   minHeight={'6.25rem'}
                   border={{ width: '1px', style: 'solid', color: Theme.divider }}
@@ -181,7 +183,7 @@ export class ScomEditorImageToolbar extends Module {
                 ></i-upload>
                 <i-label
                   id="lblFailed"
-                  caption="Error: Upload failed"
+                  caption="$upload_failed"
                   visible={false}
                   font={{ color: Theme.colors.error.main, size: '0.75rem' }}
                   class="text-center"
@@ -190,7 +192,7 @@ export class ScomEditorImageToolbar extends Module {
             </i-panel>
           </i-tab>
           <i-tab
-            caption="Embed"
+            caption="$embed"
             font={{ color: Theme.text.primary, size: '0.875rem' }}
             minHeight={'0px'}
           >
@@ -200,7 +202,7 @@ export class ScomEditorImageToolbar extends Module {
             >
               <i-input
                 id="inputUrl"
-                placeholder="Enter Url"
+                placeholder="$enter_url"
                 border={{ width: '1px', style: 'solid', color: Theme.divider }}
                 font={{ size: '0.75rem', color: Theme.text.primary }}
                 background={{ color: 'transparent' }}
@@ -218,7 +220,7 @@ export class ScomEditorImageToolbar extends Module {
                 minHeight={'1.875rem'}
                 background={{ color: 'transparent' }}
                 enabled={false}
-                caption='Embed Image'
+                caption='$embed_image'
                 onClick={() => this.updateBlock()}
               ></i-button>
             </i-vstack>

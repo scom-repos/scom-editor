@@ -9,6 +9,7 @@ import {
   Control
 } from '@ijstech/components';
 import { getModalContainer } from './utils';
+import { mainJson as translations } from '../languages/index';
 const Theme = Styles.Theme.ThemeVars;
 
 export type inputChangedCallback = (target: Input, event: KeyboardEvent) => void;
@@ -80,6 +81,8 @@ export class ScomEditorMdLink extends Module {
   showModal(parent?: Control) {
     getModalContainer().appendChild(this.mdLink);
     this.mdLink.position = 'fixed';
+    this.inputLink.placeholder = this.i18n.get('enter_url');
+    this.inputText.placeholder = this.i18n.get('edit_title');
     if (parent) this.mdLink.linkTo = parent;
     this.inputLink.focus();
     this.mdLink.refresh();
@@ -103,6 +106,7 @@ export class ScomEditorMdLink extends Module {
   }
 
   init() {
+    this.i18n.init({...translations});
     super.init();
     this.onInputChanged = this.getAttribute('onInputChanged', true) || this.onInputChanged;
     const text = this.getAttribute('text', true);
@@ -150,7 +154,7 @@ export class ScomEditorMdLink extends Module {
               border={{style: 'none'}}
               background={{color: Theme.background.modal}}
               font={{size: '0.75rem', color: Theme.text.primary}}
-              placeholder='Edit URL'
+              placeholder='$edit_url'
               onKeyUp={this.handleInput}
             ></i-input>
           </i-hstack>
@@ -171,7 +175,7 @@ export class ScomEditorMdLink extends Module {
               border={{style: 'none'}}
               background={{color: Theme.background.modal}}
               font={{size: '0.75rem', color: Theme.text.primary}}
-              placeholder='Edit Title'
+              placeholder='$edit_title'
               onKeyUp={this.handleInput}
             ></i-input>
           </i-hstack>

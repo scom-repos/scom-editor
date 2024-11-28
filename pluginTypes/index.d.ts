@@ -97,6 +97,194 @@ declare module "@scom/scom-editor/components/utils.ts" {
     export const revertHtmlTags: (str: string) => string;
     export const DEFAULT_LANGUAGE = "javascript";
 }
+/// <amd-module name="@scom/scom-editor/languages/main.json.ts" />
+declare module "@scom/scom-editor/languages/main.json.ts" {
+    const _default: {
+        en: {
+            confirm: string;
+            add: string;
+            delete: string;
+            colors: string;
+            create_link: string;
+            align_text_left: string;
+            align_text_center: string;
+            align_text_right: string;
+            bold: string;
+            italicize: string;
+            underline: string;
+            strike_through: string;
+            indent: string;
+            outdent: string;
+            replace_image: string;
+            upload: string;
+            upload_image: string;
+            upload_failed: string;
+            embed: string;
+            enter_url: string;
+            embed_image: string;
+            edit_url: string;
+            edit_title: string;
+            chart_type: string;
+            chart_title: string;
+            edit: string;
+            text: string;
+            background: string;
+            add_row_above: string;
+            add_row_below: string;
+            add_column_left: string;
+            add_column_right: string;
+            delete_row: string;
+            delete_column: string;
+        };
+        "zh-hant": {};
+        vi: {
+            confirm: string;
+            add: string;
+            delete: string;
+            colors: string;
+            create_link: string;
+            align_text_left: string;
+            align_text_center: string;
+            align_text_right: string;
+            bold: string;
+            italicize: string;
+            underline: string;
+            strike_through: string;
+            indent: string;
+            outdent: string;
+            replace_image: string;
+            upload: string;
+            upload_image: string;
+            upload_failed: string;
+            embed: string;
+            enter_url: string;
+            embed_image: string;
+            edit_url: string;
+            edit_title: string;
+            chart_type: string;
+            chart_title: string;
+            edit: string;
+            text: string;
+            background: string;
+            add_row_above: string;
+            add_row_below: string;
+            add_column_left: string;
+            add_column_right: string;
+            delete_row: string;
+            delete_column: string;
+        };
+    };
+    export default _default;
+}
+/// <amd-module name="@scom/scom-editor/languages/slashMenu.json.ts" />
+declare module "@scom/scom-editor/languages/slashMenu.json.ts" {
+    const _default_1: {
+        en: {
+            paragraph: string;
+            heading: string;
+            heading_2: string;
+            heading_3: string;
+            heading_4: string;
+            heading_5: string;
+            heading_6: string;
+            bullet_list: string;
+            numbered_list: string;
+            used_for_a_top_level_heading: string;
+            used_for_key_sections: string;
+            used_for_subsections_and_group_headings: string;
+            used_to_display_a_numbered_list: string;
+            used_to_display_an_unordered_list: string;
+            used_for_the_body_of_your_document: string;
+            create_a_table: string;
+            insert_a_code_block: string;
+            insert_a_file: string;
+            headings: string;
+            basic_blocks: string;
+            media: string;
+            table: string;
+            code_block: string;
+            file: string;
+            widget: string;
+            image: string;
+            video: string;
+            chart: string;
+            tweet: string;
+            voting: string;
+            swap: string;
+            xchain: string;
+            staking: string;
+            nft_minter: string;
+            oswap_nft: string;
+            image_widget: string;
+            insert_an_image: string;
+            insert_a_video: string;
+            insert_a_chart_widget: string;
+            insert_a_twitter_post: string;
+            insert_a_voting_widget: string;
+            insert_a_swap_widget: string;
+            insert_an_xchain_widget: string;
+            insert_a_staking_widget: string;
+            insert_a_nft_minter_widget: string;
+            insert_an_oswap_nft_widget: string;
+        };
+        "zh-hant": {};
+        vi: {
+            paragraph: string;
+            heading: string;
+            heading_2: string;
+            heading_3: string;
+            heading_4: string;
+            heading_5: string;
+            heading_6: string;
+            bullet_list: string;
+            numbered_list: string;
+            used_for_a_top_level_heading: string;
+            used_for_key_sections: string;
+            used_for_subsections_and_group_headings: string;
+            used_to_display_a_numbered_list: string;
+            used_to_display_an_unordered_list: string;
+            used_for_the_body_of_your_document: string;
+            create_a_table: string;
+            insert_a_code_block: string;
+            insert_a_file: string;
+            headings: string;
+            basic_blocks: string;
+            media: string;
+            table: string;
+            code_block: string;
+            file: string;
+            widget: string;
+            image: string;
+            video: string;
+            chart: string;
+            tweet: string;
+            voting: string;
+            swap: string;
+            xchain: string;
+            staking: string;
+            nft_minter: string;
+            oswap_nft: string;
+            image_widget: string;
+            insert_an_image: string;
+            insert_a_video: string;
+            insert_a_chart_widget: string;
+            insert_a_twitter_post: string;
+            insert_a_voting_widget: string;
+            insert_a_swap_widget: string;
+            insert_an_xchain_widget: string;
+            insert_a_staking_widget: string;
+            insert_a_nft_minter_widget: string;
+            insert_an_oswap_nft_widget: string;
+        };
+    };
+    export default _default_1;
+}
+/// <amd-module name="@scom/scom-editor/languages/index.ts" />
+declare module "@scom/scom-editor/languages/index.ts" {
+    import mainJson from "@scom/scom-editor/languages/main.json.ts";
+    import slashMenuJson from "@scom/scom-editor/languages/slashMenu.json.ts";
+    export { mainJson, slashMenuJson };
+}
 /// <amd-module name="@scom/scom-editor/components/colorPicker.tsx" />
 declare module "@scom/scom-editor/components/colorPicker.tsx" {
     import { ControlElement, Module, Control, Container } from '@ijstech/components';
@@ -850,6 +1038,10 @@ declare module "@scom/scom-editor/blocks/addSideMenu.ts" {
     import { BlockNoteEditor } from "@scom/scom-blocknote-sdk";
     export const addSideMenu: (editor: BlockNoteEditor) => void;
 }
+/// <amd-module name="@scom/scom-editor/blocks/utils.ts" />
+declare module "@scom/scom-editor/blocks/utils.ts" {
+    export const convertedSlashItem: (item: any) => any;
+}
 /// <amd-module name="@scom/scom-editor/blocks/addSlashMenu.ts" />
 declare module "@scom/scom-editor/blocks/addSlashMenu.ts" {
     import { BlockNoteEditor } from "@scom/scom-blocknote-sdk";
@@ -897,6 +1089,7 @@ declare module "@scom/scom-editor/blocks/index.ts" {
     export { addTableToolbar } from "@scom/scom-editor/blocks/addTableToolbar.ts";
     export { addFileBlock } from "@scom/scom-editor/blocks/addFileBlock.ts";
     export { addCodeBlock } from "@scom/scom-editor/blocks/addCodeBlock.ts";
+    export { convertedSlashItem } from "@scom/scom-editor/blocks/utils.ts";
 }
 /// <amd-module name="@scom/scom-editor/index.css.ts" />
 declare module "@scom/scom-editor/index.css.ts" {

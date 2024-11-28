@@ -1,6 +1,7 @@
 import { Control, Modal, Styles } from "@ijstech/components";
 import { ScomEditorSlashMenu, createModal, getModalContainer, getToolbar, setToolbar } from "../components/index";
 import { BlockNoteEditor, CustomSlashMenuState } from "@scom/scom-blocknote-sdk";
+import { convertedSlashItem } from "./utils";
 const Theme = Styles.Theme.ThemeVars;
 
 const closeSideMenu = () => {
@@ -13,21 +14,28 @@ const openSideMenu = () => {
   if (sideMenu) sideMenu.opacity = 1;
 }
 
+const convertedItems = (items: any[]) => {
+  return items.map((item: any) => {
+    return convertedSlashItem(item);
+  });
+}
+
 export const addSlashMenu = (editor: BlockNoteEditor) => {
   let modal: Modal;
   let menuElm: ScomEditorSlashMenu;
 
   async function updateItems(items: any[], onClick: (item: any) => void, selected: number, referencePos: any) {
     const { bottom = 0 } = referencePos;
+    const newItems = convertedItems(items);
     const maxHeight = window.innerHeight - bottom - 32;
     if (menuElm) {
       menuElm.setData({
-        items: [...items],
+        items: [...newItems],
         selectedIndex: selected
       })
     } else {
       menuElm = await ScomEditorSlashMenu.create({
-        items: [...items],
+        items: [...newItems],
         selectedIndex: selected,
         border: {radius: 'inherit'},
         height:'auto',

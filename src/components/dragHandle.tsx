@@ -12,6 +12,7 @@ import { Block, BlockNoteEditor } from '@scom/scom-blocknote-sdk';
 import { ColorType, ScomEditorColorPicker } from './colorPicker';
 import { getModalContainer } from './utils';
 import { customModalStyle } from './index.css';
+import { mainJson as translations } from '../languages/index';
 const Theme = Styles.Theme.ThemeVars;
 
 type deletedCallback = () => void;
@@ -48,12 +49,12 @@ export class ScomEditorDragHandle extends Module {
   private _data: ISideMenu;
   private _menuData = [
     {
-      title: `<i-label caption="Delete"></i-label>`,
+      title: `<i-label caption="$delete"></i-label>`,
       id: 'delete'
     },
     {
       title: `<i-hstack verticalAlignment="center" horizontalAlignment="space-between" width="100%">
-        <i-label caption="Colors"></i-label>
+        <i-label caption="$colors"></i-label>
         <i-icon width="16px" height="16px" fill="${Theme.text.primary}" name="angle-right"></i-icon>
       </i-hstack>`,
       id: 'color'
@@ -144,6 +145,7 @@ export class ScomEditorDragHandle extends Module {
   }
 
   init() {
+    this.i18n.init({...translations});
     super.init();
     this.onDeleted = this.getAttribute('onDeleted', true) || this.onDeleted;
     this.onSetColor = this.getAttribute('onSetColor', true) || this.onSetColor;
@@ -161,7 +163,7 @@ export class ScomEditorDragHandle extends Module {
         popupPlacement="left"
         showBackdrop={false}
         minWidth={0}
-        maxWidth={'6.25rem'}
+        maxWidth={'10rem'}
         visible={false}
         position="absolute"
         zIndex={9999}
