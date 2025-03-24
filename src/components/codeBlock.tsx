@@ -13,6 +13,9 @@ import {
 } from '@ijstech/components';
 import { DEFAULT_LANGUAGE, escapeHTML, revertHtmlTags } from './utils';
 import { customPaddingStyle, customPreStyle } from './index.css';
+import { getWidgetData } from '../global/index';
+import { ScomEditorWidget } from './widget';
+
 const Theme = Styles.Theme.ThemeVars;
 
 interface ICodeBlock {
@@ -68,7 +71,7 @@ export class ScomEditorCodeBlock extends Module {
 
   get fullCode() {
     let code = this.code;
-    if (!code.startsWith('`') && !code.endsWith('`')) {
+    if (!code.startsWith('`') && !code.endsWith('`') && !code.startsWith('@scom/')) {
       code = `\`\`\`${this.language}\n${code}\n\`\`\``;
     }
     return code;
@@ -85,16 +88,31 @@ export class ScomEditorCodeBlock extends Module {
 
   private async renderUI() {
     this.blockWrapper.clearInnerHTML();
-    const codeBlock = this.createElement('i-scom-code-viewer', this.blockWrapper) as any;
-    codeBlock.parent = this.blockWrapper;
-    const rootDir = application.rootDir;
-    await codeBlock.isReady();
-    await codeBlock.setData({
-      code: this.fullCode,
-      entryPoint: rootDir.endsWith('/') ? rootDir.slice(0, -1) : rootDir,
-      isButtonsShown: false
-    });
-    this.blockWrapper.border = {radius: '0.375rem', width: !!this.code ? '0px' : '1px', style: 'solid', color: Theme.divider};
+    const isScom = this.fullCode.startsWith('@scom/');
+    if (isScom) {
+      const values = getWidgetData(this.fullCode);
+      if (!values) return;
+      this.blockWrapper.append(
+        <i-scom-editor--widget
+          moduleName={values.module}
+          data={values.data}
+          content={values.value}
+          elements={values.elements}
+        ></i-scom-editor--widget>
+      )
+    } else {
+      const codeBlock = this.createElement('i-scom-code-viewer', this.blockWrapper) as any;
+      if (!codeBlock) return;
+      codeBlock.parent = this.blockWrapper;
+      const rootDir = application.rootDir;
+      await codeBlock.ready();
+      await codeBlock.setData({
+        code: this.fullCode,
+        entryPoint: rootDir.endsWith('/') ? rootDir.slice(0, -1) : rootDir,
+        isButtonsShown: false
+      });
+      this.blockWrapper.border = {radius: '0.375rem', width: !!this.code ? '0px' : '1px', style: 'solid', color: Theme.divider};
+    }
   }
 
   getActions() {
@@ -175,16 +193,22 @@ export class ScomEditorCodeBlock extends Module {
           await config.loadContent(this.fullCode || '');
 
           button.onClick = async () => {
-            const fullCode = escapeHTML(config.value || '');
-            const regex = /```(\w+)?(\((.+?)\))?[\s\n]([\s\S]+)[\s\n]```/g;
-            const matches = regex.exec(fullCode);
-            const path = matches?.[3] || '';
-            let language = matches?.[1] || DEFAULT_LANGUAGE;
-            if (language) {
-              language = `${language}${path ? `(${path})` : ''}`
+            let fullCode = config.value || '';
+            if (fullCode.includes('@scom/')) {
+              fullCode = fullCode.replace(/^\s*```\s*/g, '').replace(/\s*```\s*$/g, '');
+              if (onConfirm) onConfirm(true, {...this._data, code: fullCode, language: '' });
+            } else {
+              fullCode = escapeHTML(config.value || '');
+              const regex = /```(\w+)?(\((.+?)\))?[\s\n]([\s\S]+)[\s\n]```/g;
+              const matches = regex.exec(fullCode);
+              const path = matches?.[3] || '';
+              let language = matches?.[1] || DEFAULT_LANGUAGE;
+              if (language) {
+                language = `${language}${path ? `(${path})` : ''}`
+              }
+              const code = matches?.[4] || '';
+              if (onConfirm) onConfirm(true, {...this._data, code, language });
             }
-            const code = matches?.[4] || '';
-            if (onConfirm) onConfirm(true, {...this._data, code, language });
           }
           return vstack;
         }

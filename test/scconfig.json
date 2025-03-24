@@ -42,7 +42,9 @@
     "@scom/scom-storage",
     "@scom/scom-nft-minter",
     "@scom/scom-product-contract",
-    "@scom/oswap-nft-widget"
+    "@scom/oswap-nft-widget",
+    "@scom/page-text",
+    "@scom/page-block"
   ],
   "menus": [
     {

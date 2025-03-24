@@ -5,6 +5,7 @@
     "dependencies": [
         "@ijstech/components",
         "@scom/scom-blocknote-sdk",
+        "@scom/scom-upload-modal",
         "@scom/scom-storage"
     ]
 }

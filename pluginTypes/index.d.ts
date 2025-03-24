@@ -27,6 +27,7 @@ declare module "@scom/scom-editor/global/helper.ts" {
 }
 /// <amd-module name="@scom/scom-editor/global/index.ts" />
 declare module "@scom/scom-editor/global/index.ts" {
+    import { Control } from '@ijstech/components';
     export type TextAlignmentType = "left" | "center" | "right" | "justify";
     export type CustomFormattingToolbarState = {
         bold: boolean;
@@ -57,6 +58,13 @@ declare module "@scom/scom-editor/global/index.ts" {
         keyboardHoveredItemIndex: number;
     };
     export * from "@scom/scom-editor/global/helper.ts";
+    export const getWidgetData: (html: string) => {
+        module: string;
+        data: string;
+        value: string;
+        elements: any[];
+    };
+    export const getEmbedElement: (postData: any, parent: Control, callback?: any) => Promise<any>;
 }
 /// <amd-module name="@scom/scom-editor/components/utils.ts" />
 declare module "@scom/scom-editor/components/utils.ts" {
@@ -1044,6 +1052,43 @@ declare module "@scom/scom-editor/components/customBlock.tsx" {
         getActions(): any;
         init(): Promise<void>;
         render(): void;
+    }
+}
+/// <amd-module name="@scom/scom-editor/components/widget.tsx" />
+declare module "@scom/scom-editor/components/widget.tsx" {
+    import { ControlElement, Module } from "@ijstech/components";
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-editor--widget']: WidgetElement;
+            }
+        }
+    }
+    interface IElement {
+        module?: string;
+        data?: string;
+        content?: string;
+    }
+    interface WidgetElement extends ControlElement {
+        moduleName?: string;
+        data?: string;
+        content?: string;
+        elements?: IElement[];
+    }
+    export class ScomEditorWidget extends Module {
+        private _moduleName;
+        private _data;
+        private _elements;
+        private pnlWidget;
+        get moduleName(): string;
+        set moduleName(value: string);
+        get data(): any;
+        set data(value: any);
+        private renderWidget;
+        private renderChildElements;
+        private parseWidgetData;
+        init(): void;
+        render(): any;
     }
 }
 /// <amd-module name="@scom/scom-editor/components/codeBlock.tsx" />

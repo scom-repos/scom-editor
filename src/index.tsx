@@ -259,7 +259,6 @@ export class ScomEditor extends Module {
     blocks.pop();
     value = await editor.blocksToMarkdownLossy(blocks);
     this.value = value.replace(/\[(swap|xchain|staking|chart|voting|nftMinter|oswapNft)\]\((.*)\)/g, "$2");
-    console.log(JSON.stringify({ value: this.value }));
     if (this.onChanged) this.onChanged(this.value);
     const sideMenu = getToolbar('sideMenu');
     if (sideMenu) sideMenu.opacity = 0;

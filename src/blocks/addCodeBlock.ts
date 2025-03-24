@@ -6,9 +6,16 @@ function getData(element: HTMLElement) {
   if (element?.nodeName === 'PRE') {
     const codeElm = element.querySelector('code');
     if (codeElm) {
+      let language = codeElm.getAttribute('data-language') || '';
+      let code = codeElm.textContent;
+      if (language && language.startsWith('@scom/')) {
+        code = `${language}\n${code}\n`;
+        language = '';
+      }
+
       return {
-        code: codeElm.textContent,
-        language: codeElm.getAttribute('data-language') || ''
+        code,
+        language
       };
     }
   }
@@ -104,12 +111,15 @@ export function addCodeBlock(blocknote: any) {
         find: /^(`{3,}[^`\n]*\n|^`{3,}[^`\s]*)([\s\S]*?)([\s|\n]?`{3,})/gm,
         handler(props: any) {
           const { state, chain, range } = props;
-          const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+          let textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+          textContent = textContent.replace(/^\s*```\s*/g, '').replace(/\s*```\s*$/g, '');
+          const isBlock = textContent.startsWith('@scom/');
+
           chain().BNUpdateBlock(state.selection.from, {
             type: "codeBlock",
             props: {
               code: textContent,
-              language: DEFAULT_LANGUAGE
+              language: isBlock ? '' :DEFAULT_LANGUAGE
             },
           }).setTextSelection(range.from + 1);
         }
