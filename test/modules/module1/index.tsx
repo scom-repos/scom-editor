@@ -19,7 +19,7 @@ export default class Module1 extends Module {
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
-    this._value = "    ```javascript\n    <body>\n      <script>\n        async function init() {\n          let scbook = await application.createElement('@scom/scom-scbook', false, {\n          entrypoint: \"data\",\n        maxWidth: 1400,\n        showHeader: true,\n        showSearch: false\n          });\n        document.body.append(scbook);\n        };\n        init();\n      </script>\n    </body>\n    ```\n"
+    this._value = ""
   }
 
   private onTypeChanged(target: Switch) {
