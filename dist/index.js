@@ -245,7 +245,8 @@ define("@scom/scom-editor/global/index.ts", ["require", "exports", "@ijstech/com
                 else {
                     result = {
                         ...match,
-                        elements: []
+                        elements: [],
+                        module: moduleName
                     };
                 }
             }
@@ -267,10 +268,14 @@ define("@scom/scom-editor/global/index.ts", ["require", "exports", "@ijstech/com
             .replace(/\n/gm, "")
             .replace(/&amp;/g, '&')
             .replace(/\{\s+/gm, "{")
-            .replace(/\s+\}/gm, "}");
+            .replace(/\s+\}/gm, "}")
+            .replace(/^\s*/gm, "")
+            .replace(/\s*$/gm, "")
+            .replace(/\,\s*/gm, ", ");
         if (data && data.includes(':')) {
+            data = `{${data}}`;
             try {
-                data = JSON.parse(`{${data}}`);
+                data = JSON.parse(data);
             }
             catch (e) {
                 console.error('parse error: ', e, data);

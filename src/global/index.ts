@@ -84,7 +84,8 @@ export const getWidgetData = (html: string) => {
       } else {
         result = {
           ...match,
-          elements: []
+          elements: [],
+          module: moduleName
         }
       }
     }
@@ -108,11 +109,15 @@ const checkMatches = (content: string) => {
     .replace(/\n/gm, "")
     .replace(/&amp;/g, '&')
     .replace(/\{\s+/gm, "{")
-    .replace(/\s+\}/gm, "}");
+    .replace(/\s+\}/gm, "}")
+    .replace(/^\s*/gm, "")
+    .replace(/\s*$/gm, "")
+    .replace(/\,\s*/gm, ", ");
 
   if (data && data.includes(':')) {
+    data = `{${data}}`;
     try {
-      data = JSON.parse(`{${data}}`);
+      data = JSON.parse(data);
     } catch (e) {
       console.error('parse error: ', e, data);
     }
